@@ -65,7 +65,7 @@ namespace corona
 			{
 				istring<2048> temp = wide_path;
 				PathAppend(temp.c_str_w(), application_folder_name.c_str());
-				if (CreateDirectory(temp.c_str(), NULL) || ERROR_ALREADY_EXISTS == GetLastError()) {
+				if (CreateDirectory(temp.c_str(), NULL) or ERROR_ALREADY_EXISTS == GetLastError()) {
 					PathAppend(temp.c_str_w(), _filename.c_str());
 					result = temp;
 				}
@@ -103,7 +103,7 @@ namespace corona
 			DWORD       fileAttr;
 
 			fileAttr = GetFileAttributes(filename.c_str());
-			if (0xFFFFFFFF == fileAttr && GetLastError() == ERROR_FILE_NOT_FOUND)
+			if (0xFFFFFFFF == fileAttr and GetLastError() == ERROR_FILE_NOT_FOUND)
 				return false;
 			return true;
 		}

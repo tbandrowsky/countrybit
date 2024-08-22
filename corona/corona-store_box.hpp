@@ -232,7 +232,7 @@ namespace corona {
 		virtual relative_ptr_type create_object(char* _src, size_t _length)
 		{
 			box_block* item = allocate(1, _length);
-			if (!item) return null_row;
+			if (not item) return null_row;
 			memcpy(&item->data[0], _src, _length);
 			return item->location;
 		}
@@ -417,7 +417,7 @@ namespace corona {
 		{
 			relative_ptr_type placement;
 			T* item = allocate<T>(1, placement);
-			if (!item) return placement;
+			if (not item) return placement;
 			*item = src;
 			return placement;
 		}
@@ -428,7 +428,7 @@ namespace corona {
 		{
 			relative_ptr_type placement;
 			T* item = allocate<T>(length, placement);
-			if (!item) return placement;
+			if (not item) return placement;
 			while (length)
 			{
 				*item = *src;
@@ -445,7 +445,7 @@ namespace corona {
 		{
 			relative_ptr_type placement;
 			T* item = allocate<T>(length, placement);
-			if (!item) return placement;
+			if (not item) return placement;
 			while (length)
 			{
 				*item = src;
@@ -461,7 +461,7 @@ namespace corona {
 		{
 			relative_ptr_type placement;
 			T* item = allocate<T>((stop - start) + 1, placement);
-			if (!item) return placement;
+			if (not item) return placement;
 
 			int i = start;
 			while (i < stop)
@@ -495,7 +495,7 @@ namespace corona {
 
 			relative_ptr_type placement;
 			T* item = allocate<T>(length, placement);
-			if (!item) return placement;
+			if (not item) return placement;
 
 			while (length)
 			{
@@ -514,7 +514,7 @@ namespace corona {
 			requires (std::is_standard_layout<T>::value)
 		T* copy(const T* base, size_t start)
 		{
-			if (!base) return nullptr;
+			if (not base) return nullptr;
 			corona_size_t l = put_null_terminated(base, start);
 			return get_object<T>(l);
 		}
@@ -523,7 +523,7 @@ namespace corona {
 			requires (std::is_standard_layout<T>::value)
 		T* copy(const T* base, size_t start, size_t stop, bool terminate = true)
 		{
-			if (!base) return nullptr;
+			if (not base) return nullptr;
 			corona_size_t l = pack_slice(base, start, stop, terminate);
 			return get_object<T>(l);
 		}
@@ -536,7 +536,7 @@ namespace corona {
 			// use this facility, and ideally create a special box
 			relative_ptr_type placement;
 			T* item = allocate<T>(1, placement);
-			if (!item) return item;
+			if (not item) return item;
 			item = new (item) T(source);
 			return item;
 		}
@@ -547,7 +547,7 @@ namespace corona {
 		{
 			relative_ptr_type placement;
 			T* item = allocate<T>(count, placement);
-			if (!item) return item;
+			if (not item) return item;
 
 			T* it = item;
 			while (count)
@@ -677,7 +677,7 @@ namespace corona {
 			std::cout << "box:" << this << " " << (void*)stuff << std::endl;
 #endif
 			char* temp = new char[new_stuff_size];
-			if (!temp) {
+			if (not temp) {
 				throw std::exception("Out of memory");
 			}
 			if (stuff) {
@@ -699,7 +699,7 @@ namespace corona {
 
 		void ownership_delete(char* other_stuff)
 		{
-			if (stuff != other_stuff && own_the_data && stuff)
+			if (stuff != other_stuff and own_the_data and stuff)
 			{
 				delete[] stuff;
 				stuff = nullptr;
@@ -830,7 +830,7 @@ namespace corona {
 
 		void copy_box(serialized_box* _src = nullptr)
 		{
-			if (!_src) return;
+			if (not _src) return;
 			corona_size_t new_length = std::max(size(), _src->size());
 			resize(new_length);
 			if (_src) {
@@ -974,14 +974,14 @@ namespace corona {
 	{
 		dynamic_box dbox;
 		dbox.init(500);
-		if (!test_box(&dbox))
+		if (not test_box(&dbox))
 		{
 			std::cout << __LINE__ << ": dynamic box failed" << std::endl;
 			return false;
 		}
 
 		static_box<500> sbox;
-		if (!test_box(&sbox))
+		if (not test_box(&sbox))
 		{
 			std::cout << __LINE__ << ": static box failed" << std::endl;
 			return false;

@@ -326,7 +326,7 @@ namespace corona
 				std::istringstream ss(_src);
 				std::tm tm = {};
 				ss >> std::get_time(&tm, format.c_str());
-				if (!ss.fail())
+				if (not ss.fail())
 				{
 					*this = tm;
 					break;

@@ -214,11 +214,11 @@ namespace corona
 						allGood = bm->getSize(&width, &height);
 						it->x = width;
 						it->y = height;
-						if (!allGood) break;
+						if (not allGood) break;
 					}
 
 				// then, if we do, go ahead and create the bitmaps
-				if (!allGood) {
+				if (not allGood) {
 					std::list<sizeCrop> sizes;
 					for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
 						sizes.push_back(toSizeC(*it, _bitmap->cropEnabled, _bitmap->crop));
@@ -492,14 +492,14 @@ namespace corona
 			auto p = paths[_pathInstanceDto->pathName];
 
 			/*
-			if (!fill) {
+			if (not fill) {
 		#if TRACE_GUI
 				std::cout << "missing fill " << _pathInstanceDto->fillBrushName << std::endl;
 		#endif
 				return;
 			}
 
-			if (!border) {
+			if (not border) {
 		#if TRACE_GUI
 				std::cout << "missing border " << _pathInstanceDto->borderBrushName << std::endl;
 		#endif
@@ -507,7 +507,7 @@ namespace corona
 			}
 			*/
 
-			if (!p)
+			if (not p)
 				return;
 
 			//			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_pathInstanceDto->position.x, _pathInstanceDto->position.y);
@@ -516,7 +516,7 @@ namespace corona
 			if (fill) {
 				getDeviceContext()->FillGeometry(p->geometry, fill->getBrush());
 			}
-			if (border && _pathInstanceDto->strokeWidth > 0.0) {
+			if (border and _pathInstanceDto->strokeWidth > 0.0) {
 				getDeviceContext()->DrawGeometry(p->geometry, border->getBrush(), _pathInstanceDto->strokeWidth);
 			}
 		}
@@ -526,29 +526,29 @@ namespace corona
 			auto fill = brushes[_pathImmediateDto->fillBrushName];
 			auto border = brushes[_pathImmediateDto->borderBrushName];
 
-			if (!fill) {
+			if (not fill) {
 #if TRACE_GUI
 				std::cout << "missing fill " << _pathImmediateDto->fillBrushName << std::endl;
 #endif
 			}
 
-			if (!border) {
+			if (not border) {
 #if TRACE_GUI
 				std::cout << "missing border " << _pathImmediateDto->borderBrushName << std::endl;
 #endif
 			}
 
 			auto p = createPath(&_pathImmediateDto->path, _pathImmediateDto->closed);
-			if (!p)
+			if (not p)
 				return;
 
 			//			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathImmediateDto->rotation) * D2D1::Matrix3x2F::Translation(_pathImmediateDto->position.x, _pathImmediateDto->position.y);
 			//		getDeviceContext()->SetTransform(product);
 
-			if (fill && _pathImmediateDto->fillBrushName.size() > 0) {
+			if (fill and _pathImmediateDto->fillBrushName.size() > 0) {
 				getDeviceContext()->FillGeometry(p->geometry, fill->getBrush());
 			}
-			if (border && _pathImmediateDto->borderBrushName.size() > 0 && _pathImmediateDto->strokeWidth > 0.0) {
+			if (border and _pathImmediateDto->borderBrushName.size() > 0 and _pathImmediateDto->strokeWidth > 0.0) {
 				getDeviceContext()->DrawGeometry(p->geometry, border->getBrush(), _pathImmediateDto->strokeWidth);
 			}
 		}
@@ -580,7 +580,7 @@ namespace corona
 			if (_fillBrush.size())
 			{
 				auto fill = brushes[_fillBrush];
-				if (!fill) {
+				if (not fill) {
 #if TRACE_GUI
 					std::cout << "missing fill " << _fillBrush << std::endl;
 #endif
@@ -592,7 +592,7 @@ namespace corona
 			if (_borderBrush.size())
 			{
 				auto border = brushes[_borderBrush];
-				if (!border) {
+				if (not border) {
 #if TRACE_GUI
 					std::cout << "missing border " << _borderBrush << std::endl;
 #endif
@@ -613,7 +613,7 @@ namespace corona
 			if (_fillBrush.size())
 			{
 				auto fill = brushes[_fillBrush];
-				if (!fill) {
+				if (not fill) {
 					std::string msg = std::format("missing fill {0}", _fillBrush);
 					system_monitoring_interface::global_mon->log_warning(msg);
 				}
@@ -629,7 +629,7 @@ namespace corona
 				r.right -= half_border_width;
 				r.bottom -= half_border_width;
 				auto border = brushes[_borderBrush];
-				if (!border) {
+				if (not border) {
 					std::string msg = std::format("missing border {0}", _borderBrush);
 					system_monitoring_interface::global_mon->log_warning(msg);
 				}
@@ -648,7 +648,7 @@ namespace corona
 			auto style = _textStyle.size() ? textStyles[_textStyle] : nullptr;
 			auto fill = _fillBrush.size() ? brushes[_fillBrush] : nullptr;
 
-			if (!style) {
+			if (not style) {
 #if TRACE_GUI
 				std::cout << "missing textStyle " << _textStyle << std::endl;
 
@@ -663,7 +663,7 @@ namespace corona
 				return;
 }
 
-			if (!fill) {
+			if (not fill) {
 #if TRACE_GUI
 				std::cout << "missing fillBrush " << _fillBrush << std::endl;
 #endif
@@ -671,7 +671,7 @@ namespace corona
 			}
 
 			auto format = style->getFormat();
-			if (!format) {
+			if (not format) {
 #if TRACE_GUI
 				std::cout << "missing format " << _textStyle << std::endl;
 #endif
@@ -691,7 +691,7 @@ namespace corona
 			if (buff) {
 				int ret = ::MultiByteToWideChar(CP_ACP, NULL, _text, -1, buff, len - 1);
 
-				if (style->get_strike_through() || style->get_underline())
+				if (style->get_strike_through() or style->get_underline())
 				{
 					int l = wcslen(buff);
 					IDWriteTextLayout* textLayout = nullptr;
@@ -747,14 +747,14 @@ namespace corona
 			auto style = textStyles[_textInstanceDto->styleName];
 			auto fill = brushes[_textInstanceDto->fillBrushName];
 
-			if (!style) {
+			if (not style) {
 #if TRACE_GUI				
 				std::cout << "missing text style " << _textInstanceDto->styleName << std::endl;
 #endif
 				return;
 			}
 
-			if (!fill) {
+			if (not fill) {
 #if TRACE_GUI
 				std::cout << "missing fill " << _textInstanceDto->fillBrushName << std::endl;
 #endif
@@ -782,7 +782,7 @@ namespace corona
 		virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto)
 		{
 			auto bm = bitmaps[_bitmapInstanceDto->bitmapName];
-			if (!bm) {
+			if (not bm) {
 				std::string msg = std::format("bitmap {0} not in context", _bitmapInstanceDto->bitmapName);
 				system_monitoring_interface::global_mon->log_warning(msg);
 				return;
@@ -875,7 +875,7 @@ namespace corona
 
 		virtual void drawView(const char* _style, const char* _text, rectangle& _rect, int _state, const char* _debug_comment)
 		{
-			if (!_style) return;
+			if (not _style) return;
 
 			object_name style_name = _style;
 			object_name style_composed_name;

@@ -79,6 +79,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "box", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -86,6 +87,15 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "slnode", sizeof(box_id.name));
+			box_id.name[7] = 0;
+			return box_id;
+		}
+
+		static  block_id allocated_space_id()
+		{
+			block_id box_id;
+			strncpy_s(box_id.name, "alloc", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -93,6 +103,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "sl", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -100,6 +111,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "lst", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -107,6 +119,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "idtble", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -114,6 +127,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "group", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -121,6 +135,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "tble", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -128,6 +143,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "expr", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -135,6 +151,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "exprt", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -142,6 +159,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "corcol", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -149,6 +167,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "cordb", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -156,6 +175,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "oper", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -163,6 +183,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "value", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -170,6 +191,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "ident", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -177,6 +199,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "string", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -184,6 +207,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "number", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -191,6 +215,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "color", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -198,6 +223,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "wave", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -205,6 +231,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "audio", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -213,6 +240,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "dim", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -220,6 +248,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "dtm", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -227,6 +256,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "path", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -234,6 +264,7 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "json", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
@@ -241,95 +272,111 @@ namespace corona
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "gen", sizeof(box_id.name));
+			box_id.name[7] = 0;
 			return box_id;
 		}
 
 		bool is_box()
 		{
+			name[7] = 0;
 			block_id t = block_id::box_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_json()
 		{
+			name[7] = 0;
 			block_id t = block_id::json_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_general()
 		{
+			name[7] = 0;
 			block_id t = block_id::general_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_sorted_index_node()
 		{
+			name[7] = 0;
 			block_id t = block_id::sorted_index_node_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_sorted_index()
 		{
+			name[7] = 0;
 			block_id t = block_id::sorted_index_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_list()
 		{
+			name[7] = 0;
 			block_id t = block_id::list_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_item_detail_table()
 		{
+			name[7] = 0;
 			block_id t = block_id::item_detail_table_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_table()
 		{
+			name[7] = 0;
 			block_id t = block_id::table_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_group()
 		{
+			name[7] = 0;
 			block_id t = block_id::group_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_expression()
 		{
+			name[7] = 0;
 			block_id t = block_id::expression_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_collection()
 		{
+			name[7] = 0;
 			block_id t = block_id::collection_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_database()
 		{
+			name[7] = 0;
 			block_id t = block_id::database_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_operator()
 		{
+			name[7] = 0;
 			block_id t = block_id::operator_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_value()
 		{
+			name[7] = 0;
 			block_id t = block_id::value_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_identifer()
 		{
+			name[7] = 0;
 			block_id t = block_id::identifier_id();
 			return strcmp(t.name, name) == 0;
 			;
@@ -337,49 +384,69 @@ namespace corona
 
 		bool is_string()
 		{
+			name[7] = 0;
 			block_id t = block_id::string_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_number()
 		{
+			name[7] = 0;
 			block_id t = block_id::number_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_color()
 		{
+			name[7] = 0;
 			block_id t = block_id::color_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_wave()
 		{
+			name[7] = 0;
 			block_id t = block_id::wave_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_audio()
 		{
+			name[7] = 0;
+
 			block_id t = block_id::audio_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_dimension()
 		{
+			name[7] = 0;
+
 			block_id t = block_id::dimension_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_datetime()
 		{
+			name[7] = 0;
+
 			block_id t = block_id::datetime_id();
 			return strcmp(t.name, name) == 0;
 		}
 
 		bool is_path()
 		{
+			name[7] = 0;
+
 			block_id t = block_id::path_id();
+			return strcmp(t.name, name) == 0;
+		}
+
+		bool is_allocated_space()
+		{
+			name[7] = 0;
+
+			block_id t = block_id::allocated_space_id();
 			return strcmp(t.name, name) == 0;
 		}
 	};
@@ -426,7 +493,7 @@ namespace corona
 	concept explicit_int64 = std::same_as<T, int64_t>;
 
 	template <class T>
-	concept explicit_int = std::same_as<T, int64_t> || std::same_as<T, int32_t>;
+	concept explicit_int = std::same_as<T, int64_t> or std::same_as<T, int32_t>;
 
 	template <class T>
 	concept explicit_double = std::same_as<T, double>;
@@ -435,7 +502,7 @@ namespace corona
 	concept explicit_float = std::same_as<T, float>;
 
 	template <class T>
-	concept explicit_floating_point = std::same_as<T, double> || std::same_as<T, float>;
+	concept explicit_floating_point = std::same_as<T, double> or std::same_as<T, float>;
 
 	template <class T>
 	concept explicit_bool = std::same_as<T, bool>;
@@ -501,11 +568,11 @@ namespace corona
 		int d = {};
 		hex = toupper(hex);
 
-		if (hex >= 'A' && hex <= 'F')
+		if (hex >= 'A' and hex <= 'F')
 		{
 			d = hex - 'A' + 10;
 		}
-		else if (hex >= '0' && hex <= '9')
+		else if (hex >= '0' and hex <= '9')
 		{
 			d = hex - '0';
 		}
@@ -588,7 +655,7 @@ namespace corona
 		std::string to_hex(size_t _bytes = 0)
 		{
 			std::string temp = "";
-			if (_bytes > buffer_size || _bytes <= 0) {
+			if (_bytes > buffer_size or _bytes <= 0) {
 				_bytes = buffer_size;
 			}
 			for (int i = 0; i < buffer_size; i++) {
@@ -602,14 +669,14 @@ namespace corona
 		void from_hex(std::string _hex_string)
 		{
 			std::vector<char> bytes;
-			int index = 0;
+			int index_lists = 0;
 			int byte_count = 0;
 
-			while (index < _hex_string.size())
+			while (index_lists < _hex_string.size())
 			{
-				unsigned char t = corona::toInt2(_hex_string, index);
+				unsigned char t = corona::toInt2(_hex_string, index_lists);
 				bytes.push_back(t);
-				index += 2;
+				index_lists += 2;
 				byte_count++;
 			}
 
@@ -620,14 +687,14 @@ namespace corona
 
 		void set_hex(std::string _hex_string)
 		{
-			int index = 0;
+			int index_lists = 0;
 			int byte_count = 0;
 
-			while (index < _hex_string.size() && byte_count < buffer_size)
+			while (index_lists < _hex_string.size() and byte_count < buffer_size)
 			{
-				unsigned char t = corona::toInt2(_hex_string, index);
+				unsigned char t = corona::toInt2(_hex_string, index_lists);
 				buffer_bytes[byte_count] = t;
-				index += 2;
+				index_lists += 2;
 				byte_count++;
 			}
 
@@ -642,7 +709,7 @@ namespace corona
 		{
 			int byte_count = 0;
 
-			while (byte_count < buffer_size && byte_count < _string.size())
+			while (byte_count < buffer_size and byte_count < _string.size())
 			{
 				unsigned char t = _string[byte_count];
 				buffer_bytes[byte_count] = t;
@@ -771,6 +838,7 @@ namespace corona
 		}
 	};
 
+	using db_object_id_type = int64_t;
 
 }
 

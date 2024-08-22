@@ -417,9 +417,9 @@ namespace corona {
 
 		int threadCount = job_queue::numberOfProcessors();
 
-		if (_numThreads > maxWorkerThreads || _numThreads == 0) _numThreads = threadCount;
+		if (_numThreads > maxWorkerThreads or _numThreads == 0) _numThreads = threadCount;
 
-		if (!ioCompPort) {
+		if (not ioCompPort) {
 
 			numWorkerThreads = _numThreads;
 
@@ -466,7 +466,7 @@ namespace corona {
 	void job_queue::add_job(job* _jobMessage)
 	{
 		LONG result;
-		if (!_jobMessage)
+		if (not _jobMessage)
 			return;
 		if (_jobMessage->queued(this)) {
 			++num_outstanding_jobs;
@@ -477,7 +477,7 @@ namespace corona {
 
 	bool job_queue::listen_job(job* _jobMessage)
 	{
-		if (!_jobMessage)
+		if (not _jobMessage)
 			return false;
 		return _jobMessage->queued(this);
 	}
@@ -507,7 +507,7 @@ namespace corona {
 
 		while (!jobQueue->wasShutDownOrdered()) {
 			success = ::GetQueuedCompletionStatus(jobQueue->ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
-			if (success && lpov) {
+			if (success and lpov) {
 				container = (job_container*)lpov;
 				if (container) {
 					waiting_job = container->jobdata;
@@ -515,7 +515,7 @@ namespace corona {
 					if (waiting_job) {
 						jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
 						jobNotify.notify();
-						if (jobNotify.repost && (!jobQueue->wasShutDownOrdered())) {
+						if (jobNotify.repost and (!jobQueue->wasShutDownOrdered())) {
 							jobQueue->add_job(waiting_job);
 						}
 					}
@@ -527,7 +527,7 @@ namespace corona {
 
 				LONG numJobs = --jobQueue->num_outstanding_jobs;
 
-				if (!numJobs) {
+				if (not numJobs) {
 					::SetEvent(jobQueue->empty_queue_event);
 				}
 			}

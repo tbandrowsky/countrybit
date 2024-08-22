@@ -33,7 +33,7 @@ namespace corona {
 
 	void put_json(D2D1_SIZE_U& _dest, json& _src)
 	{
-		if (!_src.has_members({ "width", "height" })) {
+		if (not _src.has_members({ "width", "height" })) {
 			system_monitoring_interface::global_mon->log_warning("D2D1_SIZE_U needs a width and height");
 			system_monitoring_interface::global_mon->log_information("source json:");
 			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
@@ -53,7 +53,7 @@ namespace corona {
 	void put_json(D2D1_RECT_F& _dest, json& _src)
 	{
 		std::vector<std::string> missing;
-		if (!_src.has_members(missing, { "left", "top", "right", "bottom" })) {
+		if (not _src.has_members(missing, { "left", "top", "right", "bottom" })) {
 			system_monitoring_interface::global_mon->log_warning("D2D1_RECT_F needs a crop and size");
 			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
@@ -87,7 +87,7 @@ namespace corona {
 	{
 
 		std::vector<std::string> missing;
-		if (!_src.has_members(missing, { "crop", "size" })) {
+		if (not _src.has_members(missing, { "crop", "size" })) {
 			system_monitoring_interface::global_mon->log_warning("sizeCrop needs a crop and size");
 			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
@@ -269,7 +269,7 @@ namespace corona {
 	void put_json(gradientStop& _dest, json& _src)
 	{
 		std::vector<std::string> missing;
-		if (!_src.has_members(missing, { "color", "position" })) {
+		if (not _src.has_members(missing, { "color", "position" })) {
 			system_monitoring_interface::global_mon->log_warning("gradientStop needs a color and position");
 			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
@@ -348,7 +348,7 @@ namespace corona {
 	{
 		json_parser jp;
 
-		if (!_src.has_members({ "file_name", "crop", "sizes" })) {
+		if (not _src.has_members({ "file_name", "crop", "sizes" })) {
 			system_monitoring_interface::global_mon->log_warning("bitmap needs a filename, crop, and sizes");
 			system_monitoring_interface::global_mon->log_information("source json:");
 			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
@@ -404,7 +404,7 @@ namespace corona {
 
 	void put_json(bitmapBrushRequest& _dest, json& _src)
 	{
-		if (!_src.has_members({ "file_name" })) {
+		if (not _src.has_members({ "file_name" })) {
 			system_monitoring_interface::global_mon->log_warning("bitmap_brush must have file_name");
 			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
@@ -471,7 +471,7 @@ namespace corona {
 	{
 		json_parser jp;
 
-		if (!_src.has_members({ "start", "stop", "stops" })) {
+		if (not _src.has_members({ "start", "stop", "stops" })) {
 			system_monitoring_interface::global_mon->log_warning("linear_brush must have start, stop and stops");
 			system_monitoring_interface::global_mon->log_information("source json:");
 			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
@@ -564,7 +564,7 @@ namespace corona {
 		json_parser jp;
 
 		std::vector<std::string> missing;
-		if (!_src.has_members(missing, { "center", "offset", "size", "radiusX", "radiusY", "stops" })) {
+		if (not _src.has_members(missing, { "center", "offset", "size", "radiusX", "radiusY", "stops" })) {
 			system_monitoring_interface::global_mon->log_warning("radial_brush must have name, center, offset, size, radiusX, radiusY and stops");
 			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
@@ -637,7 +637,7 @@ namespace corona {
 	{
 		json_parser jp;
 
-		if (!_src.has_members({ "color" })) {
+		if (not _src.has_members({ "color" })) {
 			system_monitoring_interface::global_mon->log_warning("solid_brush must have color");
 			system_monitoring_interface::global_mon->log_information("source json:");
 			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
@@ -834,7 +834,7 @@ namespace corona {
 
 		bool has_brush()
 		{
-			return solid_brush || radial_brush || linear_brush || bitmap_brush;
+			return solid_brush or radial_brush or linear_brush or bitmap_brush;
 		}
 
 		const char *get_name()
@@ -1110,7 +1110,7 @@ namespace corona {
 
 		bool contains(point pt)
 		{
-			return (pt.x >= x) && (pt.x < (x + width)) && (pt.y >= y) && (pt.y < (y + height));
+			return (pt.x >= x) and (pt.x < (x + width)) and (pt.y >= y) and (pt.y < (y + height));
 		}
 	};
 
@@ -1184,7 +1184,7 @@ namespace corona {
 	void put_json(textStyleRequest& _dest, json& _src)
 	{
 
-		if (!_src.has_members({ "font_name", "font_size" })) {
+		if (not _src.has_members({ "font_name", "font_size" })) {
 			system_monitoring_interface::global_mon->log_warning("text style must have font_name, and font_size.");
 			system_monitoring_interface::global_mon->log_information("text style may also have bold, italics, underline, strike_through, line_spacing, wrap_text, character_spacing, font_stretch." );
 			system_monitoring_interface::global_mon->log_information("source json:");

@@ -358,7 +358,7 @@ namespace corona
 				in.b = (in.b / 255.0) / a;
 				hsl out;
 				out = rgb2hsl(in);
-				if (x == 0 && r == 0) {
+				if (x == 0 and r == 0) {
 					minL = out.l;
 					maxL = out.l;
 				}
@@ -407,7 +407,7 @@ namespace corona
 
 			for (x2 = 0; x2 < chromas.size(); x2++)
 			{
-				if (fabs(out.h - chromas[x2].h) < chromaKeyThreshold && fabs(out.s - chromas[x2].s) < chromaKeyThreshold) {
+				if (fabs(out.h - chromas[x2].h) < chromaKeyThreshold and fabs(out.s - chromas[x2].s) < chromaKeyThreshold) {
 					// it's premultiplied alpha, so we blank everything
 					pixel->red = 0.0;
 					pixel->green = 0.0;

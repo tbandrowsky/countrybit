@@ -44,7 +44,7 @@ namespace corona
 
 		wchar_t* to_wchar_t( const char *_src )
 		{
-			if (!_src)
+			if (not _src)
 				return nullptr;
 
 			size_t max_len = strlen(_src);
@@ -75,7 +75,7 @@ namespace corona
 
 		char* to_char(const wchar_t* _src)
 		{
-			if (!_src)
+			if (not _src)
 				return nullptr;
 
 			size_t max_len = wcslen(_src);

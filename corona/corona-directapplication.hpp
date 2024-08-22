@@ -115,7 +115,7 @@ namespace corona
 		virtual std::string getComboSelectedText(int ddlControlId);
 		virtual int getComboSelectedIndex(int ddlControlId);
 		virtual int getComboSelectedValue(int ddlControlId);
-		virtual void setComboSelectedIndex(int ddlControlId, int index);
+		virtual void setComboSelectedIndex(int ddlControlId, int index_lists);
 		virtual void setComboSelectedText(int ddlControlId, std::string& _text);
 		virtual void setComboSelectedText(int ddlControlId, const char* _text);
 		virtual void setComboSelectedValue(int ddlControlId, int value);
@@ -126,7 +126,7 @@ namespace corona
 		virtual std::string getListSelectedText(int ddlControlId);
 		virtual int getListSelectedValue(int ddlControlId);
 		virtual int getListSelectedIndex(int ddlControlId);
-		virtual void setListSelectedIndex(int ddlControlId, int index);
+		virtual void setListSelectedIndex(int ddlControlId, int index_lists);
 		virtual void setListSelectedText(int ddlControlId, std::string& _text);
 		virtual void setListSelectedText(int ddlControlId, const char* _text);
 		virtual void setListSelectedValue(int ddlControlId, int value);
@@ -247,12 +247,12 @@ namespace corona
 
 			auto winroot = factory->getWindow(hwndRoot).lock();
 
-			if (!winroot)
+			if (not winroot)
 				return;
 
 			winroot->beginDraw(failedDevice);
 
-			if (!failedDevice)
+			if (not failedDevice)
 			{
 				auto wins = winroot->getChildren();
 				auto& ctx = winroot->getContext();
@@ -351,7 +351,7 @@ namespace corona
 		int state = 0;
 		char* fontExtractedName = fontList.next_token(',', state);
 
-		while (fontExtractedName && !hfont)
+		while (fontExtractedName and !hfont)
 		{
 			hfont = CreateFont(-ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
 			fontExtractedName = fontList.next_token(',', state);
@@ -369,7 +369,7 @@ namespace corona
 		int state = 0;
 		char* fontExtractedName = fontList.next_token(',', state);
 
-		while (fontExtractedName && !hfont)
+		while (fontExtractedName and !hfont)
 		{
 			hfont = CreateFont(ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
 			fontExtractedName = fontList.next_token(',', state);
@@ -387,7 +387,7 @@ namespace corona
 		int state = 0;
 		char* fontExtractedName = fontList.next_token(',', state);
 
-		while (fontExtractedName && !hfont)
+		while (fontExtractedName and !hfont)
 		{
 			strcpy_s(srcFont.lfFaceName, fontExtractedName);
 			srcFont.lfWeight = bold ? FW_BOLD : FW_NORMAL;
@@ -402,7 +402,7 @@ namespace corona
 	std::weak_ptr<direct2dChildWindow> directApplicationWin32::createDirect2Window(DWORD control_id, rectangle bounds)
 	{
 		std::weak_ptr<direct2dChildWindow> cx;
-		if (bounds.w < 1 || bounds.h < 1)
+		if (bounds.w < 1 or bounds.h < 1)
 			return cx;
 
 		auto dpi = GetDpiForWindow(hwndRoot);
@@ -647,13 +647,13 @@ namespace corona
 				y = GET_Y_LPARAM(lParam) - WindowRect.top;
 				LRESULT test_hit = HTCLIENT;
 
-				if (x < BORDERWIDTH && y < BORDERWIDTH)
+				if (x < BORDERWIDTH and y < BORDERWIDTH)
 					test_hit = HTTOPLEFT;
-				else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH && y < BORDERWIDTH)
+				else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH and y < BORDERWIDTH)
 					test_hit = HTTOPRIGHT;
-				else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH && y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
+				else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH and y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
 					test_hit = HTBOTTOMRIGHT;
-				else if (x < BORDERWIDTH && y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
+				else if (x < BORDERWIDTH and y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
 					test_hit = HTBOTTOMLEFT;
 				else if (x < BORDERWIDTH)
 					test_hit = HTLEFT;
@@ -1101,7 +1101,7 @@ namespace corona
 
 	bool directApplicationWin32::runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController)
 	{
-		if (!_firstController)
+		if (not _firstController)
 			return false;
 
 		auto ptr = weak_from_this();
@@ -1124,7 +1124,7 @@ namespace corona
 		wcMain.hbrBackground = NULL;
 		wcMain.lpszMenuName = NULL;
 		wcMain.lpszClassName = "Corona2dBase";
-		if (!RegisterClass(&wcMain)) {
+		if (not RegisterClass(&wcMain)) {
 			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
@@ -1139,7 +1139,7 @@ namespace corona
 		wcControl.hbrBackground = NULL;
 		wcControl.lpszMenuName = NULL;
 		wcControl.lpszClassName = "Corona2dControl";
-		if (!RegisterClass(&wcControl)) {
+		if (not RegisterClass(&wcControl)) {
 			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
@@ -1164,7 +1164,7 @@ namespace corona
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 			NULL, NULL, hinstance, NULL);
 
-		if (!hwndRoot) {
+		if (not hwndRoot) {
 			MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
 			return FALSE;
 		}
@@ -1177,13 +1177,13 @@ namespace corona
 
 		while (true) {
 			if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
-				if (!::GetMessage(&msg, NULL, 0, 0))
+				if (not ::GetMessage(&msg, NULL, 0, 0))
 					break;
 				else if (checkBackgroundComplete(&msg))
 				{
 					;
 				}
-				else if (!isDialogMessage(hwndRoot, &msg)) {
+				else if (not isDialogMessage(hwndRoot, &msg)) {
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
 				}
@@ -1205,7 +1205,7 @@ namespace corona
 
 	bool directApplicationWin32::runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController)
 	{
-		if (!_firstController)
+		if (not _firstController)
 			return false;
 
 		auto ptr = weak_from_this();
@@ -1228,7 +1228,7 @@ namespace corona
 		wcMain.hbrBackground = NULL;
 		wcMain.lpszMenuName = NULL;
 		wcMain.lpszClassName = "Corona2dBase";
-		if (!RegisterClass(&wcMain)) {
+		if (not RegisterClass(&wcMain)) {
 			::MessageBox(NULL, "Could not start because the main window class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
@@ -1243,7 +1243,7 @@ namespace corona
 		wcControl.hbrBackground = NULL;
 		wcControl.lpszMenuName = NULL;
 		wcControl.lpszClassName = "Corona2dControl";
-		if (!RegisterClass(&wcControl)) {
+		if (not RegisterClass(&wcControl)) {
 			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
@@ -1289,7 +1289,7 @@ namespace corona
 			window_x, window_y, window_width, window_height,
 			NULL, NULL, hinstance, NULL);
 
-		if (!hwndRoot) {
+		if (not hwndRoot) {
 			MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
 			return FALSE;
 		}
@@ -1302,13 +1302,13 @@ namespace corona
 
 		while (true) {
 			if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {								
-				if (!::GetMessage(&msg, NULL, 0, 0))
+				if (not ::GetMessage(&msg, NULL, 0, 0))
 					break;
 				else if (checkBackgroundComplete(&msg))
 				{
 					;
 				}
-				else if (!isDialogMessage(hwndRoot, &msg))
+				else if (not isDialogMessage(hwndRoot, &msg))
 				{
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
@@ -1434,10 +1434,10 @@ namespace corona
 		return data;
 	}
 
-	void directApplicationWin32::setComboSelectedIndex(int ddlControlId, int index)
+	void directApplicationWin32::setComboSelectedIndex(int ddlControlId, int index_lists)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		::SendMessage(control, CB_SETCURSEL, index, NULL);
+		::SendMessage(control, CB_SETCURSEL, index_lists, NULL);
 	}
 
 	void directApplicationWin32::setComboSelectedText(int ddlControlId, std::string& _text)
@@ -1448,8 +1448,8 @@ namespace corona
 	void directApplicationWin32::setComboSelectedText(int ddlControlId, const char* _text)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		int index = ::SendMessage(control, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
-		::SendMessage(control, CB_SETCURSEL, index, NULL);
+		int index_lists = ::SendMessage(control, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
+		::SendMessage(control, CB_SETCURSEL, index_lists, NULL);
 	}
 
 	void directApplicationWin32::setComboSelectedValue(int ddlControlId, int value)
@@ -1519,10 +1519,10 @@ namespace corona
 		return data;
 	}
 
-	void directApplicationWin32::setListSelectedIndex(int ddlControlId, int index)
+	void directApplicationWin32::setListSelectedIndex(int ddlControlId, int index_lists)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		::SendMessage(control, LB_SETCURSEL, index, NULL);
+		::SendMessage(control, LB_SETCURSEL, index_lists, NULL);
 	}
 
 	void directApplicationWin32::setListSelectedText(int ddlControlId, std::string& _text)
@@ -1533,8 +1533,8 @@ namespace corona
 	void directApplicationWin32::setListSelectedText(int ddlControlId, const char* _text)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		int index = ::SendMessage(control, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
-		::SendMessage(control, LB_SETCURSEL, index, NULL);
+		int index_lists = ::SendMessage(control, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
+		::SendMessage(control, LB_SETCURSEL, index_lists, NULL);
 	}
 
 	void directApplicationWin32::setListSelectedValue(int ddlControlId, int value)
@@ -1579,7 +1579,7 @@ namespace corona
 		searchPath[MAX_PATH] = 0;
 
 		char* lastChar = getLastChar(searchPath);
-		if (!lastChar)
+		if (not lastChar)
 			return;
 
 		if (*lastChar == '\\') {
@@ -1651,7 +1651,7 @@ namespace corona
 		searchPath[MAX_PATH] = 0;
 
 		char* lastChar = getLastChar(searchPath);
-		if (!lastChar)
+		if (not lastChar)
 			return;
 
 		if (*lastChar == '\\') {
@@ -2211,14 +2211,14 @@ namespace corona
 					LPSTR pszOutBuffer;
 					BOOL  bResults = FALSE;
 
-					if (!WinHttpReceiveResponse(hRequest, NULL)) {
+					if (not WinHttpReceiveResponse(hRequest, NULL)) {
 						throwOnNull(hRequest, "Could not open receive http response");
 					}
 					do
 					{
 						// Check for available data.
 						dwSize = 0;
-						if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
+						if (not WinHttpQueryDataAvailable(hRequest, &dwSize))
 						{
 							throwOnNull(NULL, "Could not query data available");
 						}
@@ -2229,7 +2229,7 @@ namespace corona
 						// Read the data.
 						ZeroMemory(pszOutBuffer, dwSize + 1);
 
-						if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded)) {
+						if (not WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded)) {
 							delete[] pszOutBuffer;
 							throwOnNull(NULL, "Could not read");
 						}

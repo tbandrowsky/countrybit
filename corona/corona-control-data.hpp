@@ -38,7 +38,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "id_field", "text_field", "selected_field" })) {
+			if (not _src.has_members(missing, { "id_field", "text_field", "selected_field" })) {
 				system_monitoring_interface::global_mon->log_warning("list_data is missing");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -77,7 +77,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "label_text", "json_field_name", "width" })) {
+			if (not _src.has_members(missing, { "label_text", "json_field_name", "width" })) {
 				system_monitoring_interface::global_mon->log_warning("table_column is missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -124,7 +124,7 @@ namespace corona
 		{
 
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "columns", "id_field", "items" })) {
+			if (not _src.has_members(missing, { "columns", "id_field", "items" })) {
 				system_monitoring_interface::global_mon->log_warning("table_data missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);

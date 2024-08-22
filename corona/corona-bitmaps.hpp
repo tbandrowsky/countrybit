@@ -344,7 +344,7 @@ namespace corona
 
 				// If a new width or height was specified, create an
 				// IWICBitmapScaler and use it to resize the image.
-				if (size.width != 0 || size.height != 0)
+				if (size.width != 0 or size.height != 0)
 				{
 					if (SUCCEEDED(hr))
 					{
@@ -687,7 +687,7 @@ namespace corona
 		{
 			bool success = false;
 			if (filteredBitmaps.size() > 0) {
-				if (*_sizex == 0 && *_sizey == 0) {
+				if (*_sizex == 0 and *_sizey == 0) {
 					auto bm = filteredBitmaps.front();
 					*_sizex = bm->originalWidth;
 					*_sizey = bm->originalHeight;
@@ -718,7 +718,7 @@ namespace corona
 			int current_largest = 0;
 
 			for (auto fbm : filteredBitmaps) {
-				if ((fbm->size.width >= _width && fbm->size.height <= current_largest)
+				if ((fbm->size.width >= _width and fbm->size.height <= current_largest)
 					|| !_height
 					|| !current_largest) {
 					current_largest = fbm->size.height;
@@ -732,13 +732,13 @@ namespace corona
 		{
 			ccolor c;
 			IWICBitmap* bm = NULL;
-			auto iter = std::find_if(filteredBitmaps.begin(), filteredBitmaps.end(), [_width, _height](filteredBitmap* _bm) { return _bm->size.width == _width && _bm->size.height == _height; });
+			auto iter = std::find_if(filteredBitmaps.begin(), filteredBitmaps.end(), [_width, _height](filteredBitmap* _bm) { return _bm->size.width == _width and _bm->size.height == _height; });
 			if (iter != filteredBitmaps.end()) {
 				auto fbm = *iter;
 				bm = fbm->wicFilteredScaledBitmap;
 
 				HRESULT hr;
-				if (point.x >= 0 && (int)point.x < fbm->size.width && (int)point.y < fbm->size.height && point.y >= 0 && bm) {
+				if (point.x >= 0 and (int)point.x < fbm->size.width and (int)point.y < fbm->size.height and point.y >= 0 and bm) {
 					WICRect rcLock = { 0, 0, fbm->size.width, fbm->size.height };
 					IWICBitmapLock* pLock = NULL;
 
@@ -755,7 +755,7 @@ namespace corona
 						if (SUCCEEDED(hr))
 						{
 							hr = pLock->GetDataPointer(&cbBufferSize, &pv);
-							if (SUCCEEDED(hr) && pv && cbBufferSize) {
+							if (SUCCEEDED(hr) and pv and cbBufferSize) {
 								auto row = (PBGRAPixel*)(pv + cbStride * (int)point.y);
 								auto pix = row[(int)point.x];
 								c.a = pix.alpha / 255.0;
@@ -826,7 +826,7 @@ namespace corona
 							if (SUCCEEDED(hr)) {
 								hr = pLockFiltered->GetDataPointer(&cbBufferSizeDst, &pvDst);
 
-								if (SUCCEEDED(hr) && pvSrc && pvDst && cbBufferSizeDst && cbBufferSizeSrc && (cbBufferSizeSrc == cbBufferSizeDst)) {
+								if (SUCCEEDED(hr) and pvSrc and pvDst and cbBufferSizeDst and cbBufferSizeSrc and (cbBufferSizeSrc == cbBufferSizeDst)) {
 									memcpy(pvDst, pvSrc, cbBufferSizeSrc);
 									point size = toSize(bm->size);
 									if (filterFunction) {

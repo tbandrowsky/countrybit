@@ -250,7 +250,7 @@ namespace corona {
 			ref(_ref),
 			collection_id(_ref->collection_id)
 		{
-			if (!ref || ref->data.get() == nullptr) {
+			if (not ref or ref->data.get() == nullptr) {
 				throw std::invalid_argument("jcollection ref must have data initialized");
 			}
 			objects = object_collection::get_table(_ref->data, _ref->objects_id);
@@ -261,7 +261,7 @@ namespace corona {
 			ref(_src.ref),
 			collection_id(_src.collection_id)
 		{
-			if (!ref || ref->data.get() == nullptr) {
+			if (not ref or ref->data.get() == nullptr) {
 				throw std::invalid_argument("jcollection ref must have data initialized");
 			}
 			objects = object_collection::get_table(ref->data, ref->objects_id);
@@ -272,7 +272,7 @@ namespace corona {
 			ref(_src.ref),
 			collection_id(_src.collection_id)
 		{
-			if (!ref || ref->data.get() == nullptr) {
+			if (not ref or ref->data.get() == nullptr) {
 				throw std::invalid_argument("jcollection ref must have data initialized");
 			}
 			objects = object_collection::get_table(ref->data, ref->objects_id);
@@ -348,7 +348,7 @@ namespace corona {
 
 		auto where(relative_ptr_type _class_id)
 		{
-			return iterator_type(this, [this, _class_id](const iterator_item_type& it) { return objects[it.location].item().deleted == false && object_is_class(it.location, _class_id); });
+			return iterator_type(this, [this, _class_id](const iterator_item_type& it) { return objects[it.location].item().deleted == false and object_is_class(it.location, _class_id); });
 		}
 
 		jobject first_value(std::function<bool(const iterator_item_type&)> predicate)
@@ -454,7 +454,7 @@ namespace corona {
 			jschema schema;
 			jschema_map* pschema_map;
 			pschema_map = _b->get_object<jschema_map>(_row);
-			if (!pschema_map->block.is_collection()) {
+			if (not pschema_map->block.is_collection()) {
 				throw std::logic_error("collection read wrong");
 			}
 			schema.fields = field_store_type::get_table(_b, pschema_map->fields_table_id);
@@ -496,7 +496,7 @@ namespace corona {
 
 		bool empty(jfield& fld)
 		{
-			return fld.field_id == null_row && fld.type_id == jtype::type_null;
+			return fld.field_id == null_row and fld.type_id == jtype::type_null;
 		}
 
 		relative_ptr_type new_field_id()
@@ -625,7 +625,7 @@ namespace corona {
 
 		void bind_class(object_name& _class_name, relative_ptr_type& _class_id, bool _optional = false)
 		{
-			if (_optional && _class_name.size() == 0 && _class_id == null_row)
+			if (_optional and _class_name.size() == 0 and _class_id == null_row)
 				return;
 
 			if (_class_id != null_row)
@@ -773,7 +773,7 @@ namespace corona {
 
 			build_class_members(af, total_size_bytes, temp_fields);
 
-#if _DEBUG && false
+#if _DEBUG and false
 			std::cout << std::endl << request.class_name << " layout" << std::endl;
 			for (auto f : af)
 			{
@@ -800,7 +800,7 @@ namespace corona {
 				if (field_id == request.field_id_primary_key) {
 					p.primary_key_idx = i;
 					auto fld = get_field(field_id);
-					if (!fld.is_key)
+					if (not fld.is_key)
 					{
 						throw std::invalid_argument("Primary key field specified is not marked as a key field");
 					}
@@ -863,7 +863,7 @@ namespace corona {
 		uint64_t get_max_object_size(relative_ptr_type* _class_ids)
 		{
 
-			if (!_class_ids)
+			if (not _class_ids)
 			{
 				return default_collection_object_size;
 			}
@@ -1012,7 +1012,7 @@ namespace corona {
 		std::cout << "get_object id:" << _object_id << ", class_id:: " << item_type_id << ", deleted:" << deleted << std::endl;
 #endif
 
-		if (!existing_object.pitem()->deleted) {
+		if (not existing_object.pitem()->deleted) {
 			jobject jax(schema, existing_object.item().class_id, existing_object.pdetails());
 			return jax;
 		}
@@ -1044,7 +1044,7 @@ namespace corona {
 
 	bool jcollection::class_has_base(relative_ptr_type _class_id, relative_ptr_type _base_id)
 	{
-		if (_base_id == null_row || _class_id == null_row)
+		if (_base_id == null_row or _class_id == null_row)
 		{
 			return false;
 		}
@@ -1069,10 +1069,10 @@ namespace corona {
 	int64_t jcollection::get_class_count(relative_ptr_type _class_id)
 	{
 		int64_t count = 0;
-		int64_t index = 0;
-		for (index = 0; index < objects.size(); index++)
+		int64_t index_lists = 0;
+		for (index_lists = 0; index_lists < objects.size(); index_lists++)
 		{
-			auto object_class_id = objects[index].item().class_id;
+			auto object_class_id = objects[index_lists].item().class_id;
 			if (class_has_base(object_class_id, _class_id))
 				count++;
 		}
@@ -1320,7 +1320,7 @@ namespace corona {
 	size_t jobject::get_offset(int field_idx, jtype _type)
 	{
 #if _DEBUG
-		if (schema == nullptr || class_id == null_row || get_bytes() == nullptr) {
+		if (schema == nullptr or class_id == null_row or get_bytes() == nullptr) {
 			throw std::logic_error("slice is not initialized");
 		}
 #endif
@@ -1523,12 +1523,12 @@ namespace corona {
 
 	bool jobject::has_field(const object_name& name)
 	{
-		return schema && get_field_index_by_name(name) > -1;
+		return schema and get_field_index_by_name(name) > -1;
 	}
 
 	bool jobject::has_field(relative_ptr_type field_id)
 	{
-		return field_id > null_row && get_field_index_by_id(field_id) > -1;
+		return field_id > null_row and get_field_index_by_id(field_id) > -1;
 	}
 
 	bool jobject::is_class(relative_ptr_type class_id)
@@ -1734,73 +1734,73 @@ namespace corona {
 
 	int8_box jobject::get_int8(object_name field_name)
 	{
-		int index = get_field_index_by_name(field_name);
-		return get_int8(index);
+		int index_lists = get_field_index_by_name(field_name);
+		return get_int8(index_lists);
 	}
 
 	int16_box jobject::get_int16(object_name field_name)
 	{
-		int  index = get_field_index_by_name(field_name);
-		return get_int16(index);
+		int  index_lists = get_field_index_by_name(field_name);
+		return get_int16(index_lists);
 	}
 
 	int32_box jobject::get_int32(object_name field_name)
 	{
-		int  index = get_field_index_by_name(field_name);;
-		return get_int32(index);
+		int  index_lists = get_field_index_by_name(field_name);;
+		return get_int32(index_lists);
 	}
 
 	int64_box jobject::get_int64(object_name field_name)
 	{
-		int  index = get_field_index_by_name(field_name);;
-		return get_int64(index);
+		int  index_lists = get_field_index_by_name(field_name);;
+		return get_int64(index_lists);
 	}
 
 	float_box jobject::get_float(object_name field_name)
 	{
-		int  index = get_field_index_by_name(field_name);;
-		return get_float(index);
+		int  index_lists = get_field_index_by_name(field_name);;
+		return get_float(index_lists);
 	}
 
 	double_box jobject::get_double(object_name field_name)
 	{
-		int  index = get_field_index_by_name(field_name);;
-		return get_double(index);
+		int  index_lists = get_field_index_by_name(field_name);;
+		return get_double(index_lists);
 	}
 
 	time_box jobject::get_time(object_name field_name)
 	{
-		int  index = get_field_index_by_name(field_name);;
-		return get_time(index);
+		int  index_lists = get_field_index_by_name(field_name);;
+		return get_time(index_lists);
 	}
 
 	string_box jobject::get_string(object_name field_name)
 	{
-		int  index = get_field_index_by_name(field_name);;
-		return get_string(index);
+		int  index_lists = get_field_index_by_name(field_name);;
+		return get_string(index_lists);
 	}
 
 
 
 	image_box jobject::get_image(object_name field_name)
 	{
-		int  index = get_field_index_by_name(field_name);
-		return get_image(index);
+		int  index_lists = get_field_index_by_name(field_name);
+		return get_image(index_lists);
 	}
 
 	wave_box jobject::get_wave(object_name field_name) {
-		int  index = get_field_index_by_name(field_name);
-		return get_wave(index);
+		int  index_lists = get_field_index_by_name(field_name);
+		return get_wave(index_lists);
 	}
 
 	midi_box jobject::get_midi(object_name field_name) {
-		int  index = get_field_index_by_name(field_name);
-		return get_midi(index);
+		int  index_lists = get_field_index_by_name(field_name);
+		return get_midi(index_lists);
 	}
 
 	bool jobject::matches(const char* _str)
 	{
-		if (!_str) return true;
+		if (not _str) return true;
 		if (*_str == 0) return true;
 		for (int i = 0; i < size(); i++) {
 			if (get_field(i).type_id == jtype::type_string) {
@@ -1815,12 +1815,12 @@ namespace corona {
 
 	void jobject::set_value(const jvariant& _member_assignment)
 	{
-		int index = get_field_index_by_id(_member_assignment.field_id);
+		int index_lists = get_field_index_by_id(_member_assignment.field_id);
 
-		if (index == -1)
+		if (index_lists == -1)
 			return;
 
-		auto fld = get_field(index);
+		auto fld = get_field(index_lists);
 
 		switch (_member_assignment.variant_type)
 		{
@@ -1830,43 +1830,43 @@ namespace corona {
 			{
 			case jtype::type_float64:
 			{
-				auto fb = get_double(index);
+				auto fb = get_double(index_lists);
 				fb = _member_assignment.double_value;
 			}
 			break;
 			case jtype::type_float32:
 			{
-				auto fb = get_float(index);
+				auto fb = get_float(index_lists);
 				fb = _member_assignment.double_value;
 			}
 			break;
 			case jtype::type_int64:
 			{
-				auto fb = get_int64(index);
+				auto fb = get_int64(index_lists);
 				fb = _member_assignment.double_value;
 			}
 			break;
 			case jtype::type_int32:
 			{
-				auto fb = get_int32(index);
+				auto fb = get_int32(index_lists);
 				fb = _member_assignment.double_value;
 			}
 			break;
 			case jtype::type_int16:
 			{
-				auto fb = get_int32(index);
+				auto fb = get_int32(index_lists);
 				fb = _member_assignment.double_value;
 			}
 			break;
 			case jtype::type_int8:
 			{
-				auto fb = get_int32(index);
+				auto fb = get_int32(index_lists);
 				fb = _member_assignment.double_value;
 			}
 			break;
 			case jtype::type_string:
 			{
-				auto fb = get_string(index);
+				auto fb = get_string(index_lists);
 				fb = _member_assignment.double_value;
 			}
 			break;
@@ -1880,43 +1880,43 @@ namespace corona {
 			{
 			case jtype::type_float64:
 			{
-				auto fb = get_double(index);
+				auto fb = get_double(index_lists);
 				fb = _member_assignment.int_value;
 				break;
 			}
 			case jtype::type_float32:
 			{
-				auto fb = get_float(index);
+				auto fb = get_float(index_lists);
 				fb = _member_assignment.int_value;
 				break;
 			}
 			case jtype::type_int64:
 			{
-				auto fb = get_int64(index);
+				auto fb = get_int64(index_lists);
 				fb = _member_assignment.int_value;
 				break;
 			}
 			case jtype::type_int32:
 			{
-				auto fb = get_int32(index);
+				auto fb = get_int32(index_lists);
 				fb = _member_assignment.int_value;
 				break;
 			}
 			case jtype::type_int16:
 			{
-				auto fb = get_int16(index);
+				auto fb = get_int16(index_lists);
 				fb = _member_assignment.int_value;
 				break;
 			}
 			case jtype::type_int8:
 			{
-				auto fb = get_int8(index);
+				auto fb = get_int8(index_lists);
 				fb = _member_assignment.int_value;
 				break;
 			}
 			case jtype::type_string:
 			{
-				auto fb = get_string(index);
+				auto fb = get_string(index_lists);
 				fb = _member_assignment.int_value;
 				break;
 			}
@@ -1927,7 +1927,7 @@ namespace corona {
 			{
 			case jtype::type_datetime:
 			{
-				auto fb = get_time(index);
+				auto fb = get_time(index_lists);
 				fb = _member_assignment.time_value;
 			}
 			}
@@ -1937,43 +1937,43 @@ namespace corona {
 			{
 			case jtype::type_string:
 			{
-				auto fb = get_string(index);
+				auto fb = get_string(index_lists);
 				fb = _member_assignment.string_value.c_str();
 			}
 			break;
 			case jtype::type_float64:
 			{
-				auto fb = get_double(index);
+				auto fb = get_double(index_lists);
 				fb = _member_assignment.string_value.to_double();
 			}
 			break;
 			case jtype::type_float32:
 			{
-				auto fb = get_float(index);
+				auto fb = get_float(index_lists);
 				fb = _member_assignment.string_value.to_double();
 			}
 			break;
 			case jtype::type_int64:
 			{
-				auto fb = get_int64(index);
+				auto fb = get_int64(index_lists);
 				fb = _member_assignment.string_value.to_long();
 			}
 			break;
 			case jtype::type_int32:
 			{
-				auto fb = get_int32(index);
+				auto fb = get_int32(index_lists);
 				fb = _member_assignment.string_value.to_long();
 			}
 			break;
 			case jtype::type_int16:
 			{
-				auto fb = get_int16(index);
+				auto fb = get_int16(index_lists);
 				fb = _member_assignment.string_value.to_long();
 			}
 			break;
 			case jtype::type_int8:
 			{
-				auto fb = get_int8(index);
+				auto fb = get_int8(index_lists);
 				fb = _member_assignment.string_value.to_long();
 			}
 			break;
@@ -2063,7 +2063,7 @@ namespace corona {
 
 				if (fld_idx_dest == null_row)
 				{
-					throw std::invalid_argument("Invalid field index");
+					throw std::invalid_argument("Invalid field index_lists");
 				}
 
 				auto& fld_dest = get_field(fld_idx_dest);
@@ -2340,7 +2340,7 @@ namespace corona {
 				auto& fldref = person_class.detail(i);
 				auto& fld = schema.get_field(fldref.field_id);
 				//				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
-				if (offset_start && offset_start != fldref.offset) {
+				if (offset_start and offset_start != fldref.offset) {
 					std::cout << __LINE__ << ":class alignment failed" << std::endl;
 
 				}

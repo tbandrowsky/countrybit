@@ -208,7 +208,7 @@ namespace corona
 					}
 
 					HWND tooltip = phost->getTooltipWindow();
-					if (tooltip && tooltip_text.size() > 0) {
+					if (tooltip and tooltip_text.size() > 0) {
 						TOOLINFOA toolInfo = { 0 };
 						toolInfo.cbSize = sizeof(toolInfo);
 						toolInfo.hwnd = parent;
@@ -316,7 +316,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 				std::string text = get_text();
@@ -522,7 +522,7 @@ namespace corona
 
 			_page->on_list_changed(id, [this](list_changed_event lce) {
 				table_control_base* tcb = dynamic_cast<table_control_base*>(lce.control);
-				if (tcb && tcb->select_command) {
+				if (tcb and tcb->select_command) {
 					lce.bus->run_command(tcb->select_command);
 				}
 			});
@@ -585,13 +585,13 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 
 				if (auto ptr = window_host.lock()) {
 					std::string new_text = ptr->getListSelectedText(id);
-					int index = ptr->getListSelectedIndex(id);
+					int index_lists = ptr->getListSelectedIndex(id);
 					int value = ptr->getListSelectedValue(id);
 					result.put_member(json_field_name, new_text);
 				}
@@ -617,9 +617,9 @@ namespace corona
 		{
 			json j;
 			if (auto ptr = window_host.lock()) {
-				int index = ptr->getListSelectedIndex(id);
-				if (index >= 0) {
-					j = choices.items.get_element(index);
+				int index_lists = ptr->getListSelectedIndex(id);
+				if (index_lists >= 0) {
+					j = choices.items.get_element(index_lists);
 				}
 			}
 			return j;
@@ -741,9 +741,9 @@ namespace corona
 		{
 			json j;
 			if (auto ptr = window_host.lock()) {
-				int index = ptr->getComboSelectedIndex(id);
-				if (index >= 0) {
-					j = choices.items.get_element(index);
+				int index_lists = ptr->getComboSelectedIndex(id);
+				if (index_lists >= 0) {
+					j = choices.items.get_element(index_lists);
 				}
 			}
 			return j;
@@ -777,13 +777,13 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 
 				if (auto ptr = window_host.lock()) {
 					std::string new_text = ptr->getComboSelectedText(id);
-					int index = ptr->getComboSelectedIndex(id);
+					int index_lists = ptr->getComboSelectedIndex(id);
 					int value = ptr->getComboSelectedValue(id);
 					result.put_member(json_field_name, new_text);
 				}
@@ -1006,7 +1006,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 
@@ -1020,7 +1020,7 @@ namespace corona
 
 		virtual json set_data(json _data)
 		{
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 
 				if (auto ptr = window_host.lock()) {
@@ -1049,7 +1049,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 
@@ -1063,7 +1063,7 @@ namespace corona
 
 		virtual json set_data(json _data)
 		{
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 
 				if (auto ptr = window_host.lock()) {
@@ -1234,9 +1234,9 @@ namespace corona
 		{
 			json j;
 			if (auto ptr = window_host.lock()) {
-				int index = ptr->getComboSelectedIndex(id);
-				if (index >= 0) {
-					j = choices.items.get_element(index);
+				int index_lists = ptr->getComboSelectedIndex(id);
+				if (index_lists >= 0) {
+					j = choices.items.get_element(index_lists);
 				}
 			}
 			return j;
@@ -1294,9 +1294,9 @@ namespace corona
 		{
 			json j;
 			if (auto ptr = window_host.lock()) {
-				int index = ptr->getListViewSelectedIndex(id);
-				if (index >= 0) {
-					j = choices.items.get_element(index);
+				int index_lists = ptr->getListViewSelectedIndex(id);
+				if (index_lists >= 0) {
+					j = choices.items.get_element(index_lists);
 				}
 			}
 			return j;
@@ -1392,7 +1392,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 				if (window) {
 					::GetScrollInfo(window, SB_CTL, &sbi);
@@ -1531,7 +1531,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				if (window) {
 					SYSTEMTIME st;
 					DateTime_GetSystemtime(window, &st);
@@ -1660,7 +1660,7 @@ namespace corona
 		{
 			json_parser jp;
 			json result = jp.create_object();
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				if (window) {
 					SYSTEMTIME st;
 					MonthCal_GetCurSel(window, &st);
@@ -1894,7 +1894,7 @@ namespace corona
 				for (int i = 0; i < choices.items.size(); i++)
 				{
 					auto c = choices.items.get_element(i);
-					if (c.has_member(choices.id_field) && c.has_member(choices.text_field)) {
+					if (c.has_member(choices.id_field) and c.has_member(choices.text_field)) {
 						int lid = c[choices.id_field];
 						std::string description = c[choices.text_field];
 

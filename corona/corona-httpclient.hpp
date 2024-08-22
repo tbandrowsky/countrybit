@@ -45,7 +45,7 @@ namespace corona
             {
                 _scheme = "https://";
             }
-            else if (_scheme != "http://" && _scheme != "https://")
+            else if (_scheme != "http://" and _scheme != "https://")
             {
                 throw std::invalid_argument("Invalid scheme.  Should be http,https,http:// or https://");
             }
@@ -90,7 +90,7 @@ namespace corona
         {
             if (_param.size() > 0)
             {
-                if (!adding_params) {
+                if (not adding_params) {
                     adding_params = true;
                     ba.append("?");
                 }
@@ -118,7 +118,7 @@ namespace corona
 
                 for (char c : _value)
                 {
-                    if (isalnum(c) || c == '_') {
+                    if (isalnum(c) or c == '_') {
                         *pbuffer = c;
                         pbuffer++;
                         escape_buffer_size--;
@@ -324,7 +324,7 @@ namespace corona
                 {
                     // Check for available data.
                     dwSize = 0;
-                    if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
+                    if (not WinHttpQueryDataAvailable(hRequest, &dwSize))
                     {
                         throw_error(params.request.host + "/" + params.request.path, "Server issue: Did not receive any data.");
                     }
@@ -332,7 +332,7 @@ namespace corona
                     if (dwSize) {
                         // Allocate space for the buffer.
                         char* buf = ba.append(dwSize);
-                        if (!buf)
+                        if (not buf)
                         {
                             params.response.system_result.success = false;
                             params.response.system_result.message = "Out of memory";
@@ -344,7 +344,7 @@ namespace corona
                             // Read the data.
                             ZeroMemory(buf, dwSize + 1);
 
-                            if (!WinHttpReadData(hRequest, buf, dwSize, &dwDownloaded))
+                            if (not WinHttpReadData(hRequest, buf, dwSize, &dwDownloaded))
                             {
                                 params.response.system_result = os_result();
                                 dwSize = 0;

@@ -199,7 +199,7 @@ namespace corona
 
 		bool is_same_size(pixel_frame& _src)
 		{
-			if (_src.width == width && _src.height == height)
+			if (_src.width == width and _src.height == height)
 				return true;
 			return false;
 		}
@@ -332,7 +332,7 @@ namespace corona
 			inline pixel_type* first()
 			{
 				cur_pos = 0;
-				if (cur_pos < 0 || cur_pos >= pf->pixels.size())
+				if (cur_pos < 0 or cur_pos >= pf->pixels.size())
 				{
 					return nullptr;
 				}
@@ -342,7 +342,7 @@ namespace corona
 			inline pixel_type* down()
 			{
 				cur_pos += pf->get_width();
-				if (cur_pos < 0 || cur_pos >= pf->pixels.size())
+				if (cur_pos < 0 or cur_pos >= pf->pixels.size())
 				{
 					return nullptr;
 				}
@@ -352,7 +352,7 @@ namespace corona
 			inline pixel_type* up()
 			{
 				cur_pos += pf->get_width();
-				if (cur_pos < 0 || cur_pos >= pf->pixels.size())
+				if (cur_pos < 0 or cur_pos >= pf->pixels.size())
 				{
 					return nullptr;
 				}
@@ -366,7 +366,7 @@ namespace corona
 				{
 					cur_pos += _start_x;
 				}
-				if (cur_pos < 0 || cur_pos >= pf->get_area())
+				if (cur_pos < 0 or cur_pos >= pf->get_area())
 				{
 					return nullptr;
 				}
@@ -387,7 +387,7 @@ namespace corona
 
 			inline pixel_type* get()
 			{
-				if (cur_pos < 0 || cur_pos >= pf->get_area())
+				if (cur_pos < 0 or cur_pos >= pf->get_area())
 				{
 					return nullptr;
 				}
@@ -474,7 +474,7 @@ namespace corona
 			size.width = width;
 			size.height = height;
 
-			if (!size_pixels)
+			if (not size_pixels)
 				return nullptr;
 
 			bgra32_pixel* data = new bgra32_pixel[size_pixels];
@@ -907,7 +907,7 @@ namespace corona
 
 						for (int x = 0; x < mb.area.w; x++)
 						{
-							if (spmb && spmb->activated)
+							if (spmb and spmb->activated)
 							{
 								active_count++;
 								if (first_active_x < 0) {
@@ -916,7 +916,7 @@ namespace corona
 								auto dh = std::abs(spmb->dh - xfound->dh);
 								auto dl = std::abs(spmb->dl - xfound->dl);
 								auto ds = std::abs(spmb->ds - xfound->ds);
-								if (xfound && dh < .05) {
+								if (xfound and dh < .05) {
 									last_active_x = x;
 								}
 							}
@@ -1020,7 +1020,7 @@ namespace corona
 		void next_color_cycle()
 		{
 
-			if (total_color_seconds > 3 || color_counter == 0) {
+			if (total_color_seconds > 3 or color_counter == 0) {
 				total_color_seconds = 0.0;
 				init_color_cycle();
 			}
@@ -1061,7 +1061,7 @@ namespace corona
 				return _src;
 				});
 
-			if (last_frame.empty() || !last_frame.is_same_size(_frame1)) {
+			if (last_frame.empty() or !last_frame.is_same_size(_frame1)) {
 				last_frame = _frame1;
 				return;
 			}
@@ -1077,7 +1077,7 @@ namespace corona
 			auto sp0 = frame0_cursor.first();
 			auto sp1 = frame1_cursor.first();
 
-			while (sp0 && sp1)
+			while (sp0 and sp1)
 			{
 
 				hsl hsl0 = to_hsl(*sp0);
@@ -1095,7 +1095,7 @@ namespace corona
 				{
 					m_pixel_count++;
 
-					if (!spa->detected) {
+					if (not spa->detected) {
 						spa->signal += detection_pulse;
 						spa->detect_counter = frame_counter;
 					}

@@ -51,7 +51,7 @@ namespace corona {
 
 	bool is_number(const std::string& s) {
 		for (char c : s) {
-			if (!std::isdigit(c)) {
+			if (not std::isdigit(c)) {
 				return false;
 			}
 		}

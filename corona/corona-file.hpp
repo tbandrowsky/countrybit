@@ -46,19 +46,19 @@ namespace corona
 	class file_batch;
 	class json_node;
 
-	struct free_block_header
+	struct list_block_header
 	{
 	public:
-		int64_t		first_free_block;
-		int64_t		last_free_block;
+		int64_t		first_block;
+		int64_t		last_block;
 	};
 
 	struct index_header_struct
 	{
 	public:
 		int64_t								 count;
-		iarray<free_block_header, 20>		 free_lists;
-		iarray<free_block_header, 10000>	 index;
+		iarray<list_block_header, 62>		 free_lists;
+		iarray<list_block_header, 65536>	 index_lists;
 	};
 
 	template <typename data> class poco_node;
@@ -154,7 +154,7 @@ namespace corona
 			}
 
 			// because these are asynch, 
-			if (!r) {
+			if (not r) {
 				r = ::GetLastError();
 				return r == ERROR_IO_PENDING;
 			}
@@ -307,7 +307,7 @@ namespace corona
 		void copy(const file& _src)
 		{
 			file_name = _src.file_name;
-			if (_src.hfile && _src.hfile != INVALID_HANDLE_VALUE) {
+			if (_src.hfile and _src.hfile != INVALID_HANDLE_VALUE) {
 				HANDLE hprocess = GetCurrentProcess();
 				DuplicateHandle(hprocess, _src.hfile, NULL, &hfile, 0, 0, 0);
 			}
@@ -367,7 +367,7 @@ namespace corona
 		uint64_t add(uint64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
 		{
 			if (hfile == INVALID_HANDLE_VALUE)
-				return 0;
+				return -1;
 
 			::WaitForSingleObject(resize_event, INFINITE);
 			::ResetEvent(resize_event);
@@ -424,7 +424,7 @@ namespace corona
 
 		bool success()
 		{
-			return resize_event != NULL && hfile != INVALID_HANDLE_VALUE && last_result.success;
+			return resize_event != NULL and hfile != INVALID_HANDLE_VALUE and last_result.success;
 		}
 
 		os_result& result()

@@ -40,7 +40,7 @@ namespace corona
 				status = ::BCryptGetProperty(_item, _property_name, (PUCHAR)&bytes_length, sizeof(bytes_length), &result_bytes, 0);
 			}
 
-			if (!status) {
+			if (not status) {
 				new_buffer = buffer(bytes_length);
 			}
 			else
@@ -71,7 +71,7 @@ namespace corona
 				{
 					std::string hash_data = _src;
 					status = BCryptHashData(hash_handle, (PUCHAR)hash_data.c_str(), hash_data.size(), 0);
-					if (!status)
+					if (not status)
 					{
 						DWORD hash_length = {};
 						DWORD count_bytes = {};
@@ -120,7 +120,7 @@ namespace corona
 				{
 					std::string hash_data = _src.to_json_typed();
 					status = BCryptHashData(hash_handle, (PUCHAR)hash_data.c_str(), hash_data.size(), 0);
-					if (!status)
+					if (not status)
 					{
 						DWORD hash_length = {};
 						DWORD count_bytes = {};
@@ -358,13 +358,13 @@ namespace corona
 			PCCERT_CONTEXT pCertContext = NULL;
 
 			// Acquire a cryptographic provider context handle.
-			if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
+			if (not CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
 				std::cerr << "Error during CryptAcquireContext!" << std::endl;
 				return 1;
 			}
 
 			// Generate a key pair.
-			if (!CryptGenKey(hProv, AT_SIGNATURE, 0x08000000, &hKey)) {
+			if (not CryptGenKey(hProv, AT_SIGNATURE, 0x08000000, &hKey)) {
 				std::cerr << "Error during CryptGenKey!" << std::endl;
 				CryptReleaseContext(hProv, 0);
 				return 1;
@@ -386,7 +386,7 @@ namespace corona
 				NULL
 			);
 
-			if (!pCertContext) {
+			if (not pCertContext) {
 				std::cerr << "Error during CertCreateSelfSignCertificate!" << std::endl;
 				CryptDestroyKey(hKey);
 				CryptReleaseContext(hProv, 0);
@@ -425,7 +425,7 @@ namespace corona
 			// Read the certificate file into memory
 			BYTE* certData = new BYTE[fileSize];
 			DWORD bytesRead;
-			if (!ReadFile(hFile, certData, fileSize, &bytesRead, NULL)) {
+			if (not ReadFile(hFile, certData, fileSize, &bytesRead, NULL)) {
 				std::cerr << "Failed to read certificate file." << std::endl;
 				delete[] certData;
 				CloseHandle(hFile);
@@ -436,21 +436,21 @@ namespace corona
 			// Create a certificate context from the file data
 			PCCERT_CONTEXT pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, certData, fileSize);
 			delete[] certData;
-			if (!pCertContext) {
+			if (not pCertContext) {
 				std::cerr << "Failed to create certificate context." << std::endl;
 				return false;
 			}
 
 			// Open the root certificate store
 			HCERTSTORE hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL, CERT_SYSTEM_STORE_LOCAL_MACHINE, L"ROOT");
-			if (!hStore) {
+			if (not hStore) {
 				std::cerr << "Failed to open root certificate store." << std::endl;
 				CertFreeCertificateContext(pCertContext);
 				return false;
 			}
 
 			// Add the certificate to the store
-			if (!CertAddCertificateContextToStore(hStore, pCertContext, CERT_STORE_ADD_REPLACE_EXISTING, NULL)) {
+			if (not CertAddCertificateContextToStore(hStore, pCertContext, CERT_STORE_ADD_REPLACE_EXISTING, NULL)) {
 				std::cerr << "Failed to add certificate to store." << std::endl;
 				CertCloseStore(hStore, 0);
 				CertFreeCertificateContext(pCertContext);

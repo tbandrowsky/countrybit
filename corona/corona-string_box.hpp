@@ -48,7 +48,7 @@ namespace corona {
 			char* d = &hdr->data[0];
 			int l = 0;
 
-			while (l <= hdr->last_char && *s)
+			while (l <= hdr->last_char and *s)
 			{
 				*d = *s;
 				l++;
@@ -234,7 +234,7 @@ namespace corona {
 		{
 			int i = 0;
 			while (*_data) {
-				if (i >= size() || *_data != hdr->data[i])
+				if (i >= size() or *_data != hdr->data[i])
 					return false;
 				_data++;
 				i++;
@@ -468,7 +468,7 @@ namespace corona {
 			char* d = &data[length];
 			int l = length;
 
-			while (l <= last_char && *s)
+			while (l <= last_char and *s)
 			{
 				*d = *s;
 				l++;
@@ -514,7 +514,7 @@ namespace corona {
 			}
 			char* s = &data[start];
 			char* e = s;
-			while (*e && std::all_of(delim.begin(), delim.end(), [e](auto a) { return a != *e; }))
+			while (*e and std::all_of(delim.begin(), delim.end(), [e](auto a) { return a != *e; }))
 			{
 				start++;
 				e = &data[start];
@@ -533,7 +533,7 @@ namespace corona {
 			}
 			char* s = &data[start];
 			char* e = s;
-			while (*e && *e != delim) {
+			while (*e and *e != delim) {
 				start++;
 				e = &data[start];
 			}
@@ -786,9 +786,9 @@ namespace corona {
 		{
 			wchar_t* d = &data[0];
 			int l = 0;
-			int end_marker = (_s_length == -1 || _s_length >= last_char) ? last_char : _s_length;
+			int end_marker = (_s_length == -1 or _s_length >= last_char) ? last_char : _s_length;
 
-			while (l <= end_marker && *s)
+			while (l <= end_marker and *s)
 			{
 				*d = *s;
 				l++;
@@ -1052,22 +1052,22 @@ namespace corona {
 		int r = true;
 		istring<5> test1 = "1234567";
 
-		r = r && assert_if(test1.size() == 4, "Size incorrect.");
-		r = r && assert_if(test1 == "1234", "truncation incorrect.");
+		r = r and assert_if(test1.size() == 4, "Size incorrect.");
+		r = r and assert_if(test1 == "1234", "truncation incorrect.");
 
 		iwstring<5> test2 = L"1234567";
 
-		r = r && assert_if(test2.size() == 4, L"Size incorrect.");
-		r = r && assert_if(test2 == L"1234", L"truncation incorrect.");
+		r = r and assert_if(test2.size() == 4, L"Size incorrect.");
+		r = r and assert_if(test2 == L"1234", L"truncation incorrect.");
 
-		r = r && assert_if(test1 == test2, L"Equality incorrect.");
-		r = r && assert_if(test2 == test1, L"Equality incorrect.");
+		r = r and assert_if(test1 == test2, L"Equality incorrect.");
+		r = r and assert_if(test2 == test1, L"Equality incorrect.");
 
 		test1 = "ABC";
 		test2 = "ABCD";
 
-		r = r && assert_if(test2 > test1, L"> incorrect.");
-		r = r && assert_if(test1 < test2, L"< incorrect.");
+		r = r and assert_if(test2 > test1, L"> incorrect.");
+		r = r and assert_if(test1 < test2, L"< incorrect.");
 
 		return r;
 	}

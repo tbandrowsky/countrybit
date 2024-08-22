@@ -350,19 +350,19 @@ namespace corona
 
 		bool any_of(std::function<bool(const value_ref&)> _predicate)
 		{
-			auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) && _predicate(kp.item); };
+			auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) and _predicate(kp.item); };
 			return std::any_of(begin(), end(), new_predicate);
 		}
 
 		bool all_of(std::function<bool(const value_ref&)> _predicate)
 		{
-			auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) && _predicate(kp.item); };
+			auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) and _predicate(kp.item); };
 			return std::all_of(begin(), end(), new_predicate);
 		}
 
 		int count_if(std::function<bool(const value_ref&)> _predicate)
 		{
-			auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) && _predicate(kp.item); };
+			auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) and _predicate(kp.item); };
 			return std::count_if(begin(), end(), new_predicate);
 		}
 

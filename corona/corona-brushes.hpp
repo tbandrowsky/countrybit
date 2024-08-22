@@ -48,7 +48,7 @@ namespace corona
 			HRESULT hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
 			if (ptarget) {
 
-				if (!ptarget || !ptarget->getDeviceContext())
+				if (!ptarget or !ptarget->getDeviceContext())
 					return false;
 
 				if (asset) {

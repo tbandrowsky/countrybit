@@ -250,7 +250,7 @@ namespace corona
 
 		MENUITEMINFO info = {};
 
-		if (!created_menu) {
+		if (not created_menu) {
 
 			created_menu = ::CreatePopupMenu();
 

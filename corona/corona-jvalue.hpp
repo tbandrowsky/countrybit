@@ -92,7 +92,7 @@ namespace corona {
 
 		bool is_integer(int64_t& v)
 		{
-			if ((variant_type == jtype::type_int8 || variant_type == jtype::type_int16 || variant_type == jtype::type_int32 || variant_type == jtype::type_int64))
+			if ((variant_type == jtype::type_int8 or variant_type == jtype::type_int16 or variant_type == jtype::type_int32 or variant_type == jtype::type_int64))
 			{
 				v = int_value;
 				return true;
@@ -102,7 +102,7 @@ namespace corona {
 
 		bool is_double(double& _d)
 		{
-			if ((variant_type == jtype::type_float32 || variant_type == jtype::type_float64))
+			if ((variant_type == jtype::type_float32 or variant_type == jtype::type_float64))
 			{
 				_d = double_value;
 				return true;
@@ -120,19 +120,19 @@ namespace corona {
 			switch (_comparison)
 			{
 			case comparisons::eq:
-				if (is_integer(ithis) && _target.is_integer(itarget))
+				if (is_integer(ithis) and _target.is_integer(itarget))
 				{
 					return ithis == itarget;
 				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
+				else if (is_double(dthis) and _target.is_double(dtarget))
 				{
 					return dthis == dtarget;
 				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
+				else if (is_double(dthis) and _target.is_integer(itarget))
 				{
 					return dthis == itarget;
 				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
+				else if (is_integer(ithis) and _target.is_double(dtarget))
 				{
 					return ithis == dtarget;
 				}
@@ -144,19 +144,19 @@ namespace corona {
 				}
 				break;
 			case comparisons::lt:
-				if (is_integer(ithis) && _target.is_integer(itarget))
+				if (is_integer(ithis) and _target.is_integer(itarget))
 				{
 					return ithis < itarget;
 				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
+				else if (is_double(dthis) and _target.is_double(dtarget))
 				{
 					return dthis < dtarget;
 				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
+				else if (is_double(dthis) and _target.is_integer(itarget))
 				{
 					return dthis < itarget;
 				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
+				else if (is_integer(ithis) and _target.is_double(dtarget))
 				{
 					return ithis < dtarget;
 				}
@@ -168,19 +168,19 @@ namespace corona {
 				}
 				break;
 			case comparisons::lte:
-				if (is_integer(ithis) && _target.is_integer(itarget))
+				if (is_integer(ithis) and _target.is_integer(itarget))
 				{
 					return ithis <= itarget;
 				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
+				else if (is_double(dthis) and _target.is_double(dtarget))
 				{
 					return dthis <= dtarget;
 				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
+				else if (is_double(dthis) and _target.is_integer(itarget))
 				{
 					return dthis <= itarget;
 				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
+				else if (is_integer(ithis) and _target.is_double(dtarget))
 				{
 					return ithis <= dtarget;
 				}
@@ -192,19 +192,19 @@ namespace corona {
 				}
 				break;
 			case comparisons::gt:
-				if (is_integer(ithis) && _target.is_integer(itarget))
+				if (is_integer(ithis) and _target.is_integer(itarget))
 				{
 					return ithis > itarget;
 				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
+				else if (is_double(dthis) and _target.is_double(dtarget))
 				{
 					return dthis > dtarget;
 				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
+				else if (is_double(dthis) and _target.is_integer(itarget))
 				{
 					return dthis > itarget;
 				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
+				else if (is_integer(ithis) and _target.is_double(dtarget))
 				{
 					return ithis > dtarget;
 				}
@@ -216,19 +216,19 @@ namespace corona {
 				}
 				break;
 			case comparisons::gte:
-				if (is_integer(ithis) && _target.is_integer(itarget))
+				if (is_integer(ithis) and _target.is_integer(itarget))
 				{
 					return ithis >= itarget;
 				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
+				else if (is_double(dthis) and _target.is_double(dtarget))
 				{
 					return dthis >= dtarget;
 				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
+				else if (is_double(dthis) and _target.is_integer(itarget))
 				{
 					return dthis >= itarget;
 				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
+				else if (is_integer(ithis) and _target.is_double(dtarget))
 				{
 					return ithis >= dtarget;
 				}

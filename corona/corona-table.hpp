@@ -29,7 +29,7 @@ namespace corona {
 
 		bool success() const
 		{
-			return start != null_row && stop != null_row;
+			return start != null_row and stop != null_row;
 		}
 	};
 
@@ -121,7 +121,7 @@ namespace corona {
 
 		bool success() const
 		{
-			return the_object != nullptr && the_details != nullptr;
+			return the_object != nullptr and the_details != nullptr;
 		}
 	};
 
@@ -202,7 +202,7 @@ namespace corona {
 			table t;
 
 			t.hdr = _b->get_object<table_header>(offset);
-			if (!t.hdr->block.is_table())
+			if (not t.hdr->block.is_table())
 			{
 				throw std::logic_error("Did not read table correctly.");
 			}
@@ -246,7 +246,7 @@ namespace corona {
 		relative_ptr_type create(corona_size_t count, T* items)
 		{
 			relative_ptr_type new_row;
-			if (!storage_check(count))
+			if (not storage_check(count))
 				return null_row;
 			auto x = hdr->last_row + count;
 			new_row = hdr->last_row;
@@ -268,7 +268,7 @@ namespace corona {
 
 		T* create(corona_size_t count, relative_ptr_type& _new_row)
 		{
-			if (!storage_check(count)) {
+			if (not storage_check(count)) {
 				_new_row = null_row;
 				return nullptr;
 			}
@@ -278,17 +278,17 @@ namespace corona {
 			return &hdr->rows[_new_row];
 		}
 
-		T* insert(relative_ptr_type index, corona_size_t count)
+		T* insert(relative_ptr_type index_lists, corona_size_t count)
 		{
-			if (!storage_check(count))
+			if (not storage_check(count))
 				return nullptr;
 
-			if (!check(index) || count < 0 || size() == 0) return nullptr;
+			if (not check(index_lists) or count < 0 or size() == 0) return nullptr;
 
 			relative_ptr_type dest_idx = hdr->last_row + count;
 			relative_ptr_type source_idx = hdr->last_row;
 
-			while (source_idx >= index)
+			while (source_idx >= index_lists)
 			{
 				hdr->rows[dest_idx] = hdr->rows[source_idx];
 				dest_idx--;
@@ -297,15 +297,15 @@ namespace corona {
 
 			hdr->last_row += count;
 
-			return get_ptr(index);
+			return get_ptr(index_lists);
 		}
 
-		T* erase(relative_ptr_type index, uint32_t count)
+		T* erase(relative_ptr_type index_lists, uint32_t count)
 		{
-			if (!check(index) || count < 0 || count > hdr->last_row) return nullptr;
+			if (not check(index_lists) or count < 0 or count > hdr->last_row) return nullptr;
 
-			relative_ptr_type dest_idx = index;
-			relative_ptr_type source_idx = index + count;
+			relative_ptr_type dest_idx = index_lists;
+			relative_ptr_type source_idx = index_lists + count;
 
 			/*
 				* rows = 5
@@ -324,12 +324,12 @@ namespace corona {
 
 			hdr->last_row -= count;
 
-			return get_ptr(index);
+			return get_ptr(index_lists);
 		}
 
-		bool check(int index) const
+		bool check(int index_lists) const
 		{
-			if (index == null_row || index >= size() || index < 0)
+			if (index_lists == null_row or index_lists >= size() or index_lists < 0)
 			{
 				return false;
 			}
@@ -339,7 +339,7 @@ namespace corona {
 		// src here should be const
 		T& append(T& src, row_range& rr)
 		{
-			if (!storage_check(1)) {
+			if (not storage_check(1)) {
 				rr = { null_row, null_row, null_row };
 				return hdr->rows[0];
 			}
@@ -354,7 +354,7 @@ namespace corona {
 
 		T* get_ptr(relative_ptr_type& r)  const
 		{
-			if (r == null_row || r >= hdr->max_rows || r < 0)
+			if (r == null_row or r >= hdr->max_rows or r < 0)
 				throw std::invalid_argument("invalid row id");
 
 			if (r > hdr->last_row)
@@ -367,7 +367,7 @@ namespace corona {
 
 		T& get_at(relative_ptr_type& r) const
 		{
-			if (r == null_row || r >= hdr->max_rows || r < 0)
+			if (r == null_row or r >= hdr->max_rows or r < 0)
 				throw std::invalid_argument("invalid row id");
 
 			if (r > hdr->last_row)
@@ -582,7 +582,7 @@ namespace corona {
 		{
 			auto& pc = item[location];
 
-			if (pc.detail_range.start == 0 && pc.detail_range.stop == 0 && pc.detail_range.reserved_stop == 0)
+			if (pc.detail_range.start == 0 and pc.detail_range.stop == 0 and pc.detail_range.reserved_stop == 0)
 			{
 				throw std::invalid_argument("can't extend an uncreated");
 			}
@@ -663,9 +663,9 @@ namespace corona {
 			item.erase(location, 1);
 		}
 
-		bool check(int index)
+		bool check(int index_lists)
 		{
-			return item.check(index);
+			return item.check(index_lists);
 		}
 
 		item_details_holder<P, C> operator[](relative_ptr_type row_id) const
@@ -677,7 +677,7 @@ namespace corona {
 		{
 			item_details_holder<P, C> nullpc;
 			if (row_id == null_row) return nullpc;
-			if (!item.check(row_id)) {
+			if (not item.check(row_id)) {
 				throw std::invalid_argument("get_item out of range" + std::to_string(row_id));
 			}
 			auto& pc = item[row_id];
@@ -745,7 +745,7 @@ namespace corona {
 		};
 
 		int s = sizeof(objects) / sizeof(test_item);
-		r = r && assert_if(s == 5, "size isn't 5");
+		r = r and assert_if(s == 5, "size isn't 5");
 
 		using box_type = dynamic_box;
 
@@ -766,15 +766,15 @@ namespace corona {
 			row_range rr;
 			auto nr = basic.append(objects[i], rr);
 			std::function<bool()> check = [nr, i, rr]() { return rr.stop - rr.start == 1; };
-			r = r && assert_if(check, "size isn't 1");
-			std::function<bool()> check2 = [nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; };
-			r = r && assert_if(check2, "item not stored correctly");
+			r = r and assert_if(check, "size isn't 1");
+			std::function<bool()> check2 = [nr, i, ti]() { return ti[i].id == nr.id and ti[i].description == nr.description and ti[i].name == nr.name; };
+			r = r and assert_if(check2, "item not stored correctly");
 		}
 
-		auto count = basic.count_if([](auto& t) { return t.item.name == "yes" || t.item.name == "no";  });
+		auto count = basic.count_if([](auto& t) { return t.item.name == "yes" or t.item.name == "no";  });
 		assert_if(count == 2, "Wrong count");
 
-		auto fnbasic = [](auto& t) { return t.item.name == "yes" || t.item.name == "no";  };
+		auto fnbasic = [](auto& t) { return t.item.name == "yes" or t.item.name == "no";  };
 		auto items = basic.where(fnbasic);
 		count = 0;
 		for (auto r : items)
@@ -786,7 +786,7 @@ namespace corona {
 
 		for (relative_ptr_type i = 0; i < basic.size(); i++) {
 			auto nr = basic[i];
-			r = r && assert_if(ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name, "item not stored correctly");
+			r = r and assert_if(ti[i].id == nr.id and ti[i].description == nr.description and ti[i].name == nr.name, "item not stored correctly");
 		}
 
 #if DETAILS
@@ -804,7 +804,7 @@ namespace corona {
 #endif
 		for (relative_ptr_type i = 0; i < basic.size(); i++) {
 			auto nr = basic[i];
-			r = r && assert_if(tif[i].id == nr.id && tif[i].description == nr.description && tif[i].name == nr.name, "forward not moved correctly");
+			r = r and assert_if(tif[i].id == nr.id and tif[i].description == nr.description and tif[i].name == nr.name, "forward not moved correctly");
 		}
 
 #if DETAILS
@@ -822,7 +822,7 @@ namespace corona {
 
 		for (relative_ptr_type i = 0; i < basic.size(); i++) {
 			auto nr = basic[i];
-			r = r && assert_if(tib[i].id == nr.id && tib[i].description == nr.description && tib[i].name == nr.name, "backward not moved correctly");
+			r = r and assert_if(tib[i].id == nr.id and tib[i].description == nr.description and tib[i].name == nr.name, "backward not moved correctly");
 		}
 
 		relative_ptr_type table_location;
@@ -840,7 +840,7 @@ namespace corona {
 
 		bool all_good = false;
 
-		all_good = pi.name == "test1" && pi.description == "test1 description" && pi.id == 1;
+		all_good = pi.name == "test1" and pi.description == "test1 description" and pi.id == 1;
 		assert_if(all_good, "table didn't store round trip");
 
 		new_item.item().name = "test1";
@@ -848,11 +848,11 @@ namespace corona {
 		new_item.item().id = 1;
 
 		pi = simple_test[idx].item();
-		all_good = pi.name == "test1" && pi.description == "test1 description" && pi.id == 1;
+		all_good = pi.name == "test1" and pi.description == "test1 description" and pi.id == 1;
 		assert_if(all_good, "table didn't store round trip");
 
 		auto ppi = simple_test[idx].pitem();
-		all_good = ppi->name == "test1" && ppi->description == "test1 description" && ppi->id == 1;
+		all_good = ppi->name == "test1" and ppi->description == "test1 description" and ppi->id == 1;
 		assert_if(all_good, "table didn't store round trip ptr");
 
 		auto py = simple_test[idx];

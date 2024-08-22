@@ -171,7 +171,7 @@ namespace corona {
 				current(_current),
 				predicate(_predicate)
 			{
-				while (current && !predicate(current->data))
+				while (current and !predicate(current->data))
 				{
 					current = _base->next_link(current);
 				}
@@ -235,7 +235,7 @@ namespace corona {
 				do
 				{
 					current = base->next_node(current);
-					if (!current)
+					if (not current)
 						return iterator(base, nullptr, predicate);
 				} while (!predicate(current->data));
 				return iterator(base, current, predicate);
@@ -303,13 +303,13 @@ namespace corona {
 		bool has(const KEY& key, VALUE& value)
 		{
 			auto n = this->find_node(key);
-			return (n && n->keyValue.second == value);
+			return (n and n->keyValue.second == value);
 		}
 
 		bool has(const KEY& key, std::function<bool(VALUE& src)> pred)
 		{
 			auto n = this->find_node(key);
-			return (n && pred(n->keyValue.second));
+			return (n and pred(n->keyValue.second));
 		}
 
 		VALUE& first_value()
@@ -348,25 +348,25 @@ namespace corona {
 			bool result = true;
 
 			auto t1 = test.insert_or_assign(5, "hello");
-			if (t1.get_key() != 5 || t1.get_value() != "hello" || t1->second != "hello")
+			if (t1.get_key() != 5 or t1.get_value() != "hello" or t1->second != "hello")
 			{
 				std::cout << "fail: wrong inserted value." << std::endl;
 				return false;
 			}
 			auto t2 = test.insert_or_assign(7, "goodbye");
-			if (t2.get_key() != 7 || t2.get_value() != "goodbye" || t2->second != "goodbye")
+			if (t2.get_key() != 7 or t2.get_value() != "goodbye" or t2->second != "goodbye")
 			{
 				std::cout << "fail: wrong inserted value." << std::endl;
 				return false;
 			}
 			auto t3 = test.insert_or_assign(7, "something");
-			if (t3.get_key() != 7 || t3->second != "something")
+			if (t3.get_key() != 7 or t3->second != "something")
 			{
 				std::cout << "fail: wrong updated value." << std::endl;
 				return false;
 			}
 			auto t4 = test[7];
-			if (t4.get_key() != 7 || t4->second != "something")
+			if (t4.get_key() != 7 or t4->second != "something")
 			{
 				std::cout << "fail: wrong [] access." << std::endl;
 				return false;
@@ -392,21 +392,21 @@ namespace corona {
 			}
 
 			auto t6 = test.put(2, "hello super");
-			if (t6.get_key() != 2 || t6.get_value() != "hello super")
+			if (t6.get_key() != 2 or t6.get_value() != "hello super")
 			{
 				std::cout << "fail: wrong inserted value." << std::endl;
 				return false;
 			}
 
 			auto t7 = test.put(1, "first");
-			if (t7.get_key() != 1 || t7->second != "first")
+			if (t7.get_key() != 1 or t7->second != "first")
 			{
 				std::cout << "fail: wrong inserted value." << std::endl;
 				return false;
 			}
 
 			t7 = test.put(1, "second");
-			if (t7.get_key() != 1 || t7->second != "second")
+			if (t7.get_key() != 1 or t7->second != "second")
 			{
 				std::cout << "fail: wrong inserted value." << std::endl;
 				return false;
@@ -586,7 +586,7 @@ namespace corona {
 			bool all = true;
 			for (auto& f : _src)
 			{
-				if (!find_node(f.first_link))
+				if (not find_node(f.first_link))
 				{
 					all = false;
 					break;
@@ -719,14 +719,14 @@ namespace corona {
 			if (q) {
 				k = 0;
 				p = update[k];
-				while (k <= m && p->forward[k] == q)
+				while (k <= m and p->forward[k] == q)
 				{
 					p->forward[k] = q->forward[k];
 					k++;
 					p = update[k];
 				}
 				count--;
-				while (header.forward[m] == nullptr && m > 0) {
+				while (header.forward[m] == nullptr and m > 0) {
 					m--;
 				}
 				level = m;

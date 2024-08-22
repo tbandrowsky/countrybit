@@ -103,8 +103,8 @@ protected:
 		index_header_type* t;
 		auto boxptr = box.lock();
 		t = boxptr->get_object<index_header_type>(header_location);
-		if (!t->block.is_sorted_index()) {
-			throw std::logic_error("did not read sorted index correctly");
+		if (not t->block.is_sorted_index()) {
+			throw std::logic_error("did not read sorted index_lists correctly");
 		}
 		return t;
 	};
@@ -126,7 +126,7 @@ protected:
 
 		if (r == null_row)
 		{
-			throw std::logic_error("sorted index exhausted.");
+			throw std::logic_error("sorted index_lists exhausted.");
 		}
 
 		hd = box->get_object<index_node_holder>(r);
@@ -134,9 +134,9 @@ protected:
 		hd->header_id = box->put_object<data_pair>(dp);
 		hd->details_id = forward_pointer_collection::reserve(box, level_bounds);
 
-		if (hd->header_id == null_row || hd->details_id == null_row)
+		if (hd->header_id == null_row or hd->details_id == null_row)
 		{
-			throw std::logic_error("sorted index exhausted.");
+			throw std::logic_error("sorted index_lists exhausted.");
 		}
 
 		index_node		  node;
@@ -165,8 +165,8 @@ protected:
 	{
 		index_node_holder* hd;
 		hd = box->get_object<index_node_holder>(_node_id);
-		if (!hd->block.is_sorted_index_node()) {
-			throw std::logic_error("did not read sorted index node correctly");
+		if (not hd->block.is_sorted_index_node()) {
+			throw std::logic_error("did not read sorted index_lists node correctly");
 		}
 		index_node		  node;
 		node.data = box->get_object<data_pair>(hd->header_id);
@@ -183,7 +183,7 @@ protected:
 
 	void mapper_check()
 	{
-		if (!mapper_dirty)
+		if (not mapper_dirty)
 			return;
 
 		mapper.clear();
@@ -350,13 +350,13 @@ public:
 	bool has(const KEY& key, VALUE& value)
 	{
 		auto n = this->find_node(key);
-		return (n != null_row && get_node(n).item().second == value);
+		return (n != null_row and get_node(n).item().second == value);
 	}
 
 	bool has(const KEY& key, std::function<bool(VALUE& src)> pred)
 	{
 		auto n = this->find_node(key);
-		return (n != null_row && pred(get_node(n).item().second));
+		return (n != null_row and pred(get_node(n).item().second));
 	}
 
 	VALUE& first_value()
@@ -550,7 +550,7 @@ private:
 			qnd = get_node(q);
 			pnd = get_node(p);
 			int m = get_index_header()->level;
-			while (k <= m && pnd.detail(k) == q)
+			while (k <= m and pnd.detail(k) == q)
 			{
 				pnd.detail(k) = qnd.detail(k);
 				k++;
@@ -560,7 +560,7 @@ private:
 				}
 			}
 			get_index_header()->count--;
-			while (get_header().detail(m) == null_row && m > 0) {
+			while (get_header().detail(m) == null_row and m > 0) {
 				m--;
 			}
 			get_index_header()->level = m;
@@ -637,27 +637,27 @@ bool test_index()
 
 	test.insert_or_assign(5, "hello");
 	auto t1 = test[5];
-	if (t1.get_key() != 5 || t1.get_value() != "hello")
+	if (t1.get_key() != 5 or t1.get_value() != "hello")
 	{
 		std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 		return false;
 	}
 	test.insert_or_assign(7, "goodbye");
 	auto t2 = test[7];
-	if (t2.get_key() != 7 || t2.get_value() != "goodbye" || t2.get_value() != "goodbye")
+	if (t2.get_key() != 7 or t2.get_value() != "goodbye" or t2.get_value() != "goodbye")
 	{
 		std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 		return false;
 	}
 	test.insert_or_assign(7, "something");
 	auto t3 = test[7];
-	if (t3.get_key() != 7 || t3.get_value() != "something")
+	if (t3.get_key() != 7 or t3.get_value() != "something")
 	{
 		std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
 		return false;
 	}
 	auto t4 = test[7];
-	if (t4.get_key() != 7 || t4.get_value() != "something")
+	if (t4.get_key() != 7 or t4.get_value() != "something")
 	{
 		std::cout << __LINE__ << " fail: wrong [] access." << std::endl;
 		return false;
@@ -688,7 +688,7 @@ bool test_index()
 
 	test.put(2, "hello super");
 	auto t6 = test[2];
-	if (t6.get_key() != 2 || t6.get_value() != "hello super")
+	if (t6.get_key() != 2 or t6.get_value() != "hello super")
 	{
 		std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 		return false;
@@ -696,7 +696,7 @@ bool test_index()
 
 	test.put(1, "first");
 	auto t7 = test[1];
-	if (t7.get_key() != 1 || t7.get_value() != "first")
+	if (t7.get_key() != 1 or t7.get_value() != "first")
 	{
 		std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 		return false;
@@ -704,7 +704,7 @@ bool test_index()
 
 	test.put(1, "second");
 	t7 = test[1];
-	if (t7.get_key() != 1 || t7.get_value() != "second")
+	if (t7.get_key() != 1 or t7.get_value() != "second")
 	{
 		std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 		return false;
@@ -764,7 +764,7 @@ bool test_index()
 		return false;
 	}
 
-	if (!testi.eoi()) {
+	if (not testi.eoi()) {
 		std::cout << __LINE__ << " eoi failed" << std::endl;
 		return false;
 	}

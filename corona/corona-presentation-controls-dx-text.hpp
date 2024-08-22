@@ -366,7 +366,7 @@ namespace corona
 
 					auto draw_bounds = t->inner_bounds;
 
-					if (!t->text.size()) t->text = "";
+					if (not t->text.size()) t->text = "";
 
 					std::string test_text = std::format("{0}, {1}, {2}", t->text, draw_bounds.x, draw_bounds.y, (long)t);
 					//std::cout << test_text << std::endl;

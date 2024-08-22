@@ -71,7 +71,7 @@ namespace corona
 			}
 
 			jn.setSignal(event);
-			debug_functions && std::cout << "job end:" << GetCurrentThreadId() << std::endl;
+			debug_functions and std::cout << "job end:" << GetCurrentThreadId() << std::endl;
 			jn.shouldDelete = true;
 
 			return jn;

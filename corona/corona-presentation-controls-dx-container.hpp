@@ -54,7 +54,7 @@ namespace corona
 		{
 			parent = _parent;
 			id = _id;
-			if (parent && get_nchittest() == HTCLIENT) {
+			if (parent and get_nchittest() == HTCLIENT) {
 				set_nchittest(parent->get_nchittest());
 			}
 		}
@@ -460,7 +460,7 @@ namespace corona
 
 							auto& context = pwindow->getContext();
 
-							if (!page_to_item_index.contains(selected_page_index )) {
+							if (not page_to_item_index.contains(selected_page_index )) {
 								std::string msg;
 								msg = std::format("selected_page_index '{0}' not found", selected_page_index);
 								system_monitoring_interface::global_mon->log_warning(msg);
@@ -539,7 +539,7 @@ namespace corona
 			view_port.w = _bounds.w;
 			view_port.h = _bounds.h;
 
-			if (_bounds.h == 0 || _bounds.w == 0) 
+			if (_bounds.h == 0 or _bounds.w == 0) 
 			{
 				return;
 			}
@@ -563,7 +563,7 @@ namespace corona
 				r.bounds.h = isz.y;
 				page_index = (r.bounds.bottom() / h);
 				r.page_index = page_index;
-				if (!page_to_item_index.contains(page_index))
+				if (not page_to_item_index.contains(page_index))
 				{
 					page_to_item_index[page_index] = i;
 				}
@@ -873,7 +873,7 @@ namespace corona
 					double r = _bounds->right();
 					double tx = tempest.x + sz.x;
 
-					if (wrap && (tx >= r)) {
+					if (wrap and (tx >= r)) {
 						tempest.x = _bounds->x + _item->get_margin_amount().x + item_start_space_px;
 						tempest.y = arrange_extent.bottom() + _item->get_margin_amount().y;
 						arrange_extent = {};
@@ -1009,7 +1009,7 @@ namespace corona
 					temp.y += _item->get_margin_amount().y + item_next_space_px;
 					double r = _bounds->bottom();
 					double ty = temp.y + sz.y;
-					if (wrap && (ty > r)) {
+					if (wrap and (ty > r)) {
 						temp.x = arrange_extent.right() + _item->get_margin_amount().x;
 						temp.y = _bounds->y + _item->get_margin_amount().y + item_start_space_px;
 						arrange_extent = {};

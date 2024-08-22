@@ -89,7 +89,7 @@ namespace corona {
 
 			if (ptarget)
 			{
-				if (!ptarget->getDeviceContext())
+				if (not ptarget->getDeviceContext())
 					return false;
 
 				istring<2048> fontList = fontName;
@@ -128,7 +128,7 @@ namespace corona {
 							L"en-US",
 							&lpWriteTextFormat);
 
-						if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
+						if (SUCCEEDED(hr) or lpWriteTextFormat != nullptr) {
 							break;
 						}
 						else 

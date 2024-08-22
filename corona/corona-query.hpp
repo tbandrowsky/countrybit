@@ -20,7 +20,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (!_src.has_members(missing, { "class_name", "froms" })) {
+			if (not _src.has_members(missing, { "class_name", "froms" })) {
 				system_monitoring_interface::global_mon->log_warning("query_context missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -104,7 +104,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (!_src.has_members(missing, { "class_name", "stage_name" })) {
+			if (not _src.has_members(missing, { "class_name", "stage_name" })) {
 				system_monitoring_interface::global_mon->log_warning("query_project missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -149,7 +149,7 @@ namespace corona
 			std::vector<std::string> missing;
 			stages.clear();
 
-			if (!_src.has_members(missing, { "class_name", "stages" })) {
+			if (not _src.has_members(missing, { "class_name", "stages" })) {
 				system_monitoring_interface::global_mon->log_warning("query_context missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -191,7 +191,7 @@ namespace corona
 					[_data_name](std::shared_ptr<query_stage>& _item) ->bool {
 						return _item->stage_name == _data_name;
 					});
-				while (found != std::end(stages) && j.empty()) {
+				while (found != std::end(stages) and j.empty()) {
 					j = found->get()->stage_output;
 					found++;
 				}
@@ -240,7 +240,7 @@ namespace corona
 			timer tx;
 			json stage_input = _src->get_data(stage_input_name);
 			if (stage_input.object()) {
-				if (predicate && predicate->accepts(_src, stage_input)) {
+				if (predicate and predicate->accepts(_src, stage_input)) {
 					stage_output = stage_input;
 					return stage_input;
 				}
@@ -249,7 +249,7 @@ namespace corona
 				json_parser jp;
 				json result = jp.create_array();
 				for (auto item : stage_input) {
-					if (predicate && predicate->accepts(_src, item)) {
+					if (predicate and predicate->accepts(_src, item)) {
 						result.push_back(item);
 					}
 				}
@@ -277,7 +277,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (!_src.has_members(missing, { "class_name", "predicate" })) {
+			if (not _src.has_members(missing, { "class_name", "predicate" })) {
 				system_monitoring_interface::global_mon->log_warning("query_filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -329,7 +329,7 @@ namespace corona
 
 			stage_output = jp.create_array();
 
-			if (query1.array() && query2.array()) {
+			if (query1.array() and query2.array()) {
 				for (auto item1 : query1) {
 					json key1 = item1.extract(keys);
 					for (auto item2 : query2) {
@@ -366,7 +366,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (!_src.has_members(missing, { "class_name", "resultname1", "resultname2", "source1", "source2", "keys" })) {
+			if (not _src.has_members(missing, { "class_name", "resultname1", "resultname2", "source1", "source2", "keys" })) {
 				system_monitoring_interface::global_mon->log_warning("join missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -412,7 +412,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "textsrc" })) {
+			if (not _src.has_members(missing, { "class_name", "textsrc" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -453,7 +453,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "valuepath", "value" })) {
+			if (not _src.has_members(missing, { "class_name", "valuepath", "value" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -496,7 +496,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "valuepath", "value" })) {
+			if (not _src.has_members(missing, { "class_name", "valuepath", "value" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -539,7 +539,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "valuepath", "value" })) {
+			if (not _src.has_members(missing, { "class_name", "valuepath", "value" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -567,7 +567,7 @@ namespace corona
 		virtual bool accepts(query_context_base* _qcb, json _src)
 		{
 			json s = _src.get_query(valuepath);
-			return s.gt(value) || s.eq(value);
+			return s.gt(value) or s.eq(value);
 		}
 
 		virtual void get_json(json& _dest)
@@ -581,7 +581,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "valuepath", "value" })) {
+			if (not _src.has_members(missing, { "class_name", "valuepath", "value" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -609,7 +609,7 @@ namespace corona
 		virtual bool accepts(query_context_base* _qcb, json _src)
 		{
 			json s = _src.get_query(valuepath);
-			return s.gt(value) || s.eq(value);
+			return s.gt(value) or s.eq(value);
 		}
 
 		virtual void get_json(json& _dest)
@@ -623,7 +623,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "valuepath", "value" })) {
+			if (not _src.has_members(missing, { "class_name", "valuepath", "value" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -650,7 +650,7 @@ namespace corona
 
 		virtual bool accepts(query_context_base* _srcx, json _src)
 		{
-			return	start->accepts(_srcx, _src) && stop->accepts(_srcx, _src);
+			return	start->accepts(_srcx, _src) and stop->accepts(_srcx, _src);
 		}
 
 		virtual void get_json(json& _dest)
@@ -676,7 +676,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "start", "stop" })) {
+			if (not _src.has_members(missing, { "class_name", "start", "stop" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -733,7 +733,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "src_path", "items_path" })) {
+			if (not _src.has_members(missing, { "class_name", "src_path", "items_path" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -780,7 +780,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "conditions" })) {
+			if (not _src.has_members(missing, { "class_name", "conditions" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -840,7 +840,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "conditions" })) {
+			if (not _src.has_members(missing, { "class_name", "conditions" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -886,7 +886,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (!_src.has_members(missing, { "class_name", "source_name", "projection" })) {
+			if (not _src.has_members(missing, { "class_name", "source_name", "projection" })) {
 				system_monitoring_interface::global_mon->log_warning("query_project missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -990,7 +990,7 @@ namespace corona
 		if (_src.empty())
 			return;
 
-		if (!_src.has_members(missing, { "class_name" })) {
+		if (not _src.has_members(missing, { "class_name" })) {
 			system_monitoring_interface::global_mon->log_warning("query stage missing class_name.");
 			if (_src.size()) {
 				system_monitoring_interface::global_mon->log_information("the source json is:");
@@ -1038,7 +1038,7 @@ namespace corona
 		if (_src.empty())
 			return;
 
-		if (!_src.has_members(missing, { "class_name" })) {
+		if (not _src.has_members(missing, { "class_name" })) {
 			system_monitoring_interface::global_mon->log_warning("query filter missing class_name.");
 			if (_src.size()) {
 				system_monitoring_interface::global_mon->log_information("the source json is:");

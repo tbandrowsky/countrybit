@@ -92,7 +92,7 @@ namespace corona
 				sunits = matches[3];
 			}
 		}
-		else if (!_src.has_members(missing, { "amount", "units" })) {
+		else if (not _src.has_members(missing, { "amount", "units" })) {
 			system_monitoring_interface::global_mon->log_warning("measure is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				system_monitoring_interface::global_mon->log_warning(s);
@@ -176,7 +176,7 @@ namespace corona
 			return;
 
 		std::vector<std::string> missing;
-		if (!_src.has_members(missing, { "width", "height" })) {
+		if (not _src.has_members(missing, { "width", "height" })) {
 			system_monitoring_interface::global_mon->log_warning("measure is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				system_monitoring_interface::global_mon->log_warning(s);
@@ -190,8 +190,8 @@ namespace corona
 		jy = _src["y"];
 		jwidth = _src["width"];
 		jheight = _src["height"];
-		if (!jx.empty()) put_json(_dest.x, jx);
-		if (!jy.empty()) put_json(_dest.y, jy);
+		if (not jx.empty()) put_json(_dest.x, jx);
+		if (not jy.empty()) put_json(_dest.y, jy);
 		put_json(_dest.width, jwidth);
 		put_json(_dest.height, jheight);
 	}
@@ -211,7 +211,7 @@ namespace corona
 			return;
 
 		std::vector<std::string> missing;
-		if (!_src.has_members(missing, { "w", "h" })) {
+		if (not _src.has_members(missing, { "w", "h" })) {
 			system_monitoring_interface::global_mon->log_warning("rectangle is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				system_monitoring_interface::global_mon->log_warning(s);

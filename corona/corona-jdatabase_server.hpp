@@ -214,7 +214,7 @@ namespace corona {
 			try
 			{
 				auto collection_response = get_collection(_request.collection_id);
-				if (!collection_response.success)
+				if (not collection_response.success)
 				{
 					response.message = "Invalid collection";
 					return response;
@@ -354,7 +354,7 @@ namespace corona {
 			new_collection.max_objects = _create_collection.max_objects;
 			new_collection.data = nullptr;
 
-			if (!init_collection_id(new_collection.collection_id))
+			if (not init_collection_id(new_collection.collection_id))
 			{
 				response.success = false;
 				response.message = "Could not create collection id.";
@@ -388,7 +388,7 @@ namespace corona {
 		try {
 
 			response.success = false;
-			if (!collections_by_name.contains(_name)) {
+			if (not collections_by_name.contains(_name)) {
 				response.message = "[" + _name + "] not found";
 				return response;
 			}
@@ -406,7 +406,7 @@ namespace corona {
 	collection_response jdatabase::get_collection(collection_id_type _id)
 	{
 		collection_response response;
-		if (!collections_by_id.contains(_id)) {
+		if (not collections_by_id.contains(_id)) {
 			response.message = "collection not found";
 			return response;
 		}
@@ -499,7 +499,7 @@ namespace corona {
 	for (auto c : _query_expression)
 	{
 		auto current_item = items.top();
-		if (std::isalpha(c) || std::isalnum(c))
+		if (std::isalpha(c) or std::isalnum(c))
 		{
 			if (current_item->is_class_process_item() ||
 				current_item->is_field_process_item() ||

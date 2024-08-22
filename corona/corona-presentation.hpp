@@ -79,7 +79,7 @@ namespace corona {
 			int temp = 0;
 			scope_lock lockit(control_lock);
 
-			if (!control_ids.contains(_name)) {
+			if (not control_ids.contains(_name)) {
 				control_ids.insert_or_assign(_name, _id());
 			}
 			return control_ids[_name];
@@ -233,7 +233,7 @@ namespace corona {
 				control_base* cb = rpage[_id];
 				if (cb) {
 					r = dynamic_cast<control_type*>(cb);
-					if (r && r->parent) 
+					if (r and r->parent) 
 					{
 						r = dynamic_cast<control_type*>(r->parent->get_control());
 					}
@@ -318,7 +318,7 @@ namespace corona {
 			_settings(pg);
 		}
 		pages[_name] = new_page;
-		if (!current_page.lock())
+		if (not current_page.lock())
 			current_page = new_page;
 		return pg;
 	}
@@ -326,12 +326,12 @@ namespace corona {
 	void presentation::select_page(const std::string& _page_name, std::function<void(page& pg)> _settings)
 	{
 		auto phost = window_host.lock();
-		if (!phost) {
+		if (not phost) {
 			throw std::logic_error("Cannot select a page without the window host being created.");
 		}
 
 		HWND hwndMainMenu = phost->getMainWindow();
-		if (!hwndMainMenu) {
+		if (not hwndMainMenu) {
 			throw std::logic_error("Cannot select a page without the window being created first.");
 		}
 
@@ -353,11 +353,11 @@ namespace corona {
 			auto root = ppage->get_root();
 			root->foreach([this](control_base* _item) {
 				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
-				if (pct && pct->is_default_button) {
+				if (pct and pct->is_default_button) {
 					this->default_push_button_id = pct->get_id();
 				}
 				windows_control* wct = dynamic_cast<windows_control*>(_item);
-				if (wct && wct->is_default_focus) {
+				if (wct and wct->is_default_focus) {
 					this->default_focus_id = wct->get_id();
 				}
 			});
@@ -393,12 +393,12 @@ namespace corona {
 	void presentation::select_page(const std::string& _page_name)
 	{
 		auto phost = window_host.lock();
-		if (!phost) {
+		if (not phost) {
 			throw std::logic_error("Cannot select a page without the window host being created.");
 		}
 
 		HWND hwndMainMenu = phost->getMainWindow();
-		if (!hwndMainMenu) {
+		if (not hwndMainMenu) {
 			throw std::logic_error("Cannot select a page without the window being created first.");
 		}
 
@@ -418,11 +418,11 @@ namespace corona {
 			auto root = ppage->get_root();
 			root->foreach([this](control_base* _item) {
 				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
-				if (pct && pct->is_default_button) {
+				if (pct and pct->is_default_button) {
 					this->default_push_button_id = pct->get_id();
 				}
 				windows_control* wct = dynamic_cast<windows_control*>(_item);
-				if (wct && wct->is_default_focus) {
+				if (wct and wct->is_default_focus) {
 					this->default_focus_id = wct->get_id();
 				}
 			});
@@ -452,12 +452,12 @@ namespace corona {
 	void presentation::load_page()
 	{
 		auto phost = window_host.lock();
-		if (!phost) {
+		if (not phost) {
 			throw std::logic_error("Cannot select a page without the window host being created.");
 		}
 
 		HWND hwndMainMenu = phost->getMainWindow();
-		if (!hwndMainMenu) {
+		if (not hwndMainMenu) {
 			throw std::logic_error("Cannot select a page without the window being created first.");
 		}
 
@@ -471,11 +471,11 @@ namespace corona {
 			auto root = ppage->get_root();
 			root->foreach([this](control_base* _item) {
 				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
-				if (pct && pct->is_default_button) {
+				if (pct and pct->is_default_button) {
 					this->default_push_button_id = pct->get_id();
 				}
 				windows_control* wct = dynamic_cast<windows_control*>(_item);
-				if (wct && wct->is_default_focus) {
+				if (wct and wct->is_default_focus) {
 					this->default_focus_id = wct->get_id();
 				}
 				});
@@ -648,7 +648,7 @@ namespace corona {
 		auto cp = current_page.lock();
 
 		HWND focusedWindow = ::GetFocus();
-		while (focusedWindow || focusedWindow == ::GetDesktopWindow()) {
+		while (focusedWindow or focusedWindow == ::GetDesktopWindow()) {
 			int focusedWindowId = ::GetDlgCtrlID(focusedWindow);
 			auto ctrl = get_control<control_base>(focusedWindowId);
 			if (ctrl) {
@@ -896,13 +896,13 @@ namespace corona {
 	{
 		if (auto ptr = window_host.lock()) {
 			std::string new_text = ptr->getComboSelectedText(dropDownId);
-			int index = ptr->getComboSelectedIndex(dropDownId);
+			int index_lists = ptr->getComboSelectedIndex(dropDownId);
 			int value = ptr->getComboSelectedValue(dropDownId);
 			list_changed_event lce;
 			lce.control_id = dropDownId;
 			lce.selected_text = new_text;
 			lce.selected_value = value;
-			lce.selected_index = index;
+			lce.selected_index = index_lists;
 			lce.state = 0;
 			lce.control = nullptr; // the page will assign this.
 			lce.bus = bus;
@@ -917,7 +917,7 @@ namespace corona {
 	{
 		if (auto ptr = window_host.lock()) {
 			std::string new_text = ptr->getListSelectedText(dropDownId);
-			int index = ptr->getListSelectedIndex(dropDownId);
+			int index_lists = ptr->getListSelectedIndex(dropDownId);
 			int value = ptr->getListSelectedValue(dropDownId);
 
 			ptr->setRedraw(dropDownId, false);
@@ -925,7 +925,7 @@ namespace corona {
 			lce.control_id = dropDownId;
 			lce.selected_text = new_text;
 			lce.selected_value = value;
-			lce.selected_index = index;
+			lce.selected_index = index_lists;
 			lce.state = 0;
 			lce.control = nullptr; // the page will assign this.
 			lce.bus = bus;
@@ -942,13 +942,13 @@ namespace corona {
 	{
 		if (auto ptr = window_host.lock()) {
 			std::string new_text = ptr->getListViewSelectedText(listViewId);
-			int index = ptr->getListViewSelectedIndex(listViewId);
+			int index_lists = ptr->getListViewSelectedIndex(listViewId);
 			int value = ptr->getListViewSelectedValue(listViewId);
 			list_changed_event lce;
 			lce.control_id = listViewId;
 			lce.selected_text = new_text;
 			lce.selected_value = value;
-			lce.selected_index = index;
+			lce.selected_index = index_lists;
 			lce.state = 0;
 			lce.control = nullptr; // the page will assign this.
 			lce.bus = bus;
@@ -1115,7 +1115,7 @@ namespace corona {
 						if (name.empty()) {
 							system_monitoring_interface::global_mon->log_warning("page_name is empty for this page, skipping");
 						}
-						if (is_default || default_page_name.empty()) {
+						if (is_default or default_page_name.empty()) {
 							default_page_name = name;
 						}
 						create_page(name, [pg, this](page& _settings)->void
@@ -1143,7 +1143,7 @@ namespace corona {
 					}
 				}
 			}
-			if (!current_page_name.empty() && pages.contains(current_page_name)) {
+			if (not current_page_name.empty() and pages.contains(current_page_name)) {
 				default_page_name = current_page_name;
 				current_page = pages[current_page_name];
 			}

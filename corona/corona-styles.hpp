@@ -40,7 +40,7 @@ namespace corona
 
 		for (auto m : members)
 		{
-			if (!_dest.contains(m.first)) {
+			if (not _dest.contains(m.first)) {
 				std::vector<std::string> tcolor_array;
 				_dest.insert_or_assign(m.first, tcolor_array);
 			}
@@ -160,7 +160,7 @@ namespace corona
 	void put_json(presentation_style& _dest, json& _src)
 	{
 		std::vector<std::string> missing;
-		if (!_src.has_members(missing, { "colors", "page_style", "caption_style",
+		if (not _src.has_members(missing, { "colors", "page_style", "caption_style",
 			"title_style", "subtitle_style", 
 			"chapter_title_style", "chapter_subtitle_style", 
 			"paragraph_style", "form_style", "label_style",
@@ -179,7 +179,7 @@ namespace corona
 
 		json page_style = _src["page_style"];
 		if (page_style.object()) {
-			if (!_dest.PageStyle) {
+			if (not _dest.PageStyle) {
 				_dest.PageStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.PageStyle, page_style);
@@ -188,7 +188,7 @@ namespace corona
 
 		json caption_style = _src["caption_style"];
 		if (caption_style.object()) {
-			if (!_dest.CaptionStyle) {
+			if (not _dest.CaptionStyle) {
 				_dest.CaptionStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.CaptionStyle, caption_style);
@@ -197,7 +197,7 @@ namespace corona
 
 		json title_style = _src["title_style"];
 		if (title_style.object()) {
-			if (!_dest.TitleStyle) {
+			if (not _dest.TitleStyle) {
 				_dest.TitleStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.TitleStyle, title_style);
@@ -206,7 +206,7 @@ namespace corona
 
 		json subtitle_style = _src["subtitle_style"];
 		if (subtitle_style.object()) {
-			if (!_dest.SubtitleStyle) {
+			if (not _dest.SubtitleStyle) {
 				_dest.SubtitleStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.SubtitleStyle, subtitle_style);
@@ -215,7 +215,7 @@ namespace corona
 
 		json chapter_title_style = _src["chapter_title_style"];
 		if (chapter_title_style.object()) {
-			if (!_dest.ChapterTitleStyle) {
+			if (not _dest.ChapterTitleStyle) {
 				_dest.ChapterTitleStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.ChapterTitleStyle, chapter_title_style);
@@ -224,7 +224,7 @@ namespace corona
 
 		json chapter_subtitle_style = _src["chapter_subtitle_style"];
 		if (chapter_subtitle_style.object()) {
-			if (!_dest.ChapterSubTitleStyle) {
+			if (not _dest.ChapterSubTitleStyle) {
 				_dest.ChapterSubTitleStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.ChapterSubTitleStyle, chapter_subtitle_style);
@@ -233,7 +233,7 @@ namespace corona
 
 		json paragraph_style = _src["paragraph_style"];
 		if (paragraph_style.object()) {
-			if (!_dest.ParagraphStyle) {
+			if (not _dest.ParagraphStyle) {
 				_dest.ParagraphStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.ParagraphStyle, paragraph_style);
@@ -242,7 +242,7 @@ namespace corona
 
 		json form_style = _src["form_style"];
 		if (form_style.object()) {
-			if (!_dest.FormStyle) {
+			if (not _dest.FormStyle) {
 				_dest.FormStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.FormStyle, form_style);
@@ -251,7 +251,7 @@ namespace corona
 
 		json label_style = _src["label_style"];
 		if (label_style.object()) {
-			if (!_dest.LabelStyle) {
+			if (not _dest.LabelStyle) {
 				_dest.LabelStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.LabelStyle, label_style);
@@ -260,7 +260,7 @@ namespace corona
 
 		json placeholder_style = _src["placeholder_style"];
 		if (placeholder_style.object()) {
-			if (!_dest.PlaceholderStyle) {
+			if (not _dest.PlaceholderStyle) {
 				_dest.PlaceholderStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.PlaceholderStyle, placeholder_style);
@@ -269,7 +269,7 @@ namespace corona
 
 		json error_style = _src["error_style"];
 		if (error_style.object()) {
-			if (!_dest.ErrorStyle) {
+			if (not _dest.ErrorStyle) {
 				_dest.ErrorStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.ErrorStyle, error_style);
@@ -278,7 +278,7 @@ namespace corona
 
 		json success_style = _src["success_style"];
 		if (success_style.object()) {
-			if (!_dest.SuccessStyle) {
+			if (not _dest.SuccessStyle) {
 				_dest.SuccessStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.SuccessStyle, success_style);
@@ -287,7 +287,7 @@ namespace corona
 
 		json code_style = _src["code_style"];
 		if (code_style.object()) {
-			if (!_dest.CodeStyle) {
+			if (not _dest.CodeStyle) {
 				_dest.CodeStyle = std::make_shared<viewStyleRequest>();
 			}
 			put_json(_dest.CodeStyle, code_style);
@@ -640,7 +640,7 @@ namespace corona
 			}
 			std::shared_ptr<presentation_style> update_style;
 
-			if (!style_sheet_name.empty()) {
+			if (not style_sheet_name.empty()) {
 
 				if (style_sheets.contains(style_sheet_name)) {
 					update_style = style_sheets[style_sheet_name];

@@ -271,7 +271,7 @@ namespace corona
 
 	std::weak_ptr<direct2dChildWindow> direct2dWindow::createChild(relative_ptr_type _id, UINT _x, UINT _y, UINT _w, UINT _h)
 	{
-		if (!children.contains(_id)) {
+		if (not children.contains(_id)) {
 			auto pthis = weak_from_this();
 			auto new_ptr = std::make_shared<direct2dChildWindow>(pthis, getContext().getAdapter(), _x, _y, _w, _h);
 			children.insert_or_assign(_id, new_ptr);
@@ -362,7 +362,7 @@ namespace corona
 
 		bool changed = false;
 
-		if (_wdips != windowPosition.w || _hdips != windowPosition.h || !childBitmap)
+		if (_wdips != windowPosition.w or _hdips != windowPosition.h or !childBitmap)
 			changed = true;
 
 		windowPosition.w = _wdips;

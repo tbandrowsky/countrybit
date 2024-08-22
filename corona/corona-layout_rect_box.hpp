@@ -74,7 +74,7 @@ namespace corona {
 
 		bool empty()
 		{
-			return x.empty() && y.empty() && width.empty() && height.empty();
+			return x.empty() and y.empty() and width.empty() and height.empty();
 		}
 
 	};

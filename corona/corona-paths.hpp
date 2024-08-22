@@ -35,7 +35,7 @@ namespace corona {
 				{
 					if (auto pfactory = ptarget->getAdapter().lock()) {
 						hr = pfactory->getD2DFactory()->CreatePathGeometry(&geometry);
-						if (!SUCCEEDED(hr)) {
+						if (not SUCCEEDED(hr)) {
 							// UH, SOMETHING;
 						}
 					}

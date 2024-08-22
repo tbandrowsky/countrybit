@@ -109,14 +109,14 @@ namespace corona
 
 				while (*fn)
 				{
-					if (*fn == '/' || *fn == '\\')
+					if (*fn == '/' or *fn == '\\')
 					{
 						last_post = fn;
 					}
 					fn++;
 				}
 
-				if (*last_post == '/' || *last_post == '\\')
+				if (*last_post == '/' or *last_post == '\\')
 				{
 					last_post++;
 				}

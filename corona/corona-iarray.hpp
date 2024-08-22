@@ -128,7 +128,7 @@ namespace corona {
 			item_type* d = &data[0];
 			length = 0;
 
-			while (length < max_items && srclength)
+			while (length < max_items and srclength)
 			{
 				*d = *src;
 				length++;
@@ -236,7 +236,7 @@ namespace corona {
 			item_type* d = &hdr->data[0];
 			corona_size_t l = 0;
 
-			while (l < hdr->max_items && l < ls)
+			while (l < hdr->max_items and l < ls)
 			{
 				*d = *s;
 				l++;
@@ -343,14 +343,14 @@ namespace corona {
 
 		item_type& operator[](corona_size_t _idx)  const
 		{
-			if (_idx < 0 || _idx >= hdr->max_items)
+			if (_idx < 0 or _idx >= hdr->max_items)
 				throw std::invalid_argument("range error");
 			return hdr->data[_idx];
 		}
 
 		item_type& get_at(corona_size_t _idx) const
 		{
-			if (_idx < 0 || _idx >= hdr->max_items)
+			if (_idx < 0 or _idx >= hdr->max_items)
 				throw std::invalid_argument("range error");
 			return hdr->data[_idx];
 		}
@@ -497,7 +497,7 @@ namespace corona {
 
 		for (auto r : test_iarray)
 		{
-			if (r.item != r.location || test_iarray[r.location] != r.item) {
+			if (r.item != r.location or test_iarray[r.location] != r.item) {
 				std::cout << __LINE__ << ": iarray failed" << std::endl;
 				return false;
 			}
@@ -534,7 +534,7 @@ namespace corona {
 		for (auto r : items)
 		{
 			auto rti = r.item;
-			assert_if(rti < 5 && rti % 2 == 0, "Wrong values");
+			assert_if(rti < 5 and rti % 2 == 0, "Wrong values");
 			count++;
 		}
 		assert_if(count == 3, "Wrong count");

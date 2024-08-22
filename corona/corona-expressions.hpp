@@ -110,7 +110,7 @@ namespace corona
         }
 
         void skip_whitespace() {
-            while (current_char != '\0' && isspace(current_char)) {
+            while (current_char != '\0' and isspace(current_char)) {
                 advance();
             }
         }
@@ -122,7 +122,7 @@ namespace corona
 
         json expr() {
             json result = term();
-            while (current_token.type == PLUS || current_token.type == MINUS) {
+            while (current_token.type == PLUS or current_token.type == MINUS) {
                 Token token = current_token;
                 if (token.type == PLUS) {
                     eat(PLUS);
@@ -176,7 +176,7 @@ namespace corona
 
         json term() {
             json result = factor();
-            while (current_token.type == MUL || current_token.type == DIV) {
+            while (current_token.type == MUL or current_token.type == DIV) {
                 Token token = current_token;
                 if (token.type == MUL) {
                     eat(MUL);

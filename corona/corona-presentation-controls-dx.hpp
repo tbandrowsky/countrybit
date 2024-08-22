@@ -64,7 +64,7 @@ namespace corona
 		{
 			host = _host;
 			if (auto phost = _host.lock()) {
-				if (bounds.x < 0 || bounds.y < 0 || bounds.w < 0 || bounds.h < 0) {
+				if (bounds.x < 0 or bounds.y < 0 or bounds.w < 0 or bounds.h < 0) {
 					std::stringstream ss;
 					ss << typeid(*this).name() << " bounds is jacked on create";
 					std::string mm = ss.str();
@@ -126,7 +126,7 @@ namespace corona
 				if (auto pwindow = window.lock())
 				{
 					pwindow->beginDraw(adapter_blown_away);
-					if (!adapter_blown_away)
+					if (not adapter_blown_away)
 					{
 						auto& context = pwindow->getContext();
 
@@ -153,12 +153,12 @@ namespace corona
 							pwindow->getContext().setViewStyle(vs);
 						}
 
-						if (view_style && view_style->box_border_brush.get_name())
+						if (view_style and view_style->box_border_brush.get_name())
 						{
 							border_name = view_style->box_border_brush.get_name();
 						}
 
-						if (view_style && view_style->box_fill_brush.get_name())
+						if (view_style and view_style->box_fill_brush.get_name())
 						{
 							background_name = view_style->box_fill_brush.get_name();
 						}
@@ -300,7 +300,7 @@ namespace corona
 			// Find the native format of the stream.
 			hr = _pSourceReader->GetNativeMediaType(dwStreamIndex, 0, &pNativeType);
 
-			if (SUCCEEDED(hr) && pNativeType) {
+			if (SUCCEEDED(hr) and pNativeType) {
 
 				// Find the major type.
 				hr = pNativeType->GetGUID(MF_MT_MAJOR_TYPE, &majorType);
@@ -308,7 +308,7 @@ namespace corona
 				// Define the output type.
 				hr = MFCreateMediaType(&pType);
 
-				if (SUCCEEDED(hr) && pType) {
+				if (SUCCEEDED(hr) and pType) {
 
 					hr = pType->SetGUID(MF_MT_MAJOR_TYPE, majorType);
 
@@ -408,7 +408,7 @@ namespace corona
 						ID2D1Bitmap1* dbm = delta_boi.get_activation(dc, new_sprinkles);
 						add_sprinkles(new_sprinkles);
 
-						if (size_inited && dbm)
+						if (size_inited and dbm)
 						{
 							dc->DrawBitmap(dbm, &dest_rect, 1.0);
 							dbm->Release();
@@ -570,7 +570,7 @@ namespace corona
 
 		void select_camera(std::string _camera_name)
 		{
-			if (selected_camera_name.empty() || selected_camera_name != _camera_name) {
+			if (selected_camera_name.empty() or selected_camera_name != _camera_name) {
 				selected_camera_name = _camera_name;
 				stop();
 			}
@@ -702,7 +702,7 @@ namespace corona
 			UINT32 feed_width;
 			UINT32 feed_height;
 
-			if (!ppType)
+			if (not ppType)
 				return E_FAIL;
 
 			*ppType = nullptr;
@@ -732,7 +732,7 @@ namespace corona
 				goto done;
 			}
 
-			for (DWORD i = 0; i < cTypes && !found_match; i++)
+			for (DWORD i = 0; i < cTypes and !found_match; i++)
 			{
 				hr = pHandler->GetMediaTypeByIndex(i, &pType);
 				if (FAILED(hr))
@@ -755,7 +755,7 @@ namespace corona
 							hr = MFGetAttributeSize(pType, MF_MT_FRAME_SIZE, &feed_width, &feed_height);
 							if (SUCCEEDED(hr))
 							{
-								if (feed_width > max_feed_width && feed_height > max_feed_height && ppType)
+								if (feed_width > max_feed_width and feed_height > max_feed_height and ppType)
 								{
 									if (*ppType) 
 										(*ppType)->Release();
@@ -842,7 +842,7 @@ namespace corona
 
 						PWSTR deviceName = nullptr;
 						hr = MFGetAttributeString(pdevice, MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &deviceName);
-						if (SUCCEEDED(hr) && deviceName) {
+						if (SUCCEEDED(hr) and deviceName) {
 							istring<256> tcamera_name;
 							std::string scamera_name;
 							tcamera_name = deviceName;
@@ -875,7 +875,7 @@ namespace corona
 					IMFSourceReader* newSourceReader = nullptr;
 
 					hr = pdevice->ActivateObject(IID_PPV_ARGS(&newSource));
-					if (SUCCEEDED(hr) && newSource) {
+					if (SUCCEEDED(hr) and newSource) {
 
 						::GetSystemTimePreciseAsFileTime(&ft);
 						li.HighPart = ft.dwHighDateTime;
@@ -885,7 +885,7 @@ namespace corona
 						IMFMediaType* ptype = nullptr;
 						hr = find_device_format(newSource, &ptype);
 
-						if (SUCCEEDED(hr) && ptype)
+						if (SUCCEEDED(hr) and ptype)
 						{
 							hr = set_device_format(newSource, ptype);
 
@@ -913,7 +913,7 @@ namespace corona
 									&newSourceReader
 								);
 
-								if (newSource && newSourceReader) 
+								if (newSource and newSourceReader) 
 								{
 									hr = configure_decoder(newSourceReader, MF_SOURCE_READER_FIRST_VIDEO_STREAM);
 									pSource = newSource;
@@ -1057,15 +1057,15 @@ namespace corona
 					IMF2DBuffer* p2dBuffer = nullptr;
 
 					hr = pSample->ConvertToContiguousBuffer(&pMediaBuffer);
-					if (SUCCEEDED(hr) && pMediaBuffer) {
+					if (SUCCEEDED(hr) and pMediaBuffer) {
 						camera_status = "";
 						hr = pMediaBuffer->QueryInterface(&p2dBuffer);
-						if (SUCCEEDED(hr) && p2dBuffer) {
+						if (SUCCEEDED(hr) and p2dBuffer) {
 							BYTE* byte_start = nullptr;
 							long pitch = 0;
 							// here is where we can fill the MAT for OpenCV, in addition to
 							hr = p2dBuffer->Lock2D(&byte_start, &pitch);
-							if (SUCCEEDED(hr) && byte_start && pitch) 
+							if (SUCCEEDED(hr) and byte_start and pitch) 
 							{
 								int64_t diff = ( li.QuadPart - last_barcode_time ) / 10000000;
 
@@ -1581,7 +1581,7 @@ namespace corona
 
 					auto& context = pwindow->getContext();
 
-					if (mouse_left_down.value() || *active_id == id)
+					if (mouse_left_down.value() or *active_id == id)
 					{
 						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceDown.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
@@ -1843,7 +1843,7 @@ namespace corona
 								if (dest_box.w < 0)
 									return;
 
-								for (int i = 0; i < movement_boxes.size() && i < 4; i++)
+								for (int i = 0; i < movement_boxes.size() and i < 4; i++)
 								{
 									auto source_box = movement_boxes[i];
 									dest_box.h = dest_box.w / source_box.area.w * source_box.area.h;
@@ -2143,7 +2143,7 @@ namespace corona
 
 							rectangle icon_bounds = *_bounds;
 
-							if (active_id && *active_id == id) {
+							if (active_id and *active_id == id) {
 								point start;
 								point stop;
 								start.x = icon_bounds.x + icon_width / 2;

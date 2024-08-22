@@ -209,9 +209,9 @@ namespace corona {
 		if (box16 != box32) return false;
 		if (box16 < box32) return false;
 		if (box16 > box32) return false;
-		if (!(box16 == box32)) return false;
-		if (!(box16 >= box32)) return false;
-		if (!(box16 <= box32)) return false;
+		if (not (box16 == box32)) return false;
+		if (not (box16 >= box32)) return false;
+		if (not (box16 <= box32)) return false;
 
 		auto d = distance(box64, box32);
 		if (d != 1024) return false;

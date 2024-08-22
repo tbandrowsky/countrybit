@@ -203,7 +203,7 @@ namespace corona
 						if (b.is_safe_string()) {
 							std::string s_contents = b.get_ptr();
 							json temp_contents = jp.parse_object(s_contents);
-							if (!jp.parse_errors.size()) {
+							if (not jp.parse_errors.size()) {
 								json corona_config = temp_contents["CoronaServer"];
 								corona_api->host = corona_config["Host"];
 								corona_api->path = corona_config["Path"];
@@ -341,7 +341,7 @@ namespace corona
 								jo.put_member("camera", camera_name);
 								std::cout << camera_name << std::endl;
 
-								if (!camera_settings.has_member(camera_name))
+								if (not camera_settings.has_member(camera_name))
 								{
 									json new_settings = jp.create_object();
 

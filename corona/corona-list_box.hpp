@@ -125,7 +125,7 @@ namespace corona {
 
 		void mapper_check()
 		{
-			if (!mapper_dirty)
+			if (not mapper_dirty)
 				return;
 
 			mapper.clear();
@@ -259,7 +259,7 @@ namespace corona {
 		item_type& first()
 		{
 			auto t = first_link();
-			if (!t)
+			if (not t)
 				throw std::invalid_argument("list is empty");
 			return t->data;
 		}
@@ -267,7 +267,7 @@ namespace corona {
 		item_type& last()
 		{
 			auto t = last_link();
-			if (!t)
+			if (not t)
 				throw std::invalid_argument("list is empty");
 			return t->data;
 		}
@@ -285,7 +285,7 @@ namespace corona {
 			{
 				base_idx = idx;
 			}
-			if (base_idx < 0 || base_idx >= size()) {
+			if (base_idx < 0 or base_idx >= size()) {
 				throw std::invalid_argument("idx out of range, and come on, we even let you do idx < 0 and you still got it wrong");
 			}
 			auto map_idx = mapper.map(base_idx);

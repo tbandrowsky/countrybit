@@ -61,7 +61,7 @@ namespace corona
 		void closeWindow(HWND hwnd)
 		{
 			auto win = getWindow(hwnd);
-			if (!win.expired()) {
+			if (not win.expired()) {
 				parent_windows.erase(hwnd);
 			}
 		}

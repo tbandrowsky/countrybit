@@ -27,7 +27,7 @@ namespace corona
 						last_contents = file_contents;
 						json_parser jp;
 						json tcontents = jp.parse_object(file_contents);
-						if (!tcontents.empty()) {
+						if (not tcontents.empty()) {
 							contents = tcontents;
 							pt = 1;
 						}
@@ -60,7 +60,7 @@ namespace corona
 									last_contents = s_contents;
 									json temp_contents = jp.parse_object(s_contents);
 									contents = temp_contents;
-									if (!jp.parse_errors.size()) {
+									if (not jp.parse_errors.size()) {
 										return true;
 									}
 								}

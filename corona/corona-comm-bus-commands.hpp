@@ -33,7 +33,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "create_class_name", "form_name" })) {
+			if (not _src.has_members(missing, { "create_class_name", "form_name" })) {
 				system_monitoring_interface::global_mon->log_warning("create_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -81,7 +81,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "table_name", "form_name", "page_name"})) {
+			if (not _src.has_members(missing, { "table_name", "form_name", "page_name"})) {
 				system_monitoring_interface::global_mon->log_warning("select_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -131,7 +131,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "table_name", "form_name" })) {
+			if (not _src.has_members(missing, { "table_name", "form_name" })) {
 				system_monitoring_interface::global_mon->log_warning("preview_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -158,7 +158,7 @@ namespace corona
 			json obj;
 			control_base* cb = nullptr;
 
-			if (!form_name.empty())
+			if (not form_name.empty())
 				cb = bus->find_control(form_name);
 
 			if (cb) {
@@ -180,7 +180,7 @@ namespace corona
 		{
 			form_name = _src["form_name"];
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "form_name" })) {
+			if (not _src.has_members(missing, { "form_name" })) {
 				system_monitoring_interface::global_mon->log_warning("save_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -226,7 +226,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "control_name", "data" })) {
+			if (not _src.has_members(missing, { "control_name", "data" })) {
 				system_monitoring_interface::global_mon->log_warning("load_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -268,7 +268,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "class_name", "control_name" })) {
+			if (not _src.has_members(missing, { "class_name", "control_name" })) {
 				system_monitoring_interface::global_mon->log_warning("delete_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -298,13 +298,13 @@ namespace corona
 			control_base* cb_form = {};
 			control_base* cb_table = {};
 
-			if (!form_name.empty())
+			if (not form_name.empty())
 				cb_form = bus->find_control(form_name);
 
-			if (!table_name.empty())
+			if (not table_name.empty())
 				cb_table = bus->find_control(table_name);
 
-			if (cb_form && cb_table) 
+			if (cb_form and cb_table) 
 			{
 				json search_class_filters = jp.create_object();
 				search_class_filters.put_member("ClassName", search_class_name);
@@ -342,7 +342,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (!_src.has_members(missing, { "form_name", "table_name", "search_class_name"})) {
+			if (not _src.has_members(missing, { "form_name", "table_name", "search_class_name"})) {
 				system_monitoring_interface::global_mon->log_warning("search_objects_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -372,7 +372,7 @@ namespace corona
 		{
 			json obj;
 			control_base* cb = {};
-			if (!source_name.empty())
+			if (not source_name.empty())
 				cb = bus->find_control(source_name);
 			json data;
 			if (cb) {
@@ -394,7 +394,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (!_src.has_members(missing, { "page_name" })) {
+			if (not _src.has_members(missing, { "page_name" })) {
 				system_monitoring_interface::global_mon->log_warning("select_page_command missing:");
 
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
@@ -407,7 +407,7 @@ namespace corona
 
 			if (system_monitoring_interface::global_mon->enable_options_display) {
 				missing.clear();
-				if (!_src.has_members(missing, { "form_name", "source_name" })) {
+				if (not _src.has_members(missing, { "form_name", "source_name" })) {
 					system_monitoring_interface::global_mon->log_warning("select_object_command has options:");
 					std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 						system_monitoring_interface::global_mon->log_warning(s);
@@ -434,7 +434,7 @@ namespace corona
 		{
 			json obj;
 			control_base* cb = {};
-			if (!form_to_read.empty())
+			if (not form_to_read.empty())
 				cb = bus->find_control(form_to_read);
 			json data;
 			if (cb) {
@@ -456,7 +456,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "frame_contents_page", "frame_to_load" })) {
+			if (not _src.has_members(missing, { "frame_contents_page", "frame_to_load" })) {
 				system_monitoring_interface::global_mon->log_warning("select_frame_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -487,7 +487,7 @@ namespace corona
 		if (_src.empty())
 			return;
 
-		if (!_src.has_members(missing, { "class_name" })) {
+		if (not _src.has_members(missing, { "class_name" })) {
 			system_monitoring_interface::global_mon->log_warning("command object missing class_name.");
 			if (_src.size()) {
 				system_monitoring_interface::global_mon->log_information("the source json is:");

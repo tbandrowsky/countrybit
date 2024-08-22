@@ -35,8 +35,8 @@ namespace corona {
 
 		static bool contains(rectangle r, double x, double y)
 		{
-			return (r.x <= x) && (r.right() > x) &&
-				(r.y <= y) && (r.bottom() > y);
+			return (r.x <= x) and (r.right() > x) &&
+				(r.y <= y) and (r.bottom() > y);
 		}
 
 		static rectangle deflate(rectangle r0, rectangle amt)
@@ -66,12 +66,12 @@ namespace corona {
 
 		static rectangle extend(rectangle r0, rectangle r1)
 		{
-			if (r0.x == 0 || r0.x > r1.x) {
+			if (r0.x == 0 or r0.x > r1.x) {
 				double rm = r0.right();
 				r0.x = r1.x;
 				r0.w = rm - r0.x;
 			}
-			if (r0.y == 0 || r0.y > r1.y) {
+			if (r0.y == 0 or r0.y > r1.y) {
 				double rm = r0.bottom();
 				r0.y = r1.y;
 				r0.h = rm - r0.y;
@@ -108,7 +108,7 @@ namespace corona {
 		static bool intersect(const rectangle* a, const rectangle* b)
 		{
 			bool intersection = false;
-			if (b->bottom() < a->y || a->bottom() < b->y || b->right() < a->x || a->right() < b->x)
+			if (b->bottom() < a->y or a->bottom() < b->y or b->right() < a->x or a->right() < b->x)
 				intersection = false;
 			else
 				intersection = true;

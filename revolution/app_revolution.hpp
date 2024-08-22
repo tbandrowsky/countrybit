@@ -245,7 +245,7 @@ namespace corona
 						if (b.is_safe_string()) {
 							std::string s_contents = b.get_ptr();
 							json temp_contents = jp.parse_object(s_contents);
-							if (!jp.parse_errors.size()) {
+							if (not jp.parse_errors.size()) {
 								json corona_config = temp_contents["CoronaServer"];
 								corona_api->host = corona_config["Host"];
 								corona_api->path = corona_config["Path"];
@@ -795,13 +795,13 @@ namespace corona
 						});
 				});
 
-			if (!this->responses.contains("/objects/edit/")) {
+			if (not this->responses.contains("/objects/edit/")) {
 				return;
 			}
 			auto response_data = responses["/objects/edit/"];
 			json response_json = jp.parse_object(response_data.response);
 
-			if (!response_json["Success"]) {
+			if (not response_json["Success"]) {
 				return;
 			}
 

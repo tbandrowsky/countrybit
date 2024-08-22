@@ -122,7 +122,7 @@ namespace corona
 			pages_config_mon.file_name = pages_config_file_name;
 			styles_config_mon.file_name = styles_config_file_name;
 
-			if (true || !app->file_exists(database_file_name)) 
+			if (true or !app->file_exists(database_file_name)) 
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(this, db_file);
@@ -193,7 +193,7 @@ namespace corona
 			relative_ptr_type	pages_changed = pages_config_mon.poll_contents(app.get(), pages_json);
 			relative_ptr_type	styles_changed = styles_config_mon.poll_contents(app.get(), styles_json);
 
-			if (pages_changed != null_row || 
+			if (pages_changed != null_row or 
 				styles_changed != null_row)
 			{
 				timer tx;
@@ -203,13 +203,13 @@ namespace corona
 
 				// to do, at some point create a merge method in json proper.
 				json combined;
-				if (styles_json.object() && pages_json.object())
+				if (styles_json.object() and pages_json.object())
 				{
 					combined = styles_json.clone();
 					json jsrcstyles = pages_json["styles"].clone();
 					json jdststyles = combined["styles"];
 
-					if (jsrcstyles.array() && jdststyles.array()) 
+					if (jsrcstyles.array() and jdststyles.array()) 
 					{
 						jdststyles.append_array(jsrcstyles);
 					}
@@ -221,7 +221,7 @@ namespace corona
 					json jsrcpages = pages_json["pages"].clone();
 					json jdstpages = combined["pages"];
 
-					if (jsrcpages.array() && jdstpages.array())
+					if (jsrcpages.array() and jdstpages.array())
 					{
 						jdstpages.append_array(jsrcpages);
 					}
@@ -233,7 +233,7 @@ namespace corona
 					json jsrcstartup = pages_json["startup"].clone();
 					json jdststartup = combined["startup"];
 
-					if (jsrcstartup.array() && jdststartup.array())
+					if (jsrcstartup.array() and jdststartup.array())
 					{
 						jdststartup.append_array(jsrcstartup);
 					}
@@ -467,7 +467,7 @@ namespace corona
 				date_time dt = date_time::now();
 				std::stringstream page_message;
 				std::string default_page = presentation_layer->setPresentation(_pages);
-				if (_select_default && !default_page.empty()) {
+				if (_select_default and !default_page.empty()) {
 					presentation_layer->select_page(default_page);
 					page_message << "Pages loaded, default page: " << default_page;
 				}
@@ -504,10 +504,10 @@ namespace corona
 			run_ui([this, _page, _target_control, _obj]() ->void {
 				timer tx;
 				presentation_layer->select_page(_page);
-				if (!_target_control.empty()) {
+				if (not _target_control.empty()) {
 					control_base* cb = find_control(_target_control);
 					if (cb) {
-						if (!cb->set_items(_obj)) {
+						if (not cb->set_items(_obj)) {
 							cb->set_data(_obj);
 						}
 					}
@@ -523,10 +523,10 @@ namespace corona
 
 			run_ui([this, _page, _target_frame, _frame_contents_page, _obj]() ->void {
 				timer tx;
-				if (!presentation_layer->is_current_page(_page)) {
+				if (not presentation_layer->is_current_page(_page)) {
 					presentation_layer->select_page(_page);
 				}
-				if (!_target_frame.empty()) {
+				if (not _target_frame.empty()) {
 					control_base* cb = find_control(_target_frame);
 					if (cb) {
 						frame_layout* fl = dynamic_cast<frame_layout*>(cb);
@@ -537,7 +537,7 @@ namespace corona
 								fl->set_contents(presentation_layer.get(), pg_master, pg_src.get());
 							}
 						}
-						if (!cb->set_items(_obj)) {
+						if (not cb->set_items(_obj)) {
 							cb->set_data(_obj);
 						}
 						presentation_layer->onResize();

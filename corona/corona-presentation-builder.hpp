@@ -251,7 +251,7 @@ namespace corona
 
 		template <typename control_type> void apply_item_sizes(control_type _ref)
 		{
-			if (!_ref) {
+			if (not _ref) {
 				return;
 			}
 
@@ -1196,7 +1196,7 @@ namespace corona
 		{
 			std::string my_name = form_name();
 			control_base *cb = find(my_name);
-			if (cb && cb->form_name() == my_name) {
+			if (cb and cb->form_name() == my_name) {
 				// lord help me this is wrong.
 				return (form_control *)cb;
 			}
@@ -1255,7 +1255,7 @@ namespace corona
 				draw_visualization = _draw_visualization;
 			}
 
-			if (!field_def.label_text.empty())
+			if (not field_def.label_text.empty())
 			{
 				if (field_def.label_box.width.empty())
 				{
@@ -1288,7 +1288,7 @@ namespace corona
 				_row.set_size(1.0_container, field_def.field_box.height);
 				});
 
-			if (!field_def.prefix.empty())
+			if (not field_def.prefix.empty())
 			{
 				edit_row.label(prefix_id, [this](label_control& _settings) {
 					_settings.set_box(field_def.prefix_box);
@@ -1309,7 +1309,7 @@ namespace corona
 
 			edit_row.from_json(field_def.control_settings);
 
-			if (!field_def.suffix.empty())
+			if (not field_def.suffix.empty())
 			{
 				edit_row.label(suffix_id, [this](label_control& _settings) {
 					_settings.text = field_def.suffix;
@@ -1350,7 +1350,7 @@ namespace corona
 		{
 			json_parser jp;
 
-			int index = 0;
+			int index_lists = 0;
 			for (auto& fld : fields)
 			{
 				fld.form_name = name;
@@ -1380,7 +1380,7 @@ namespace corona
 
 				if (fld.class_name.empty()) {
 					std::string msg;
-					msg = std::format("form '{0}' fields.[{1}] does not have a class_name", name, index);
+					msg = std::format("form '{0}' fields.[{1}] does not have a class_name", name, index_lists);
 					system_monitoring_interface::global_mon->log_warning(msg);
 				}
 				if (fld.control_settings.empty())
@@ -1399,13 +1399,13 @@ namespace corona
 					fld.control_settings.put_member("class_name", fld.class_name);
 					fld.control_settings.put_member("json_field_name", fld.json_field_name);
 
-					if (!fld.control_settings.has_member("box")) {
+					if (not fld.control_settings.has_member("box")) {
 						json fbox = jp.create_object();
 						corona::get_json(fbox, fld.field_box);
 						fld.control_settings.put_member("box", fbox);
 					}
 				}
-				index++;
+				index_lists++;
 			}
 		}
 
@@ -1526,7 +1526,7 @@ namespace corona
 			for (auto& ctrl : ids.fields)
 			{
 				control_base* cb = find(ctrl.field_id);
-				if (cb && cb->json_field_name.size()) {
+				if (cb and cb->json_field_name.size()) {
 					if (_data.has_member(cb->json_field_name)) {
 						cb->set_data(_data);
 					}
@@ -1697,7 +1697,7 @@ namespace corona
 			{
 				auto dat = tab_panes[i];
 
-				if (!i && active_id <= 0)
+				if (not i and active_id <= 0)
 				{
 					active_id = dat.pane.id;
 				}
@@ -1799,14 +1799,14 @@ namespace corona
 
 		virtual bool is_control_message(int _key)
 		{
-			bool is_message = is_focused && 
-				(_key == VK_TAB || 
-					_key == VK_LEFT || _key == VK_RIGHT || 
-					_key == VK_UP || _key == VK_DOWN || 
-					_key == VK_PRIOR || _key == VK_NEXT || 
-					_key == VK_HOME || _key == VK_END ||
-					_key == VK_DELETE || _key == VK_INSERT ||
-					_key == VK_RETURN || _key == VK_DELETE);
+			bool is_message = is_focused and 
+				(_key == VK_TAB or 
+					_key == VK_LEFT or _key == VK_RIGHT or 
+					_key == VK_UP or _key == VK_DOWN or 
+					_key == VK_PRIOR or _key == VK_NEXT or 
+					_key == VK_HOME or _key == VK_END ||
+					_key == VK_DELETE or _key == VK_INSERT ||
+					_key == VK_RETURN or _key == VK_DELETE);
 			return is_message;
 		}
 
@@ -1847,7 +1847,7 @@ namespace corona
 				cg.generator = [this](tab_pane_instance* _tp, control_base* _args)
 					{
 						_args->children.clear();
-						if (!_tp->tab_form) {
+						if (not _tp->tab_form) {
 							_tp->tab_form = std::make_shared<form_control>(this, active_id);
 							_tp->tab_form->set_model(_tp->pane.form);
 						}
@@ -1855,7 +1855,7 @@ namespace corona
 					};
 				content_frame->set_contents(cg);
 
-				if (current_presentation && current_page) {
+				if (current_presentation and current_page) {
 					content_frame->on_subscribe(current_presentation, current_page);
 				}
 			}
@@ -1895,7 +1895,7 @@ namespace corona
 		{
 			host = _host;
 			if (auto phost = _host.lock()) {
-				if (inner_bounds.x < 0 || inner_bounds.y < 0 || inner_bounds.w < 0 || inner_bounds.h < 0) {
+				if (inner_bounds.x < 0 or inner_bounds.y < 0 or inner_bounds.w < 0 or inner_bounds.h < 0) {
 					throw std::logic_error("inner bounds not initialized");
 				}
 				window = phost->createDirect2Window(id, inner_bounds);
@@ -1933,7 +1933,7 @@ namespace corona
 			if (auto pwindow = window.lock())
 			{
 				pwindow->beginDraw(adapter_blown_away);
-				if (!adapter_blown_away)
+				if (not adapter_blown_away)
 				{
 					auto& context = pwindow->getContext();
 
@@ -1966,7 +1966,7 @@ namespace corona
 						on_draw(this);
 					} 
 
-					if (is_focused && border_name) 
+					if (is_focused and border_name) 
 					{
 						rectangle r = inner_bounds;
 						r.x = bounds.x - inner_bounds.x;
@@ -2930,7 +2930,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 				json result_array = jp.create_array();
@@ -3030,7 +3030,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (!json_field_name.empty()) {
+			if (not json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 				json result_array = jp.create_array();

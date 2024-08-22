@@ -412,7 +412,7 @@ namespace corona
 			jcomputed.put_member("inner_bounds", jinner_bounds);
 			jcomputed.put_member("bounds", jbounds);
 
-			if (bounds.w == 0 || bounds.h == 0) {
+			if (bounds.w == 0 or bounds.h == 0) {
 				jissues.push_back("item sized empty");
 			}
 
@@ -433,7 +433,7 @@ namespace corona
 			json jbox, jmargin, jpadding;
 
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "box" })) {
+			if (not _src.has_members(missing, { "box" })) {
 				system_monitoring_interface::global_mon->log_warning("control is missing:", __FILE__, __LINE__);
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -528,11 +528,11 @@ namespace corona
 		template <typename control_type> control_type& find(int _id)
 		{
 			control_base* temp = find(_id);
-			if (!temp) {
+			if (not temp) {
 				throw std::invalid_argument(std::format("Control id {0} not found", _id));
 			}
 			control_type* citem = dynamic_cast<control_type *>(temp);
-			if (!citem) {
+			if (not citem) {
 				throw std::invalid_argument(std::format("Control id {0} is a {1}.", _id, typeid(*temp).name()));
 			}
 			return *citem;
@@ -811,11 +811,11 @@ namespace corona
 			mouse_right_down = false;
 		}
 
-		if (mouse_left_down.changed_to(false) && _left_click) {
+		if (mouse_left_down.changed_to(false) and _left_click) {
 			_left_click(this);
 		}
 
-		if (mouse_right_down.changed_to(false) && _right_click) {
+		if (mouse_right_down.changed_to(false) and _right_click) {
 			_right_click(this);
 		}
 
@@ -904,7 +904,7 @@ namespace corona
 		{
 			sz.x = pi.box.width.amount * _ctx.w;
 		}
-		else if (pi.box.width.units == measure_units::font || pi.box.width.units == measure_units::font_golden_ratio)
+		else if (pi.box.width.units == measure_units::font or pi.box.width.units == measure_units::font_golden_ratio)
 		{
 			double font_height = get_font_size();
 			sz.x = font_height * pi.box.width.amount;
@@ -931,7 +931,7 @@ namespace corona
 		{
 			sz.y = pi.box.height.amount * _ctx.h;
 		}
-		else if (pi.box.height.units == measure_units::font || pi.box.height.units == measure_units::font_golden_ratio)
+		else if (pi.box.height.units == measure_units::font or pi.box.height.units == measure_units::font_golden_ratio)
 		{
 			double font_height = get_font_size();
 			sz.y = font_height * pi.box.height.amount;
@@ -1039,7 +1039,7 @@ namespace corona
 		if (parent)
 		{
 			auto pparent = dynamic_cast<control_base *>(parent);
-			if (pparent && _clip_children) {
+			if (pparent and _clip_children) {
 				auto pbounds = pparent->get_inner_bounds();
 				if (bounds.x < pbounds.x)
 					bounds.x = pbounds.x;

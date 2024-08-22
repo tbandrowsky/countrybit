@@ -57,7 +57,7 @@ namespace corona
 		virtual std::string getComboSelectedText(int ddlControlId) = 0;
 		virtual int getComboSelectedValue(int ddlControlId) = 0;
 		virtual int getComboSelectedIndex(int ddlControlId) = 0;
-		virtual void setComboSelectedIndex(int ddlControlId, int index) = 0;
+		virtual void setComboSelectedIndex(int ddlControlId, int index_lists) = 0;
 		virtual void setComboSelectedText(int ddlControlId, std::string& _text) = 0;
 		virtual void setComboSelectedText(int ddlControlId, const char* _text) = 0;
 		virtual void setComboSelectedValue(int ddlControlId, int value) = 0;
@@ -70,7 +70,7 @@ namespace corona
 		virtual std::string getListSelectedText(int ddlControlId) = 0;
 		virtual int getListSelectedValue(int ddlControlId) = 0;
 		virtual int getListSelectedIndex(int ddlControlId) = 0;
-		virtual void setListSelectedIndex(int ddlControlId, int index) = 0;
+		virtual void setListSelectedIndex(int ddlControlId, int index_lists) = 0;
 		virtual void setListSelectedText(int ddlControlId, std::string& _text) = 0;
 		virtual void setListSelectedText(int ddlControlId, const char* _text) = 0;
 		virtual void setListSelectedValue(int ddlControlId, int value) = 0;

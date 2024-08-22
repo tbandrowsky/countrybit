@@ -76,7 +76,7 @@ namespace corona
 				return false;
 			}
 
-			if (SUCCEEDED(hr) && d3d11Device != nullptr)
+			if (SUCCEEDED(hr) and d3d11Device != nullptr)
 			{
 				return true;
 			}

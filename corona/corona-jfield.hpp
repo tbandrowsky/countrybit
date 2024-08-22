@@ -172,7 +172,7 @@ namespace corona {
 
 		bool is_integer()
 		{
-			return type_id == jtype::type_int16 || type_id == jtype::type_int32 || type_id == jtype::type_int64 || type_id == jtype::type_int8;
+			return type_id == jtype::type_int16 or type_id == jtype::type_int32 or type_id == jtype::type_int64 or type_id == jtype::type_int8;
 		}
 
 		bool is_image()
@@ -212,7 +212,7 @@ namespace corona {
 
 		bool is_float()
 		{
-			return type_id == jtype::type_float32 || type_id == jtype::type_float64;
+			return type_id == jtype::type_float32 or type_id == jtype::type_float64;
 		}
 
 		bool is_float32()
