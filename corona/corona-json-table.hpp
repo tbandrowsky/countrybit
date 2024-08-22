@@ -224,10 +224,17 @@ namespace corona
 			header.data_length = bytes.get_size();
 			header.data_location = _allocator(bytes.get_size());
 
-			_file->write(header.block_location, &header, sizeof(header));
-			_file->write(header.data_location, bytes.get_ptr(), bytes.get_size());
+			if (header.block_location < 0 or header.data_location < 0)
+				return -1;
+
+			auto hdr_status = _file->write(header.block_location, &header, sizeof(header));
+			auto data_status = _file->write(header.data_location, bytes.get_ptr(), bytes.get_size());
 
 			system_monitoring_interface::global_mon->log_block_stop("block", "append", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			if (not (hdr_status.success and data_status.success)) {
+				return -1;
+			}
 
 			return header.block_location;
 		}
@@ -1165,19 +1172,19 @@ namespace corona
 
 		corona::json test_negative = jp.parse_object(R"({ "name:"bill", "age":42 })");
 		if (not test_negative.error())
-			parse_result.put_member("negative object_parse", false);
+			parse_result.put_member("not_object_parse", false);
 		else
-			parse_result.put_member("negative object_parse", true);
+			parse_result.put_member("not_object_parse", true);
 
 		corona::json test_eq1 = jp.parse_object(R"({ "name":"bill", "age":42 })");
 		corona::json test_eq2 = jp.parse_object(R"({ "name":"bill", "age":42 })");
 
 		if (test_eq1.empty() or test_eq2.empty())
-			parse_result.put_member("positive object_parse", false);
+			parse_result.put_member("object_parse", false);
 		else 
-			parse_result.put_member("positive object_parse", true);		
+			parse_result.put_member("object_parse", true);		
 
-		proof_assertions.put_member("object_parse", parse_result);
+		proof_assertions.put_member("parse", parse_result);
 
 		json member_result = jp.create_object();
 
@@ -1330,9 +1337,9 @@ namespace corona
 
 		if (test_array.size() != 12) {
 			system_monitoring_interface::global_mon->log_warning("array parse size incorrect", __FILE__, __LINE__);
-			array_results.put_member("array size", false);
+			parse_result.put_member("array_size", false);
 		} else 
-			array_results.put_member("array size", true);
+			parse_result.put_member("array_size", true);
 
 		std::vector<std::string> names = { "holly", "susan", "tina", "kirsten", "cheri", "dorothy", "leila", "dennis", "kevin", "kirk", "dan", "peter" };
 
@@ -1347,15 +1354,15 @@ namespace corona
 			}
 			xidx++;
 		}
-		array_results.put_member("array string element", barray_test);
+		parse_result.put_member("array_element", barray_test);
 
 		if (xidx != 12) {
 			system_monitoring_interface::global_mon->log_warning("array enumeration", __FILE__, __LINE__);
-			array_results.put_member("array enumeration", false);
+			parse_result.put_member("array_enumeration", false);
 		}
 		else 
 		{
-			array_results.put_member("array enumeration", true);
+			parse_result.put_member("array_enumeration", true);
 		}
 
 		if (not test_array.any([](json& _item) {
@@ -1379,6 +1386,8 @@ namespace corona
 		else {
 			array_results.put_member("all", true);
 		}
+
+		proof_assertions.put_member("array", array_results);
 
 		corona::json test_woh1 = jp.parse_object(R"({ "name":"bill", "age":42 })");
 		corona::json test_woh2 = jp.parse_object(R"({ "name":"bill", "age":42 })");
@@ -1496,7 +1505,6 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("array group failed", __FILE__, __LINE__);
 		}
 
-		proof_assertions.put_member("array", array_results);
 		_proof.put_member("object", proof_assertions);
 
 		system_monitoring_interface::global_mon->log_command_start("test json", "stop", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1506,7 +1514,7 @@ namespace corona
 	{
 		date_time st = date_time::now();
 		timer tx;
-		system_monitoring_interface::global_mon->log_function_start("file i/o proof", "start",  st, __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_function_start("file proof", "start",  st, __FILE__, __LINE__);
 
 		json_parser jp;
 		json proof_assertions = jp.create_object();
@@ -1550,7 +1558,6 @@ namespace corona
 		{
 			proof_assertions.put_member("read", true);
 		}
-
 		
 		if (not strcmp(buffer_write, buffer_read))
 		{
@@ -1564,7 +1571,7 @@ namespace corona
 
 		_proof.put_member("file", proof_assertions);
 
-		system_monitoring_interface::global_mon->log_function_stop("file i/o proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_function_stop("file proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 	}
 
@@ -1572,67 +1579,272 @@ namespace corona
 	{
 		date_time st = date_time::now();
 		timer tx;
-		system_monitoring_interface::global_mon->log_function_start("block i/o proof", "start", st, __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_function_start("block proof", "start", st, __FILE__, __LINE__);
 
 		std::shared_ptr<file>  dtest = _app->create_file_ptr(FOLDERID_Documents, "corona_data_block_test.ctb");
 
-		std::cout << "test_data_block, thread:" << ::GetCurrentThreadId() << std::endl;
-
 		json_parser jp;
+		json proof_assertion = jp.create_object();
+
+		json dependencies = jp.parse_object(R"( 
+{ 
+	"block": [ "object", "file.roundtrip" ],
+	"assignment" : [ "object.parse" ],
+    "read" : [ "file.read" ],
+	"write" : [ "file.write" ],
+	"append" : [ "file.append" ],
+	"grow" : [ "object.parse", "file.write", "file.apend" ]
+}
+)");
+		proof_assertion.put_member("dependencies", dependencies);
+
 		json jx = jp.parse_object(R"({ "name":"bill", "age":42 })");
-		data_block db, dc;
-		db = jx;
-		std::cout << "test_data_block, write, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t r1 = db.append(dtest.get(), [dtest](int64_t _size)->block_header_struct {
-			block_header_struct bhs;
-			bhs.block_location = dtest->add(sizeof(block_header_struct));
-			bhs.block_type = block_id::json_id();
-			bhs.data_length = _size;
-			bhs.data_location = dtest->add(_size);
-			bhs.next_block = 0;
-			dtest->add(_size);
-			return bhs;
+
+		data_block dfirst, dfirstread, dbounds;
+
+		dfirst = jx;
+
+		if (dfirst.get_string() != jx.get_string())
+		{
+			proof_assertion.put_member("assignment", false);
+			system_monitoring_interface::global_mon->log_warning("assignment of data to data block failed.", __FILE__, __LINE__);
+		}
+		else
+		{
+			proof_assertion.put_member("assignment", true);
+		}
+
+		int64_t dfirstlocation = dfirst.append(dtest.get(), [dtest](int64_t _size)->int64_t {
+			int64_t temp = dtest->add(_size);
+			return temp;
 			});
+
+		dbounds.bytes = "test border string";
+		std::string borders = dbounds.get_string();
+
+		int64_t dboundslocation = dbounds.append(dtest.get(), [dtest](int64_t _size)->int64_t {
+			int64_t temp = dtest->add(_size);
+			return temp;
+			});
+
+		int64_t dfirstlocationread = dfirstread.read(dtest.get(), dfirstlocation);
+
+		int64_t dboundslocationread = dbounds.read(dtest.get(), dboundslocation);
+
+		std::string sc, sb;
+		sc = dfirstread.get_string();
+		sb = dfirst.get_string();
+		if (sc != sb)
+		{
+			proof_assertion.put_member("append", false);
+			proof_assertion.put_member("read", false);
+			system_monitoring_interface::global_mon->log_warning("append and read failed", __FILE__, __LINE__);
+		}
+		else
+		{
+			proof_assertion.put_member("append", true);
+			proof_assertion.put_member("read", true);
+		}
+
+		std::string borders_after;
+		borders_after = dbounds.get_string();
+		if (borders != borders_after)
+		{
+			proof_assertion.put_member("write", false);
+			system_monitoring_interface::global_mon->log_warning("probably overrwrite", __FILE__, __LINE__);
+		}
+		else
+		{
+			proof_assertion.put_member("write", true);
+		}
+
+		// grow the middle block and see if it all works out.
+
+		json jx2 = jp.parse_object(R"({ "name":"bill", "age":42, "weight":185, "agency":"super alien and paranormal investigative unit" })");
+
+		dfirst = jx2;
+		std::string sbefore = dfirst.get_string();
+		dfirst.write(dtest.get(), [dtest](int64_t _location) -> void {
+				;
+			},
+			[dtest](int64_t _size_bytes) -> int64_t {
+				return dtest->add(_size_bytes);
+			}
+		);
 		
-		std::cout << "test_data_block, read, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t r2 =  dc.read(dtest.get(), r1);
+		json growth = jp.create_object();
 
-		std::cout << "test_data_block_nested, check, thread:" << ::GetCurrentThreadId() << std::endl;
-		std::string x = dc.get_string();
-		std::cout << x << std::endl;
+		sb = dfirst.get_string();
+		if (sc != sb)
+		{
+			growth.put_member("self", false);
+			system_monitoring_interface::global_mon->log_warning("expand block failed", __FILE__, __LINE__);
+		}
+		else
+		{
+			growth.put_member("self", true);
+		}
 
-		system_monitoring_interface::global_mon->log_function_stop("block i/o proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		dbounds.read(dtest.get(), dboundslocation);
+
+		borders_after = dbounds.get_string();
+		if (borders_after != borders)
+		{
+			growth.put_member("neighbor", false);
+			system_monitoring_interface::global_mon->log_warning("expand block stomped neighbor", __FILE__, __LINE__);
+		}
+		else
+		{
+			growth.put_member("neighbor", true);
+		}
+
+		proof_assertion.put_member("grow", growth);
+		_proof.put_member("block", proof_assertion);
+
+		system_monitoring_interface::global_mon->log_function_stop("block proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 	void test_json_node(json& _proof, std::shared_ptr<application> _app)
 	{
 		date_time st = date_time::now();
 		timer tx;
-		system_monitoring_interface::global_mon->log_function_start("object i/o proof", "proof", st, __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_function_start("node proof", "start", st, __FILE__, __LINE__);
 
 		std::shared_ptr<file>  dtest = _app->create_file_ptr(FOLDERID_Documents, "corona_json_node_test.ctb");
 
-		std::cout << "test_json_node, thread:" << ::GetCurrentThreadId() << std::endl;
+		json_parser jp;
+		json proof_assertion = jp.create_object();
 
-		json_node jnwrite, jnread;
+		json dependencies = jp.parse_object(R"( 
+{ 
+	"node": [ "block", "object" ],
+    "read" : [ "block.read" ],
+	"write" : [ "block.write" ],
+	"append" : [ "block.append" ]
+}
+)");
+		proof_assertion.put_member("dependencies", dependencies);
+
+		json_node jnfirst, jnsecond;
 		json_parser jp;
 
-		jnwrite.data = jp.create_array();
+		jnfirst.data = jp.create_array();
 		for (double i = 0; i < 42; i++)
 		{
-			jnwrite.data.append_element( i );
+			jnfirst.data.append_element( i );
 		}
 
-		std::cout << "test_json_node, write, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t location =  jnwrite.append(dtest.get());
+		bool append_worked = true;
 
-		std::cout << "test_json_node, read, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t bytes_ex =  jnread.read(dtest.get(), location);
-		
-		std::cout << "test_json_node, check, thread:" << ::GetCurrentThreadId() << std::endl;
-		std::string x = jnread.data.to_json_string();
-		std::cout << x << std::endl;
-		return 1;
+		int64_t locfirst = jnfirst.append(dtest.get(), [dtest](int64_t size)->int64_t {
+			return dtest->add(size);
+			});
+
+		if (locfirst < 0)
+		{
+			system_monitoring_interface::global_mon->log_warning("node append failed.", __FILE__, __LINE__);
+			append_worked = false;
+		}
+
+		jnsecond.data = jp.parse_object(R"({ "Star" : "Aldeberran" })");
+		std::string second_start = jnsecond.data.to_json_string();
+
+		int64_t locsecond = jnsecond.append(dtest.get(), [dtest](int64_t size)->int64_t {
+			return dtest->add(size);
+			});
+
+		if (locsecond < 0)
+		{
+			system_monitoring_interface::global_mon->log_warning("node append failed.", __FILE__, __LINE__);
+			append_worked = false;
+		}
+
+		proof_assertion.put_member("append", append_worked);
+
+		jnfirst.read(dtest.get(), locfirst);
+
+		bool read_success = true;
+
+		if (jnfirst.data.size() != 42)
+		{
+			read_success = false;
+			system_monitoring_interface::global_mon->log_warning("read array size incorrect.", __FILE__, __LINE__);
+		}
+		else 
+		{
+			system_monitoring_interface::global_mon->log_warning("read array size incorrect.", __FILE__, __LINE__);
+		}
+
+		for (int i = 0; i < 42; i++) {
+			int x = jnfirst.data.get_element(i);
+			if (x != i) {
+				read_success = false;
+			}
+			jnfirst.data.put_element(i, (double)(i * 10));
+		}
+
+		bool write_success = true;
+
+		relative_ptr_type write_result = jnfirst.write(dtest.get(), [](int64_t _location)
+			{
+
+			},
+			[dtest](int64_t _size) {
+				return dtest->add(_size);
+			}
+		);
+
+		if (write_result < 0) {
+			system_monitoring_interface::global_mon->log_warning("write node failed.", __FILE__, __LINE__);
+			write_success = false;
+		}
+		proof_assertion.put_member("write", write_success);
+		proof_assertion.put_member("read", read_success);
+
+		bool grow_success = true;
+
+		for (int i = 0; i < 10000; i++)
+		{
+			jnfirst.data = jp.create_array();
+			jnfirst.data.push_back(i);
+		}
+
+		relative_ptr_type loc = jnfirst.write(dtest.get(),
+			[](int64_t _location)
+			{
+
+			},
+			[dtest](int64_t _size) {
+				return dtest->add(_size);
+			}
+		);
+
+		if (loc < 0) 
+		{
+			system_monitoring_interface::global_mon->log_warning("node write failed.", __FILE__, __LINE__);
+		}
+
+		auto rs = jnfirst.read(dtest.get(), locfirst);
+
+		if (rs < 0)
+		{
+			grow_success = false;
+			system_monitoring_interface::global_mon->log_warning("grow failed.", __FILE__, __LINE__);
+		}
+		else
+		{
+		}
+
+		for (int i = 0; i < 10000; i++) {
+			int x = jnfirst.data.get_element(i);
+			if (x != i) {
+				read_success = false;
+			}
+			jnfirst.data.put_element(i, (double)(i * 10));
+		}
+		proof_assertion.put_member("grow", grow_success);
+
+		system_monitoring_interface::global_mon->log_function_stop("node proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 	void test_json_table(json& _proof, std::shared_ptr<application> _app)
@@ -1654,7 +1866,7 @@ namespace corona
 
 		json_table test_table(f, {"ObjectId"});
 
-		 test_table.create();
+		test_table.create();
 
 		relative_ptr_type rpt =  test_table.put(test_write);
 		json test_read =  test_table.get(test_key);

@@ -381,10 +381,6 @@ namespace corona
 
 			created_classes.put_member("SysLogin", true);
 
-
-
-
-
 			response =  create_class(R"(
 {	
 	"ClassName" : "SysPermission",
