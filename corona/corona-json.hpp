@@ -1660,7 +1660,27 @@ namespace corona
 			return put_element( -1, et);
 		}
 
-		template <typename element_type> json push_back(element_type et)
+		json push_back(double et)
+		{
+			return put_element(-1, et);
+		}
+
+		json push_back(int64_t et)
+		{
+			return put_element(-1, et);
+		}
+
+		json push_back(std::string et)
+		{
+			return put_element(-1, et);
+		}
+
+		json push_back(date_time et)
+		{
+			return put_element(-1, et);
+		}
+
+		json push_back(json et)
 		{
 			return put_element(-1, et);
 		}

@@ -782,7 +782,7 @@ namespace corona {
 		}
 #endif
 
-			auto pcr = classes.put_item(class_id, nullptr, af.size(), af.data);
+			auto pcr = classes.put_item(class_id, nullptr, af.size(), af.get_ptr(0));
 
 			auto& p = pcr.item();
 			p.class_id = class_id;

@@ -24,7 +24,7 @@ For Future Consideration
 namespace corona {
 
 	template <typename item_type, int max_items>
-	struct iarray
+	class iarray
 	{
 		item_type data[max_items];
 		corona_size_t length;
@@ -33,6 +33,7 @@ namespace corona {
 		using iterator_item_type = value_reference<item_type>;
 		using iterator_type = filterable_iterator<item_type, collection_type, iterator_item_type>;
 
+	public:
 		iarray()
 		{
 			length = 0;
@@ -96,6 +97,11 @@ namespace corona {
 		corona_size_t size() const
 		{
 			return length;
+		}
+
+		corona_size_t capacity() const
+		{
+			return max_items;
 		}
 
 		int get_index(item_type* _item)

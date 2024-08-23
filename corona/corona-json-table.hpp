@@ -293,7 +293,7 @@ namespace corona
 
 		virtual void on_read()
 		{
-			poco_type* contents = bytes.get_ptr();
+			poco_type* contents = (poco_type *)bytes.get_ptr();
 			if (contents) {
 				data = *contents;
 			}
@@ -354,7 +354,7 @@ namespace corona
 		int64_t get_hash_index(json _key)
 		{
 			int64_t hash_code = _key.get_weak_ordered_hash(this->key_fields, bits_per_key);
-			int64_t block_index = hash_code % index_header.data.index_lists.length;
+			int64_t block_index = hash_code % index_header.data.index_lists.capacity();
 			return block_index;
 		}
 
@@ -486,10 +486,10 @@ namespace corona
 		allocation_index get_allocation_index(int64_t _size)
 		{
 			allocation_index ai = data_block::get_allocation_index(_size);
-			if (ai.index >= index_header.data.free_lists.length) {
+			if (ai.index >= index_header.data.free_lists.capacity()) {
 				std::string msg = std::format("{0} bytes is too big to allocate as a block.", _size);
 				system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
-				ai.index = index_header.data.free_lists.length - 1;
+				ai.index = index_header.data.free_lists.capacity() - 1;
 			}
 			return ai;
 		}
@@ -834,7 +834,7 @@ namespace corona
 			result.is_all = true;
 			int64_t item_index = 0;
 
-			while (index_lists < index_header.data.index_lists.length)
+			while (index_lists < index_header.data.index_lists.capacity())
 			{
 				auto& list_start = index_header.data.index_lists[index_lists];
 				json_node jn;
@@ -885,7 +885,7 @@ namespace corona
 			int64_t item_index = 0;
 			result.is_all = true;
 
-			while (index_lists < index_header.data.index_lists.length)
+			while (index_lists < index_header.data.index_lists.capacity())
 			{
 				auto& list_start = index_header.data.index_lists[index_lists];
 				json_node jn;
@@ -934,7 +934,7 @@ namespace corona
 			int64_t item_index = 0;
 			result.is_all = true;
 
-			while (index_lists < index_header.data.index_lists.length)
+			while (index_lists < index_header.data.index_lists.capacity())
 			{
 				auto& list_start = index_header.data.index_lists[index_lists];
 				json_node jn;
@@ -979,7 +979,7 @@ namespace corona
 
 			auto index_lists = get_hash_index(_key_fragment);
 
-			while (index_lists < index_header.data.index_lists.length)
+			while (index_lists < index_header.data.index_lists.capacity())
 			{
 				auto& list_start = index_header.data.index_lists[index_lists];
 				json_node jn;
@@ -993,7 +993,7 @@ namespace corona
 					while (block_location)
 					{
 						jn.read(database_file.get(), block_location);
-						if (_fn(jn.data)) {
+						if (not _fn or _fn(jn.data)) {
 							return jn.data;
 						}
 						block_location = jn.header.next_block;
@@ -1008,11 +1008,11 @@ namespace corona
 			return empty;
 		}
 
-		json select_array(std::function<json(int _index, json& _item)> _project)
+		json select(std::function<json(int _index, json& _item)> _project)
 		{
 			date_time start_time = date_time::now();
 			timer tx;
-			system_monitoring_interface::global_mon->log_table_start("table", "select_array", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_table_start("table", "select", start_time, __FILE__, __LINE__);
 
 			json_parser jp;
 			json ja = jp.create_array();
@@ -1031,19 +1031,47 @@ namespace corona
 					return count;
 				});
 
-			system_monitoring_interface::global_mon->log_table_stop("table", "select_array complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_table_stop("table", "select complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return ja;
 		}
 
-		json select_array(json _key_fragment, 
+		json select(json _key_fragment, std::function<json(int _index, json& _item)> _project)
+		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "select", start_time, __FILE__, __LINE__);
+
+			json_parser jp;
+			json ja = jp.create_array();
+			json* pja = &ja;
+
+			json empty_key = jp.create_object();
+
+			auto result = for_each(_key_fragment, [pja, _project](int _index, json_node& _data) ->relative_ptr_type
+				{
+					relative_ptr_type count = 0;
+					json new_item = _project(_index, _data.data);
+					if (not new_item.empty() and !new_item.is_member("Skip", "this")) {
+						pja->append_element(new_item);
+						count = 1;
+					}
+					return count;
+				});
+
+			system_monitoring_interface::global_mon->log_table_stop("table", "select complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			return ja;
+		}
+
+		json update(json _key_fragment, 
 			std::function<json(int _index, json& _item)> _project,
 			json _update = "{ }"_jobject
 		)
 		{
 			date_time start_time = date_time::now();
 			timer tx;
-			system_monitoring_interface::global_mon->log_table_start("table", "select_array", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_table_start("table", "update", start_time, __FILE__, __LINE__);
 
 			json_parser jp;
 			json ja = jp.create_array();
@@ -1058,15 +1086,18 @@ namespace corona
 						count++;
 						if (_update.object() and _update.size()>0) {
 							_data.data.assign_update(_update);
-							_data.write(database_file.get(), [this](int64_t _size)->block_header_struct {
+							_data.write(database_file.get(), [this](int64_t _size)->size_t {
 								return _size;
-								});
+							},
+							 [this](int64_t _size)->size_t {
+									return _size;
+							});
 						}
 					}
 					return count;
-				});
+			});
 
-			system_monitoring_interface::global_mon->log_table_stop("table", "select_array complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_table_stop("table", "update complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return ja;
 		}
@@ -1726,7 +1757,6 @@ namespace corona
 		proof_assertion.put_member("dependencies", dependencies);
 
 		json_node jnfirst, jnsecond;
-		json_parser jp;
 
 		jnfirst.data = jp.create_array();
 		for (double i = 0; i < 42; i++)
@@ -1806,7 +1836,8 @@ namespace corona
 		for (int i = 0; i < 10000; i++)
 		{
 			jnfirst.data = jp.create_array();
-			jnfirst.data.push_back(i);
+			double t = i;
+			jnfirst.data.push_back(t);
 		}
 
 		relative_ptr_type loc = jnfirst.write(dtest.get(),
@@ -1843,6 +1874,7 @@ namespace corona
 			jnfirst.data.put_element(i, (double)(i * 10));
 		}
 		proof_assertion.put_member("grow", grow_success);
+		_proof.put_member("node", proof_assertion);
 
 		system_monitoring_interface::global_mon->log_function_stop("node proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
@@ -1858,6 +1890,34 @@ namespace corona
 		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "corona_table.ctb");
 
 		json_parser jp;
+		json proof_assertion = jp.create_object();
+
+		json dependencies = jp.parse_object(R"( 
+{ 
+	"node": [ "node", "object" ],
+    "put" : [ "node.write", "node.append" ],
+	"get" : [ "node.read" ],
+	"create" : [ "node.read", "node.write" ],
+	"erase" : [ "node.read", "node.write" ],
+	"select" : [ "node.read" ],
+	"for_each" : [ "node.read", "node.write" ],
+	"group" : [ "object.group" ],
+	"any" : [ "object.any" ],
+	"all" : [ "object.all" ],
+}
+)");
+
+		bool	put_success = true,
+			get_success = true,
+			create_success = true,
+			erase_success = true,
+			select_array_success = true,
+			for_each_success = true,
+			group_success = true,
+			any_success = true,
+			all_success = true;
+
+		proof_assertion.put_member("dependencies", dependencies);
 
 		json test_write = jp.create_object();
 		test_write.put_member_i64("ObjectId", 5);
@@ -1866,25 +1926,64 @@ namespace corona
 
 		json_table test_table(f, {"ObjectId"});
 
-		test_table.create();
+		relative_ptr_type table_loc = test_table.create();
+
+		if (table_loc < 0) {
+			system_monitoring_interface::global_mon->log_warning("create table failed.", __FILE__, __LINE__);
+			create_success = false;
+		}
 
 		relative_ptr_type rpt =  test_table.put(test_write);
+		if (rpt < 0) {
+			system_monitoring_interface::global_mon->log_warning("put failed.", __FILE__, __LINE__);
+			put_success = false;
+		}
+
 		json test_read =  test_table.get(test_key);
-		test_read.set_compare_order( {"ObjectId"});
+		if (test_read.empty()) {
+			system_monitoring_interface::global_mon->log_warning("get failed.", __FILE__, __LINE__);
+			get_success = false;
+		}
+
+		test_read.set_compare_order( {"ObjectId"} );
 
 		if (test_read.compare(test_write))
 		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			system_monitoring_interface::global_mon->log_warning("get did not match put.", __FILE__, __LINE__);
+			get_success = false;
 		}
-		json db_contents =  test_table.select_array([](int _index, json& item) {
+
+		json db_contents =  test_table.select([](int _index, json& item) {
 			return item;
 			});
 
-		std::cout << db_contents.to_json_string() << std::endl;
+		if (not db_contents.array()) {
+			select_array_success = false;
+			system_monitoring_interface::global_mon->log_warning("select did not return nodes.", __FILE__, __LINE__);
+		}
 
 		test_write.put_member_i64("ObjectId", 7);
 		test_write.put_member("Name", "Jack");
+		test_key = test_write.extract({ "ObjectId" });
+		test_table.put(test_write);
+
+		test_read = test_table.get(test_key);
+		test_read.set_natural_order();
+
+		if (test_read.compare(test_write))
+		{
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("wrong inserted value.", __FILE__, __LINE__);
+		}
+
+		db_contents =  test_table.select([](int _index, json& item) {
+			return item;
+			});
+
+		int db_size1 = db_contents.size();
+
+		test_write.put_member_i64("ObjectId", 7);
+		test_write.put_member("Name", "Jill");
 		test_key = test_write.extract({ "ObjectId" });
 		test_table.put(test_write);
 
@@ -1893,35 +1992,15 @@ namespace corona
 
 		if (test_read.compare(test_write))
 		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("wrong inserted value.", __FILE__, __LINE__);
 		}
 
-		db_contents =  test_table.select_array([](int _index, json& item) {
+		db_contents =  test_table.select([](int _index, json& item) {
 			return item;
 			});
 
-		std::cout << db_contents.to_json_string() << std::endl;
-
-		test_write.put_member_i64("ObjectId", 7);
-		test_write.put_member("Name", "Jill");
-		test_key = test_write.extract({ "ObjectId" });
-		 test_table.put(test_write);
-
-		test_read =  test_table.get(test_key);
-		test_read.set_natural_order();
-
-		if (test_read.compare(test_write))
-		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
-		}
-
-		db_contents =  test_table.select_array([](int _index, json& item) {
-			return item;
-			});
-
-		std::cout << db_contents.to_json_string() << std::endl;
+		int db_size1b = db_contents.size();
 
 		try
 		{
@@ -1930,101 +2009,103 @@ namespace corona
 		}
 		catch (std::exception exc)
 		{
-			std::cout << __LINE__ << " fail: wrong null access." << std::endl;
-			return false;
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("wrong null access", __FILE__, __LINE__);
 		}
 
-		db_contents =  test_table.select_array([](int _index, json& item) {
+		db_contents =  test_table.select([](int _index, json& item) {
 			return item;
-			});
+		});
 
 		std::cout << db_contents.to_json_string() << std::endl;
 
 		if (db_contents.size() != 2)
 		{
-			std::cout << __LINE__ << " fail: wrong number of result elements." << std::endl;
-			return false;
+			select_array_success = false;
+			system_monitoring_interface::global_mon->log_warning("wrong number of result elements", __FILE__, __LINE__);
 		}
 
 		test_write.put_member_i64("ObjectId", 2);
 		test_write.put_member("Name", "Sydney");
 		test_key = test_write.extract({ "ObjectId" });
-		 test_table.put(test_write);
+		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 
 		test_write.put_member_i64("ObjectId", 7);
 		test_write.put_member("Name", "Zeus");
 		test_key = test_write.extract({ "ObjectId" });
-		 test_table.put(test_write);
+		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 
 		test_write.put_member_i64("ObjectId", 1);
 		test_write.put_member("Name", "Canada");
 		test_key = test_write.extract({ "ObjectId" });
-		 test_table.put(test_write);
+		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 
 		test_write.put_member_i64("ObjectId", 7);
 		test_write.put_member("Name", "Zeus");
 		test_key = test_write.extract({ "ObjectId" });
-		 test_table.put(test_write);
+		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 
 		test_write.put_member_i64("ObjectId", 1);
 		test_write.put_member("Name", "Maraca");
 		test_key = test_write.extract({ "ObjectId" });
-		 test_table.put(test_write);
+		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 
-		db_contents =  test_table.select_array([](int _index, json& item) {
+		db_contents =  test_table.select([](int _index, json& item) {
 			return item;
 			});
 
 		if (test_table.size() != 4)
 		{
-			std::cout << __LINE__ << " fail: wrong number of result elements in test." << std::endl;
-			return false;
+			select_array_success = false;
+
+			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 
 		if (db_contents.size() != 4)
 		{
-			std::cout << __LINE__ << " fail: wrong number of result elements." << std::endl;
-			return false;
+			select_array_success = false;
+
+			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 		
 		int64_t tests[4] = { 1, 2, 5, 7 };
@@ -2033,8 +2114,7 @@ namespace corona
 		json counts = jp.create_object();
 		json *pcounts = &counts;
 
-		relative_ptr_type count =  test_table.for_each([tests,pcounts](int _index, json& _item) -> bool {
-
+		auto fr = test_table.for_each([tests,pcounts](int _index, json& _item) -> bool {
 			int64_t test_index = tests[_index];
 			std::string member_names = std::format("item{0}", (int64_t)_item["ObjectId"]);
 			int64_t counto = 0;
@@ -2044,20 +2124,25 @@ namespace corona
 			counto++;
 			pcounts->put_member_i64(member_names, counto);
 			return 1;
-			});
+		});
+
+		if ((not counts.object()) or (counts.size() != 4))
+		{
+			for_each_success = false;
+		}
 
 		std::string count_string = counts.to_json();
 
-		std::cout << count_string << std::endl;
-
-		db_contents =  test_table.select_array([tests](int _index, json& _item) -> json {
+		db_contents =  test_table.select([tests](int _index, json& _item) -> json {
 			int64_t temp = _item["ObjectId"];
 			return (temp > 0i64) ? _item : json();
-			}
+		}
 		);
 
-		std::cout << "..." << std::endl;
-		std::cout << "Check negative objects." << std::endl;
+		if (not db_contents.array()) {
+			select_array_success = false;
+			system_monitoring_interface::global_mon->log_warning("select failed", __FILE__, __LINE__);
+		}
 
 		bool any_fails = db_contents.any([](json& _item)->bool {
 			int64_t temp = _item["ObjectId"];
@@ -2065,15 +2150,8 @@ namespace corona
 			});
 
 		if (any_fails) {
-			std::cout << __LINE__ << " query failed" << std::endl;
-			return false;
+			system_monitoring_interface::global_mon->log_warning("query failed", __FILE__, __LINE__);
 		}
-
-		std::cout << db_contents.to_json() << std::endl;
-
-		// and break it up
-		std::cout << "..." << std::endl;
-		std::cout << "Create summary object." << std::endl;
 
 		auto summary = db_contents.array_to_object([](json& _item) {
 			return (std::string)_item["ObjectId"];
@@ -2082,17 +2160,15 @@ namespace corona
 				return _target;
 			});
 
-		std::cout << summary.to_json() << std::endl;
-
-		// and, see, now we can explore partial keys
-
-		std::cout << "..." << std::endl;
-		std::cout << "Extract only those that have the name Zeus." << std::endl;
+		if (not (summary.has_member("1") and summary.has_member("2") and summary.has_member("5") and summary.has_member("7")))
+		{
+			for_each_success = false;
+		}
 
 		json search_key = jp.create_object("Name", "Zeus");
 		search_key.set_compare_order({ "Name" });
 
-		db_contents =  test_table.select_array(search_key, [tests](int _index, json& _item) -> json {
+		db_contents =  test_table.select(search_key, [tests](int _index, json& _item) -> json {
 			return _item;
 			}
 		);
@@ -2103,8 +2179,8 @@ namespace corona
 			});
 
 		if (any_fails) {
-			std::cout << __LINE__ << " find bad key query failed" << std::endl;
-			return false;
+			system_monitoring_interface::global_mon->log_warning("any failed.", __FILE__, __LINE__);
+			any_success = false;
 		}
 
 		std::cout << db_contents.to_json() << std::endl;
@@ -2113,13 +2189,16 @@ namespace corona
 		bool rdel3 =  test_table.erase(test_key);
 
 		if (rdel3) {
-			std::cout << "delete non-existing failed" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("erase failed.", __FILE__, __LINE__);
+			erase_success = false;
 		}
 
 		test_key.put_member_i64("ObjectId", 1);
 		bool rdel1 =  test_table.erase(test_key);
 
 		if (not rdel1) {
+			erase_success = false;
+			system_monitoring_interface::global_mon->log_warning("erase failed.", __FILE__, __LINE__);
 			std::cout << "delete existing failed" << std::endl;
 		}
 
@@ -2127,20 +2206,21 @@ namespace corona
 		relative_ptr_type rdel7 =  test_table.erase(test_key);
 
 		if (not rdel7) {
+			system_monitoring_interface::global_mon->log_warning("erase failed.", __FILE__, __LINE__);
 			std::cout << "delete existing failed" << std::endl;
 		}
 
-		json testi =  test_table.select_array([tests](int _index, json& item) -> json {
+		json testi =  test_table.select([tests](int _index, json& item) -> json {
 			int64_t object_id = item["ObjectId"];
 			return object_id == 7 ? item : json();
 			});
 
 		if (testi.size() > 0) {
-			std::cout << __LINE__ << " retrieved a deleted item" << std::endl;
-			return false;
+			erase_success = false;
+			system_monitoring_interface::global_mon->log_warning("erase failed.", __FILE__, __LINE__);
 		}
 		 
-		db_contents =  test_table.select_array([tests](int _index, json& item) {
+		db_contents =  test_table.select([tests](int _index, json& item) {
 			return item;
 			}
 		);
@@ -2151,13 +2231,32 @@ namespace corona
 			});
 
 		if (any_iteration_fails) {
-			std::cout << __LINE__ << " iteration after delete failed." << std::endl;
-			return false;
+			system_monitoring_interface::global_mon->log_warning("any fails.", __FILE__, __LINE__);
+			any_success = false;
 		}
 
-		return true;
-	}
+		put_success = true,
+		get_success = true,
+		create_success = true,
+		erase_success = true,
+		select_array_success = true,
+		for_each_success = true,
+		group_success = true,
+		any_success = true,
+		all_success = true,
+		erase_success = false;
 
+		proof_assertion.put_member("put", put_success);
+		proof_assertion.put_member("get", get_success);
+		proof_assertion.put_member("create", create_success);
+		proof_assertion.put_member("select_array", select_array_success);
+		proof_assertion.put_member("for_each", for_each_success);
+		proof_assertion.put_member("group", group_success);
+		proof_assertion.put_member("any", any_success);
+		proof_assertion.put_member("all", all_success);
+		proof_assertion.put_member("erase", erase_success);
+	}
 }
 
 #endif
+

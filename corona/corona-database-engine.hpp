@@ -156,14 +156,8 @@ namespace corona
 				scope_lock lock_two(objects_rw_lock);
 
 				header.data.object_id = 1;
-				header_location = header.append(database_file.get(), [this](int64_t _size)->block_header_struct {
-					block_header_struct bhs;
-					bhs.block_location = database_file->add(sizeof(block_header_struct));
-					bhs.block_type = block_id::database_id();
-					bhs.data_length = _size;
-					bhs.data_location = database_file->add(_size);
-					bhs.next_block = 0;
-					return bhs;
+				header_location = header.append(database_file.get(), [this](int64_t _size)->int64_t {
+					return database_file->add(_size);
 					});
 
 				header.data.object_id = 1;
@@ -174,7 +168,7 @@ namespace corona
 
 				created_classes = jp.create_object();
 
-				header.write(database_file.get(), nullptr);
+				header.write(database_file.get(), nullptr, nullptr);
 
 			}
 		
@@ -1155,7 +1149,7 @@ private:
 					constraint_names.push_back(constraint_field);
 				}
 				objects_by_name_key.set_compare_order(constraint_names);
-				json name_id =  objects_by_name.get_first(objects_by_name_key);
+				json name_id =  objects_by_name.get_first(objects_by_name_key, nullptr);
 				if (name_id.object()) {
 					json object_key = jp.create_object();
 					object_key.copy_member("ObjectId", name_id);
@@ -1386,7 +1380,7 @@ private:
 		{
 			scope_lock hlock(header_rw_lock);
 			header.data.object_id++;
-			header.write(database_file.get(),nullptr);
+			header.write(database_file.get(), nullptr, nullptr);
 			return header.data.object_id;
 		}
 
@@ -2080,7 +2074,7 @@ private:
 				return result;
 			}
 
-			result_list =  classes.select_array([this, get_classes_request](int _index, json& _item) {
+			result_list =  classes.select([this, get_classes_request](int _index, json& _item) {
 				json_parser jp;
 				json token = get_classes_request["Token"];
 				bool has_permission = has_class_permission(token, _item["ClassName"], "Get");
@@ -2383,7 +2377,7 @@ private:
 
 				{
 					scope_lock lock_one(classes_rw_lock);
-					class_object_ids =  class_objects.select_array(search_key, [](int _index, json& _item)->json {
+					class_object_ids =  class_objects.update(search_key, [](int _index, json& _item)->json {
 						return _item;
 						}, update_json);
 				}
@@ -2695,7 +2689,7 @@ private:
 			scope_lock lock_one(objects_rw_lock);
 
 			if (object_key.has_member("ClassName")) {
-				json revised_key =  class_objects.get_first(object_key);
+				json revised_key =  class_objects.get_first(object_key, nullptr);
 				object_key.copy_member("ObjectId", revised_key);
 			}
 
