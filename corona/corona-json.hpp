@@ -809,8 +809,10 @@ namespace corona
 			return -1; // No bits set
 		}
 
-		int64_t get_weak_ordered_hash( std::vector<std::string> _keys, int _bits_per_key )
+		int64_t get_weak_ordered_hash( std::vector<std::string> _keys )
 		{
+			uint16_t key_values[3];
+
 			int64_t hash = 0;
 
 			if (not object())
@@ -818,13 +820,10 @@ namespace corona
 
 			int64_t num;
 			int idx = 0;
-			int shift_item = 12 - _bits_per_key;
-			short x = 0;
 
 			for (auto ikey : _keys)
 			{
-				x = 0;
-				hash <<= _bits_per_key;
+				int x = 0;
 
 				if (has_member(ikey)) {
 					auto m = get_member(ikey);
@@ -836,7 +835,8 @@ namespace corona
 					else if (m.is_double())
 					{
 						double v = (double)m;
-						x = static_cast<int>(std::log10(v));
+						if (v < 0) v = 0;
+						x = static_cast<short>(std::log10(v));
 					}
 					else if (m.is_int64())
 					{
@@ -855,12 +855,18 @@ namespace corona
 							x = temp[0] * 256;
 						}
 					}
-					x >>= shift_item;
-					hash |= x;
 				}
+				key_values[idx] = x;
 				idx++;
 				if (idx >= 2)
 					break;
+			}
+
+			hash = 0;
+			for (int i = 0; i < idx; i++)
+			{
+				hash += key_values[i];
+				hash *= 65535;
 			}
 
 			return hash;

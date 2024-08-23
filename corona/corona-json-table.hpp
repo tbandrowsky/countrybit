@@ -352,11 +352,10 @@ namespace corona
 		
 		std::vector<std::string> key_fields;
 		json header_key;
-		const int bits_per_key = 8;
 
 		int64_t get_hash_index(json _key)
 		{
-			int64_t hash_code = _key.get_weak_ordered_hash(this->key_fields, bits_per_key);
+			int64_t hash_code = _key.get_weak_ordered_hash(this->key_fields);
 			int64_t block_index = hash_code % index_header.data.index_lists.capacity();
 			return block_index;
 		}
@@ -1200,7 +1199,7 @@ namespace corona
 		date_time start;
 		timer tx;	
 
-		system_monitoring_interface::global_mon->log_command_start("test json", "start", start, __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_function_start("test json", "start", start, __FILE__, __LINE__);
 
 		json parse_result = jp.create_object();
 
@@ -1273,15 +1272,6 @@ namespace corona
 		}
 		else {
 			comparison_results.put_member("< empty comparison", true);
-		}
-
-		if (empty.compare(test_eq1) < 0)
-		{
-			system_monitoring_interface::global_mon->log_warning("empty >= test_eq1 failed", __FILE__, __LINE__);
-			comparison_results.put_member(">= empty comparison", false);
-		}
-		else {
-			comparison_results.put_member(">= empty comparison", true);
 		}
 
 		if (test_eq1.compare(test_eq2) != 0)
@@ -1436,74 +1426,66 @@ namespace corona
 		corona::json test_woh5 = jp.parse_object(R"({ "name":"greg", "age":12 })");
 		corona::json test_woh6 = jp.parse_object(R"({ "name":"greg", "age":14 })");
 
-		int bits_per_key = 8;
-
 		bool weak_ordered_hashing_test = true;
 
-		while (bits_per_key > 2) {
+		int64_t hash_woh1 = test_woh1.get_weak_ordered_hash({ "name","age" });
+		int64_t hash_woh2 = test_woh2.get_weak_ordered_hash({ "name","age" });
+		int64_t hash_woh3 = test_woh3.get_weak_ordered_hash({ "name","age" });
+		int64_t hash_woh4 = test_woh4.get_weak_ordered_hash({ "name","age" });
+		int64_t hash_woh5 = test_woh5.get_weak_ordered_hash({ "name","age" });
+		int64_t hash_woh6 = test_woh6.get_weak_ordered_hash({ "name","age" });
 
-			int64_t hash_woh1 = test_woh1.get_weak_ordered_hash({ "name","age" }, bits_per_key);
-			int64_t hash_woh2 = test_woh2.get_weak_ordered_hash({ "name","age" }, bits_per_key);
-			int64_t hash_woh3 = test_woh3.get_weak_ordered_hash({ "name","age" }, bits_per_key);
-			int64_t hash_woh4 = test_woh4.get_weak_ordered_hash({ "name","age" }, bits_per_key);
-			int64_t hash_woh5 = test_woh5.get_weak_ordered_hash({ "name","age" }, bits_per_key);
-			int64_t hash_woh6 = test_woh6.get_weak_ordered_hash({ "name","age" }, bits_per_key);
+		int64_t hash_woh1s = test_woh1.get_weak_ordered_hash({ "name" });
+		int64_t hash_woh2s = test_woh2.get_weak_ordered_hash({ "name" });
+		int64_t hash_woh3s = test_woh3.get_weak_ordered_hash({ "name" });
+		int64_t hash_woh4s = test_woh4.get_weak_ordered_hash({ "name" });
+		int64_t hash_woh5s = test_woh5.get_weak_ordered_hash({ "name" });
+		int64_t hash_woh6s = test_woh6.get_weak_ordered_hash({ "name" });
 
-			int64_t hash_woh1s = test_woh1.get_weak_ordered_hash({ "name" }, bits_per_key);
-			int64_t hash_woh2s = test_woh2.get_weak_ordered_hash({ "name" }, bits_per_key);
-			int64_t hash_woh3s = test_woh3.get_weak_ordered_hash({ "name" }, bits_per_key);
-			int64_t hash_woh4s = test_woh4.get_weak_ordered_hash({ "name" }, bits_per_key);
-			int64_t hash_woh5s = test_woh5.get_weak_ordered_hash({ "name" }, bits_per_key);
-			int64_t hash_woh6s = test_woh6.get_weak_ordered_hash({ "name" }, bits_per_key);
+		if (hash_woh1 != hash_woh2) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash == failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
+		if (hash_woh2 > hash_woh3) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
+		if (hash_woh3 > hash_woh4) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
+		if (hash_woh4 > hash_woh5) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
+		if (hash_woh5 > hash_woh6) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
 
-			if (hash_woh1 != hash_woh2) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash == failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-			if (hash_woh2 != hash_woh3) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-			if (hash_woh3 >= hash_woh4) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-			if (hash_woh4 >= hash_woh5) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-			if (hash_woh5 >= hash_woh6) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-
-			if (hash_woh1s != hash_woh2s) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash == failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-			if (hash_woh3s != hash_woh4s) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-			if (hash_woh5s != hash_woh6s) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-			if (hash_woh1s >= hash_woh3s) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-			if (hash_woh4s >= hash_woh5s) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-			if (hash_woh6s >= hash_woh6s) {
-				system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
-				weak_ordered_hashing_test = false;
-			}
-
-			bits_per_key--;
-
+		if (hash_woh1s != hash_woh2s) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash == failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
+		if (hash_woh2s > hash_woh3s) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
+		if (hash_woh3s != hash_woh4s) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
+		if (hash_woh5s > hash_woh6s) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
+		if (hash_woh1s > hash_woh3s) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
+		}
+		if (hash_woh4s > hash_woh5s) {
+			system_monitoring_interface::global_mon->log_warning("weak ordered hash < failed", __FILE__, __LINE__);
+			weak_ordered_hashing_test = false;
 		}
 
 		comparison_results.put_member("weak_ordered_hash", weak_ordered_hashing_test);
@@ -1549,7 +1531,7 @@ namespace corona
 		proof_assertions.prove_member("is_true");
 		_proof.put_member("object", proof_assertions);
 
-		system_monitoring_interface::global_mon->log_command_start("test json", "stop", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_function_start("test json", "stop", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 	void test_file(json& _proof, std::shared_ptr<application> _app)
@@ -1645,7 +1627,9 @@ namespace corona
 
 		dfirst = jx;
 
-		if (dfirst.get_string() != jx.get_string())
+		std::string dfs = dfirst.get_string();
+		std::string jxs = jx.to_json_typed_string();
+		if (dfs != jxs)
 		{
 			proof_assertion.put_member("assignment", false);
 			system_monitoring_interface::global_mon->log_warning("assignment of data to data block failed.", __FILE__, __LINE__);

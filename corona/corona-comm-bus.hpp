@@ -112,6 +112,8 @@ namespace corona
 
 			app_menu = std::make_shared<menu_item>();
 
+			prove_system();
+
 			database_schema_file_name = _config_file_name_base + "schema.json";
 			database_config_file_name = "config.json";
 			pages_config_file_name = _config_file_name_base + "pages.json";
