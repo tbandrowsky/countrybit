@@ -697,6 +697,8 @@ namespace corona
 			function_impl = std::dynamic_pointer_cast<json_function>(_value);
 		}
 
+		json query(std::string _path);
+
 		json clone()
 		{
 			json result;
@@ -902,6 +904,11 @@ namespace corona
 		bool function() const
 		{
 			return (bool)function_impl;
+		}
+
+		bool scalar() const
+		{
+			return not array() and not object() and not empty();
 		}
 
 		bool empty() const
@@ -2178,152 +2185,42 @@ namespace corona
 			return *this;
 		}
 
-		json get_query(std::string _path)
+		bool prove_member(std::string _member)
 		{
-			json result;
-			std::vector<std::string> items = split(_path, '.');
-			json start = *this;
-
-			for (auto item : items) 
-			{
-				if (start.object()) 
-				{
-					start = start[item];
-				}
-				else if (start.array())
-				{
-					if (is_number(item)) {
-						int idx = std::strtol(item.c_str(), nullptr, 10);
-						if (idx < 0 or idx >= start.size()) {
-							return result;
-						}
-						start = start.get_element(idx);
-					} 
-					else {
-						std::vector<std::string> item_ops = split(item, '-');
-						if (item_ops.size() < 2) {
-							return result;
-						}
-						std::string operation = item_ops[0];
-						std::string member_name = item_ops[1];
-						if (operation == "last")
-						{
-							int index_lists = start.size() - 1;
-							if (index_lists < 0)
-								return result;
-							else
-								return start.get_element(index_lists);
-						}
-						else if (operation == "first")
-						{
-							int index_lists = start.size() - 1;
-							if (index_lists < 0)
-								return result;
-							else
-								return start.get_element(index_lists);
-						}
-						else if (operation == "count")
-						{
-							int count = 0;
-							for (auto ch : start) {
-								if (ch.has_member(member_name)) {
-									count++;
-								}
-							}
-							auto v = std::make_shared<json_double>();
-							v->value = count;
-							result = json(v);
-							return result;
-						}
-						else if (operation == "min")
-						{
-							json mvalue;
-							for (auto ch : start) {
-								if (ch.has_member(member_name)) {
-									if (mvalue.empty()) {
-										mvalue = ch[member_name];
-									}
-									else {
-										json tvalue = ch[member_name];
-										if (tvalue.lt(mvalue)) {
-											mvalue = tvalue;
-										}
-									}
-								}
-							}
-							return mvalue;
-						}
-						else if (operation == "max")
-						{
-							json mvalue;
-							for (auto ch : start) {
-								if (ch.has_member(member_name)) {
-									if (mvalue.empty()) {
-										mvalue = ch[member_name];
-									}
-									else {
-										json tvalue = ch[member_name];
-										if (tvalue.gt(mvalue)) {
-											mvalue = tvalue;
-										}
-									}
-								}
-							}
-							return mvalue;
-						}
-						else if (operation == "sum")
-						{
-							double rsum = 0;
-							for (auto ch : start) {
-								if (ch.has_member(member_name)) {
-									double t = (double)ch[member_name];
-									t += rsum;
-								}							
-							}
-							auto v = std::make_shared<json_double>();
-							v->value = rsum;
-							result = json(v);
-							return result;
-						}
-						else if (operation == "avg")
-						{
-							double rsum = 0;
-							double count = 0;
-							for (auto ch : start) {
-								if (ch.has_member(member_name)) {
-									double t = (double)ch[member_name];
-									t += rsum;
-									count += 1.0;
-								}
-							}
-							if (count > 0) {
-								auto v = std::make_shared<json_double>();
-								v->value = rsum / count;
-								result = json(v);
-							}
-							return result;
-						}
-						else if (operation == "cat")
-						{
-							std::string sresult = "";
-							std::string comma = "";
-							for (auto ch : start) {
-								if (ch.has_member(member_name)) {
-									sresult += comma;
-									sresult += (std::string)ch[member_name];
-									comma = ", ";
-								}
-							}
-							auto v = std::make_shared<json_string>();
-							v->value = sresult;
-							result = json(v);
-							return result;
-						}
-					}
+			std::vector<std::string> evidences;
+			auto members = get_members();
+			for (auto m : members) {
+				if (m.first != _member) {
+					evidences.push_back(m.first);
 				}
 			}
-			return start;
+			return prove_member(_member, evidences);
 		}
+
+		bool prove_member(std::string _member, std::vector<std::string> _evidences)
+		{
+			for (auto ev : _evidences)
+			{
+				json& me = *this;
+				json memb = me[ev];
+				bool is_true;
+				if (memb.object()) 
+				{
+					is_true = (bool)memb[_member];
+				}
+				else
+				{
+					is_true = (bool)me[ev];
+				}
+				if (not is_true) {
+					put_member(_member, false);
+					return false;
+				}
+			}
+			put_member(_member, true);
+			return true;
+		}
+
 
 		json join(json& _right, 
 			std::function<bool(json&_item1, json&_item2)> _compare,
@@ -3857,6 +3754,170 @@ namespace corona
 		json j = _src.clone();
 		j = jp.from_double(0.0) - j;
 		return j;
+	}
+
+	json json::query(std::string _path)
+	{
+		json_parser jp;
+		json result = jp.create_object();
+		std::vector<std::string> items = split(_path, '.');
+		json start = *this;
+
+		result.put_member("path", _path);
+
+		for (auto item : items)
+		{
+			result.put_member("name", item);
+			if (start.object())
+			{
+				result.put_member("object", start);
+				json new_start = start[item];
+				if (new_start.object() || new_start.array()) {
+					start = start[item];
+				}
+				else {
+					result.put_member("value", new_start);
+				}
+			}
+			else if (start.array())
+			{
+				result.put_member("array", start);
+				if (is_number(item)) {
+					int idx = std::strtol(item.c_str(), nullptr, 10);
+					if (idx < 0 or idx >= start.size()) {
+						return result;
+					}
+					start = start.get_element(idx);
+				}
+				else {
+					std::vector<std::string> item_ops = split(item, '-');
+					if (item_ops.size() < 2) {
+						return result;
+					}
+					std::string operation = item_ops[0];
+					std::string member_name = item_ops[1];
+					if (operation == "last")
+					{
+						int index_lists = start.size() - 1;
+						if (index_lists < 0)
+							return result;
+						else {
+							json v = start.get_element(index_lists);
+							result.put_member("value", v);
+							return v;;
+						}
+					}
+					else if (operation == "first")
+					{
+						int index_lists = start.size() - 1;
+						if (index_lists < 0)
+							return result;
+						else {
+							json v = start.get_element(index_lists);
+							result.put_member("value", v);
+							return v;;
+						}
+					}
+					else if (operation == "count")
+					{
+						int count = 0;
+						for (auto ch : start) {
+							if (ch.has_member(member_name)) {
+								count++;
+							}
+						}
+						result.put_member("value", count);
+						return result;
+					}
+					else if (operation == "min")
+					{
+						json mvalue;
+						for (auto ch : start) {
+							if (ch.has_member(member_name)) {
+								if (mvalue.empty()) {
+									mvalue = ch[member_name];
+								}
+								else {
+									json tvalue = ch[member_name];
+									if (tvalue.lt(mvalue)) {
+										mvalue = tvalue;
+									}
+								}
+							}
+						}
+						result.put_member("value", mvalue);
+						return result;
+					}
+					else if (operation == "max")
+					{
+						json mvalue;
+						for (auto ch : start) {
+							if (ch.has_member(member_name)) {
+								if (mvalue.empty()) {
+									mvalue = ch[member_name];
+								}
+								else {
+									json tvalue = ch[member_name];
+									if (tvalue.gt(mvalue)) {
+										mvalue = tvalue;
+									}
+								}
+							}
+						}
+						result.put_member("value", mvalue);
+						return result;
+					}
+					else if (operation == "sum")
+					{
+						double rsum = 0;
+						for (auto ch : start) {
+							if (ch.has_member(member_name)) {
+								double t = (double)ch[member_name];
+								t += rsum;
+							}
+						}
+						result.put_member("value", rsum);
+						return result;
+					}
+					else if (operation == "avg")
+					{
+						double rsum = 0;
+						double count = 0;
+						for (auto ch : start) {
+							if (ch.has_member(member_name)) {
+								double t = (double)ch[member_name];
+								t += rsum;
+								count += 1.0;
+							}
+						}
+						double vvalue = 0;
+						if (count > 0.0) {
+							vvalue = rsum / count;
+						}
+						else {
+							vvalue = 0.0;
+						}
+						result.put_member("value", rsum);
+						return result;
+					}
+					else if (operation == "cat")
+					{
+						std::string sresult = "";
+						std::string comma = "";
+						for (auto ch : start) {
+							if (ch.has_member(member_name)) {
+								sresult += comma;
+								sresult += (std::string)ch[member_name];
+								comma = ", ";
+							}
+						}
+						result.put_member("value", sresult);
+						return result;
+					}
+				}
+			}
+		}
+		return result;
 	}
 
 

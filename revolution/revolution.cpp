@@ -38,7 +38,7 @@ int __stdcall WinMain(HINSTANCE hInstance,
 
 	auto dpiResult = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
-	CoInitialize(NULL);
+	CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	INITCOMMONCONTROLSEX ice;
 	ZeroMemory(&ice, sizeof(ice));
 	ice.dwSize = sizeof(ice);

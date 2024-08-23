@@ -248,6 +248,9 @@ namespace corona {
 // consisting of multiple classes
 #include "corona-database-engine.hpp"
 
+// publicity stunts..  this implements the OLE drag and drop of us as a source target
+#include "corona-publicity-stunts.hpp"
+
 // the communication bus allows all the services in a corona 
 // application to talk to each.  It also implements publish / subscribe.
 // it's not really complete per se, but it is so much easier now

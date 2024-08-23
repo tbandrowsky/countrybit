@@ -78,6 +78,8 @@ namespace corona
 
 		bool ready_for_polling;
 
+		json system_proof;
+
 		comm_bus(std::string _application_name, 
 			std::string _application_folder_name,
 			std::string _config_file_name_base)
@@ -162,6 +164,83 @@ namespace corona
 			}
 
 			log_command_stop("comm_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		}
+
+		void prove_system()
+		{
+			timer tx;
+			date_time t = date_time::now();
+
+			json_parser jp;
+			json system_proof = jp.create_object();
+
+			log_job_start("verification", "verification start", t, __FILE__, __LINE__);
+
+			test_object(system_proof, app);
+			test_file(system_proof, app);
+			test_data_block(system_proof, app);
+			test_json_node(system_proof, app);
+			test_json_table(system_proof, app);
+
+			bool system_works = system_proof.prove_member("is_true");
+			if (not system_works) {
+				json top_level = system_proof["table"];
+				json reason = failure_analysis(system_proof, top_level, "is_true");
+				log_warning("This system does not work because:", __FILE__, __LINE__);
+				log_json(reason);
+			}
+			else 
+			{
+				log_job_stop("verification", "verification complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+		}
+
+		// if the 
+
+		json failure_analysis(json _root_proof, json _current, std::string _proposition)
+		{
+			json_parser jp;
+			json reason;
+
+			reason = jp.create_object();
+
+			if (_current.object()) {
+				bool is_true = (bool)_current[_proposition];
+				if (is_true) 
+				{
+					json reason = jp.from_integer(1);
+					return reason;
+				}
+				else 
+				{
+					json dependencies = _current[ "dependencies" ];
+					auto depmembers = dependencies.get_members();
+					for (auto depm : depmembers) {
+						std::string test_name = depm.first;
+						bool is_true = (bool)_current[test_name];
+						if (not is_true) {
+							json underlying = depm.second;
+							if (underlying.array()) {
+								for (auto path : underlying) {
+									json source_chumpy = _root_proof.query(path);
+									if (source_chumpy.object()) {
+										json fail_reason = failure_analysis(_root_proof,
+											source_chumpy["object"],
+											source_chumpy["name"]
+										);
+										if (fail_reason.object())
+										{
+											return fail_reason;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			reason = jp.from_integer(1);
+			return reason;
 		}
 
 		void poll_db()

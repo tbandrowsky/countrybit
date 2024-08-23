@@ -212,6 +212,9 @@ namespace corona
 
 		relative_ptr_type append(file* _file, std::function<int64_t(int64_t _size)> _allocator)
 		{
+
+			on_write();
+
 			int size = bytes.get_size();
 
 			date_time start_time = date_time::now();
@@ -1195,7 +1198,7 @@ namespace corona
 		json proof_assertions = jp.create_object();
 
 		date_time start;
-		timer tx;
+		timer tx;	
 
 		system_monitoring_interface::global_mon->log_command_start("test json", "start", start, __FILE__, __LINE__);
 
@@ -1215,6 +1218,7 @@ namespace corona
 		else 
 			parse_result.put_member("object_parse", true);		
 
+		parse_result.prove_member("is_true");
 		proof_assertions.put_member("parse", parse_result);
 
 		json member_result = jp.create_object();
@@ -1257,6 +1261,7 @@ namespace corona
 			member_result.put_member("negative_membership", true);
 		}
 
+		member_result.prove_member("is_true");
 		proof_assertions.put_member("member_access", member_result);
 
 		json comparison_results = jp.create_object();
@@ -1344,6 +1349,8 @@ namespace corona
 			comparison_results.put_member("< weak_order, multiple keys", true);
 		}
 
+		comparison_results.prove_member("is_true");
+
 		proof_assertions.put_member("comparison", comparison_results);
 
 		json array_results = jp.create_object();
@@ -1395,6 +1402,7 @@ namespace corona
 		{
 			parse_result.put_member("array_enumeration", true);
 		}
+		parse_result.prove_member("is_true");
 
 		if (not test_array.any([](json& _item) {
 			return (double)_item["age"] > 35;
@@ -1418,6 +1426,7 @@ namespace corona
 			array_results.put_member("all", true);
 		}
 
+		parse_result.prove_member("is_true");
 		proof_assertions.put_member("array", array_results);
 
 		corona::json test_woh1 = jp.parse_object(R"({ "name":"bill", "age":42 })");
@@ -1498,6 +1507,7 @@ namespace corona
 		}
 
 		comparison_results.put_member("weak_ordered_hash", weak_ordered_hashing_test);
+		comparison_results.prove_member("is_true");
 
 		json test_array_group = test_array.array_to_object(
 			[](json& _item)->std::string {
@@ -1536,6 +1546,7 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("array group failed", __FILE__, __LINE__);
 		}
 
+		proof_assertions.prove_member("is_true");
 		_proof.put_member("object", proof_assertions);
 
 		system_monitoring_interface::global_mon->log_command_start("test json", "stop", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1599,7 +1610,7 @@ namespace corona
 		{
 			proof_assertions.put_member("roundtrip", true);
 		}
-
+		proof_assertions.prove_member("is_true");
 		_proof.put_member("file", proof_assertions);
 
 		system_monitoring_interface::global_mon->log_function_stop("file proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1619,7 +1630,6 @@ namespace corona
 
 		json dependencies = jp.parse_object(R"( 
 { 
-	"block": [ "object", "file.roundtrip" ],
 	"assignment" : [ "object.parse" ],
     "read" : [ "file.read" ],
 	"write" : [ "file.write" ],
@@ -1729,8 +1739,12 @@ namespace corona
 			growth.put_member("neighbor", true);
 		}
 
+		growth.prove_member("is_true");
 		proof_assertion.put_member("grow", growth);
+		proof_assertion.prove_member("is_true");
+
 		_proof.put_member("block", proof_assertion);
+		proof_assertion.prove_member("is_true");
 
 		system_monitoring_interface::global_mon->log_function_stop("block proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
@@ -1748,7 +1762,6 @@ namespace corona
 
 		json dependencies = jp.parse_object(R"( 
 { 
-	"node": [ "block", "object" ],
     "read" : [ "block.read" ],
 	"write" : [ "block.write" ],
 	"append" : [ "block.append" ]
@@ -1874,6 +1887,8 @@ namespace corona
 			jnfirst.data.put_element(i, (double)(i * 10));
 		}
 		proof_assertion.put_member("grow", grow_success);
+		proof_assertion.prove_member("is_true");
+
 		_proof.put_member("node", proof_assertion);
 
 		system_monitoring_interface::global_mon->log_function_stop("node proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1894,7 +1909,6 @@ namespace corona
 
 		json dependencies = jp.parse_object(R"( 
 { 
-	"node": [ "node", "object" ],
     "put" : [ "node.write", "node.append" ],
 	"get" : [ "node.read" ],
 	"create" : [ "node.read", "node.write" ],
@@ -1903,7 +1917,7 @@ namespace corona
 	"for_each" : [ "node.read", "node.write" ],
 	"group" : [ "object.group" ],
 	"any" : [ "object.any" ],
-	"all" : [ "object.all" ],
+	"all" : [ "object.all" ]
 }
 )");
 
@@ -2255,6 +2269,20 @@ namespace corona
 		proof_assertion.put_member("any", any_success);
 		proof_assertion.put_member("all", all_success);
 		proof_assertion.put_member("erase", erase_success);
+
+		bool general_success = put_success
+			and get_success
+			and create_success
+			and select_array_success
+			and for_each_success
+			and group_success
+			and any_success
+			and all_success
+			and erase_success;
+
+		proof_assertion.put_member("is_true", general_success);
+
+		_proof.put_member("table", proof_assertion);
 	}
 }
 
