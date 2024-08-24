@@ -455,8 +455,9 @@ namespace corona
 	{
 		block_id	block_type;
 		int64_t		block_location;
-		int64_t		data_length;
 		int64_t		data_location;
+		int64_t		data_capacity;
+		int64_t		data_size;
 		int64_t		next_block;
 	};
 

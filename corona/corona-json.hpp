@@ -751,7 +751,7 @@ namespace corona
 			return good;
 		}
 
-		std::string to_json_typed_string()
+		std::string to_json_typed_escaped()
 		{
 			std::string json_str = to_json_typed();
 			std::string escaped_json_str = "";
@@ -776,7 +776,7 @@ namespace corona
 			return escaped_json_str;
 		}
 
-		std::string to_json_string()
+		std::string to_json_escaped()
 		{
 			std::string json_str = to_json();
 			std::string escaped_json_str = "";
@@ -807,6 +807,36 @@ namespace corona
 				return index_lists;
 			}
 			return -1; // No bits set
+		}
+
+		int64_t get_weak_ordered_hash_maximum(std::vector<std::string> _keys)
+		{
+			uint16_t key_values[3];
+
+			int64_t hash = 0;
+
+			if (not object())
+				return 0;
+
+			int64_t num;
+			int idx = 0;
+
+			for (auto ikey : _keys)
+			{
+				key_values[idx] = std::numeric_limits<uint16_t>::max();
+				idx++;
+				if (idx >= 2)
+					break;
+			}
+
+			hash = 0;
+			for (int i = 0; i < idx; i++)
+			{
+				hash += key_values[i];
+				hash *= 65535;
+			}
+
+			return hash;
 		}
 
 		int64_t get_weak_ordered_hash( std::vector<std::string> _keys )
@@ -2633,6 +2663,8 @@ namespace corona
 
 		const char* eat_white(const char* _src)
 		{
+			if (not _src)
+				return _src;
 			while (std::isspace(*_src))
 				_src++;
 			return _src;
@@ -3100,7 +3132,7 @@ namespace corona
 					}
 					_src = eat_white(_src);
 				}
-				_src++;
+				if (*_src) _src++;
 			}
 			*_modified = _src;
 			return result;
@@ -3137,7 +3169,7 @@ namespace corona
 	{
 		json default_params;
 		json result = fn(*function_this, default_params);
-		return result.to_json_typed_string();
+		return result.to_json_typed_escaped();
 	}
 
 	std::string json_function::get_type_prefix()

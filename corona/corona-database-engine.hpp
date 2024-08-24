@@ -603,10 +603,15 @@ private:
 			timer method_timer;
 			json_parser jp;
 			json j = jp.parse_object(_text);
-			json check_request = create_system_request(j);
-			json checked =  check_class(check_request);
 			json response;
+			json check_request = create_system_request(j);
 
+			if (j.error()) {
+				response = create_response(check_request, false, "parse error on class", j, method_timer.get_elapsed_seconds());
+				return response;
+			}
+
+			json checked =  check_class(check_request);
 
 			date_time start_time = date_time::now();
 			timer tx;
