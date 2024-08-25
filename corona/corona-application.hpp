@@ -81,12 +81,23 @@ namespace corona
 			global_job_queue->waitForEmptyQueue();
 		}
 
-		std::string get_user_name()
+		std::string get_user_display_name()
 		{
 			std::string result;
 			char buffer[UNLEN + 1] = {};
 			DWORD max_length = sizeof(buffer) / sizeof(char);
 			if (GetUserNameEx(NameDisplay, buffer, &max_length)) {
+				result = buffer;
+			}
+			return result;
+		}
+
+		std::string get_user_account_name()
+		{
+			std::string result;
+			char buffer[UNLEN + 1] = {};
+			DWORD max_length = sizeof(buffer) / sizeof(char);
+			if (GetUserNameEx(NameUserPrincipal, buffer, &max_length)) {
 				result = buffer;
 			}
 			return result;

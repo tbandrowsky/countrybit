@@ -123,7 +123,7 @@ namespace corona
 
 			prove_system();
 
-			log_information("Welcome to the Revolution " + app->get_user_name());
+			log_information("Welcome to the Revolution " + app->get_user_display_name());
 			log_information("Your first super secret order:");
 			log_information("remember to drink your ovaltine");
 
@@ -201,10 +201,6 @@ namespace corona
 		{
 			"Name" : "Apparel",
 			"Description" : "Let them know you are Revolution ready with these trinkets!"
-		},
-		{
-			"Name" : "Artists",
-			"Description" : "You may not like our politics but we love you!"
 		}
 	]
 }
@@ -225,8 +221,9 @@ namespace corona
 			log_information("			   is running.");
 			log_information("revolution_styles.json -  similar to CSS, lets you change colors and fonts.");
 			log_information("revolution_pages.json -  forms, plus the commands back to the engine.");
-			log_information("						  edit this guy to change the way the app works.");
-			log_information("Corona will place your user token and the database in username/appdata/roaming/revolution");
+			log_information("                         edit this guy to change the way the app works.");
+			log_information("user token and the database are in");
+			log_information("username/appdata/roaming/revolution");
 			log_information("The schema, styles and pages files can be edited live.");
 			log_information("We are cleared for departure.");
 		}

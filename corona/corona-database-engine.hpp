@@ -1686,7 +1686,7 @@ private:
 											json new_object = new_object_template.clone();
 											new_object.erase_member("ObjectId");
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
-											datomatic.push_back(new_object);
+											datomatic.push_back(new_object["Data"]);
 											if (datomatic.size() > 5) {
 												timer tx;
 												json cor = create_system_request(datomatic);
