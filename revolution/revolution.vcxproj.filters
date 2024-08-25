@@ -66,14 +66,14 @@
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="reparations_schema.json" />
-    <CopyFileToFolders Include="donation_data\itcont.csv" />
-    <CopyFileToFolders Include="donation_data\cn.csv" />
-    <CopyFileToFolders Include="donation_data\cm.csv" />
-    <CopyFileToFolders Include="donation_data\ccl.csv" />
     <CopyFileToFolders Include="config.json" />
-    <CopyFileToFolders Include="donation_finder_pages.json" />
-    <CopyFileToFolders Include="donation_finder_schema.json" />
-    <CopyFileToFolders Include="donation_finder_styles.json" />
+    <CopyFileToFolders Include="revolution_pages.json" />
+    <CopyFileToFolders Include="revolution_schema.json" />
+    <CopyFileToFolders Include="revolution_styles.json" />
+    <CopyFileToFolders Include="itcont.csv" />
+    <CopyFileToFolders Include="ccl.csv" />
+    <CopyFileToFolders Include="cm.csv" />
+    <CopyFileToFolders Include="cn.csv" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

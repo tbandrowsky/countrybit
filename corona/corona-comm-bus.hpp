@@ -89,6 +89,15 @@ namespace corona
 			date_time t = date_time::now();
 
 			log_command_start("comm_bus", "startup", t);
+
+			log_information("Thank you for flying with Country Video Games");
+
+			log_information("This is your Capt for this flight, TJ Bandrowsky,");
+			log_information("and we'll be travelling aboard the Corona Engine, ");
+			log_information("a new stack for Windows application developement.");
+			log_information("Corona is going to do a formal verification of itself");
+			log_information("and this environment.");
+
 			ready_for_polling = false;
 
 			app = std::make_shared<application>();
@@ -113,6 +122,10 @@ namespace corona
 			app_menu = std::make_shared<menu_item>();
 
 			prove_system();
+
+			log_information("Welcome to the Revolution " + app->get_user_name());
+			log_information("Your first super secret order:");
+			log_information("remember to drink your ovaltine");
 
 			database_schema_file_name = _config_file_name_base + "schema.json";
 			database_config_file_name = "config.json";
@@ -165,7 +178,57 @@ namespace corona
 				ready_for_polling = true;
 			}
 
+			log_information("Folks, the system test is just about complete.");
+
+			json_parser jp;
+			json advertisement = jp.parse_object(R"(
+{
+	"CountryVideoGames" : {
+	"Motto" : "For the few free who stand against the many.",
+	"Reminders" : [
+		{
+			"Name" : "Art",
+			"Description" : "This application is art"
+		},
+		{
+			"Name" : "Cigarettes",
+			"Description" : "Enjoy a Country Video Games smooth smoke!"
+		},
+		{
+			"Name" : "Whiskey",
+			"Description" : "Country Video Games bourbon makes life better!"
+		},
+		{
+			"Name" : "Apparel",
+			"Description" : "Let them know you are Revolution ready with these trinkets!"
+		},
+		{
+			"Name" : "Artists",
+			"Description" : "You may not like our politics but we love you!"
+		}
+	]
+}
+)");
+			log_json(advertisement);
+
+			log_information("Thank you for flying Country Video Games.");
+			log_information("Your pilot for this show is TJ Bandrowsky.");
+			log_information("We are cleared for departure.");
 			log_command_stop("comm_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			log_information("Corona now running the application 'Revolution'");
+			log_information("This is an immensely modable system.");
+			log_information("config.json - for networking stuff in the next release.");
+			log_information("revolution_schema.json - the database configuration is here.");
+			log_information("			   you can add your own data sources.");
+			log_information("			   add new fields, all while the system");
+			log_information("			   is running.");
+			log_information("revolution_styles.json -  similar to CSS, lets you change colors and fonts.");
+			log_information("revolution_pages.json -  forms, plus the commands back to the engine.");
+			log_information("						  edit this guy to change the way the app works.");
+			log_information("Corona will place your user token and the database in username/appdata/roaming/revolution");
+			log_information("The schema, styles and pages files can be edited live.");
+			log_information("We are cleared for departure.");
 		}
 
 		void prove_system()
@@ -190,6 +253,7 @@ namespace corona
 				json reason = failure_analysis(system_proof, top_level, "is_true");
 				log_warning("This system does not work because:", __FILE__, __LINE__);
 				log_json(reason);
+				log_job_stop("verification", "verification failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else 
 			{
@@ -218,8 +282,8 @@ namespace corona
 					json dependencies = _current[ "dependencies" ];
 					auto depmembers = dependencies.get_members();
 					for (auto depm : depmembers) {
-						std::string test_name = depm.first;
-						bool is_true = (bool)_current[test_name];
+						std::string assertion_name = depm.first;
+						bool is_true = (bool)_current[assertion_name];
 						if (not is_true) {
 							json underlying = depm.second;
 							if (underlying.array()) {
@@ -235,6 +299,11 @@ namespace corona
 											return fail_reason;
 										}
 									}
+									std::string test_name = _current["test_name"];
+									json fail_reason = jp.create_object();
+									fail_reason.put_member("object", assertion_name);
+									fail_reason.put_member("name", test_name);
+									return fail_reason;
 								}
 							}
 						}

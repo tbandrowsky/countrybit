@@ -86,7 +86,7 @@ namespace corona
 			std::string result;
 			char buffer[UNLEN + 1] = {};
 			DWORD max_length = sizeof(buffer) / sizeof(char);
-			if (GetUserNameEx(NameUserPrincipal, buffer, &max_length)) {
+			if (GetUserNameEx(NameDisplay, buffer, &max_length)) {
 				result = buffer;
 			}
 			return result;

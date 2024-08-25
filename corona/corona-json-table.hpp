@@ -1316,10 +1316,12 @@ namespace corona
 
 		json proof_assertions = jp.create_object();
 
-		date_time start;
+		proof_assertions.put_member("test_name", "object");
+
+		date_time start = date_time::now();
 		timer tx;	
 
-		system_monitoring_interface::global_mon->log_function_start("test json", "start", start, __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_function_start("test object", "start", start, __FILE__, __LINE__);
 
 		json parse_result = jp.create_object();
 
@@ -1660,8 +1662,10 @@ namespace corona
 		timer tx;
 		system_monitoring_interface::global_mon->log_function_start("file proof", "start",  st, __FILE__, __LINE__);
 
+
 		json_parser jp;
 		json proof_assertions = jp.create_object();
+		proof_assertions.put_member("test_name", "file");
 
 		file dtest = _app->create_file(FOLDERID_Documents, "corona_data_block_test.ctb");
 
@@ -1729,6 +1733,7 @@ namespace corona
 
 		json_parser jp;
 		json proof_assertion = jp.create_object();
+		proof_assertion.put_member("test_name", "data_block");
 
 		json dependencies = jp.parse_object(R"( 
 { 
@@ -1867,6 +1872,7 @@ namespace corona
 
 		json_parser jp;
 		json proof_assertion = jp.create_object();
+		proof_assertion.put_member("test_name", "json_node");
 
 		json dependencies = jp.parse_object(R"( 
 { 
@@ -2009,6 +2015,7 @@ namespace corona
 
 		json_parser jp;
 		json proof_assertion = jp.create_object();
+		proof_assertion.put_member("test_name", "json_table");
 
 		json dependencies = jp.parse_object(R"( 
 { 
@@ -2382,6 +2389,8 @@ namespace corona
 		proof_assertion.put_member("is_true", general_success);
 
 		_proof.put_member("table", proof_assertion);
+
+		system_monitoring_interface::global_mon->log_function_stop("table proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 }
 
