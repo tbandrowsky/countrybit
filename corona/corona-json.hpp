@@ -818,6 +818,12 @@ namespace corona
 			if (not object())
 				return 0;
 
+			if (_keys.size() == 1) {
+				json jm = get_member(_keys[0]);
+				if (jm.is_int64())
+					return 1000000000i64;
+			}
+
 			int64_t num;
 			int idx = 0;
 
@@ -841,6 +847,13 @@ namespace corona
 
 		int64_t get_weak_ordered_hash( std::vector<std::string> _keys )
 		{
+
+			if (_keys.size() == 1) {
+				json jm = get_member(_keys[0]);
+				if (jm.is_int64())
+					return jm.get_int64s();
+			}
+
 			uint16_t key_values[3];
 
 			int64_t hash = 0;
@@ -871,7 +884,7 @@ namespace corona
 					else if (m.is_int64())
 					{
 						int64_t v = (int64_t)m;
-						x = getMaxBitIndex(v);
+						x = static_cast<short>(std::log10(v)*100);
 					}
 					else
 					{

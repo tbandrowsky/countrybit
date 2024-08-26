@@ -351,15 +351,6 @@ namespace corona
 			return r;
 		}
 
-		int64_t write_index_list(file* _file, int _index)
-		{
-			auto offset = offsetof(index_header_struct, index_lists) + _index * sizeof(list_block_header);
-			auto size = sizeof(list_block_header);
-			memcpy(bytes.get_ptr() + offset, (const char*)&data + offset, size);
-			auto r = write_piece(_file, offset, size);
-			return r;
-		}
-
 		int64_t write_count(file* _file)
 		{
 			auto offset = offsetof(index_header_struct, count);
@@ -368,6 +359,12 @@ namespace corona
 			auto r = write_piece(_file, offset, size);
 			return r;
 		}
+
+	};
+
+	class json_tree_node : public poco_node<tree_block_header> 
+	{
+	public:
 
 	};
 
@@ -385,24 +382,22 @@ namespace corona
 		std::vector<std::string> key_fields;
 		json header_key;
 
-		int64_t hash_divisor;
-
-		int64_t get_hash_index(json _key)
-		{
-			int64_t hash_code = _key.get_weak_ordered_hash(this->key_fields);
-			int64_t block_index = hash_code / hash_divisor;
-			if (block_index >= table_header.data.index_lists.capacity()) {
-				block_index = table_header.data.index_lists.capacity() - 1;
-			}
-			return block_index;
-		}
-
 		relative_ptr_type create_header()
 		{
 			json_parser jp;
 			table_header.append(database_file.get(), [this](int64_t _size) {
 				return allocate(_size);
 				});
+
+			json_tree_node jtn;
+
+			jtn.data = {};
+			table_header.data.data_root_location = jtn.append(database_file.get(), [this](int64_t _size) {
+				return allocate(_size);
+				});
+
+			table_header.write(database_file.get(), nullptr, nullptr);
+
 			return table_header.header.block_location;
 		}
 
@@ -410,24 +405,58 @@ namespace corona
 		{
 			json_node jn;
 
-			auto block_index = get_hash_index(_key);
-			auto& list_start = table_header.data.index_lists[block_index];
+			int64_t hash_code = _key.get_weak_ordered_hash(key_fields);
 
-			if (list_start.first_block)
+			json_tree_node jtn;
+			
+			int64_t location = table_header.data.data_root_location;
+			if (location <= 0)
+				return null_row;
+
+			list_block_header* list_start = nullptr;
+
+			while (location > 0) {
+				auto status = jtn.read(database_file.get(), location);
+				if (status <= 0)
+					return null_row;
+				if (hash_code == jtn.data.hash_code) 
+				{
+					list_start = &jtn.data.index_list;
+					break;
+				}
+				else if (hash_code < jtn.data.hash_code) 
+				{
+					location = jtn.data.left_block;
+				}
+				else if (hash_code > jtn.data.hash_code) 
+				{
+					location = jtn.data.left_block;
+				}
+			}
+
+			if (list_start == nullptr) {
+				return null_row;
+			}
+
+			if (list_start->first_block)
 			{
-				auto block_location = list_start.first_block;
+				auto block_location = list_start->first_block;
 
 				// see if our block is in here, if so, update it.
 
 				while (block_location)
 				{
 					jn.read(database_file.get(), block_location);
-					if (_key.compare(jn.data) == 0) {
+					int c = _key.compare(jn.data);
+					if (c == 0) {
 						return block_location;
 					}
-					else
+					else if (c < 0)
 					{
 						block_location = jn.header.next_block;
+					}
+					else {
+						return null_row;
 					}
 				}
 			};
@@ -442,15 +471,67 @@ namespace corona
 			system_monitoring_interface::global_mon->log_json_start("json_table", "put_node", start_time, __FILE__, __LINE__);
 		
 			json node_key = _data.extract(key_fields);
-			auto block_index = get_hash_index(node_key);
+			int64_t hash_code = node_key.get_weak_ordered_hash(key_fields);
 
-			auto &list_start = table_header.data.index_lists[ block_index ];
+			json_tree_node jtn;
+			json_tree_node ntn;
+			bool ntn_created = false;
+
+			int64_t location = table_header.data.data_root_location;
+
+			list_block_header* list_start = nullptr;
+
+			while (location > 0) 
+			{
+				auto status = jtn.read(database_file.get(), location);
+
+				if (status < 0) {
+					system_monitoring_interface::global_mon->log_warning("node read failed");
+				}
+
+				if (hash_code == jtn.data.hash_code)
+				{
+					list_start = &jtn.data.index_list;
+					break;
+				}
+				else if (hash_code < jtn.data.hash_code)
+				{
+					location = jtn.data.left_block;
+					if (location == 0) {
+						ntn_created = true;
+						ntn.data.hash_code = hash_code;
+						ntn.data.index_list = {};
+						ntn.data.left_block = 0;
+						ntn.data.right_block = 0;
+						list_start = &ntn.data.index_list;
+						ntn.data.right_block = ntn.append(database_file.get(), [this](int64_t _size) -> int64_t {
+							return allocate(_size);
+						});
+					}
+				}
+				else if (hash_code > jtn.data.hash_code)
+				{
+					location = jtn.data.left_block;
+					if (location == 0) {
+						ntn_created = true;
+						ntn.data.hash_code = hash_code;
+						ntn.data.index_list = {};
+						ntn.data.left_block = 0;
+						ntn.data.right_block = 0;
+						list_start = &ntn.data.index_list;
+						jtn.data.right_block = ntn.append(database_file.get(), [this](int64_t _size) -> int64_t {
+							return allocate(_size);
+						});
+					}
+				}
+			}
+
 			json_node new_node;
 			int64_t previous_block_location = 0;
 
-			if (list_start.first_block) 
+			if (list_start->first_block) 
 			{
-				auto block_location = list_start.first_block;
+				auto block_location = list_start->first_block;
 				json_node current_node;
 
 				// see if our block is in here, if so, update it.
@@ -458,8 +539,47 @@ namespace corona
 				while (block_location) 
 				{
 					current_node.read(database_file.get(), block_location);
-					if (node_key.compare(current_node.data) == 0) {
+
+					int comparison = node_key.compare(current_node.data);
+
+					if (comparison > current_node.header.data_hashcode) {
+						// if not, then we must come up with one.
+						new_node.header.data_hashcode = hash_code;
+						new_node.data = _data;
+						new_node.header.next_block = block_location;
+						new_node.append(database_file.get(), [this](int64_t _size) -> int64_t {
+							return allocate(_size);
+							});
+
+						if (previous_block_location > 0) {
+							// and now we gotta put this node into our index
+							json_node previous_node;
+							previous_node.read(database_file.get(), previous_block_location);
+							previous_node.header.next_block = new_node.header.block_location;
+							previous_node.write(database_file.get(),
+								[this](int64_t _size) -> void {
+									return free(_size);
+								},
+								[this](int64_t _size) -> int64_t {
+									return allocate(_size);
+								});
+						}
+						else 
+						{
+							list_start->first_block = new_node.header.block_location;
+							if (ntn_created) {
+								ntn.write(database_file.get(), nullptr, nullptr);
+							}
+							jtn.write(database_file.get(), nullptr, nullptr);
+						}
+
+						table_header.data.count++;
+						table_header.write_count(database_file.get());
+						return new_node;
+					}
+					else if (comparison == 0) {
 						current_node.data = _data;
+						current_node.header.data_hashcode = hash_code;
 						current_node.write(database_file.get(),
 							[this](int64_t location) -> void {
 								free(location);
@@ -469,6 +589,8 @@ namespace corona
 							}
 						);
 						system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						table_header.data.count++;
+						table_header.write_count(database_file.get());
 						return current_node;
 					}
 					else 
@@ -479,6 +601,7 @@ namespace corona
 				}
 
 				// if not, then we must come up with one.
+				new_node.header.data_hashcode = hash_code;
 				new_node.data = _data;
 				new_node.append(database_file.get(), [this](int64_t _size) -> int64_t {
 					return allocate(_size);
@@ -495,20 +618,31 @@ namespace corona
 					[this](int64_t _size) -> int64_t {
 						return allocate(_size);
 					});
-				list_start.last_block = new_node.header.block_location;
+				list_start->last_block = new_node.header.block_location;
 				table_header.data.count++;
 				table_header.write_count(database_file.get());
-				table_header.write_index_list(database_file.get(), block_index);
+
+				if (ntn_created) {
+					ntn.write(database_file.get(), nullptr, nullptr);
+				}
+				jtn.write(database_file.get(), nullptr, nullptr);
 			}
 			else 
 			{
+				new_node.header.data_hashcode = hash_code;
 				new_node.data = _data;
 				new_node.append(database_file.get(), [this](int64_t _size) -> int64_t {
 					return allocate(_size);
 					});
-				list_start.first_block = list_start.last_block = new_node.header.block_location;
+				list_start->first_block = list_start->last_block = new_node.header.block_location;
 				table_header.data.count++;
 				table_header.write_count(database_file.get());
+
+				if (ntn_created) {
+					ntn.write(database_file.get(), nullptr, nullptr);
+				}
+				jtn.write(database_file.get(), nullptr, nullptr);
+
 			}
 			system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -531,15 +665,44 @@ namespace corona
 			auto jn = get_node(_file, _node_location);
 
 			json node_key = jn.data.extract(key_fields);
-			auto block_index = get_hash_index(node_key);
+			int64_t hash_code = node_key.get_weak_ordered_hash(key_fields);
 
-			auto& list_start = table_header.data.index_lists[block_index];
-			json_node new_node;
+			json_tree_node jtn;
 
-			if (list_start.first_block)
+			int64_t location = table_header.data.data_root_location;
+
+			if (location <= 0)
+				return;
+
+			list_block_header* list_start = nullptr;
+
+			while (location > 0) 
+			{
+				auto status = jtn.read(database_file.get(), location);
+				if (status <= 0)
+					return;
+				if (hash_code == jtn.data.hash_code)
+				{
+					list_start = &jtn.data.index_list;
+					break;
+				}
+				else if (hash_code < jtn.data.hash_code)
+				{
+					location = jtn.data.left_block;
+				}
+				else if (hash_code > jtn.data.hash_code)
+				{
+					location = jtn.data.left_block;
+				}
+			}
+
+			if (!list_start)
+				return;
+
+			if (list_start->first_block)
 			{
 				int64_t previous_block_location = 0;
-				int64_t block_location = list_start.first_block;
+				int64_t block_location = list_start->first_block;
 				json_node current_node;
 
 				// see if our block is in here, if so, update it.
@@ -561,29 +724,26 @@ namespace corona
 									return allocate(_size);
 								});
 						}
-						if (list_start.first_block == block_location)
-							list_start.first_block = current_node.header.next_block;
-						if (list_start.last_block == block_location)
-							list_start.last_block == current_node.header.next_block;
+						if (list_start->first_block == block_location)
+							list_start->first_block = current_node.header.next_block;
+						if (list_start->last_block == block_location)
+							list_start->last_block == current_node.header.next_block;
 						current_node.erase([this](int64_t _location) {
 							free(_location);
 						});
 						block_location = 0;
 					}
-					else {
+					else 
+					{
 						previous_block_location = block_location;
 						block_location = current_node.header.next_block;
 					}
 				}
 
 				// and now we gotta put this node into our index
-				table_header.data.count++;
+				table_header.data.count--;
 				table_header.write_count(database_file.get());
-				table_header.write_index_list(database_file.get(), block_index);
 			}
-
-			table_header.data.count--;
-			table_header.write_count(database_file.get());
 
 			system_monitoring_interface::global_mon->log_json_stop("json_table", "get_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
@@ -718,12 +878,6 @@ namespace corona
 			json_parser jp;
 			header_key = jp.create_object();
 			table_header = {};
-			int64_t maximum_hash_value = header_key.get_weak_ordered_hash_maximum(_key_fields);
-			hash_divisor = 1;
-			while (maximum_hash_value > table_header.data.index_lists.capacity()) {
-				maximum_hash_value /= 2;
-				hash_divisor *= 2;
-			}
 		}
 
 		json_table(const json_table& _src) 
@@ -943,6 +1097,48 @@ namespace corona
 			int64_t count;
 		};
 
+		void visit(relative_ptr_type _node, for_each_result& _result, json _key_fragment, std::function<relative_ptr_type(int _index, json_node& _item)> _process_clause)
+		{
+			json_tree_node jtn;
+
+			if (_node <= 0)
+				return;
+
+			if (jtn.read(database_file.get(), _node) <= 0) {
+				return;
+			}
+
+			visit(jtn.data.left_block, _result, _key_fragment, _process_clause);
+
+			auto list_start = jtn.data.index_list;
+			auto block_location = list_start.first_block;
+
+			// see if our block is in here, if so, update it.
+
+			json_node jn;
+
+			while (block_location)
+			{
+				jn.read(database_file.get(), block_location);
+				if (_key_fragment.empty() or _key_fragment.compare(jn.data) == 0) {
+					relative_ptr_type process_result = _process_clause(_result.count, jn);
+					if (process_result > 0)
+					{
+						_result.is_any = true;
+						_result.count++;
+					}
+					else
+					{
+						_result.is_all = false;
+					}
+				}
+				block_location = jn.header.next_block;
+			}
+
+			visit(jtn.data.right_block, _result, _key_fragment, _process_clause);
+
+		}
+
 		for_each_result for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json_node& _item)> _process_clause)
 		{
 
@@ -952,42 +1148,9 @@ namespace corona
 			timer tx;
 			system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
 
-			auto index_lists = get_hash_index(_key_fragment);
 			result.is_all = true;
-			int64_t item_index = 0;
 
-			while (index_lists < table_header.data.index_lists.capacity())
-			{
-				auto& list_start = table_header.data.index_lists[index_lists];
-				json_node jn;
-
-				if (list_start.first_block)
-				{
-					auto block_location = list_start.first_block;
-
-					// see if our block is in here, if so, update it.
-
-					while (block_location)
-					{
-						jn.read(database_file.get(), block_location);
-						if (_key_fragment.compare(jn.data) == 0) {
-							relative_ptr_type process_result = _process_clause(item_index, jn);
-							if (process_result > 0)
-							{
-								result.is_any = true;
-								result.count++;
-								item_index++;
-							}
-							else 
-							{
-								result.is_all = false;
-							}
-						}
-						block_location = jn.header.next_block;
-					}
-				}
-				index_lists++;
-			}
+			visit(table_header.data.data_root_location, result, _key_fragment, _process_clause);
 
 			system_monitoring_interface::global_mon->log_table_stop("table", "for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -996,133 +1159,70 @@ namespace corona
 
 		for_each_result for_each(std::function<relative_ptr_type(int _index, json_node& _item)> _process_clause)
 		{
-
-			for_each_result result = {};
-
-			date_time start_time = date_time::now();
-			timer tx;
-			system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
-
-			int64_t index_lists = 0;
-			int64_t item_index = 0;
-			result.is_all = true;
-
-			while (index_lists < table_header.data.index_lists.capacity())
-			{
-				auto& list_start = table_header.data.index_lists[index_lists];
-				json_node jn;
-
-				if (list_start.first_block)
-				{
-					auto block_location = list_start.first_block;
-
-					// see if our block is in here, if so, update it.
-
-					while (block_location)
-					{
-						jn.read(database_file.get(), block_location);
-						relative_ptr_type process_result = _process_clause(item_index, jn);
-						if (process_result > 0)
-						{
-							result.is_any = true;
-							result.count++;
-							item_index++;
-						}
-						else
-						{
-							result.is_all = false;
-						}
-						block_location = jn.header.next_block;
-					}
-				}
-				index_lists++;
-			}
-
-			system_monitoring_interface::global_mon->log_table_stop("table", "for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			return result;
+			json empty_key;
+			return for_each( empty_key, _process_clause);
 		}
 
 		for_each_result for_each(std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
-
-			for_each_result result = {};
-
-			date_time start_time = date_time::now();
-			timer tx;
-			system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
-
-			int64_t index_lists = 0;
-			int64_t item_index = 0;
-			result.is_all = true;
-
-			while (index_lists < table_header.data.index_lists.capacity())
-			{
-				auto& list_start = table_header.data.index_lists[index_lists];
-				json_node jn;
-
-				if (list_start.first_block)
-				{
-					auto block_location = list_start.first_block;
-
-					// see if our block is in here, if so, update it.
-
-					while (block_location)
-					{
-						jn.read(database_file.get(), block_location);
-						relative_ptr_type process_result = _process_clause(item_index, jn.data);
-						if (process_result > 0)
-						{
-							result.is_any = true;
-							result.count++;
-							item_index++;
-						}
-						else
-						{
-							result.is_all = false;
-						}
-						block_location = jn.header.next_block;
-					}
-				}
-				index_lists++;
-			}
-
-			system_monitoring_interface::global_mon->log_table_stop("table", "for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			return result;
+			json empty_key;
+			return for_each(empty_key, [_process_clause](int _index, json_node& _jn) {
+				return _process_clause(_index, _jn.data);
+				});
 		}
-
 
 		json get_first(json _key_fragment, std::function<bool(json& _src)> _fn)
 		{
+			json empty;
 			date_time start_time = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_table_start("table", "get_first", start_time, __FILE__, __LINE__);
 
-			auto index_lists = get_hash_index(_key_fragment);
+			auto index_lists = 0;
 
-			while (index_lists < table_header.data.index_lists.capacity())
-			{
-				auto& list_start = table_header.data.index_lists[index_lists];
-				json_node jn;
+			json_node jn;
 
-				if (list_start.first_block)
+			int64_t hash_code = _key_fragment.get_weak_ordered_hash(key_fields);
+
+			json_tree_node jtn;
+
+			int64_t location = table_header.data.data_root_location;
+			if (location <= 0)
+				return empty;
+
+			list_block_header* list_start = nullptr;
+
+			int64_t last_node_location = 0;
+
+			while (location > 0) {
+				auto status = jtn.read(database_file.get(), location);
+				if (status <= 0)
+					return empty;
+				if (hash_code == jtn.data.hash_code)
 				{
-					auto block_location = list_start.first_block;
-
-					// see if our block is in here, if so, update it.
-
-					while (block_location)
-					{
-						jn.read(database_file.get(), block_location);
-						if (not _fn or _fn(jn.data)) {
-							return jn.data;
-						}
-						block_location = jn.header.next_block;
-					}
+					list_start = &jtn.data.index_list;
+					break;
 				}
-				index_lists++;
+				else if (hash_code < jtn.data.hash_code)
+				{
+					location = jtn.data.left_block;
+				}
+				else if (hash_code > jtn.data.hash_code)
+				{
+					location = jtn.data.left_block;
+				}
 			}
+
+			if (list_start == nullptr) {
+				return empty;
+			}
+
+			if (list_start->first_block)
+			{
+				auto block_location = list_start->first_block;
+				jn.read(database_file.get(), block_location);
+				return jn.data;
+			};
 
 			system_monitoring_interface::global_mon->log_table_stop("table", "get_first complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 

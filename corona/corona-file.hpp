@@ -53,12 +53,21 @@ namespace corona
 		int64_t		last_block;
 	};
 
+	struct tree_block_header
+	{
+	public:
+		int64_t				hash_code;
+		int64_t				left_block;
+		int64_t				right_block;
+		list_block_header	index_list;
+	};
+
 	struct index_header_struct
 	{
 	public:
 		int64_t								 count;
 		iarray<list_block_header, 62>		 free_lists;
-		iarray<list_block_header, 65536>	 index_lists;
+		int64_t								 data_root_location;
 	};
 
 	template <typename data> class poco_node;

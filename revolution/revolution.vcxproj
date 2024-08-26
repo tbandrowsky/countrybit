@@ -431,6 +431,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);;Comctl32.lib;Winhttp.lib;D2d1.lib;dwrite.lib;Shlwapi.lib;DXGI.lib;D3D11.lib;DXGUID.lib;Dwmapi.lib;bcrypt.lib;httpapi.lib;mfplat.lib; mf.lib; mfreadwrite.lib; mfuuid.lib; zxing.lib;Secur32.lib</AdditionalDependencies>
+      <StackReserveSize>10000000</StackReserveSize>
+      <StackCommitSize>1000000</StackCommitSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -468,6 +470,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);;Comctl32.lib;Winhttp.lib;D2d1.lib;dwrite.lib;Shlwapi.lib;DXGI.lib;D3D11.lib;DXGUID.lib;Dwmapi.lib;bcrypt.lib;httpapi.lib</AdditionalDependencies>
+      <StackReserveSize>10000000</StackReserveSize>
+      <StackCommitSize>1000000</StackCommitSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -552,6 +556,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);;Comctl32.lib;Winhttp.lib;D2d1.lib;dwrite.lib;Shlwapi.lib;DXGI.lib;D3D11.lib;DXGUID.lib;Dwmapi.lib;bcrypt.lib;httpapi.lib;opencv_core4.lib; mfplat.lib; mf.lib; mfreadwrite.lib; mfuuid.lib; zxing.lib; Secur32.lib</AdditionalDependencies>
+      <StackReserveSize>10000000</StackReserveSize>
+      <StackCommitSize>1000000</StackCommitSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

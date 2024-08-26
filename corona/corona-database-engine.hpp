@@ -1686,15 +1686,15 @@ private:
 											json new_object = new_object_template.clone();
 											new_object.erase_member("ObjectId");
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
-											datomatic.push_back(new_object["Data"]);
-											if (datomatic.size() > 5) {
+											datomatic.push_back(new_object);
+											if (datomatic.size() > 100) {
 												timer tx;
 												json cor = create_system_request(datomatic);
 												json put_result =  put_object(cor);
 												if (put_result["Success"]) {
 													double e = tx.get_elapsed_seconds();
 													total_row_count += datomatic.size();
-													std::string msg = std::format("import {0} rows @{1} rows / second, {2} rows total", datomatic.size() / e, datomatic.size(), total_row_count);
+													std::string msg = std::format("import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
 													system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
 													datomatic = jp.create_array();
 												}
@@ -2610,9 +2610,9 @@ private:
 					scope_lock lock_one(objects_rw_lock);
 
 					obj.put_member("Active", true);
-					relative_ptr_type put_result =  objects.put(obj);
+					relative_ptr_type put_result =  objects.put(dobj);
 
-					json cobj = object_definition.extract({ "ClassName", "ObjectId" });
+					json cobj = dobj.extract({ "ClassName", "ObjectId" });
 					cobj.put_member("Active", true);
 					relative_ptr_type classput_result =  class_objects.put(cobj);
 				}
