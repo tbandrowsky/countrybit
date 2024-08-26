@@ -426,11 +426,13 @@ namespace corona
 				}
 				else if (hash_code < jtn.data.hash_code) 
 				{
+					list_start = &jtn.data.index_list;
 					location = jtn.data.left_block;
 				}
 				else if (hash_code > jtn.data.hash_code) 
 				{
-					location = jtn.data.left_block;
+					list_start = &jtn.data.index_list;
+					location = jtn.data.right_block;
 				}
 			}
 
@@ -504,14 +506,14 @@ namespace corona
 						ntn.data.left_block = 0;
 						ntn.data.right_block = 0;
 						list_start = &ntn.data.index_list;
-						ntn.data.right_block = ntn.append(database_file.get(), [this](int64_t _size) -> int64_t {
+						jtn.data.left_block = ntn.append(database_file.get(), [this](int64_t _size) -> int64_t {
 							return allocate(_size);
 						});
 					}
 				}
 				else if (hash_code > jtn.data.hash_code)
 				{
-					location = jtn.data.left_block;
+					location = jtn.data.right_block;
 					if (location == 0) {
 						ntn_created = true;
 						ntn.data.hash_code = hash_code;
@@ -555,6 +557,7 @@ namespace corona
 							// and now we gotta put this node into our index
 							json_node previous_node;
 							previous_node.read(database_file.get(), previous_block_location);
+							new_node.header.next_block = previous_node.header.next_block;
 							previous_node.header.next_block = new_node.header.block_location;
 							previous_node.write(database_file.get(),
 								[this](int64_t _size) -> void {
@@ -572,7 +575,7 @@ namespace corona
 							}
 							jtn.write(database_file.get(), nullptr, nullptr);
 						}
-
+						// this is an insert, so we do write the count
 						table_header.data.count++;
 						table_header.write_count(database_file.get());
 						return new_node;
@@ -589,8 +592,7 @@ namespace corona
 							}
 						);
 						system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						table_header.data.count++;
-						table_header.write_count(database_file.get());
+						// this is an update, so we do not write the count
 						return current_node;
 					}
 					else 
@@ -619,6 +621,7 @@ namespace corona
 						return allocate(_size);
 					});
 				list_start->last_block = new_node.header.block_location;
+				// this is an insert, so we do write the count
 				table_header.data.count++;
 				table_header.write_count(database_file.get());
 
@@ -635,6 +638,8 @@ namespace corona
 					return allocate(_size);
 					});
 				list_start->first_block = list_start->last_block = new_node.header.block_location;
+				// this is an insert, so we do write the count
+
 				table_header.data.count++;
 				table_header.write_count(database_file.get());
 
@@ -692,7 +697,7 @@ namespace corona
 				}
 				else if (hash_code > jtn.data.hash_code)
 				{
-					location = jtn.data.left_block;
+					location = jtn.data.right_block;
 				}
 			}
 
@@ -728,6 +733,7 @@ namespace corona
 							list_start->first_block = current_node.header.next_block;
 						if (list_start->last_block == block_location)
 							list_start->last_block == current_node.header.next_block;
+						jtn.write(database_file.get(), nullptr, nullptr);
 						current_node.erase([this](int64_t _location) {
 							free(_location);
 						});
@@ -1097,7 +1103,7 @@ namespace corona
 			int64_t count;
 		};
 
-		void visit(relative_ptr_type _node, for_each_result& _result, json _key_fragment, std::function<relative_ptr_type(int _index, json_node& _item)> _process_clause)
+		void visit(relative_ptr_type _node, for_each_result& _result, json _key_fragment, std::function<relative_ptr_type(int _index, json_node& _item)>& _process_clause)
 		{
 			json_tree_node jtn;
 
@@ -1245,7 +1251,8 @@ namespace corona
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data);
-					if (not new_item.empty() and !new_item.is_member("Skip", "this")) {
+					if (not new_item.empty() and 
+						not new_item.is_member("Skip", "this")) {
 						pja->append_element(new_item);
 						count = 1;
 					}
@@ -1273,7 +1280,8 @@ namespace corona
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data.data);
-					if (not new_item.empty() and !new_item.is_member("Skip", "this")) {
+					if (not new_item.empty() and 
+						not new_item.is_member("Skip", "this")) {
 						pja->append_element(new_item);
 						count = 1;
 					}
@@ -2167,13 +2175,15 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("get failed.", __FILE__, __LINE__);
 			get_success = false;
 		}
+		else {
 
-		test_read.set_compare_order( {"ObjectId"} );
+			test_read.set_compare_order({ "ObjectId" });
 
-		if (test_read.compare(test_write))
-		{
-			system_monitoring_interface::global_mon->log_warning("get did not match put.", __FILE__, __LINE__);
-			get_success = false;
+			if (test_read.compare(test_write))
+			{
+				system_monitoring_interface::global_mon->log_warning("get did not match put.", __FILE__, __LINE__);
+				get_success = false;
+			}
 		}
 
 		json db_contents =  test_table.select([](int _index, json& item) {
@@ -2453,17 +2463,6 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("any fails.", __FILE__, __LINE__);
 			any_success = false;
 		}
-
-		put_success = true,
-		get_success = true,
-		create_success = true,
-		erase_success = true,
-		select_array_success = true,
-		for_each_success = true,
-		group_success = true,
-		any_success = true,
-		all_success = true,
-		erase_success = false;
 
 		proof_assertion.put_member("put", put_success);
 		proof_assertion.put_member("get", get_success);

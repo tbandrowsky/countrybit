@@ -867,12 +867,12 @@ namespace corona
 					{
 						double v = (double)m;
 						if (v < 0) v = 0;
-						x = static_cast<short>(std::log10(v));
+						x = static_cast<short>(std::log10(v) * 100);
 					}
 					else if (m.is_int64())
 					{
 						int64_t v = (int64_t)m;
-						x = static_cast<short>(std::log10(v));
+						x = static_cast<short>(std::log10(v) * 100);
 					}
 					else
 					{
@@ -894,10 +894,13 @@ namespace corona
 			}
 
 			hash = 0;
-			for (int i = 0; i < idx; i++)
+			for (int i = 0; i < idx; )
 			{
 				hash += key_values[i];
-				hash *= 65535;
+				i++;
+				if (i < idx) {
+					hash *= 65535;
+				}
 			}
 
 			return hash;
