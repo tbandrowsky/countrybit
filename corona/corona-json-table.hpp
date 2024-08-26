@@ -542,7 +542,7 @@ namespace corona
 
 					int comparison = node_key.compare(current_node.data);
 
-					if (comparison > current_node.header.data_hashcode) {
+					if (comparison > 0) {
 						// if not, then we must come up with one.
 						new_node.header.data_hashcode = hash_code;
 						new_node.data = _data;
@@ -1226,7 +1226,6 @@ namespace corona
 
 			system_monitoring_interface::global_mon->log_table_stop("table", "get_first complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			json empty;
 			return empty;
 		}
 
