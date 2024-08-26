@@ -466,6 +466,153 @@ namespace corona
 			return -1i64;
 		}
 
+		int64_t rotate_tree_left(json_tree_node& a)
+		{
+			json_tree_node p;
+			if (a.data.parent_block) 
+			{
+				p.read(database_file.get(), a.data.parent_block);
+				if (p.data.right_block == a.header.block_location)
+				{
+					/*
+					B.Left = A
+					P.right = B
+					A.Right = null
+					*/
+					json_tree_node b;
+					b.read(database_file.get(), a.data.right_block);
+
+					p.data.right_block = b.header.block_location;
+					p.write(database_file.get(), nullptr, nullptr);
+
+					// new anchor
+					b.data.right_block = a.header.block_location;
+					a.data.right_block = 0;
+					a.data.parent_block = b.header.block_location;
+					b.write(database_file.get(), nullptr, nullptr);
+					a.write(database_file.get(), nullptr, nullptr);
+
+					return b.header.block_location;
+				}
+				else if (p.data.left_block == a.header.block_location)
+				{
+					json_tree_node b;
+					b.read(database_file.get(), a.data.right_block);
+
+					p.data.left_block = b.header.block_location;
+					p.write(database_file.get(), nullptr, nullptr);
+
+					// new anchor
+					b.data.left_block = a.header.block_location;
+					a.data.right_block = 0;
+					a.data.parent_block = b.header.block_location;
+					b.write(database_file.get(), nullptr, nullptr);
+					a.write(database_file.get(), nullptr, nullptr);
+
+					return b.header.block_location;
+				}
+				else {
+					return -1;
+				}
+			}
+			else 
+			{
+			/*
+				B.Left = A
+				P.right = B
+				A.Right = null
+				*/
+				json_tree_node b;
+				b.read(database_file.get(), a.data.right_block);
+
+				table_header.data.data_root_location = a.data.right_block;
+				table_header.write(database_file.get(), nullptr, nullptr);
+
+				// new anchor
+				b.data.left_block = a.header.block_location;
+				a.data.right_block = 0;
+				a.data.parent_block = b.header.block_location;
+				b.write(database_file.get(), nullptr, nullptr);
+				a.write(database_file.get(), nullptr, nullptr);
+
+				return b.header.block_location;
+
+			}
+		}
+
+		int64_t rotate_tree_right(json_tree_node& a)
+		{
+			json_tree_node p;
+			if (a.data.parent_block)
+			{
+				p.read(database_file.get(), a.data.parent_block);
+				if (p.data.right_block == a.header.block_location)
+				{
+					/*
+					B.Left = A
+					P.right = B
+					A.Right = null
+					*/
+					json_tree_node b;
+					b.read(database_file.get(), a.data.left_block);
+
+					p.data.right_block = b.header.block_location;
+					p.write(database_file.get(), nullptr, nullptr);
+
+					// new anchor
+					b.data.right_block = a.header.block_location;
+					a.data.left_block = 0;
+					a.data.parent_block = b.header.block_location;
+					b.write(database_file.get(), nullptr, nullptr);
+					a.write(database_file.get(), nullptr, nullptr);
+
+					return b.header.block_location;
+
+				}
+				else if (p.data.left_block == a.header.block_location)
+				{
+					json_tree_node b;
+					b.read(database_file.get(), a.data.left_block);
+
+					p.data.left_block = b.header.block_location;
+					p.write(database_file.get(), nullptr, nullptr);
+
+					// new anchor
+					b.data.right_block = a.header.block_location;
+					a.data.left_block = 0;
+					a.data.parent_block = b.header.block_location;
+					b.write(database_file.get(), nullptr, nullptr);
+					a.write(database_file.get(), nullptr, nullptr);
+
+					return b.header.block_location;
+				}
+			}
+			else
+			{
+				/*
+					B.Left = A
+					P.right = B
+					A.Right = null
+					*/
+				json_tree_node b;
+				b.read(database_file.get(), a.data.left_block);
+
+				table_header.data.data_root_location = a.data.left_block;
+				table_header.write(database_file.get(), nullptr, nullptr);
+
+				// new anchor
+				b.data.parent_block = 0;
+				b.data.right_block = a.header.block_location;
+				a.data.left_block = 0;
+				a.data.parent_block = b.header.block_location;
+				b.write(database_file.get(), nullptr, nullptr);
+				a.write(database_file.get(), nullptr, nullptr);
+
+				return b.header.block_location;
+
+			}
+		}
+
 		json_node put_node(json _data)
 		{
 			date_time start_time = date_time::now();
@@ -483,8 +630,12 @@ namespace corona
 
 			list_block_header* list_start = nullptr;
 
+			int node_travel_count = 0;
+			int block_travel_count = 0;
+
 			while (location > 0) 
 			{
+				node_travel_count++;
 				auto status = jtn.read(database_file.get(), location);
 
 				if (status < 0) {
@@ -499,10 +650,12 @@ namespace corona
 				else if (hash_code < jtn.data.hash_code)
 				{
 					location = jtn.data.left_block;
+					jtn.write(database_file.get(), nullptr, nullptr);
 					if (location == 0) {
 						ntn_created = true;
 						ntn.data.hash_code = hash_code;
 						ntn.data.index_list = {};
+						ntn.data.parent_block = jtn.data.parent_block;
 						ntn.data.left_block = 0;
 						ntn.data.right_block = 0;
 						list_start = &ntn.data.index_list;
@@ -510,22 +663,35 @@ namespace corona
 							return allocate(_size);
 						});
 					}
+					else if (jtn.data.right_block == 0) 
+					{
+						auto new_jtn = rotate_tree_right(jtn);
+						location = new_jtn;
+					}
 				}
 				else if (hash_code > jtn.data.hash_code)
 				{
 					location = jtn.data.right_block;
+					jtn.write(database_file.get(), nullptr, nullptr);
 					if (location == 0) {
 						ntn_created = true;
 						ntn.data.hash_code = hash_code;
 						ntn.data.index_list = {};
+						ntn.data.parent_block = jtn.data.parent_block;
 						ntn.data.left_block = 0;
 						ntn.data.right_block = 0;
 						list_start = &ntn.data.index_list;
 						jtn.data.right_block = ntn.append(database_file.get(), [this](int64_t _size) -> int64_t {
 							return allocate(_size);
-						});
+							});
+					}
+					else if (jtn.data.left_block == 0)
+					{
+						auto new_jtn = rotate_tree_left(jtn);
+						location = new_jtn;
 					}
 				}
+
 			}
 
 			json_node new_node;
@@ -536,6 +702,7 @@ namespace corona
 				auto block_location = list_start->first_block;
 				json_node current_node;
 
+				block_travel_count++;
 				// see if our block is in here, if so, update it.
 
 				while (block_location) 
@@ -649,6 +816,10 @@ namespace corona
 				jtn.write(database_file.get(), nullptr, nullptr);
 
 			}
+
+			std::string msg = std::format("put: node_travels:{0}, block_search:{1}", node_travel_count, block_travel_count);
+			system_monitoring_interface::global_mon->log_information(msg, __FILE__, __LINE__);
+
 			system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return new_node;

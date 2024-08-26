@@ -57,6 +57,7 @@ namespace corona
 	{
 	public:
 		int64_t				hash_code;
+		int64_t				parent_block;
 		int64_t				left_block;
 		int64_t				right_block;
 		list_block_header	index_list;
