@@ -486,6 +486,7 @@ namespace corona
 					p.write(database_file.get(), nullptr, nullptr);
 
 					// new anchor
+					b.data.parent_block = a.data.parent_block;
 					b.data.right_block = a.header.block_location;
 					a.data.right_block = 0;
 					a.data.parent_block = b.header.block_location;
@@ -503,6 +504,7 @@ namespace corona
 					p.write(database_file.get(), nullptr, nullptr);
 
 					// new anchor
+					b.data.parent_block = a.data.parent_block;
 					b.data.left_block = a.header.block_location;
 					a.data.right_block = 0;
 					a.data.parent_block = b.header.block_location;
@@ -525,14 +527,15 @@ namespace corona
 				json_tree_node b;
 				b.read(database_file.get(), a.data.right_block);
 
-				table_header.data.data_root_location = a.data.right_block;
+				table_header.data.data_root_location = b.header.block_location;
 				table_header.write(database_file.get(), nullptr, nullptr);
 
 				// new anchor
+				b.data.parent_block = 0;
 				b.data.left_block = a.header.block_location;
+				b.write(database_file.get(), nullptr, nullptr);
 				a.data.right_block = 0;
 				a.data.parent_block = b.header.block_location;
-				b.write(database_file.get(), nullptr, nullptr);
 				a.write(database_file.get(), nullptr, nullptr);
 
 				return b.header.block_location;
@@ -597,7 +600,7 @@ namespace corona
 				json_tree_node b;
 				b.read(database_file.get(), a.data.left_block);
 
-				table_header.data.data_root_location = a.data.left_block;
+				table_header.data.data_root_location = b.header.block_location;
 				table_header.write(database_file.get(), nullptr, nullptr);
 
 				// new anchor

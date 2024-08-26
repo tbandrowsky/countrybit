@@ -2279,7 +2279,7 @@ private:
 								}
 								descendants.put_member(acn, acn);
 								ancestor_class.put_member("Descendants", descendants);
-								 classes.put(ancestor_class);
+								classes.put(ancestor_class);
 							}
 						}
 					}
