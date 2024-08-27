@@ -379,6 +379,7 @@ namespace corona
 		bool enable_json_table_logging = false;
 		bool enable_json_poco_logging = false;
 		bool enable_json_block_logging = false;
+		bool enable_put_logging = true;
 
 		virtual void log_base_block_start(int _indent, std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
@@ -584,6 +585,41 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
+		}
+
+		virtual void log_put(std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
+		{
+
+			if (not enable_put_logging)
+				return;
+
+			::EnterCriticalSection(&log_lock);
+
+			try {
+
+				std::cout << Logcommand;
+				std::cout << std::format("{0:<5}", " ");
+				std::cout << Logapi;
+				std::cout << std::format("{0:<5}", " ");
+				std::cout << Logfunction;
+				std::cout << std::format("{0:<20}", " ");
+				std::cout << Loginformation;
+				std::cout << std::format("{0:<80}{1:<10}{2:<25}",
+					_message,
+					GetCurrentThreadId(),
+					std::format("{0} secs", _elapsed_seconds)
+				);
+				file_line(_file, _line);
+				std::cout << Normal;
+				std::cout << std::endl;
 			}
 			catch (std::exception exc)
 			{
