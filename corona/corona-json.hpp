@@ -842,11 +842,10 @@ namespace corona
 					{
 						std::string temp = (std::string)m;
 						int sz = temp.size();
-						if (sz > 8) {
-							sz = 8;
-						}
-						for (int i = 0; i < sz; i++) {
-							hash += temp[i];
+						for (int i = 0; i < 8; i++) {
+							if (i < sz) {
+								hash += temp[i];
+							}
 							hash *= 256;
 						}
 					}
@@ -902,11 +901,10 @@ namespace corona
 					{
 						std::string temps = (std::string)m;
 						int sz = temps.size();
-						if (sz > 4) {
-							sz = 4;
-						}
-						for (int i = 0; i < sz; i++) {
-							temp += temps[i];
+						for (int i = 0; i < 4; i++) {
+							if (i < sz) {
+								temp += temps[i];
+							}
 							temp *= 256;
 						}
 					}
@@ -963,11 +961,10 @@ namespace corona
 					{
 						std::string temps = (std::string)m;
 						int sz = temps.size();
-						if (sz > 2) {
-							sz = 2;
-						}
-						for (int i = 0; i < sz; i++) {
-							temp += temps[i];
+						for (int i = 0; i < 2; i++) {
+							if (i < sz) {
+								temp += temps[i];
+							}
 							temp *= 256;
 						}
 					}
@@ -2326,12 +2323,15 @@ namespace corona
 
 		bool prove_member(std::string _member, std::vector<std::string> _evidences)
 		{
+			bool is_true = true;
 			for (auto ev : _evidences)
 			{
 				json& me = *this;
 				json memb = me[ev];
-				bool is_true;
-				if (memb.object()) 
+				if (ev == "test_name" || ev == "dependencies") {
+					continue;
+				}
+				else if (memb.object()) 
 				{
 					is_true = (bool)memb[_member];
 				}
