@@ -1515,13 +1515,21 @@ private:
 
 			if (_schema.has_member("Classes"))
 			{
-				json class_array = _schema["Classes"];
+				date_time start_section = date_time::now();
+				timer txsect;
+				system_monitoring_interface::global_mon->log_job_section_start("", "Classes", start_section, __FILE__, __LINE__);
 
+				json class_array = _schema["Classes"];
 				if (class_array.array())
 				{
 					for (int i = 0; i < class_array.size(); i++)
 					{
+						date_time start_class = date_time::now();
+						timer txc;
+
 						json class_definition = class_array.get_element(i);
+						system_monitoring_interface::global_mon->log_function_start("put class", class_definition["ClassName"], start_class, __FILE__, __LINE__);
+
 						try {
 
 							json put_class_request = create_system_request(class_definition);
@@ -1545,8 +1553,10 @@ private:
 						{
 							system_monitoring_interface::global_mon->log_exception(exc);
 						}
+						system_monitoring_interface::global_mon->log_function_stop("put class", class_definition["ClassName"], txc.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
+				system_monitoring_interface::global_mon->log_job_section_stop("", "Classes", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else
 			{
@@ -1555,30 +1565,49 @@ private:
 
 			if (_schema.has_member("Users"))
 			{
+				date_time start_section = date_time::now();
+				timer txsect;
+				system_monitoring_interface::global_mon->log_job_section_start("", "Users", start_section, __FILE__, __LINE__);
 				json user_array = _schema["Users"];
 				if (user_array.array())
 				{
 					for (int i = 0; i < user_array.size(); i++)
 					{
+						date_time start_user = date_time::now();
+						timer txu;
+
 						json user_definition = user_array.get_element(i);
+						system_monitoring_interface::global_mon->log_function_start("put user", user_definition["UserName"], start_user, __FILE__, __LINE__);
 						json put_user_request = create_system_request(user_definition);
-						 create_user(put_user_request);
+						create_user(put_user_request);
+					    system_monitoring_interface::global_mon->log_function_stop("put class", user_definition["UserName"], txu.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
+				system_monitoring_interface::global_mon->log_job_section_stop("", "Users", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 	
 			if (_schema.has_member("Datasets"))
 			{
+				date_time start_section = date_time::now();
+				timer txsect;
+				system_monitoring_interface::global_mon->log_job_section_start("", "Datasets", start_section, __FILE__, __LINE__);
+				json user_array = _schema["Users"];
+
 				json script_array = _schema["Datasets"];
 				if (script_array.array())
 				{
 					for (int i = 0; i < script_array.size(); i++)
 					{
+						date_time start_dataset = date_time::now();
+						timer txs;
+
 						json script_definition = script_array.get_element(i);
 						json script_key = jp.create_object();
 						script_key.copy_member("DatasetName", script_definition);
 						script_key.copy_member("DatasetVersion", script_definition);
 						script_key.put_member("ClassName", "SysDatasets");
+
+						system_monitoring_interface::global_mon->log_job_section_start("DataSet", script_definition["DatasetName"], start_dataset, __FILE__, __LINE__);
 
 						bool script_run = (bool)script_definition["RunOnChange"];
 						json existing_script =  acquire_object(script_key);
@@ -1687,7 +1716,7 @@ private:
 											new_object.erase_member("ObjectId");
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
 											datomatic.push_back(new_object);
-											if (datomatic.size() > 100) {
+											if (datomatic.size() > 1000) {
 												timer tx;
 												json cor = create_system_request(datomatic);
 												json put_result =  put_object(cor);
@@ -1780,7 +1809,12 @@ private:
 							else
 								system_monitoring_interface::global_mon->log_information(save_script_result["Message"]);
 						}
+
+						system_monitoring_interface::global_mon->log_job_section_stop("DataSet", script_definition["DatasetName"], txs.get_elapsed_seconds(), __FILE__, __LINE__);
+
+
 					}
+					system_monitoring_interface::global_mon->log_job_section_stop("DataSets", "", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 
