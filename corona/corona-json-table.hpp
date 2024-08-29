@@ -514,7 +514,7 @@ namespace corona
 
 		void get_hash_bytes(json& _node_key, hashbytes& _bytes)
 		{
-			int64_t hash_code = _node_key.get_weak_ordered_hash(key_fields);
+			uint64_t hash_code = _node_key.get_weak_ordered_hash(key_fields);
 			int64_t thash_code = hash_code;
 
 			_bytes.resize(8);
@@ -595,9 +595,30 @@ namespace corona
 				auto block_location = list_start->first_block;
 				json_node current_node, previous_node;
 
-				// see if our block is in here, if so, update it.
-
+				// first, check to see if this is larger than anything at the end of the block, then we'll just append it...
 				int comparison = 0;
+
+				if (list_start->last_block) {
+					current_node.read(database_file.get(), list_start->last_block);
+					comparison = node_key.compare(current_node.data);
+					if (comparison > 0) {
+						system_monitoring_interface::global_mon->log_put("append new node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						new_node.data = _data;
+						new_node.header.next_block = 0;
+						new_node.append(database_file.get(), [this](int64_t _size) {
+							return allocate(_size);
+							});
+						current_node.header.next_block = new_node.header.block_location;
+						current_node.write(database_file.get(), nullptr, nullptr);
+						list_start->last_block = new_node.header.block_location;
+						jtn.write(database_file.get(), nullptr, nullptr);
+						table_header.data.count++;
+						table_header.write_count(database_file.get());
+						return new_node;
+					}
+				}
+
+				// see if our block is in here, if so, update it.
 
 				while (block_location)
 				{
@@ -1230,7 +1251,7 @@ namespace corona
 
 			json_node jn;
 
-			int64_t hash_code = _key_fragment.get_weak_ordered_hash(key_fields);
+			uint64_t hash_code = _key_fragment.get_weak_ordered_hash(key_fields);
 
 			json_tree_node jtn;
 
@@ -1695,19 +1716,19 @@ namespace corona
 
 		bool weak_ordered_hashing_test = true;
 
-		int64_t hash_woh1 = test_woh1.get_weak_ordered_hash({ "name","age" });
-		int64_t hash_woh2 = test_woh2.get_weak_ordered_hash({ "name","age" });
-		int64_t hash_woh3 = test_woh3.get_weak_ordered_hash({ "name","age" });
-		int64_t hash_woh4 = test_woh4.get_weak_ordered_hash({ "name","age" });
-		int64_t hash_woh5 = test_woh5.get_weak_ordered_hash({ "name","age" });
-		int64_t hash_woh6 = test_woh6.get_weak_ordered_hash({ "name","age" });
+		uint64_t hash_woh1 = test_woh1.get_weak_ordered_hash({ "name","age" });
+		uint64_t hash_woh2 = test_woh2.get_weak_ordered_hash({ "name","age" });
+		uint64_t hash_woh3 = test_woh3.get_weak_ordered_hash({ "name","age" });
+		uint64_t hash_woh4 = test_woh4.get_weak_ordered_hash({ "name","age" });
+		uint64_t hash_woh5 = test_woh5.get_weak_ordered_hash({ "name","age" });
+		uint64_t hash_woh6 = test_woh6.get_weak_ordered_hash({ "name","age" });
 
-		int64_t hash_woh1s = test_woh1.get_weak_ordered_hash({ "name" });
-		int64_t hash_woh2s = test_woh2.get_weak_ordered_hash({ "name" });
-		int64_t hash_woh3s = test_woh3.get_weak_ordered_hash({ "name" });
-		int64_t hash_woh4s = test_woh4.get_weak_ordered_hash({ "name" });
-		int64_t hash_woh5s = test_woh5.get_weak_ordered_hash({ "name" });
-		int64_t hash_woh6s = test_woh6.get_weak_ordered_hash({ "name" });
+		uint64_t hash_woh1s = test_woh1.get_weak_ordered_hash({ "name" });
+		uint64_t hash_woh2s = test_woh2.get_weak_ordered_hash({ "name" });
+		uint64_t hash_woh3s = test_woh3.get_weak_ordered_hash({ "name" });
+		uint64_t hash_woh4s = test_woh4.get_weak_ordered_hash({ "name" });
+		uint64_t hash_woh5s = test_woh5.get_weak_ordered_hash({ "name" });
+		uint64_t hash_woh6s = test_woh6.get_weak_ordered_hash({ "name" });
 
 		if (hash_woh1 != hash_woh2) {
 			system_monitoring_interface::global_mon->log_warning("weak ordered hash == failed", __FILE__, __LINE__);

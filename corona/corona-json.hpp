@@ -809,101 +809,188 @@ namespace corona
 			return -1; // No bits set
 		}
 
-		int64_t get_weak_ordered_hash_maximum(std::vector<std::string> _keys)
+		uint64_t get_weak_ordered_hash1(std::vector<std::string> _keys)
 		{
-			uint16_t key_values[3];
+			// single key case
 
-			int64_t hash = 0;
+			uint64_t hash = 0;
 
 			if (not object())
 				return 0;
 
-			int64_t num;
-			int idx = 0;
-
-			for (auto ikey : _keys)
+			for (int i = 0; i < 1; i++)
 			{
-				key_values[idx] = std::numeric_limits<uint16_t>::max();
-				idx++;
-				if (idx >= 2)
-					break;
-			}
-
-			hash = 0;
-			for (int i = 0; i < idx; i++)
-			{
-				hash += key_values[i];
-				hash *= 65535;
+				auto ikey = _keys[i];
+				if (has_member(ikey)) {
+					auto m = get_member(ikey);
+					if (m.is_datetime())
+					{
+						date_time dt = (date_time)(m);
+						hash = dt.get_time_t();
+					}
+					else if (m.is_double())
+					{
+						double v = (double)m;
+						if (v < 0) v = 0;
+						hash = static_cast<short>(std::log10(v) * 1000);
+					}
+					else if (m.is_int64())
+					{
+						hash = (int64_t)m;
+					}
+					else
+					{
+						std::string temp = (std::string)m;
+						int sz = temp.size();
+						if (sz > 8) {
+							sz = 8;
+						}
+						for (int i = 0; i < sz; i++) {
+							hash += temp[i];
+							hash *= 256;
+						}
+					}
+				}
 			}
 
 			return hash;
 		}
 
-		int64_t get_weak_ordered_hash( std::vector<std::string> _keys )
+		uint64_t get_weak_ordered_hash2(std::vector<std::string> _keys)
 		{
+			// single key case
 
-			uint16_t key_values[3];
-
-			int64_t hash = 0;
+			uint64_t hash = 0;
 
 			if (not object())
 				return 0;
 
-			int64_t num;
-			int idx = 0;
+			bool flippo;
 
-			for (auto ikey : _keys)
+			for (int i = 0; i < 2; i++)
 			{
-				int x = 0;
+				auto ikey = _keys[i];
+				hash <<= 32;
+				uint32_t temp = 0;
 
 				if (has_member(ikey)) {
 					auto m = get_member(ikey);
 					if (m.is_datetime())
 					{
 						date_time dt = (date_time)(m);
-						x = dt.year() - 1900;
+						LARGE_INTEGER li;
+						li.QuadPart= dt.get_time_t();
+						temp = li.HighPart;
 					}
 					else if (m.is_double())
 					{
 						double v = (double)m;
 						if (v < 0) v = 0;
-						x = static_cast<short>(std::log10(v) * 100);
+						double x = static_cast<short>(std::log10(v) * 1000);
+
+						LARGE_INTEGER li;
+						li.QuadPart = x;
+						temp = li.HighPart;
 					}
 					else if (m.is_int64())
 					{
-						int64_t v = (int64_t)m;
-						x = static_cast<short>(std::log10(v) * 100);
+						LARGE_INTEGER li;
+						li.QuadPart = m;
+						temp = li.HighPart;
 					}
 					else
 					{
-						std::string temp = (std::string)m;
-						if (temp.size() > 1)
-						{
-							x = temp[0] * 256 + temp[1];
+						std::string temps = (std::string)m;
+						int sz = temps.size();
+						if (sz > 4) {
+							sz = 4;
 						}
-						else if (temp.size() > 0)
-						{
-							x = temp[0] * 256;
+						for (int i = 0; i < sz; i++) {
+							temp += temps[i];
+							temp *= 256;
 						}
 					}
 				}
-				key_values[idx] = x;
-				idx++;
-				if (idx >= 2)
-					break;
-			}
-
-			hash = 0;
-			for (int i = 0; i < idx; )
-			{
-				hash += key_values[i];
-				i++;
-				if (i < idx) {
-					hash *= 65535;
-				}
+				hash |= temp;
 			}
 
 			return hash;
+		}
+
+		uint64_t get_weak_ordered_hash3(std::vector<std::string> _keys)
+		{
+			// single key case
+
+			uint64_t hash = 0;
+
+			if (not object())
+				return 0;
+
+			bool flippo;
+
+			for (int i = 0; i < 3; i++)
+			{
+				auto ikey = _keys[i];
+				hash <<= 16;
+				uint16_t temp = 0;
+
+				if (has_member(ikey)) {
+					auto m = get_member(ikey);
+					if (m.is_datetime())
+					{
+						date_time dt = (date_time)(m);
+						LARGE_INTEGER li;
+						li.QuadPart = dt.get_time_t();
+						temp = HIWORD(li.HighPart);
+					}
+					else if (m.is_double())
+					{
+						double v = (double)m;
+						if (v < 0) v = 0;
+						double x = static_cast<short>(std::log10(v) * 1000);
+
+						LARGE_INTEGER li;
+						li.QuadPart = x;
+						temp = HIWORD(li.HighPart);
+					}
+					else if (m.is_int64())
+					{
+						LARGE_INTEGER li;
+						li.QuadPart = m;
+						temp = HIWORD(li.HighPart);
+					}
+					else
+					{
+						std::string temps = (std::string)m;
+						int sz = temps.size();
+						if (sz > 2) {
+							sz = 2;
+						}
+						for (int i = 0; i < sz; i++) {
+							temp += temps[i];
+							temp *= 256;
+						}
+					}
+				}
+				hash |= temp;
+			}
+
+			return hash;
+		}
+
+		uint64_t get_weak_ordered_hash( std::vector<std::string> _keys )
+		{
+			switch (_keys.size()) {
+			case 0:
+				return 0;
+			case 1:
+				return get_weak_ordered_hash1(_keys);
+			case 2:
+				return get_weak_ordered_hash2(_keys);
+			case 3:
+				return get_weak_ordered_hash2(_keys);
+			}
+			return 0;
 		}
 
 		bool is_int64() const
