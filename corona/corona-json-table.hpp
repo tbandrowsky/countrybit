@@ -597,65 +597,82 @@ namespace corona
 
 				// see if our block is in here, if so, update it.
 
-				while (block_location) 
+				int comparison = 0;
+
+				while (block_location)
 				{
 					current_node.read(database_file.get(), block_location);
 
-					int comparison = node_key.compare(current_node.data);
+					comparison = node_key.compare(current_node.data);
 
-					if (comparison < 0) {
-						system_monitoring_interface::global_mon->log_put("insert into list", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					if (comparison > 0) {
+						previous_block_location = block_location;
+						previous_node = current_node;
+						block_location = current_node.header.next_block;
+					}
+					else {
+						break;
+					}
+				}
 
-						new_node.data = _data;
-						if (previous_block_location > 0) {
-							new_node.header.next_block = current_node.header.block_location;
-							new_node.append(database_file.get(), [this](int64_t _size) {
-								return allocate(_size);
-								});
-							previous_node.header.next_block = new_node.header.block_location;
-							previous_node.write(database_file.get(), nullptr, nullptr);
-						}
-						else {
-							new_node.header.next_block = list_start->first_block;
-							new_node.data = _data;
-							jtn.write(database_file.get(), nullptr, nullptr);
-						}
-						// this is an insert, so we do write the count
-						table_header.data.count++;
-						table_header.write_count(database_file.get());
-						return new_node;
-					}
-					else if (comparison == 0) {
-						system_monitoring_interface::global_mon->log_put("update existing", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						current_node.data = _data;
-						current_node.write(database_file.get(),
-							[this](int64_t location) -> void {
-								free(location);
-							}, 
-							[this](int64_t size) -> int64_t {
-								return allocate(size);
-							}
-						);
-						system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						// this is an update, so we do not write the count
-						return current_node;
-					}
-					else 
-					{
-						system_monitoring_interface::global_mon->log_put("add to end", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						new_node.data = _data;
-						new_node.header.next_block = 0;
+				if (block_location > 0 and comparison < 0) {
+					system_monitoring_interface::global_mon->log_put("insert into list", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+					new_node.data = _data;
+					if (previous_block_location > 0) {
+						new_node.header.next_block = current_node.header.block_location;
 						new_node.append(database_file.get(), [this](int64_t _size) {
 							return allocate(_size);
 							});
-						current_node.header.next_block = new_node.header.block_location;
-						list_start->last_block= new_node.header.block_location;
-						table_header.data.count++;
-						table_header.write_count(database_file.get());
-						jtn.write(database_file.get(), nullptr, nullptr);
-						return new_node;
+						previous_node.header.next_block = new_node.header.block_location;
+						previous_node.write(database_file.get(), nullptr, nullptr);
 					}
+					else {
+						new_node.header.next_block = list_start->first_block;
+						new_node.data = _data;
+						new_node.append(database_file.get(), [this](int64_t _size) {
+							return allocate(_size);
+							});
+						list_start->first_block = new_node.header.block_location;
+						jtn.write(database_file.get(), nullptr, nullptr);
+					}
+					// this is an insert, so we do write the count
+					table_header.data.count++;
+					table_header.write_count(database_file.get());
+					return new_node;
 				}
+				else if (block_location > 0 and comparison == 0) {
+					system_monitoring_interface::global_mon->log_put("update existing", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					current_node.data = _data;
+					current_node.write(database_file.get(),
+						[this](int64_t location) -> void {
+							free(location);
+						}, 
+						[this](int64_t size) -> int64_t {
+							return allocate(size);
+						}
+					);
+					system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					// this is an update, so we do not write the count
+					return current_node;
+				}
+				else 
+				{
+					system_monitoring_interface::global_mon->log_put("add to end", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					new_node.data = _data;
+					new_node.header.next_block = 0;
+					new_node.append(database_file.get(), [this](int64_t _size) {
+						return allocate(_size);
+						});
+					current_node.header.next_block = new_node.header.block_location;
+					current_node.write(database_file.get(), nullptr, nullptr);
+					list_start->last_block= new_node.header.block_location;
+					jtn.write(database_file.get(), nullptr, nullptr);
+					table_header.data.count++;
+					table_header.write_count(database_file.get());
+					return new_node;
+				}
+
 				system_monitoring_interface::global_mon->log_warning("Should not be here", __FILE__, __LINE__);
 			}
 			else 
@@ -2311,7 +2328,7 @@ namespace corona
 		}
 
 		test_write.put_member_i64("ObjectId", 7);
-		test_write.put_member("Name", "Zeus");
+		test_write.put_member("Name", "Orwell");
 		test_key = test_write.extract({ "ObjectId" });
 		test_table.put(test_write);
 
@@ -2337,7 +2354,7 @@ namespace corona
 		}
 
 		test_write.put_member_i64("ObjectId", 7);
-		test_write.put_member("Name", "Zeus");
+		test_write.put_member("Name", "Roger");
 		test_key = test_write.extract({ "ObjectId" });
 		test_table.put(test_write);
 
