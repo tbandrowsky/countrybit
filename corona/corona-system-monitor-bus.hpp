@@ -28,6 +28,12 @@ namespace corona
 		char CSI[3] = { 0x1b, '[', 0 };
 		char Logactivity[3] = { 0x1b, 'M', 0 };
 
+		bool enable_json_table_logging = false;
+		bool enable_json_poco_logging = false;
+		bool enable_json_block_logging = false;
+		bool enable_put_logging = false;
+		bool enable_options_display = false;
+
 		void test_colors()
 		{
 
@@ -68,8 +74,6 @@ namespace corona
 		console_color Logintel;		
 
 		static system_monitoring_interface* global_mon;
-
-		bool enable_options_display = false;
 
 		CRITICAL_SECTION log_lock;
 
@@ -376,10 +380,6 @@ namespace corona
 			::LeaveCriticalSection(&log_lock);
 		}
 
-		bool enable_json_table_logging = false;
-		bool enable_json_poco_logging = false;
-		bool enable_json_block_logging = false;
-		bool enable_put_logging = true;
 
 		virtual void log_base_block_start(int _indent, std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{

@@ -204,7 +204,8 @@ namespace corona
 					return -size;
 				}
 			}
-			else {
+			else 
+			{
 				header.data_size = size;
 			}
 
@@ -383,6 +384,32 @@ namespace corona
 			data = _src.data;
 			return *this;
 		}
+
+		relative_ptr_type write_child(file* _file, int _index)
+		{
+			if (header.block_location < 0)
+			{
+				throw std::invalid_argument("cannot append a partial write of a block");
+			}
+
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_block_start("block", "write child", start_time, __FILE__, __LINE__);
+
+			int64_t child_base = offsetof(tree_block_header, children);
+			int64_t offset = child_base + _index * sizeof(data.children[0]);
+
+			file_command_result data_result = _file->write(header.data_location + offset, &data.children[_index], sizeof(data.children[0]));
+
+			if (data_result.success)
+			{
+				system_monitoring_interface::global_mon->log_block_stop("block", "write child", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return data_result.location;
+			}
+			system_monitoring_interface::global_mon->log_block_stop("block", "write child", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			return -1i64;
+		}
+
 	};
 
 	class json_table
@@ -417,47 +444,40 @@ namespace corona
 		relative_ptr_type find_node(json _key)
 		{
 			json_node jn;
-
-			int64_t hash_code = _key.get_weak_ordered_hash(key_fields);
-
-			json_tree_node jtn;
 			timer tx;
 
+			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			int64_t hash_code = _key.get_weak_ordered_hash(key_fields);
+			int64_t thash_code = hash_code;
+			byte hash_bytes[8];
+
+			for (int i = 7; i >= 0; i++) {
+				hash_bytes[i] = thash_code % 256;
+				thash_code >>= 8;
+			}
+
+			json_tree_node jtn;
+			
 			int64_t location = table_header.data.data_root_location;
 			if (location <= 0)
 				return null_row;
 
 			list_block_header* list_start = nullptr;
 
-			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			int level_index = 0;
 
-			while (location > 0) {
+			for (level_index = 0; level_index < 8; level_index++)
+			{
 				auto status = jtn.read(database_file.get(), location);
-				log_put("travel", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				if (status <= 0)
+				byte local_hash_code = hash_bytes[level_index];
+				location = jtn.data.children[local_hash_code];
+				if (location == 0)
 					return null_row;
-				if (hash_code == jtn.data.hash_code) 
-				{
-					list_start = &jtn.data.index_list;
-					break;
-				}
-				else if (hash_code < jtn.data.hash_code) 
-				{
-					list_start = &jtn.data.index_list;
-					location = jtn.data.left_block;
-				}
-				else if (hash_code > jtn.data.hash_code) 
-				{
-					list_start = &jtn.data.index_list;
-					location = jtn.data.right_block;
-				}
+				list_start = &jtn.data.index_list;
 			}
 
 			log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			if (list_start == nullptr) {
-				return null_row;
-			}
 
 			if (list_start->first_block)
 			{
@@ -485,187 +505,12 @@ namespace corona
 			return -1i64;
 		}
 
-		void rotate_tree_left(json_tree_node& a)
-		{
-			timer tx;
-			json_tree_node p;
-			if (a.data.parent_block) 
-			{
-				p.read(database_file.get(), a.data.parent_block);
-				if (p.data.right_block == a.header.block_location)
-				{
-					system_monitoring_interface::global_mon->log_put("rotate left via right parent", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						/*
-					B.Left = A
-					P.right = B
-					A.Right = null
-					*/
-					json_tree_node b;
-					b.read(database_file.get(), a.data.right_block);
-
-					p.data.right_block = b.header.block_location;
-
-					// new anchor
-					b.data.parent_block = a.data.parent_block;
-					b.data.left_block = a.header.block_location;
-					a.data.right_block = 0;
-					a.data.parent_block = b.header.block_location;
-
-					a.write(database_file.get(), nullptr, nullptr);
-					b.write(database_file.get(), nullptr, nullptr);
-					p.write(database_file.get(), nullptr, nullptr);
-
-					log_put("rl rp p", p, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					log_put("rl rp b", b, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					log_put("rl rp a", a, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				}
-				else if (p.data.left_block == a.header.block_location)
-				{
-					system_monitoring_interface::global_mon->log_put("rotate left via left parent", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-					json_tree_node b;
-					b.read(database_file.get(), a.data.right_block);
-
-					p.data.left_block = b.header.block_location;
-
-					// new anchor
-					b.data.parent_block = a.data.parent_block;
-					b.data.left_block = a.header.block_location;
-					a.data.right_block = 0;
-					a.data.parent_block = b.header.block_location;
-
-					a.write(database_file.get(), nullptr, nullptr);
-					b.write(database_file.get(), nullptr, nullptr);
-					p.write(database_file.get(), nullptr, nullptr);
-
-					log_put("rl lp p", p, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					log_put("rl lp b", b, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					log_put("rl lp a", a, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				}
-			}
-			else 
-			{
-
-			/*
-				B.Left = A
-				P.right = B
-				A.Right = null
-				*/
-				json_tree_node b;
-				b.read(database_file.get(), a.data.right_block);
-
-				table_header.data.data_root_location = b.header.block_location;
-				table_header.write(database_file.get(), nullptr, nullptr);
-
-				// new anchor
-				b.data.parent_block = 0;
-				b.data.left_block = a.header.block_location;
-				b.write(database_file.get(), nullptr, nullptr);
-				a.data.right_block = 0;
-				a.data.parent_block = b.header.block_location;
-				a.write(database_file.get(), nullptr, nullptr);
-
-				log_put("rl np p", p, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				log_put("rl np b", b, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				log_put("rl np a", a, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-
-			}
-		}
-
-		void rotate_tree_right(json_tree_node& a)
-		{
-			json_tree_node p;
-			timer tx;
-
-			if (a.data.parent_block)
-			{
-				p.read(database_file.get(), a.data.parent_block);
-				if (p.data.right_block == a.header.block_location)
-				{
-					/*
-					B.Left = A
-					P.right = B
-					A.Right = null
-					*/
-					json_tree_node b;
-					b.read(database_file.get(), a.data.left_block);
-
-					p.data.right_block = b.header.block_location;
-
-					// new anchor
-					b.data.right_block = a.header.block_location;
-					a.data.left_block = 0;
-					a.data.parent_block = b.header.block_location;
-
-					a.write(database_file.get(), nullptr, nullptr);
-					b.write(database_file.get(), nullptr, nullptr);
-					p.write(database_file.get(), nullptr, nullptr);
-
-					log_put("rr rp p", p, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					log_put("rr rp b", b, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					log_put("rr rp a", a, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				}
-				else if (p.data.left_block == a.header.block_location)
-				{
-					json_tree_node b;
-					b.read(database_file.get(), a.data.left_block);
-
-					p.data.left_block = b.header.block_location;
-					p.write(database_file.get(), nullptr, nullptr);
-
-					// new anchor
-					b.data.right_block = a.header.block_location;
-					a.data.left_block = 0;
-					a.data.parent_block = b.header.block_location;
-
-					a.write(database_file.get(), nullptr, nullptr);
-					b.write(database_file.get(), nullptr, nullptr);
-					p.write(database_file.get(), nullptr, nullptr);
-
-					log_put("rr lp p", p, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					log_put("rr lp b", b, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					log_put("rr lp a", a, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				}
-			}
-			else
-			{
-				/*
-					B.Left = A
-					P.right = B
-					A.Right = null
-					*/
-				json_tree_node b;
-				b.read(database_file.get(), a.data.left_block);
-
-				table_header.data.data_root_location = b.header.block_location;
-				table_header.write(database_file.get(), nullptr, nullptr);
-
-				// new anchor
-				b.data.parent_block = 0;
-				b.data.right_block = a.header.block_location;
-				a.data.left_block = 0;
-				a.data.parent_block = b.header.block_location;
-				b.write(database_file.get(), nullptr, nullptr);
-				a.write(database_file.get(), nullptr, nullptr);
-
-				log_put("rr np p", p, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				log_put("rr np b", b, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				log_put("rr np a", a, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			}
-		}
 
 		void log_put(std::string _place, json_tree_node& _jtn, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
-			std::string msg = std::format("{0:10} ^{2:<10} {1:<10} <-{3:<10} ->{4:<10}",
+			std::string msg = std::format("{0:10} {1:<10}",
 				_place,
-				_jtn.header.block_location,
-				_jtn.data.parent_block,
-				_jtn.data.left_block,
-				_jtn.data.right_block);
+				_jtn.header.block_location);
 
 			system_monitoring_interface::global_mon->log_put(msg, _elapsed_seconds, _file, _line);
 
@@ -676,115 +521,56 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_json_start("json_table", "put_node", start_time, __FILE__, __LINE__);
-		
+
 			json node_key = _data.extract(key_fields);
 			int64_t hash_code = node_key.get_weak_ordered_hash(key_fields);
+			int64_t thash_code = hash_code;
+			byte hash_bytes[8];
 
-			bool ntn_created = false;
-
-			int64_t location = table_header.data.data_root_location;
-
-			list_block_header* list_start = nullptr;
-
-			int node_travel_count = 0;
-			int block_travel_count = 0;
+			for (int i = 7; i >= 0; i++) {
+				hash_bytes[i] = thash_code % 256;
+				thash_code >>= 8;
+			}
 
 			json_tree_node jtn;
 
 			// if there is nothing in our tree, create a header
 
-			system_monitoring_interface::global_mon->log_put("put_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			list_block_header* list_start = nullptr;
 
-			if (location == 0)
-			{
-				json_tree_node ntn;
-				ntn.data.hash_code = hash_code;
-				ntn.data.index_list = {};
-				ntn.data.parent_block = 0;
-				ntn.data.left_block = 0;
-				ntn.data.right_block = 0;
-				list_start = &ntn.data.index_list;
+			int level_index = 0;
+			int64_t location;
 
-				table_header.data.data_root_location = ntn.append(database_file.get(), [this](int64_t _size) -> int64_t {
-					return allocate(_size);
+			if (table_header.data.data_root_location == 0) {
+				json_tree_node jtn;
+				jtn.data = {};
+				table_header.data.data_root_location = jtn.append(database_file.get(), [this](int64_t _size_t) {
+					return allocate(_size_t);
 					});
-
 				table_header.write(database_file.get(), nullptr, nullptr);
-				location = table_header.data.data_root_location;
+				log_put("new root", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			};
 
-				log_put("new root", ntn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			location = table_header.data.data_root_location;
+
+			for (level_index = 0; level_index < 8; level_index++)
+			{
+				auto status = jtn.read(database_file.get(), location);
+				byte local_hash_code = hash_bytes[level_index];
+				location = jtn.data.children[local_hash_code];
+				if (location == 0) {
+					json_tree_node ntn;
+					ntn.data = {};
+					location = ntn.append(database_file.get(), [this](int64_t _size_t) {
+						return allocate(_size_t);
+						});
+					jtn.data.children[local_hash_code] = location;
+					jtn.write_child(database_file.get(), local_hash_code);
+				}
+				list_start = &jtn.data.index_list;
 			}
 
 			// walk the tree, to figure out which list to put it in
-			while (location > 0) 
-			{
-				node_travel_count++;
-				auto status = jtn.read(database_file.get(), location);
-
-				log_put("travel", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				if (status < 0) {
-					system_monitoring_interface::global_mon->log_warning("node read failed");
-				}
-
-				if (hash_code == jtn.data.hash_code)
-				{
-					list_start = &jtn.data.index_list;
-					log_put("=", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					break;
-				}
-				else if (hash_code < jtn.data.hash_code)
-				{
-					location = jtn.data.left_block;
-					if (location == 0) {
-						json_tree_node ntn;
-						ntn.data.hash_code = hash_code;
-						ntn.data.index_list = {};
-						ntn.data.parent_block = jtn.header.block_location;
-						ntn.data.left_block = 0;
-						ntn.data.right_block = 0;
-						jtn.data.left_block = ntn.append(database_file.get(), [this](int64_t _size) -> int64_t {
-							return allocate(_size);
-						});
-						log_put("<", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						jtn.write(database_file.get(), nullptr, nullptr);
-						jtn = ntn;
-						list_start = &jtn.data.index_list;
-						log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					}
-					else if (jtn.data.right_block == 0) 
-					{
-						rotate_tree_right(jtn);
-					}
-				}
-				else if (hash_code > jtn.data.hash_code)
-				{
-					location = jtn.data.right_block;
-					jtn.write(database_file.get(), nullptr, nullptr);
-					if (location == 0) {
-						json_tree_node ntn;
-
-						ntn.data.hash_code = hash_code;
-						ntn.data.index_list = {};
-						ntn.data.parent_block = jtn.header.block_location;
-						ntn.data.left_block = 0;
-						ntn.data.right_block = 0;
-						jtn.data.right_block = ntn.append(database_file.get(), [this](int64_t _size) -> int64_t {
-							return allocate(_size);
-							});
-						jtn.write(database_file.get(), nullptr, nullptr);
-						log_put(">", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						jtn = ntn;
-						list_start = &jtn.data.index_list;
-						log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					}
-					else if (jtn.data.left_block == 0)
-					{
-						rotate_tree_left(jtn);
-					}
-				}
-
-			}
 
 			// now that we have our list, find out where in the list it goes
 			json_node new_node;
@@ -795,7 +581,6 @@ namespace corona
 				auto block_location = list_start->first_block;
 				json_node current_node;
 
-				block_travel_count++;
 				// see if our block is in here, if so, update it.
 
 				while (block_location) 
@@ -898,9 +683,6 @@ namespace corona
 				table_header.write_count(database_file.get());
 			}
 
-			std::string msg = std::format("put: node_travels:{0}, block_search:{1}", node_travel_count, block_travel_count);
-			system_monitoring_interface::global_mon->log_information(msg, __FILE__, __LINE__);
-
 			system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return new_node;
@@ -922,39 +704,40 @@ namespace corona
 			auto jn = get_node(_file, _node_location);
 
 			json node_key = jn.data.extract(key_fields);
+
+			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			int64_t hash_code = node_key.get_weak_ordered_hash(key_fields);
+			int64_t thash_code = hash_code;
+			byte hash_bytes[8];
+
+			for (int i = 7; i >= 0; i++) {
+				hash_bytes[i] = thash_code % 256;
+				thash_code >>= 8;
+			}
 
 			json_tree_node jtn;
+			timer tx;
 
 			int64_t location = table_header.data.data_root_location;
-
 			if (location <= 0)
 				return;
 
 			list_block_header* list_start = nullptr;
 
-			while (location > 0) 
+			int level_index = 0;
+
+			for (level_index = 0; level_index < 8; level_index++)
 			{
 				auto status = jtn.read(database_file.get(), location);
-				if (status <= 0)
+				byte local_hash_code = hash_bytes[level_index];
+				location = jtn.data.children[local_hash_code];
+				if (location == 0)
 					return;
-				if (hash_code == jtn.data.hash_code)
-				{
-					list_start = &jtn.data.index_list;
-					break;
-				}
-				else if (hash_code < jtn.data.hash_code)
-				{
-					location = jtn.data.left_block;
-				}
-				else if (hash_code > jtn.data.hash_code)
-				{
-					location = jtn.data.right_block;
-				}
+				list_start = &jtn.data.index_list;
 			}
 
-			if (!list_start)
-				return;
+			log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			if (list_start->first_block)
 			{
@@ -1355,18 +1138,26 @@ namespace corona
 			int64_t count;
 		};
 
-		void visit(relative_ptr_type _node, for_each_result& _result, json _key_fragment, std::function<relative_ptr_type(int _index, json_node& _item)>& _process_clause)
+		void visit(int64_t _node, for_each_result& _result, json _key_fragment, std::function<relative_ptr_type(int _index, json_node& _item)>& _process_clause)
 		{
 			json_tree_node jtn;
 
 			if (_node <= 0)
 				return;
 
-			if (jtn.read(database_file.get(), _node) <= 0) {
+			if (jtn.read(database_file.get(), _node) <= 0) 
+			{
 				return;
 			}
 
-			visit(jtn.data.left_block, _result, _key_fragment, _process_clause);
+			for (int i = 0; i < jtn.data.children.capacity(); i++)
+			{
+				int64_t child = jtn.data.children[i];
+				if (child) 
+				{
+					visit( child, _result, _key_fragment, _process_clause);
+				}
+			}
 
 			auto list_start = jtn.data.index_list;
 			auto block_location = list_start.first_block;
@@ -1392,8 +1183,6 @@ namespace corona
 				}
 				block_location = jn.header.next_block;
 			}
-
-			visit(jtn.data.right_block, _result, _key_fragment, _process_clause);
 
 		}
 

@@ -2780,12 +2780,9 @@ private:
 
 			json response;
 
-
 			date_time start_time = date_time::now();
 			timer tx;
-
 			system_monitoring_interface::global_mon->log_function_start("copy_object", "start", start_time, __FILE__, __LINE__);
-
 
 			if (not check_message(copy_request, { auth_general }))
 			{
