@@ -448,14 +448,9 @@ namespace corona
 
 			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			int64_t hash_code = _key.get_weak_ordered_hash(key_fields);
-			int64_t thash_code = hash_code;
-			byte hash_bytes[8];
+			hashbytes hash_bytes;
 
-			for (int i = 7; i >= 0; i++) {
-				hash_bytes[i] = thash_code % 256;
-				thash_code >>= 8;
-			}
+			get_hash_bytes(_key, hash_bytes);
 
 			json_tree_node jtn;
 			
@@ -492,7 +487,7 @@ namespace corona
 					if (c == 0) {
 						return block_location;
 					}
-					else if (c < 0)
+					else if (c > 0)
 					{
 						block_location = jn.header.next_block;
 					}
@@ -516,6 +511,21 @@ namespace corona
 
 		}
 
+		using hashbytes = std::vector<byte>;
+
+		void get_hash_bytes(json& _node_key, hashbytes& _bytes)
+		{
+			int64_t hash_code = _node_key.get_weak_ordered_hash(key_fields);
+			int64_t thash_code = hash_code;
+
+			_bytes.resize(8);
+
+			for (int i = 7; i >= 0; i--) {
+				_bytes[i] = thash_code % 256;
+				thash_code >>= 8;
+			}
+		}
+
 		json_node put_node(json _data)
 		{
 			date_time start_time = date_time::now();
@@ -523,14 +533,9 @@ namespace corona
 			system_monitoring_interface::global_mon->log_json_start("json_table", "put_node", start_time, __FILE__, __LINE__);
 
 			json node_key = _data.extract(key_fields);
-			int64_t hash_code = node_key.get_weak_ordered_hash(key_fields);
-			int64_t thash_code = hash_code;
-			byte hash_bytes[8];
+			hashbytes hash_bytes;
 
-			for (int i = 7; i >= 0; i++) {
-				hash_bytes[i] = thash_code % 256;
-				thash_code >>= 8;
-			}
+			get_hash_bytes(node_key, hash_bytes);
 
 			json_tree_node jtn;
 
@@ -540,6 +545,8 @@ namespace corona
 
 			int level_index = 0;
 			int64_t location;
+
+			log_put("start put", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			if (table_header.data.data_root_location == 0) {
 				json_tree_node jtn;
@@ -553,8 +560,11 @@ namespace corona
 
 			location = table_header.data.data_root_location;
 
+			std::string path = "";
+
 			for (level_index = 0; level_index < 8; level_index++)
 			{
+				path = path + std::to_string(location) + ".";
 				auto status = jtn.read(database_file.get(), location);
 				byte local_hash_code = hash_bytes[level_index];
 				location = jtn.data.children[local_hash_code];
@@ -570,6 +580,8 @@ namespace corona
 				list_start = &jtn.data.index_list;
 			}
 
+			system_monitoring_interface::global_mon->log_put(path, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			// walk the tree, to figure out which list to put it in
 
 			// now that we have our list, find out where in the list it goes
@@ -578,6 +590,8 @@ namespace corona
 
 			if (list_start->first_block) 
 			{
+				system_monitoring_interface::global_mon->log_put("block exists", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 				auto block_location = list_start->first_block;
 				json_node current_node;
 
@@ -589,9 +603,9 @@ namespace corona
 
 					int comparison = node_key.compare(current_node.data);
 
-					if (comparison > 0) {
+					if (comparison < 0) {
+						system_monitoring_interface::global_mon->log_put("insert into list", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						// if not, then we must come up with one.
-						new_node.header.data_hashcode = hash_code;
 						new_node.data = _data;
 						new_node.header.next_block = block_location;
 						new_node.append(database_file.get(), [this](int64_t _size) -> int64_t {
@@ -602,7 +616,6 @@ namespace corona
 							// and now we gotta put this node into our index
 							json_node previous_node;
 							previous_node.read(database_file.get(), previous_block_location);
-							new_node.header.next_block = previous_node.header.next_block;
 							previous_node.header.next_block = new_node.header.block_location;
 							previous_node.write(database_file.get(),
 								[this](int64_t _size) -> void {
@@ -623,8 +636,8 @@ namespace corona
 						return new_node;
 					}
 					else if (comparison == 0) {
+						system_monitoring_interface::global_mon->log_put("update existing", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						current_node.data = _data;
-						current_node.header.data_hashcode = hash_code;
 						current_node.write(database_file.get(),
 							[this](int64_t location) -> void {
 								free(location);
@@ -645,7 +658,6 @@ namespace corona
 				}
 
 				// if not, then we must come up with one.
-				new_node.header.data_hashcode = hash_code;
 				new_node.data = _data;
 				new_node.append(database_file.get(), [this](int64_t _size) -> int64_t {
 					return allocate(_size);
@@ -670,7 +682,7 @@ namespace corona
 			}
 			else 
 			{
-				new_node.header.data_hashcode = hash_code;
+				system_monitoring_interface::global_mon->log_put("new block", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				new_node.data = _data;
 				new_node.header.next_block = 0;
 				new_node.append(database_file.get(), [this](int64_t _size) -> int64_t {
@@ -707,17 +719,11 @@ namespace corona
 
 			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			int64_t hash_code = node_key.get_weak_ordered_hash(key_fields);
-			int64_t thash_code = hash_code;
-			byte hash_bytes[8];
+			hashbytes hash_bytes;
 
-			for (int i = 7; i >= 0; i++) {
-				hash_bytes[i] = thash_code % 256;
-				thash_code >>= 8;
-			}
+			get_hash_bytes(node_key, hash_bytes);
 
 			json_tree_node jtn;
-			timer tx;
 
 			int64_t location = table_header.data.data_root_location;
 			if (location <= 0)
@@ -1241,23 +1247,19 @@ namespace corona
 
 			int64_t last_node_location = 0;
 
-			while (location > 0) {
+			int level_index;
+
+			for (level_index = 0; level_index < 8; level_index++)
+			{
 				auto status = jtn.read(database_file.get(), location);
-				if (status <= 0)
+				for (int i = 0; i < jtn.data.children.capacity(); i++) {
+					location = jtn.data.children[i];
+					if (location > 0)
+						break;
+				}
+				if (location == 0)
 					return empty;
-				if (hash_code == jtn.data.hash_code)
-				{
-					list_start = &jtn.data.index_list;
-					break;
-				}
-				else if (hash_code < jtn.data.hash_code)
-				{
-					location = jtn.data.left_block;
-				}
-				else if (hash_code > jtn.data.hash_code)
-				{
-					location = jtn.data.left_block;
-				}
+				list_start = &jtn.data.index_list;
 			}
 
 			if (list_start == nullptr) {

@@ -31,7 +31,7 @@ namespace corona
 		bool enable_json_table_logging = false;
 		bool enable_json_poco_logging = false;
 		bool enable_json_block_logging = false;
-		bool enable_put_logging = false;
+		bool enable_put_logging = true;
 		bool enable_options_display = false;
 
 		void test_colors()

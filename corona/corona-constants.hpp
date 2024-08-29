@@ -457,7 +457,6 @@ namespace corona
 		int64_t		block_location;
 		int64_t		data_location;
 		int64_t		data_capacity;
-		int64_t		data_hashcode;
 		int64_t		data_size;
 		int64_t		next_block;
 	};
