@@ -236,7 +236,6 @@ namespace corona
 
 			header.block_location = _allocator(sizeof(header));
 			header.block_type = block_id::table_id();
-			header.next_block = 0;
 			header.data_size = bytes.get_size();
 			header.data_capacity = size_ai.size;
 			header.data_location = _allocator(size_ai.size);
@@ -551,6 +550,7 @@ namespace corona
 			if (table_header.data.data_root_location == 0) {
 				json_tree_node jtn;
 				jtn.data = {};
+				jtn.header.next_block = 0;
 				table_header.data.data_root_location = jtn.append(database_file.get(), [this](int64_t _size_t) {
 					return allocate(_size_t);
 					});
@@ -593,7 +593,7 @@ namespace corona
 				system_monitoring_interface::global_mon->log_put("block exists", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				auto block_location = list_start->first_block;
-				json_node current_node;
+				json_node current_node, previous_node;
 
 				// see if our block is in here, if so, update it.
 
@@ -605,29 +605,19 @@ namespace corona
 
 					if (comparison < 0) {
 						system_monitoring_interface::global_mon->log_put("insert into list", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						// if not, then we must come up with one.
-						new_node.data = _data;
-						new_node.header.next_block = block_location;
-						new_node.append(database_file.get(), [this](int64_t _size) -> int64_t {
-							return allocate(_size);
-							});
 
+						new_node.data = _data;
 						if (previous_block_location > 0) {
-							// and now we gotta put this node into our index
-							json_node previous_node;
-							previous_node.read(database_file.get(), previous_block_location);
-							previous_node.header.next_block = new_node.header.block_location;
-							previous_node.write(database_file.get(),
-								[this](int64_t _size) -> void {
-									return free(_size);
-								},
-								[this](int64_t _size) -> int64_t {
-									return allocate(_size);
+							new_node.header.next_block = current_node.header.block_location;
+							new_node.append(database_file.get(), [this](int64_t _size) {
+								return allocate(_size);
 								});
+							previous_node.header.next_block = new_node.header.block_location;
+							previous_node.write(database_file.get(), nullptr, nullptr);
 						}
-						else 
-						{
-							list_start->first_block = new_node.header.block_location;
+						else {
+							new_node.header.next_block = list_start->first_block;
+							new_node.data = _data;
 							jtn.write(database_file.get(), nullptr, nullptr);
 						}
 						// this is an insert, so we do write the count
@@ -652,33 +642,21 @@ namespace corona
 					}
 					else 
 					{
-						previous_block_location = block_location;
-						block_location = current_node.header.next_block;
+						system_monitoring_interface::global_mon->log_put("add to end", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						new_node.data = _data;
+						new_node.header.next_block = 0;
+						new_node.append(database_file.get(), [this](int64_t _size) {
+							return allocate(_size);
+							});
+						current_node.header.next_block = new_node.header.block_location;
+						list_start->last_block= new_node.header.block_location;
+						table_header.data.count++;
+						table_header.write_count(database_file.get());
+						jtn.write(database_file.get(), nullptr, nullptr);
+						return new_node;
 					}
 				}
-
-				// if not, then we must come up with one.
-				new_node.data = _data;
-				new_node.append(database_file.get(), [this](int64_t _size) -> int64_t {
-					return allocate(_size);
-					});
-
-				// and now we gotta put this node into our index
-				json_node previous_node;
-				previous_node.read(database_file.get(), previous_block_location);
-				previous_node.header.next_block = new_node.header.block_location;
-				previous_node.write(database_file.get(),
-					[this](int64_t _size) -> void {
-						return free(_size);
-					},
-					[this](int64_t _size) -> int64_t {
-						return allocate(_size);
-					});
-				list_start->last_block = new_node.header.block_location;
-				// this is an insert, so we do write the count
-				table_header.data.count++;
-				table_header.write_count(database_file.get());
-				jtn.write(database_file.get(), nullptr, nullptr);
+				system_monitoring_interface::global_mon->log_warning("Should not be here", __FILE__, __LINE__);
 			}
 			else 
 			{
@@ -2252,6 +2230,16 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("wrong inserted value.", __FILE__, __LINE__);
 		}
 
+		test_read = jp.create_object();
+		test_read.put_member_i64("ObjectId", 5);
+		test_read.set_natural_order();
+
+		json joe = test_table.get(test_read);
+		if (joe.empty()) {
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("joe disappeared.", __FILE__, __LINE__);
+		}
+
 		db_contents =  test_table.select([](int _index, json& item) {
 			return item;
 			});
@@ -2310,6 +2298,16 @@ namespace corona
 		{
 			get_success = false;
 			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
+		}
+
+		test_read = jp.create_object();
+		test_read.put_member_i64("ObjectId", 5);
+		test_read.set_natural_order();
+
+		joe = test_table.get(test_read);
+		if (joe.empty()) {
+			get_success = false;
+			system_monitoring_interface::global_mon->log_warning("sydney killed joe!", __FILE__, __LINE__);
 		}
 
 		test_write.put_member_i64("ObjectId", 7);
