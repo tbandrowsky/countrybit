@@ -2412,55 +2412,51 @@ private:
 				return response;
 			}
 
-			json objects = jp.create_array();
 			json class_def;
 
-			{
-				scope_lock lock_one(classes_rw_lock);
-				class_def =  classes.get(query_class_request);
-			}
+			json class_key = query_class_request["Data"]
+								.extract({ "ClassName" });
+			class_def =  classes.get(class_key);
+			std::string class_name = class_def["ClassName"];
+
+			std::map<std::string, bool> class_names;
+
+			class_names.insert_or_assign(class_name, true);
 
 			json derived_classes = class_def["Descendants"];
-			auto members = derived_classes.get_members();
 
-			for (auto member : members)
+			if (derived_classes.object()) {
+				auto members = derived_classes.get_members();
+
+				for (auto member : members)
+				{
+					class_names.insert_or_assign(member.first, true);
+				}
+			}
+
+			json object_list = jp.create_object();
+
+			for (auto class_pair : class_names)
 			{
 				json_parser jp;
-				json search_key = jp.create_object("ClassName", member.first);
+				json search_key = jp.create_object("ClassName", class_pair.first);
 				search_key.set_compare_order({ "ClassName" });
 				json class_object_ids;
 
-				{
-					scope_lock lock_one(classes_rw_lock);
-					class_object_ids =  class_objects.update(search_key, [](int _index, json& _item)->json {
-						return _item;
-						}, update_json);
-				}
+				class_object_ids =  class_objects.update(search_key, [](int _index, json& _item)->json {
+					return _item;
+					}, update_json);
 
 				json get_object_id = jp.create_object("ObjectId", 0i64);
 				get_object_id.put_member("Token", token);
 
-				if (class_object_ids.array()) {
-					for (db_object_id_type i = 0; i < class_object_ids.size(); i++)
-					{
-						db_object_id_type ri = class_object_ids.get_element(i)["ObjectId"];
-						get_object_id.put_member_i64("ObjectId", ri);
-						get_object_id.set_natural_order();
-						json check_request = create_request(query_class_request, get_object_id);
-						bool granted =  check_object_key_permission(check_request, "Get");
-						if (granted)
-						{
-							json objx =  get_object(check_request);
-							if (objx["Success"])
-							{
-								objects.append_element(objx["Data"]);
-							}
-						}
-					}
+				if (class_object_ids.array()) 
+				{
+					object_list = objects.get_list(class_object_ids);
 				}
 			}
 
-			response = create_response(query_class_request, true, "Query completed", objects, method_timer.get_elapsed_seconds());
+			response = create_response(query_class_request, true, "Query completed", object_list, method_timer.get_elapsed_seconds());
 			system_monitoring_interface::global_mon->log_function_stop("update", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}

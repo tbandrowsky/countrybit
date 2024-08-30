@@ -304,6 +304,13 @@ namespace corona
 			if (not table_name.empty())
 				cb_table = bus->find_control(table_name);
 
+			if (not cb_form) {
+				comm_bus_interface::global_bus->log_warning(std::format("{0} form for search command not found", form_name), __FILE__, __LINE__);
+			}
+
+			if (not cb_table) {
+				comm_bus_interface::global_bus->log_warning(std::format("{0} table for search command not found", table_name), __FILE__, __LINE__);
+			}
 			if (cb_form and cb_table) 
 			{
 				json search_class_filters = jp.create_object();

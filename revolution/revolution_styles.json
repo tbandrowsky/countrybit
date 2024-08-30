@@ -109,7 +109,7 @@
               "position": 0.1
             },
             {
-              "color": "#151510",
+              "color": "#051510",
               "position": 1.0
             }
           ]
@@ -144,11 +144,11 @@
           },
           "stops": [
             {
-              "color": "512150",
+              "color": "212150",
               "position": 0.4
             },
             {
-              "color": "112150",
+              "color": "212150",
               "position": 0.4
             },
             {
@@ -168,7 +168,7 @@
       },
       "title_style": {
         "text_style": {
-          "font_name": "Georgia,Times New Roman",
+          "font_name": "Open Sans,Verdana,Arial",
           "font_size": 24,
           "vertical_alignment": "center",
           "horizontal_alignment": "near"
@@ -186,7 +186,7 @@
       },
       "subtitle_style": {
         "text_style": {
-          "font_name": "Georgia, Times New Roman",
+          "font_name": "Open Sans,Verdana,Arial",
           "font_size": 18,
           "bold": false,
           "underline": false

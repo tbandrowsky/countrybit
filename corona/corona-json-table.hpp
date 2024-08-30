@@ -441,6 +441,91 @@ namespace corona
 			return table_header.header.block_location;
 		}
 
+		json find_nodes(json _array)
+		{
+			json_parser jp;
+
+			json_node jn;
+			timer tx;
+
+			json results = jp.create_array();
+
+			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			json grouped_by_hash = _array.group([this](json& _item)->std::string {
+				json node_key = _item.extract(key_fields);
+				hashbytes hash_bytes;
+				uint64_t hash_code = get_hash_bytes(node_key, hash_bytes);
+				return std::to_string(hash_code);
+				});
+
+			json_tree_node jtn;
+
+			// if there is nothing in our tree, create a header
+
+			auto objects_by_hash = grouped_by_hash.get_members();
+
+			for (auto obj : objects_by_hash) {
+
+				hashbytes hash_bytes;
+				uint64_t hash_code = std::strtoull(obj.first.c_str(), nullptr, 10);
+				get_hash_bytes(hash_code, hash_bytes);
+
+				json_tree_node jtn;
+
+				int64_t location = table_header.data.data_root_location;
+
+				list_block_header* list_start = nullptr;
+
+				if (location_cache.contains(hash_code)) {
+					location = location_cache[hash_code];
+					auto status = jtn.read(database_file.get(), location);
+					list_start = &jtn.data.index_list;
+					system_monitoring_interface::global_mon->log_put("cached", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				}
+				else {
+
+					int level_index = 0;
+
+					for (level_index = 0; level_index < 8; level_index++)
+					{
+						auto status = jtn.read(database_file.get(), location);
+						byte local_hash_code = hash_bytes[level_index];
+						location = jtn.data.children[local_hash_code];
+						list_start = &jtn.data.index_list;
+					}
+
+					location_cache.insert_or_assign(hash_code, jtn.header.block_location);
+				}
+
+				log_put("found hash", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				for (json _data : obj.second)
+				{
+					json node_key = _data.extract(key_fields);
+
+					if (list_start->first_block)
+					{
+						auto block_location = list_start->first_block;
+
+						// see if our block is in here, if so, update it.
+
+						while (block_location)
+						{
+							jn.read(database_file.get(), block_location);
+							int c = node_key.compare(jn.data);
+							if (c == 0) {
+								results.push_back(jn.data);
+								break;
+							}
+							block_location = jn.header.next_block;
+						}
+					};
+				}
+			}
+			return results;
+		}
+
 		relative_ptr_type find_node(json _key)
 		{
 			json_node jn;
@@ -1263,6 +1348,17 @@ namespace corona
 			relative_ptr_type result =  find_node(key);
 			system_monitoring_interface::global_mon->log_table_stop("table", "contains complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return  result != null_row;
+		}
+
+		json get_list(json _array)
+		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "get_list", start_time, __FILE__, __LINE__);
+			json object_list = find_nodes(_array);
+
+			system_monitoring_interface::global_mon->log_table_stop("table", "get_list", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			return object_list;
 		}
 
 		json get(std::string _key)
