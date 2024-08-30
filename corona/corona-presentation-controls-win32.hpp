@@ -26,6 +26,8 @@ namespace corona
 			text_style = {};
 			text_style.name = "windows_control_style";
 			text_style.fontName = presentation_style_factory::get_current()->get_style()->PrimaryFont;
+			if (text_style.fontName.empty())
+				text_style.fontName = "Verdana";
 			text_style.fontSize = 12;
 			text_style.bold = false;
 			text_style.italics = false;

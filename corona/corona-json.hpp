@@ -2261,8 +2261,7 @@ namespace corona
 				for (int i = start; i < stop; i++)
 				{
 					json temp = get_element(i);
-					json temp2 = temp.clone();
-					result_item.push_back(temp2);
+					result_item.push_back(temp);
 				}
 			}
 			return result_item;
