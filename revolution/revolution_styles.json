@@ -1,8 +1,8 @@
 {
   "styles": [
     {
-      "style_sheet_name": "Donation Finder Styles",
-      "primary_font": "TW Cent MT, Century Gothic, Arial",
+      "style_sheet_name": "Candidate Finder Styles",
+      "primary_font": "Open Sans, Century Gothic, Arial",
       "colors": {
         "Blue": [
           "34657F",
@@ -121,7 +121,7 @@
       },
       "caption_style": {
         "text_style": {
-          "font_name": "Arial, Georgia, Times New Roman, Times",
+          "font_name": "Open Sans, Arial",
           "font_size": 24
         },
         "shape_border_thickness": 0,
@@ -144,7 +144,7 @@
           },
           "stops": [
             {
-              "color": "512150",
+              "color": "012150",
               "position": 0.4
             },
             {
@@ -168,7 +168,7 @@
       },
       "title_style": {
         "text_style": {
-          "font_name": "Georgia,Times New Roman",
+          "font_name": "Open Sans,Arial",
           "font_size": 24,
           "vertical_alignment": "center",
           "horizontal_alignment": "near"
@@ -186,7 +186,7 @@
       },
       "subtitle_style": {
         "text_style": {
-          "font_name": "Georgia, Times New Roman",
+          "font_name": "Open Sans,Arial",
           "font_size": 18,
           "bold": false,
           "underline": false
@@ -223,7 +223,8 @@
         "text_style": {
           "font_name": "Arial",
           "font_size": 17,
-          "underline": true
+          "underline": false,
+          "vertical_alignment" : "center"
         },
         "shape_fill_brush": {
           "class_name": "solid_brush",
@@ -328,7 +329,6 @@
           "color": "FFFFEE"
         }
       }
-
     }
   ]
 }

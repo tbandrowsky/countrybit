@@ -3,8 +3,8 @@
     {
       "class_name": "select_frame_command",
       "page_to_select": "home",
-      "frame_to_load": "donation_finder_home",
-      "frame_contents_page": "donation_search"
+      "frame_to_load": "candidate_contents",
+      "frame_contents_page": "candidate_search"
     }
   ],
   "pages": [
@@ -27,7 +27,7 @@
               "class_name": "caption_bar",
               "corporate_name": "country video games",
               "image_file": "cockade.png",
-              "title_name": "Donation Finder : A Tool for the Revolution Game",
+              "title_name": "CANDIDATE RESEARCH",
               "subtitle_name": "Country Video Games",
               "title_start": "0.28 container",
               "box": {
@@ -44,13 +44,13 @@
               "view_style": {
                 "box_fill_brush": {
                   "class_name": "solid_brush",
-                  "color": "211012AA"
+                  "color": "919291AA"
                 },
                 "box_border_brush": {
                   "class_name": "solid_brush",
                   "color": "21101277"
                 },
-                "box_border_thickness": 8
+                "box_border_thickness": 2
               },
               "padding": {
                 "amount": 10,
@@ -61,7 +61,7 @@
               "children": [
                 {
                   "class_name": "frame",
-                  "name": "donation_finder_home",
+                  "name": "candidate_contents",
                   "box": {
                     "width": "1.0 container",
                     "height": "1.0 container"
@@ -75,7 +75,7 @@
     },
     {
       "class_name": "page",
-      "page_name": "donation_search",
+      "page_name": "candidate_search",
       "children": [
         {
           "class_name": "column",
@@ -90,6 +90,7 @@
             {
               "class_name": "row",
               "item_next_space": "16 pixels",
+              "item_start_space": "16 pixels",
               "box": {
                 "width": "1.0 container",
                 "height": "1.0 container"
@@ -97,51 +98,24 @@
               "children": [
                 {
                   "class_name": "column",
-                  "name": "navbar",
                   "box": {
-                    "width": "125 pixels",
-                    "height": "1.0 container"
-                  },
-                  "children": [
-                    {
-                      "class_name": "chaptertitle",
-                      "text": "Donation Search",
-                      "box": {
-                        "width": "1.0 container",
-                        "height": "30 pixels"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "class_name": "column",
-                  "box": {
-                    "x": "32.0 pixels",
                     "width": "250 pixels",
                     "height": "1.0 container"
                   },
                   "children": [
                     {
-                      "class_name": "chaptertitle",
-                      "text": "Donations",
-                      "box": {
-                        "width": "1.0 container",
-                        "height": "30 pixels"
-                      }
-                    },
-                    {
                       "class_name": "chaptersubtitle",
                       "text": "Search",
                       "box": {
                         "width": "1.0 container",
-                        "height": "25 pixels"
+                        "height": "50 pixels"
                       }
                     },
                     {
                       "class_name": "form",
-                      "name": "search_donations_form",
+                      "name": "search_candidates_form",
                       "model": {
-                        "name": "search_donations_form",
+                        "name": "search_candidates_form",
                         "defaults": {
                           "box": {
                             "width": "1.0 container",
@@ -161,7 +135,7 @@
                             "json_field_name": "Description",
                             "label_text": "Description",
                             "class_name": "edit",
-                            "tooltip_text": "Search for a donation",
+                            "tooltip_text": "Search for a candidate",
                             "is_default_focus": true
                           }
                         ],
@@ -184,7 +158,7 @@
                       "children": [
                         {
                           "class_name": "push_button",
-                          "text": "Search Donations",
+                          "text": "Search",
                           "box": {
                             "width": {
                               "amount": 100,
@@ -197,9 +171,9 @@
                           },
                           "click_command": {
                             "class_name": "search_objects_command",
-                            "search_class_name": "Donations",
-                            "form_name": "search_donations_form",
-                            "table_name": "donations_list",
+                            "search_class_name": "CandidatesMaster",
+                            "form_name": "search_candidates_form",
+                            "table_name": "candidate_list",
                             "query": {
                               "class_name": "query_context",
                               "froms": {
@@ -208,12 +182,12 @@
                               },
                               "stages": [
                                 {
-                                  "stage_name": "search for any donation text",
+                                  "stage_name": "search for any candidate text",
                                   "class_name": "filter",
-                                  "stage_input_name": "Donations:",
+                                  "stage_input_name": "CandidatesMaster:",
                                   "predicate": {
                                     "class_name": "contains",
-                                    "textsrc": "search_event_form:Description"
+                                    "textsrc": "search_candidates_form:Description"
                                   }
                                 }
                               ]
@@ -221,76 +195,29 @@
                           }
                         }
                       ]
-                    },
-                    {
-                      "class_name": "chaptersubtitle",
-                      "text": "Create",
-                      "box": {
-                        "width": "1.0 container",
-                        "height": "25 pixels"
-                      }
-                    },
-                    {
-                      "class_name": "push_button",
-                      "text": "New Event",
-                      "box": {
-                        "width": {
-                          "amount": 100,
-                          "units": "pixels"
-                        },
-                        "height": {
-                          "amount": 40,
-                          "units": "pixels"
-                        }
-                      },
-                      "click_command": {
-                        "class_name": "create_object_command",
-                        "create_class_name": "Events",
-                        "form_name": "EventPage"
-                      }
                     }
                   ]
                 },
                 {
                   "class_name": "column",
                   "box": {
-                    "x": "48 pixels",
                     "width": "0.30 container",
                     "height": "0.8 container"
-                  },
-                  "view_style": {
-                    "box_fill_brush": {
-                      "class_name": "solid_brush",
-                      "color": "211012AA"
-                    },
-                    "box_border_brush": {
-                      "class_name": "solid_brush",
-                      "color": "21101277"
-                    },
-                    "box_border_thickness": 8
                   },
                   "content_alignment": "near",
                   "content_cross_alignment": "near",
                   "children": [
                     {
-                      "class_name": "chaptertitle",
-                      "text": "",
-                      "box": {
-                        "width": "1.0 container",
-                        "height": "30 pixels"
-                      }
-                    },
-                    {
                       "class_name": "chaptersubtitle",
                       "text": "List",
                       "box": {
                         "width": "1.0 container",
-                        "height": "25 pixels"
+                        "height": "50 pixels"
                       }
                     },
                     {
                       "class_name": "listview",
-                      "name": "event_list",
+                      "name": "candidate_list",
                       "box": {
                         "width": "1.0 container",
                         "height": {
@@ -302,19 +229,19 @@
                         "id_field": "ObjectId",
                         "columns": [
                           {
-                            "json_field_name": "EventDate",
-                            "label_text": "Year",
+                            "json_field_name": "FullName",
+                            "label_text": "FullName",
                             "width": 100,
                             "format": "%Y"
                           },
                           {
-                            "json_field_name": "Description",
+                            "json_field_name": "PoliticalParty",
                             "label_text": "Name",
                             "width": 300
                           },
                           {
-                            "json_field_name": "ObjectId",
-                            "label_text": "Id",
+                            "json_field_name": "CandidateId",
+                            "label_text": "FEC Id",
                             "width": 100
                           }
                         ],
@@ -322,55 +249,35 @@
                       },
                       "select_command": {
                         "class_name": "preview_object_command",
-                        "table_name": "event_list",
-                        "form_name": "edit_event_form"
+                        "table_name": "candidate_list",
+                        "form_name": "view_candidate_form"
                       }
                     }
                   ]
                 },
                 {
                   "class_name": "column",
-                  "name": "event_edit_column",
+                  "name": "view_candidate_column",
                   "box": {
-                    "x": "48 pixels",
-                    "width": "1.0 remaining",
+                    "width": "0.8 remaining",
                     "height": "0.8 container"
-                  },
-                  "view_style": {
-                    "box_fill_brush": {
-                      "class_name": "solid_brush",
-                      "color": "211012AA"
-                    },
-                    "box_border_brush": {
-                      "class_name": "solid_brush",
-                      "color": "21101277"
-                    },
-                    "box_border_thickness": 8
                   },
                   "content_alignment": "near",
                   "content_cross_alignment": "near",
                   "children": [
                     {
-                      "class_name": "chaptertitle",
-                      "text": "",
-                      "box": {
-                        "width": "1.0 container",
-                        "height": "30 pixels"
-                      }
-                    },
-                    {
                       "class_name": "chaptersubtitle",
                       "text": "Edit",
                       "box": {
                         "width": "1.0 container",
-                        "height": "25 pixels"
+                        "height": "50 pixels"
                       }
                     },
                     {
                       "class_name": "form",
-                      "name": "edit_event_form",
+                      "name": "view_candidate_form",
                       "model": {
-                        "name": "edit_event",
+                        "name": "view_candidate",
                         "defaults": {
                           "box": {
                             "width": "1.0 container",
@@ -387,26 +294,25 @@
                         },
                         "fields": [
                           {
-                            "json_field_name": "Description",
-                            "label_text": "Description",
+                            "json_field_name": "FullName",
+                            "label_text": "Full Name",
                             "class_name": "edit",
-                            "tooltip_text": "Event preview",
+                            "tooltip_text": "Candidate Full Name",
                             "is_default_focus": true
                           },
                           {
-                            "json_field_name": "EventDate",
-                            "label_text": "Date",
+                            "json_field_name": "PoliticalParty",
+                            "label_text": "Party",
                             "class_name": "edit",
-                            "tooltip_text": "The day of the event",
-                            "is_default_focus": false,
-                            "field_box": {
-                              "width": "250 pixels",
-                              "height": "25 pixels"
-                            },
-                            "box": {
-                              "width": "250 pixels",
-                              "height": "50 pixels"
-                            }
+                            "tooltip_text": "Candidate Political Party",
+                            "is_default_focus": false
+                          },
+                          {
+                            "json_field_name": "ElectionYear",
+                            "label_text": "Election Year",
+                            "class_name": "edit",
+                            "tooltip_text": "Election Year",
+                            "is_default_focus": false
                           },
                           {
                             "json_field_name": "Story",
@@ -423,7 +329,6 @@
                               "height": "150 pixels"
                             }
                           }
-
                         ],
                         "data": []
                       },
@@ -437,12 +342,12 @@
                       "text": "Create",
                       "box": {
                         "width": "1.0 container",
-                        "height": "25 pixels"
+                        "height": "50 pixels"
                       }
                     },
                     {
                       "class_name": "push_button",
-                      "text": "Save Event",
+                      "text": "Save",
                       "box": {
                         "width": {
                           "amount": 100,

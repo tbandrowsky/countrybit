@@ -80,7 +80,6 @@ namespace corona
 
 		json schema;
 
-
 		std::map<class_method_key, json_function_function> functions;
 
 		crypto crypter;
@@ -208,7 +207,7 @@ namespace corona
 	"ClassName" : "SysSchemas",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Database script changes",
-	"ImplementMap" : [ "SchemaName", "SchemaVersion" ],
+	"UniqueConstraint" : [ "SchemaName", "SchemaVersion" ],
 	"Fields" : {			
 			"SchemaName" : "string",
 			"SchemaDescription" : "string",
@@ -243,7 +242,7 @@ namespace corona
 	"ClassName" : "SysDatasets",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Database script changes",
-	"ImplementMap" : [ "DatasetName", "DatasetVersion" ],
+	"UniqueConstraintKey" : [ "DatasetName", "DatasetVersion" ],
 	"Fields" : {			
 			"DatasetName" : "string",
 			"DatasetDescription" : "string",
@@ -305,7 +304,7 @@ namespace corona
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysUser",
 	"ClassDescription" : "A user",
-	"ImplementMap" : [ "Name" ],
+	"UniqueConstraint" : [ "Name" ],
 	"Fields" : {			
 			"ClassName" : "string",
 			"FirstName" : "string",
@@ -345,7 +344,7 @@ namespace corona
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysLogin",
 	"ClassDescription" : "A login of a user",
-	"ImplementMap" : [ "Name" ],
+	"UniqueConstraint" : [ "Name" ],
 	"Fields" : {			
 			"Name" : "string",
 			"Password" : "string",
@@ -529,7 +528,7 @@ namespace corona
 	"ClassName" : "SysTeam",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "A team",
-	"ImplementMap" : [ "Name" ],
+	"UniqueConstraint" : [ "Name" ],
 	"Fields" : {			
 			"Name" : "string",
 			"Description" : "string",
@@ -673,13 +672,13 @@ private:
 			json classA = jp.create_object();
 			classA.copy_member("BaseClassName", _classA);
 			classA.copy_member("Fields", _classA);
-			classA.copy_member("ImplementMap", _classA);
+			classA.copy_member("UniqueConstraint", _classA);
 			std::string sa = classA.to_json_typed();
 
 			json classB = jp.create_object();
 			classB.copy_member("BaseClassName", _classB);
 			classB.copy_member("Fields", _classB);
-			classB.copy_member("ImplementMap", _classB);
+			classB.copy_member("UniqueConstraint", _classB);
 			std::string sb = classB.to_json_typed();
 
 			return sa == sb;
@@ -783,9 +782,9 @@ private:
 					}
 				}
 
-				if (class_definition.has_member("ImplementMap")) {
+				if (class_definition.has_member("UniqueConstraint")) {
 					json class_fields = class_definition["Fields"];
-					json unique_names = class_definition["ImplementMap"];
+					json unique_names = class_definition["UniqueConstraint"];
 					if (unique_names.array()) {
 						for (auto jfield_name : unique_names) {
 							std::string field_name = (std::string)jfield_name;
@@ -968,17 +967,17 @@ private:
 							result.put_member("Data", object_definition);
 						}
 
-						if (class_data.has_member("ImplementMap"))
+						if (class_data.has_member("UniqueConstraint"))
 						{
 							json objects_by_name_key = jp.create_object();
-							json constraint_fields = class_data["ImplementMap"];
+							json constraint_fields = class_data["UniqueConstraint"];
 							std::vector<std::string> constraint_names;
 							constraint_names.push_back("ClassName");
 							for (auto constraint_field : constraint_fields) {
 								constraint_names.push_back(constraint_field);
 							}
 							objects_by_name_key.set_compare_order(constraint_names);
-							result.put_member("ImplementMapKey", objects_by_name_key);
+							result.put_member("UniqueConstraintKey", objects_by_name_key);
 						}
 					}
 					else
@@ -1144,10 +1143,10 @@ private:
 				return obj;
 			}
 
-			if (classdef.has_member("ImplementMap"))
+			if (classdef.has_member("UniqueConstraint"))
 			{
 				json objects_by_name_key = jp.create_object();
-				json constraint_fields = classdef["ImplementMap"];
+				json constraint_fields = classdef["UniqueConstraint"];
 				std::vector<std::string> constraint_names;
 				constraint_names.push_back("ClassName");
 				for (auto constraint_field : constraint_fields) {
@@ -1517,7 +1516,7 @@ private:
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
-				system_monitoring_interface::global_mon->log_job_section_start("", "Classes", start_section, __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_start("Classes", "start", start_section, __FILE__, __LINE__);
 
 				json class_array = _schema["Classes"];
 				if (class_array.array())
@@ -1556,7 +1555,7 @@ private:
 						system_monitoring_interface::global_mon->log_function_stop("put class", class_definition["ClassName"], txc.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
-				system_monitoring_interface::global_mon->log_job_section_stop("", "Classes", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_stop("Classes", "complete", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else
 			{
@@ -1567,7 +1566,7 @@ private:
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
-				system_monitoring_interface::global_mon->log_job_section_start("", "Users", start_section, __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_start("Users", "start", start_section, __FILE__, __LINE__);
 				json user_array = _schema["Users"];
 				if (user_array.array())
 				{
@@ -1583,14 +1582,14 @@ private:
 					    system_monitoring_interface::global_mon->log_function_stop("put class", user_definition["UserName"], txu.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
-				system_monitoring_interface::global_mon->log_job_section_stop("", "Users", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_stop("Users", "complete", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 	
 			if (_schema.has_member("Datasets"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
-				system_monitoring_interface::global_mon->log_job_section_start("", "Datasets", start_section, __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_start("Datasets", "start", start_section, __FILE__, __LINE__);
 				json user_array = _schema["Users"];
 
 				json script_array = _schema["Datasets"];
@@ -1602,6 +1601,7 @@ private:
 						timer txs;
 
 						json script_definition = script_array.get_element(i);
+						script_definition.put_member("ClassName", "SysDatasets");
 						json script_key = jp.create_object();
 						script_key.copy_member("DatasetName", script_definition);
 						script_key.copy_member("DatasetVersion", script_definition);
@@ -1742,8 +1742,21 @@ private:
 										if (datomatic.size() > 0) {
 											timer tx;
 											json cor = create_system_request(datomatic);
-											 put_object(cor);
-											system_monitoring_interface::global_mon->log_warning("FileName and Delimiter can't be blank.");
+											json put_result = put_object(cor);
+											if (put_result["Success"]) {
+												double e = tx.get_elapsed_seconds();
+												total_row_count += datomatic.size();
+												std::string msg = std::format("import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
+												system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
+												datomatic = jp.create_array();
+											}
+											else {
+												std::string msg = std::format("Error saving object {0}", (std::string)put_result["Message"]);
+												system_monitoring_interface::global_mon->log_warning(msg);
+												system_monitoring_interface::global_mon->log_information("Return result");
+												system_monitoring_interface::global_mon->log_json(put_result);
+												break;
+											}
 										}
 
 									}
@@ -1814,10 +1827,11 @@ private:
 
 
 					}
-					system_monitoring_interface::global_mon->log_job_section_stop("DataSets", "", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::global_mon->log_job_section_stop("DataSets", "complete", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 
+			_schema.put_member("ClassName", "SysSchemas");
 			json put_schema_request = create_system_request(_schema);
 			// in corona, creating an object doesn't actually persist anything 
 			// but a change in identifier.  It's a clean way of just getting the 
@@ -2621,12 +2635,13 @@ private:
 					item_array.push_back(data);
 				}
 
-				for (json obj : item_array) {
-
+				for (auto obj : item_array)
+				{
+					json_parser jp;
 					json dobj = obj["Data"];
-					if (dobj.has_member("ImplementMapKey"))
+					if (dobj.has_member("UniqueConstraintKey"))
 					{
-						json keys = dobj["ImplementMapKey"];
+						json keys = dobj["UniqueConstraintKey"];
 						if (keys.array()) {
 							json key_index = jp.create_object();
 							std::vector<std::string> key_order;
@@ -2637,18 +2652,16 @@ private:
 							}
 							key_index.set_compare_order(key_order);
 							key_index.copy_member("ObjectId", obj);
-							 objects_by_name.put(key_index);
+							objects_by_name.put(key_index);
 						}
 					}
 
-					scope_lock lock_one(objects_rw_lock);
-
 					obj.put_member("Active", true);
-					relative_ptr_type put_result =  objects.put(dobj);
+					relative_ptr_type put_result = objects.put(dobj);
 
 					json cobj = dobj.extract({ "ClassName", "ObjectId" });
 					cobj.put_member("Active", true);
-					relative_ptr_type classput_result =  class_objects.put(cobj);
+					relative_ptr_type classput_result = class_objects.put(cobj);
 				}
 
 				result = create_response(put_object_request, true, "Object(s) created", data, method_timer.get_elapsed_seconds());
