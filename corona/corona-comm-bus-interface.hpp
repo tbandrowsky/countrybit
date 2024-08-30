@@ -374,38 +374,6 @@ namespace corona
 			}
 		}
 
-		void run_each(json& _items, std::function<void(json& _item)> _on_each)
-		{
-			std::vector<HANDLE> events;
-
-			if (not _items.array())
-				return;
-
-			int counter = 0;
-			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
-			for (int idx = 0; idx < _items.size(); ) {
-				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-				events.push_back(handle);
-				int end = idx + bucket_size;
-				if (end > _items.size())
-					end = _items.size();
-				general_job* gj = new general_job([idx, end, _on_each, _items]() -> void {
-					for (int x = idx; x < end; x++)
-					{
-						json itm = _items.get_element(x);
-						_on_each(itm);
-					}
-					}, handle);
-				global_job_queue->add_job(gj);
-				idx = end;
-			}
-
-			for (auto evt : events) {
-				::WaitForSingleObject(evt, INFINITE);
-				CloseHandle(evt);
-			}
-		}
-
 		template <typename item> void run_each(std::vector<item>& _items, int _width, int _height, std::function<void(int _x, int _y, item& _item)> _on_each)
 		{
 			std::vector<HANDLE> events;

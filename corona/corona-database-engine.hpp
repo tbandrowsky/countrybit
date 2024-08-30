@@ -80,6 +80,7 @@ namespace corona
 
 		json schema;
 
+
 		std::map<class_method_key, json_function_function> functions;
 
 		crypto crypter;
@@ -207,7 +208,7 @@ namespace corona
 	"ClassName" : "SysSchemas",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Database script changes",
-	"UniqueConstraint" : [ "SchemaName", "SchemaVersion" ],
+	"ImplementMap" : [ "SchemaName", "SchemaVersion" ],
 	"Fields" : {			
 			"SchemaName" : "string",
 			"SchemaDescription" : "string",
@@ -242,7 +243,7 @@ namespace corona
 	"ClassName" : "SysDatasets",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Database script changes",
-	"UniqueConstraintKey" : [ "DatasetName", "DatasetVersion" ],
+	"ImplementMap" : [ "DatasetName", "DatasetVersion" ],
 	"Fields" : {			
 			"DatasetName" : "string",
 			"DatasetDescription" : "string",
@@ -304,7 +305,7 @@ namespace corona
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysUser",
 	"ClassDescription" : "A user",
-	"UniqueConstraint" : [ "Name" ],
+	"ImplementMap" : [ "Name" ],
 	"Fields" : {			
 			"ClassName" : "string",
 			"FirstName" : "string",
@@ -344,7 +345,7 @@ namespace corona
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysLogin",
 	"ClassDescription" : "A login of a user",
-	"UniqueConstraint" : [ "Name" ],
+	"ImplementMap" : [ "Name" ],
 	"Fields" : {			
 			"Name" : "string",
 			"Password" : "string",
@@ -528,7 +529,7 @@ namespace corona
 	"ClassName" : "SysTeam",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "A team",
-	"UniqueConstraint" : [ "Name" ],
+	"ImplementMap" : [ "Name" ],
 	"Fields" : {			
 			"Name" : "string",
 			"Description" : "string",
@@ -672,13 +673,13 @@ private:
 			json classA = jp.create_object();
 			classA.copy_member("BaseClassName", _classA);
 			classA.copy_member("Fields", _classA);
-			classA.copy_member("UniqueConstraint", _classA);
+			classA.copy_member("ImplementMap", _classA);
 			std::string sa = classA.to_json_typed();
 
 			json classB = jp.create_object();
 			classB.copy_member("BaseClassName", _classB);
 			classB.copy_member("Fields", _classB);
-			classB.copy_member("UniqueConstraint", _classB);
+			classB.copy_member("ImplementMap", _classB);
 			std::string sb = classB.to_json_typed();
 
 			return sa == sb;
@@ -782,9 +783,9 @@ private:
 					}
 				}
 
-				if (class_definition.has_member("UniqueConstraint")) {
+				if (class_definition.has_member("ImplementMap")) {
 					json class_fields = class_definition["Fields"];
-					json unique_names = class_definition["UniqueConstraint"];
+					json unique_names = class_definition["ImplementMap"];
 					if (unique_names.array()) {
 						for (auto jfield_name : unique_names) {
 							std::string field_name = (std::string)jfield_name;
@@ -852,137 +853,6 @@ private:
 			return result;
 		}
 
-		class check_object_worker {
-		public:
-			json check_object_request;
-			json object_list;
-			json result_list;
-			json result;
-			corona_database* db;
-
-			void check_objects()
-			{
-				json_parser jp;
-				result_list = jp.create_array();
-
-				for (auto object_definition: object_list) 
-				{
-					
-					if (not object_definition.object())
-					{
-						result = db->create_response(check_object_request, false, "This is not an object", object_definition, method_timer.get_elapsed_seconds());
-						result_list.push_back(result);
-					}
-
-					if (not object_definition.has_member("ClassName"))
-					{
-						result = db->create_response(check_object_request, false, "Object must have class name", object_definition, method_timer.get_elapsed_seconds());
-						result_list.push_back(result);
-					}
-
-					db_object_id_type object_id = -1;
-
-					if (object_definition.has_member("ObjectId"))
-					{
-						object_id = object_definition["ObjectId"].get_int64s();
-					}
-					else
-					{
-						object_id = db->get_next_object_id();
-
-						object_definition.put_member_i64("ObjectId", object_id);
-					}
-
-					json key_boy = object_definition.extract({ "ClassName" });
-
-					{
-
-						json class_data = db->classes.get(key_boy);
-						json warnings = jp.create_array();
-						std::string class_name = key_boy["ClassName"];
-
-						if (not class_data.empty())
-						{
-							result.put_member("ClassDefinition", class_data);
-							// check the object against the class definition for correctness
-							// first we see which fields are in the class not in the object
-							json field_definition = class_data["Fields"];
-							auto class_members = field_definition.get_members();
-							for (auto kv : class_members) {
-								json err_field = jp.create_object("Name", kv.first);
-								if (object_definition.has_member(kv.first)) {
-									std::string obj_type = object_definition[kv.first]->get_type_name();
-									std::string member_type = kv.second;
-									if (member_type != obj_type) {
-										object_definition.change_member_type(kv.first, member_type);
-									}
-								}
-								else
-								{
-									json warning = jp.create_object();
-									warning.put_member("Error", "Required field missing");
-									warning.put_member("FieldName", kv.first);
-									warnings.push_back(warning);
-								}
-							}
-							// then we see which fields are in the object that are not 
-							// in the class definition.
-							auto object_members = object_definition.get_members();
-							for (auto om : object_members) {
-								if (field_definition.has_member(om.first)) {
-									;
-								}
-								else {
-									json warning = jp.create_object();
-									warning.put_member("Error", "Field not found in class definition");
-									warning.put_member("FieldName", om.first);
-									warnings.push_back(warning);
-								}
-							}
-							result = jp.create_object();
-							if (warnings.size() > 0) {
-								std::string msg = std::format("Object '{0}' has problems", class_name);
-								result.put_member("Message", msg);
-								result.put_member("Success", 0);
-								result.put_member("Warnings", warnings);
-								result.put_member("Definition", class_data);
-								result.put_member("Data", object_definition);
-							}
-							else {
-								result.put_member("Message", "Ok");
-								result.put_member("Success", 1);
-								result.put_member("Definition", class_data);
-								result.put_member("Data", object_definition);
-							}
-
-							if (class_data.has_member("UniqueConstraint"))
-							{
-								json objects_by_name_key = jp.create_object();
-								json constraint_fields = class_data["UniqueConstraint"];
-								std::vector<std::string> constraint_names;
-								constraint_names.push_back("ClassName");
-								for (auto constraint_field : constraint_fields) {
-									constraint_names.push_back(constraint_field);
-								}
-								objects_by_name_key.set_compare_order(constraint_names);
-								result.put_member("UniqueConstraintKey", objects_by_name_key);
-							}
-						}
-						else
-						{
-							std::string msg = std::format("'{0}' is not valid class_name", class_name);
-							result.put_member("Message", msg);
-							result.put_member("Success", 0);
-							result.put_member("Data", object_definition);
-							result = class_data;
-						}
-						result_list.push_back(result);
-					}
-				}
-			}
-		};
-
-
 		json check_object(json check_object_request)
 		{
 			timer method_timer;
@@ -1006,32 +876,122 @@ private:
 				object_list.push_back(object_load);
 			}
 
-			std::vector<check_object_worker> workers;
+			result_list = jp.create_array();
 
-			int threads = global_job_queue->getThreadCount();
-			int job_size = object_list.size() / threads;
-			if (job_size < 1) job_size = object_list.size();
-
-			for (int i = 0; i < object_list.size(); i+= job_size)
+			for (auto object_definition : object_list)
 			{
-				check_object_worker cow;
-				cow.check_object_request = check_object_request.clone();
-				cow.db = this;
-				cow.result = result.clone();
-				cow.object_list = object_list.slice(i, job_size);
-			}
+				if (not object_definition.object())
+				{
+					result = create_response(check_object_request, false, "This is not an object", object_definition, method_timer.get_elapsed_seconds());
+					result_list.push_back(result);
+				}
 
-			comm_bus_interface::global_bus->run_each<check_object_worker>(workers, [](check_object_worker& cow) {
-				cow.check_objects();
-				});
+				if (not object_definition.has_member("ClassName"))
+				{
+					result = create_response(check_object_request, false, "Object must have class name", object_definition, method_timer.get_elapsed_seconds());
+					result_list.push_back(result);
+				}
 
-			for (auto worker : workers)
-			{
-				for (auto r : worker.result_list) {
-					result_list.push_back(r);
+				db_object_id_type object_id = -1;
+
+				if (object_definition.has_member("ObjectId"))
+				{
+					object_id = object_definition["ObjectId"].get_int64s();
+				}
+				else
+				{
+					object_id =  get_next_object_id();
+
+					object_definition.put_member_i64("ObjectId", object_id);
+				}
+
+				json key_boy = object_definition.extract({ "ClassName" });
+
+				{
+					scope_lock lock_one(classes_rw_lock);
+
+					json class_data =  classes.get(key_boy);
+					json warnings = jp.create_array();
+					std::string class_name = key_boy["ClassName"];
+
+					if (not class_data.empty())
+					{
+						result.put_member("ClassDefinition", class_data);
+						// check the object against the class definition for correctness
+						// first we see which fields are in the class not in the object
+						json field_definition = class_data["Fields"];
+						auto class_members = field_definition.get_members();
+						for (auto kv : class_members) {
+							json err_field = jp.create_object("Name", kv.first);
+							if (object_definition.has_member(kv.first)) {
+								std::string obj_type = object_definition[kv.first]->get_type_name();
+								std::string member_type = kv.second;
+								if (member_type != obj_type) {
+									object_definition.change_member_type(kv.first, member_type);
+								}
+							}
+							else
+							{
+								json warning = jp.create_object();
+								warning.put_member("Error", "Required field missing");
+								warning.put_member("FieldName", kv.first);
+								warnings.push_back(warning);
+							}
+						}
+						// then we see which fields are in the object that are not 
+						// in the class definition.
+						auto object_members = object_definition.get_members();
+						for (auto om : object_members) {
+							if (field_definition.has_member(om.first)) {
+								;
+							}
+							else {
+								json warning = jp.create_object();
+								warning.put_member("Error", "Field not found in class definition");
+								warning.put_member("FieldName", om.first);
+								warnings.push_back(warning);
+							}
+						}
+						result = jp.create_object();
+						if (warnings.size() > 0) {
+							std::string msg = std::format("Object '{0}' has problems", class_name);
+							result.put_member("Message", msg);
+							result.put_member("Success", 0);
+							result.put_member("Warnings", warnings);
+							result.put_member("Definition", class_data);
+							result.put_member("Data", object_definition);
+						}
+						else {
+							result.put_member("Message", "Ok");
+							result.put_member("Success", 1);
+							result.put_member("Definition", class_data);
+							result.put_member("Data", object_definition);
+						}
+
+						if (class_data.has_member("ImplementMap"))
+						{
+							json objects_by_name_key = jp.create_object();
+							json constraint_fields = class_data["ImplementMap"];
+							std::vector<std::string> constraint_names;
+							constraint_names.push_back("ClassName");
+							for (auto constraint_field : constraint_fields) {
+								constraint_names.push_back(constraint_field);
+							}
+							objects_by_name_key.set_compare_order(constraint_names);
+							result.put_member("ImplementMapKey", objects_by_name_key);
+						}
+					}
+					else
+					{
+						std::string msg = std::format("'{0}' is not valid class_name", class_name);
+						result.put_member("Message", msg);
+						result.put_member("Success", 0);
+						result.put_member("Data", object_definition);
+						result = class_data;
+					}
+					result_list.push_back(result);
 				}
 			}
-
 			result = create_response(check_object_request, true, "Objects processed", result_list, method_timer.get_elapsed_seconds());
 			return result;
 		}
@@ -1184,10 +1144,10 @@ private:
 				return obj;
 			}
 
-			if (classdef.has_member("UniqueConstraint"))
+			if (classdef.has_member("ImplementMap"))
 			{
 				json objects_by_name_key = jp.create_object();
-				json constraint_fields = classdef["UniqueConstraint"];
+				json constraint_fields = classdef["ImplementMap"];
 				std::vector<std::string> constraint_names;
 				constraint_names.push_back("ClassName");
 				for (auto constraint_field : constraint_fields) {
@@ -1557,7 +1517,7 @@ private:
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
-				system_monitoring_interface::global_mon->log_job_section_start("Classes", "start", start_section, __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_start("", "Classes", start_section, __FILE__, __LINE__);
 
 				json class_array = _schema["Classes"];
 				if (class_array.array())
@@ -1596,7 +1556,7 @@ private:
 						system_monitoring_interface::global_mon->log_function_stop("put class", class_definition["ClassName"], txc.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
-				system_monitoring_interface::global_mon->log_job_section_stop("Classes", "complete", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_stop("", "Classes", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else
 			{
@@ -1607,7 +1567,7 @@ private:
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
-				system_monitoring_interface::global_mon->log_job_section_start("Users", "start", start_section, __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_start("", "Users", start_section, __FILE__, __LINE__);
 				json user_array = _schema["Users"];
 				if (user_array.array())
 				{
@@ -1623,14 +1583,14 @@ private:
 					    system_monitoring_interface::global_mon->log_function_stop("put class", user_definition["UserName"], txu.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
-				system_monitoring_interface::global_mon->log_job_section_stop("Users", "complete", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_stop("", "Users", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 	
 			if (_schema.has_member("Datasets"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
-				system_monitoring_interface::global_mon->log_job_section_start("Datasets", "start", start_section, __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_section_start("", "Datasets", start_section, __FILE__, __LINE__);
 				json user_array = _schema["Users"];
 
 				json script_array = _schema["Datasets"];
@@ -1642,7 +1602,6 @@ private:
 						timer txs;
 
 						json script_definition = script_array.get_element(i);
-						script_definition.put_member("ClassName", "SysDatasets");
 						json script_key = jp.create_object();
 						script_key.copy_member("DatasetName", script_definition);
 						script_key.copy_member("DatasetVersion", script_definition);
@@ -1783,21 +1742,8 @@ private:
 										if (datomatic.size() > 0) {
 											timer tx;
 											json cor = create_system_request(datomatic);
-											json put_result = put_object(cor);
-											if (put_result["Success"]) {
-												double e = tx.get_elapsed_seconds();
-												total_row_count += datomatic.size();
-												std::string msg = std::format("import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
-												system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
-												datomatic = jp.create_array();
-											}
-											else {
-												std::string msg = std::format("Error saving object {0}", (std::string)put_result["Message"]);
-												system_monitoring_interface::global_mon->log_warning(msg);
-												system_monitoring_interface::global_mon->log_information("Return result");
-												system_monitoring_interface::global_mon->log_json(put_result);
-												break;
-											}
+											 put_object(cor);
+											system_monitoring_interface::global_mon->log_warning("FileName and Delimiter can't be blank.");
 										}
 
 									}
@@ -1868,11 +1814,10 @@ private:
 
 
 					}
-					system_monitoring_interface::global_mon->log_job_section_stop("DataSets", "complete", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::global_mon->log_job_section_stop("DataSets", "", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 
-			_schema.put_member("ClassName", "SysSchemas");
 			json put_schema_request = create_system_request(_schema);
 			// in corona, creating an object doesn't actually persist anything 
 			// but a change in identifier.  It's a clean way of just getting the 
@@ -2676,13 +2621,12 @@ private:
 					item_array.push_back(data);
 				}
 
-				for (auto obj : item_array)
-				{
-					json_parser jp;
+				for (json obj : item_array) {
+
 					json dobj = obj["Data"];
-					if (dobj.has_member("UniqueConstraintKey"))
+					if (dobj.has_member("ImplementMapKey"))
 					{
-						json keys = dobj["UniqueConstraintKey"];
+						json keys = dobj["ImplementMapKey"];
 						if (keys.array()) {
 							json key_index = jp.create_object();
 							std::vector<std::string> key_order;
@@ -2693,16 +2637,18 @@ private:
 							}
 							key_index.set_compare_order(key_order);
 							key_index.copy_member("ObjectId", obj);
-							objects_by_name.put(key_index);
+							 objects_by_name.put(key_index);
 						}
 					}
 
+					scope_lock lock_one(objects_rw_lock);
+
 					obj.put_member("Active", true);
-					relative_ptr_type put_result = objects.put(dobj);
+					relative_ptr_type put_result =  objects.put(dobj);
 
 					json cobj = dobj.extract({ "ClassName", "ObjectId" });
 					cobj.put_member("Active", true);
-					relative_ptr_type classput_result = class_objects.put(cobj);
+					relative_ptr_type classput_result =  class_objects.put(cobj);
 				}
 
 				result = create_response(put_object_request, true, "Object(s) created", data, method_timer.get_elapsed_seconds());

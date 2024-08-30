@@ -1,6 +1,6 @@
 {
-  "SchemaName": "Country Video Games Candidate Finder",
-  "SchemaDescription": "This schema creates a simple searchable database using FEC database as a source.",
+  "SchemaName": "Country Video Games Donation Finder",
+  "SchemaDescription": "This schema creates a simple searchable database using FEC donations as a source.",
   "SchemaVersion": "1.0",
   "SchemaAuthors": [ "TJ Bandrowsky" ],
   "Classes": [
@@ -19,7 +19,7 @@
         "State": "string",
         "Zip": "string"
       },
-      "UniqueConstraint": [ "CandidateId" ]
+      "UniqueConstraintKey": [ "CandidateId" ]
     },
     {
       "ClassName": "Committees",
@@ -30,7 +30,7 @@
         "CommitteeName": "string",
         "PoliticalParty": "string"
       },
-      "UniqueConstraint": [ "CommitteeId" ]
+      "UniqueConstraintKey": [ "CommitteeId" ]
     },
     {
       "ClassName": "CommitteeCandidates",
@@ -42,7 +42,7 @@
         "ElectionYear": "string",
         "LinkageId" :  "string"
       },
-      "UniqueConstraint": [ "LinkageId" ]
+      "UniqueConstraintKey": [ "LinkageId" ]
     },
     {
       "ClassName": "Individuals",
@@ -112,6 +112,35 @@
           "1": "CommitteeName",
           "10": "PoliticalParty",
           "13": "CompanyName"
+        }
+      }
+    },
+    {
+      "DatasetName": "Individual Master",
+      "DatasetDescription": "Load Individuals",
+      "DatasetVersion": "1.0",
+      "Author": "Federal Elections Commission",
+      "Source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "RunOnChange": {
+        "ClassToMonitor": "Individuals",
+        "KillAndFill": true
+      },
+      "Import": {
+        "Type": "csv",
+        "Delimiter": "|",
+        "FileName": "itcont.csv",
+        "TargetClass": "Individuals",
+        "ColumnMap": {
+          "0": "CommitteeId",
+          "8": "FullName",
+          "9": "City",
+          "10": "State",
+          "11": "Zip",
+          "12": "Employer",
+          "13" : "Occupation",
+          "14" : "TransactionDate",
+          "15" : "TransactionAmount",
+          "20": "Memo"
         }
       }
     }

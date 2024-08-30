@@ -413,8 +413,6 @@ namespace corona
 
 	class json_table
 	{
-	public:
-
 	private:
 
 		json_table_header				table_header;
@@ -443,9 +441,9 @@ namespace corona
 			return table_header.header.block_location;
 		}
 
-		json_node find_node(json _key)
+		relative_ptr_type find_node(json _key)
 		{
-			json_node jn, empty;
+			json_node jn;
 			timer tx;
 
 			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -458,7 +456,7 @@ namespace corona
 			
 			int64_t location = table_header.data.data_root_location;
 			if (location <= 0)
-				return jn;
+				return null_row;
 
 			list_block_header* list_start = nullptr;
 
@@ -478,7 +476,7 @@ namespace corona
 					byte local_hash_code = hash_bytes[level_index];
 					location = jtn.data.children[local_hash_code];
 					if (location == 0)
-						return empty;
+						return null_row;
 					list_start = &jtn.data.index_list;
 				}
 
@@ -498,19 +496,19 @@ namespace corona
 					jn.read(database_file.get(), block_location);
 					int c = _key.compare(jn.data);
 					if (c == 0) {
-						return jn;
+						return block_location;
 					}
 					else if (c > 0)
 					{
 						block_location = jn.header.next_block;
 					}
 					else {
-						return empty;
+						return null_row;
 					}
 				}
 			};
 
-			return empty;
+			return -1i64;
 		}
 
 
@@ -543,7 +541,6 @@ namespace corona
 
 		json_node put_node(json _data)
 		{
-
 			date_time start_time = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_json_start("json_table", "put_node", start_time, __FILE__, __LINE__);
@@ -555,7 +552,7 @@ namespace corona
 
 			json_tree_node jtn;
 
-			// if there is nothing in our tree, create a header			
+			// if there is nothing in our tree, create a header
 
 			list_block_header* list_start = nullptr;
 
@@ -756,7 +753,6 @@ namespace corona
 
 		void erase_node(file* _file, relative_ptr_type _node_location)
 		{
-
 			date_time start_time = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_json_start("json_table", "erase_node", start_time, __FILE__, __LINE__);
@@ -1031,10 +1027,9 @@ namespace corona
 			timer tx;
 			system_monitoring_interface::global_mon->log_table_start("table", "contains", start_time, __FILE__, __LINE__);
 
-			auto nd = find_node(key);
-			relative_ptr_type result = nd.header.block_location;
+			relative_ptr_type result =  find_node(key);
 			system_monitoring_interface::global_mon->log_table_stop("table", "contains complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			return  result > 0;
+			return  result != null_row;
 		}
 
 		json get(std::string _key)
@@ -1057,9 +1052,10 @@ namespace corona
 			}
 
 			json result;
-			auto n =  find_node(key);
-			if (n.header.block_location > 0) {
-				result = n.data;
+			relative_ptr_type n =  find_node(key);
+			if (n != null_row) {
+				json_node r =  get_node(database_file.get(), n);
+				result = r.data;
 			}
 			system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -1073,9 +1069,10 @@ namespace corona
 			system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 
 			json result;
-			auto n =  find_node(key);
-			if (n.header.block_location > 0) {
-				result = n.data;
+			relative_ptr_type n =  find_node(key);
+			if (n != null_row) {
+				json_node r =  get_node(database_file.get(), n);
+				result = r.data;
 			}
 			system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -1089,10 +1086,11 @@ namespace corona
 			system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 
 			json result;
-			auto resultnd = find_node(key);
-			if (resultnd.header.block_location >= 0) {
-				if (not resultnd.data.empty()) {
-					result = resultnd.data.extract(include_fields);
+			relative_ptr_type n =  find_node(key);
+			if (n != null_row) {
+				json_node r =  get_node(database_file.get(), n);
+				if (not r.data.empty()) {
+					result = r.data.extract(include_fields);
 				}
 			}
 			system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1137,20 +1135,24 @@ namespace corona
 
 			auto key = get_key(value);
 
-			auto jnz = find_node(key);
+			auto node_location = find_node(key);
 
-			jnz.data.assign_replace(value);
-			jnz.write(database_file.get(), 
-			[this](int64_t _location) {
-				return free(_location);
-				},
-			[this](int64_t _size) {
-				return allocate(_size);	
-			});
+			if (node_location > -1) {
+				json_node jnz;
+				jnz.read(database_file.get(), node_location);
+				jnz.data.assign_replace(value);
+				jnz.write(database_file.get(), 
+				[this](int64_t _location) {
+					return free(_location);
+					},
+				[this](int64_t _size) {
+					return allocate(_size);	
+				});
+			}
 
 			system_monitoring_interface::global_mon->log_table_stop("table", "replace", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			return jnz.header.block_location;
+			return node_location;
 		}
 
 		relative_ptr_type replace(std::string _json)
@@ -1166,8 +1168,7 @@ namespace corona
 			timer tx;
 			system_monitoring_interface::global_mon->log_table_start("table", "erase", start_time, __FILE__, __LINE__);
 
-			json_node fn = find_node(key);
-			int64_t node_location = fn.header.block_location;
+			int64_t node_location = find_node(key);
 
 			bool deleted = false;
 
