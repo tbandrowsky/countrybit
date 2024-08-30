@@ -2245,6 +2245,28 @@ namespace corona
 			return result_item;
 		}
 
+		json slice(int _start_index, int _length)
+		{
+			json result_item;
+			if (array_impl) {
+				result_item = json(std::make_shared<json_array>());
+				int start = _start_index;
+				int stop = _start_index + _length;
+				if (start >= size()) {
+					return result_item;
+				}
+				if (stop >= size()) {
+					stop = size();
+				}
+				for (int i = start; i < stop; i++)
+				{
+					json temp = get_element(i);
+					json temp2 = temp.clone();
+					result_item.push_back(temp2);
+				}
+			}
+			return result_item;
+		}
 
 		json map(std::function<json(std::string _member, int _index, json& _item)> _transform)
 		{

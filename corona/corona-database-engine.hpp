@@ -852,6 +852,137 @@ private:
 			return result;
 		}
 
+		class check_object_worker {
+		public:
+			json check_object_request;
+			json object_list;
+			json result_list;
+			json result;
+			corona_database* db;
+
+			void check_objects()
+			{
+				json_parser jp;
+				result_list = jp.create_array();
+
+				for (auto object_definition: object_list) 
+				{
+					
+					if (not object_definition.object())
+					{
+						result = db->create_response(check_object_request, false, "This is not an object", object_definition, method_timer.get_elapsed_seconds());
+						result_list.push_back(result);
+					}
+
+					if (not object_definition.has_member("ClassName"))
+					{
+						result = db->create_response(check_object_request, false, "Object must have class name", object_definition, method_timer.get_elapsed_seconds());
+						result_list.push_back(result);
+					}
+
+					db_object_id_type object_id = -1;
+
+					if (object_definition.has_member("ObjectId"))
+					{
+						object_id = object_definition["ObjectId"].get_int64s();
+					}
+					else
+					{
+						object_id = db->get_next_object_id();
+
+						object_definition.put_member_i64("ObjectId", object_id);
+					}
+
+					json key_boy = object_definition.extract({ "ClassName" });
+
+					{
+
+						json class_data = db->classes.get(key_boy);
+						json warnings = jp.create_array();
+						std::string class_name = key_boy["ClassName"];
+
+						if (not class_data.empty())
+						{
+							result.put_member("ClassDefinition", class_data);
+							// check the object against the class definition for correctness
+							// first we see which fields are in the class not in the object
+							json field_definition = class_data["Fields"];
+							auto class_members = field_definition.get_members();
+							for (auto kv : class_members) {
+								json err_field = jp.create_object("Name", kv.first);
+								if (object_definition.has_member(kv.first)) {
+									std::string obj_type = object_definition[kv.first]->get_type_name();
+									std::string member_type = kv.second;
+									if (member_type != obj_type) {
+										object_definition.change_member_type(kv.first, member_type);
+									}
+								}
+								else
+								{
+									json warning = jp.create_object();
+									warning.put_member("Error", "Required field missing");
+									warning.put_member("FieldName", kv.first);
+									warnings.push_back(warning);
+								}
+							}
+							// then we see which fields are in the object that are not 
+							// in the class definition.
+							auto object_members = object_definition.get_members();
+							for (auto om : object_members) {
+								if (field_definition.has_member(om.first)) {
+									;
+								}
+								else {
+									json warning = jp.create_object();
+									warning.put_member("Error", "Field not found in class definition");
+									warning.put_member("FieldName", om.first);
+									warnings.push_back(warning);
+								}
+							}
+							result = jp.create_object();
+							if (warnings.size() > 0) {
+								std::string msg = std::format("Object '{0}' has problems", class_name);
+								result.put_member("Message", msg);
+								result.put_member("Success", 0);
+								result.put_member("Warnings", warnings);
+								result.put_member("Definition", class_data);
+								result.put_member("Data", object_definition);
+							}
+							else {
+								result.put_member("Message", "Ok");
+								result.put_member("Success", 1);
+								result.put_member("Definition", class_data);
+								result.put_member("Data", object_definition);
+							}
+
+							if (class_data.has_member("UniqueConstraint"))
+							{
+								json objects_by_name_key = jp.create_object();
+								json constraint_fields = class_data["UniqueConstraint"];
+								std::vector<std::string> constraint_names;
+								constraint_names.push_back("ClassName");
+								for (auto constraint_field : constraint_fields) {
+									constraint_names.push_back(constraint_field);
+								}
+								objects_by_name_key.set_compare_order(constraint_names);
+								result.put_member("UniqueConstraintKey", objects_by_name_key);
+							}
+						}
+						else
+						{
+							std::string msg = std::format("'{0}' is not valid class_name", class_name);
+							result.put_member("Message", msg);
+							result.put_member("Success", 0);
+							result.put_member("Data", object_definition);
+							result = class_data;
+						}
+						result_list.push_back(result);
+					}
+				}
+			}
+		};
+
+
 		json check_object(json check_object_request)
 		{
 			timer method_timer;
@@ -875,122 +1006,32 @@ private:
 				object_list.push_back(object_load);
 			}
 
-			result_list = jp.create_array();
+			std::vector<check_object_worker> workers;
 
-			for (auto object_definition : object_list)
+			int threads = global_job_queue->getThreadCount();
+			int job_size = object_list.size() / threads;
+			if (job_size < 1) job_size = object_list.size();
+
+			for (int i = 0; i < object_list.size(); i+= job_size)
 			{
-				if (not object_definition.object())
-				{
-					result = create_response(check_object_request, false, "This is not an object", object_definition, method_timer.get_elapsed_seconds());
-					result_list.push_back(result);
-				}
+				check_object_worker cow;
+				cow.check_object_request = check_object_request.clone();
+				cow.db = this;
+				cow.result = result.clone();
+				cow.object_list = object_list.slice(i, job_size);
+			}
 
-				if (not object_definition.has_member("ClassName"))
-				{
-					result = create_response(check_object_request, false, "Object must have class name", object_definition, method_timer.get_elapsed_seconds());
-					result_list.push_back(result);
-				}
+			comm_bus_interface::global_bus->run_each<check_object_worker>(workers, [](check_object_worker& cow) {
+				cow.check_objects();
+				});
 
-				db_object_id_type object_id = -1;
-
-				if (object_definition.has_member("ObjectId"))
-				{
-					object_id = object_definition["ObjectId"].get_int64s();
-				}
-				else
-				{
-					object_id =  get_next_object_id();
-
-					object_definition.put_member_i64("ObjectId", object_id);
-				}
-
-				json key_boy = object_definition.extract({ "ClassName" });
-
-				{
-					scope_lock lock_one(classes_rw_lock);
-
-					json class_data =  classes.get(key_boy);
-					json warnings = jp.create_array();
-					std::string class_name = key_boy["ClassName"];
-
-					if (not class_data.empty())
-					{
-						result.put_member("ClassDefinition", class_data);
-						// check the object against the class definition for correctness
-						// first we see which fields are in the class not in the object
-						json field_definition = class_data["Fields"];
-						auto class_members = field_definition.get_members();
-						for (auto kv : class_members) {
-							json err_field = jp.create_object("Name", kv.first);
-							if (object_definition.has_member(kv.first)) {
-								std::string obj_type = object_definition[kv.first]->get_type_name();
-								std::string member_type = kv.second;
-								if (member_type != obj_type) {
-									object_definition.change_member_type(kv.first, member_type);
-								}
-							}
-							else
-							{
-								json warning = jp.create_object();
-								warning.put_member("Error", "Required field missing");
-								warning.put_member("FieldName", kv.first);
-								warnings.push_back(warning);
-							}
-						}
-						// then we see which fields are in the object that are not 
-						// in the class definition.
-						auto object_members = object_definition.get_members();
-						for (auto om : object_members) {
-							if (field_definition.has_member(om.first)) {
-								;
-							}
-							else {
-								json warning = jp.create_object();
-								warning.put_member("Error", "Field not found in class definition");
-								warning.put_member("FieldName", om.first);
-								warnings.push_back(warning);
-							}
-						}
-						result = jp.create_object();
-						if (warnings.size() > 0) {
-							std::string msg = std::format("Object '{0}' has problems", class_name);
-							result.put_member("Message", msg);
-							result.put_member("Success", 0);
-							result.put_member("Warnings", warnings);
-							result.put_member("Definition", class_data);
-							result.put_member("Data", object_definition);
-						}
-						else {
-							result.put_member("Message", "Ok");
-							result.put_member("Success", 1);
-							result.put_member("Definition", class_data);
-							result.put_member("Data", object_definition);
-						}
-
-						if (class_data.has_member("UniqueConstraint"))
-						{
-							json objects_by_name_key = jp.create_object();
-							json constraint_fields = class_data["UniqueConstraint"];
-							std::vector<std::string> constraint_names;
-							constraint_names.push_back("ClassName");
-							for (auto constraint_field : constraint_fields) {
-								constraint_names.push_back(constraint_field);
-							}
-							objects_by_name_key.set_compare_order(constraint_names);
-							result.put_member("UniqueConstraintKey", objects_by_name_key);
-						}
-					}
-					else
-					{
-						std::string msg = std::format("'{0}' is not valid class_name", class_name);
-						result.put_member("Message", msg);
-						result.put_member("Success", 0);
-						result.put_member("Data", object_definition);
-						result = class_data;
-					}
-					result_list.push_back(result);
+			for (auto worker : workers)
+			{
+				for (auto r : worker.result_list) {
+					result_list.push_back(r);
 				}
 			}
+
 			result = create_response(check_object_request, true, "Objects processed", result_list, method_timer.get_elapsed_seconds());
 			return result;
 		}
