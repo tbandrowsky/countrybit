@@ -2447,9 +2447,6 @@ private:
 					return _item;
 					}, update_json);
 
-				json get_object_id = jp.create_object("ObjectId", 0i64);
-				get_object_id.put_member("Token", token);
-
 				if (class_object_ids.array()) 
 				{
 					object_list = objects.get_list(class_object_ids);

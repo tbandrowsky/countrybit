@@ -448,6 +448,10 @@ namespace corona
 			json_node jn;
 			timer tx;
 
+			if (key_fields.size() > 1) {
+				comm_bus_interface::global_bus->log_warning("find_nodes doesn't work with multiple keys", __FILE__, __LINE__);
+			}
+
 			json results = jp.create_array();
 
 			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -500,28 +504,31 @@ namespace corona
 
 				log_put("found hash", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-				for (json _data : obj.second)
+				std::string key_name = key_fields[0];
+
+				json grouped = obj.second.group([key_name](json& _item) -> std::string {
+					return _item[key_name];
+					});
+
+				if (list_start->first_block)
 				{
-					json node_key = _data.extract(key_fields);
+					system_monitoring_interface::global_mon->log_information("block scan:" + key_name + ":" + std::to_string(list_start->first_block));
+					auto block_location = list_start->first_block;
 
-					if (list_start->first_block)
+					// see if our block is in here, if so, update it.
+
+					while (block_location)
 					{
-						auto block_location = list_start->first_block;
-
-						// see if our block is in here, if so, update it.
-
-						while (block_location)
+						jn.read(database_file.get(), block_location);
+						std::string key_value = jn.data[key_name];
+						system_monitoring_interface::global_mon->log_information("check node:" + key_value);
+						if (grouped.has_member(key_value))
 						{
-							jn.read(database_file.get(), block_location);
-							int c = node_key.compare(jn.data);
-							if (c == 0) {
-								results.push_back(jn.data);
-								break;
-							}
-							block_location = jn.header.next_block;
+							results.push_back(jn.data);
 						}
-					};
-				}
+						block_location = jn.header.next_block;
+					}
+				};
 			}
 			return results;
 		}
@@ -564,8 +571,8 @@ namespace corona
 						return null_row;
 					list_start = &jtn.data.index_list;
 				}
-
-				location_cache.insert_or_assign(hash_code, jtn.header.block_location);
+				auto status = jtn.read(database_file.get(), location);
+				//location_cache.insert_or_assign(hash_code, jtn.header.block_location);
 			}
 
 			log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -695,9 +702,9 @@ namespace corona
 
 					for (level_index = 0; level_index < 8; level_index++)
 					{
-						path = path + std::to_string(location) + ".";
 						auto status = jtn.read(database_file.get(), location);
 						byte local_hash_code = hash_bytes[level_index];
+						path = path + std::to_string(local_hash_code) + ".";
 						location = jtn.data.children[local_hash_code];
 						if (location == 0) {
 							json_tree_node ntn;
@@ -707,17 +714,19 @@ namespace corona
 								});
 							jtn.data.children[local_hash_code] = location;
 							jtn.write_child(database_file.get(), local_hash_code);
+							jtn = ntn;
 						}
 						list_start = &jtn.data.index_list;
 					}
 
+					path = path + "->" + std::to_string(jtn.header.block_location);
 					system_monitoring_interface::global_mon->log_put(path, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 
 				if (location_cache.size() > 10000) {
 					location_cache.clear();
 				}
-				location_cache.insert_or_assign(hash_code, jtn.header.block_location);
+				//location_cache.insert_or_assign(hash_code, jtn.header.block_location);
 
 				for (json _data : obj.second)
 				{
@@ -739,23 +748,21 @@ namespace corona
 						// first, check to see if this is larger than anything at the end of the block, then we'll just append it...
 						int comparison = 0;
 
-						if (list_start->last_block) {
-							current_node.read(database_file.get(), list_start->last_block);
-							comparison = node_key.compare(current_node.data);
-							if (comparison > 0) {
-								system_monitoring_interface::global_mon->log_put("append new node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-								new_node.data = _data;
-								new_node.header.next_block = 0;
-								new_node.append(database_file.get(), [this](int64_t _size) {
-									return allocate(_size);
-									});
-								current_node.header.next_block = new_node.header.block_location;
-								current_node.write(database_file.get(), nullptr, nullptr);
-								list_start->last_block = new_node.header.block_location;
-								jtn.write(database_file.get(), nullptr, nullptr);
-								table_header.data.count++;
-								return;
-							}
+						current_node.read(database_file.get(), list_start->last_block);
+						comparison = node_key.compare(current_node.data);
+						if (comparison > 0) {
+							system_monitoring_interface::global_mon->log_put("append new node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+							new_node.data = _data;
+							new_node.header.next_block = 0;
+							new_node.append(database_file.get(), [this](int64_t _size) {
+								return allocate(_size);
+								});
+							current_node.header.next_block = new_node.header.block_location;
+							current_node.write(database_file.get(), nullptr, nullptr);
+							list_start->last_block = new_node.header.block_location;
+							jtn.write(database_file.get(), nullptr, nullptr);
+							table_header.data.count++;
+							continue;
 						}
 
 						// see if our block is in here, if so, update it.
@@ -799,7 +806,7 @@ namespace corona
 							}
 							// this is an insert, so we do write the count
 							table_header.data.count++;
-							return;
+							continue;
 						}
 						else if (block_location > 0 and comparison == 0) {
 							system_monitoring_interface::global_mon->log_put("update existing", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -814,7 +821,7 @@ namespace corona
 							);
 							system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 							// this is an update, so we do not write the count
-							return;
+							continue;
 						}
 						else
 						{
@@ -829,7 +836,7 @@ namespace corona
 							list_start->last_block = new_node.header.block_location;
 							jtn.write(database_file.get(), nullptr, nullptr);
 							table_header.data.count++;
-							return;
+							continue;
 						}
 
 						system_monitoring_interface::global_mon->log_warning("Should not be here", __FILE__, __LINE__);
@@ -916,10 +923,12 @@ namespace corona
 							});
 						jtn.data.children[local_hash_code] = location;
 						jtn.write_child(database_file.get(), local_hash_code);
+						jtn = ntn;
 					}
 					list_start = &jtn.data.index_list;
 				}
 
+				path = path + "->" + std::to_string(jtn.header.data_location);
 				system_monitoring_interface::global_mon->log_put(path, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
@@ -934,7 +943,7 @@ namespace corona
 				if (location_cache.size() > 10000) {
 					location_cache.clear();
 				}
-				location_cache.insert_or_assign(hash_code, jtn.header.block_location);
+				//location_cache.insert_or_assign(hash_code, jtn.header.block_location);
 
 				system_monitoring_interface::global_mon->log_put("block exists", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
