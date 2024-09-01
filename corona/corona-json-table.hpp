@@ -496,10 +496,11 @@ namespace corona
 						auto status = jtn.read(database_file.get(), location);
 						byte local_hash_code = hash_bytes[level_index];
 						location = jtn.data.children[local_hash_code];
-						list_start = &jtn.data.index_list;
 					}
+					auto status = jtn.read(database_file.get(), location);
+					list_start = &jtn.data.index_list;
 
-					location_cache.insert_or_assign(hash_code, jtn.header.block_location);
+				//	location_cache.insert_or_assign(hash_code, jtn.header.block_location);
 				}
 
 				log_put("found hash", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -569,9 +570,9 @@ namespace corona
 					location = jtn.data.children[local_hash_code];
 					if (location == 0)
 						return null_row;
-					list_start = &jtn.data.index_list;
 				}
 				auto status = jtn.read(database_file.get(), location);
+				list_start = &jtn.data.index_list;
 				//location_cache.insert_or_assign(hash_code, jtn.header.block_location);
 			}
 
@@ -714,10 +715,11 @@ namespace corona
 								});
 							jtn.data.children[local_hash_code] = location;
 							jtn.write_child(database_file.get(), local_hash_code);
-							jtn = ntn;
 						}
-						list_start = &jtn.data.index_list;
 					}
+
+					auto status = jtn.read(database_file.get(), location);
+					list_start = &jtn.data.index_list;
 
 					path = path + "->" + std::to_string(jtn.header.block_location);
 					system_monitoring_interface::global_mon->log_put(path, tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -923,10 +925,11 @@ namespace corona
 							});
 						jtn.data.children[local_hash_code] = location;
 						jtn.write_child(database_file.get(), local_hash_code);
-						jtn = ntn;
 					}
-					list_start = &jtn.data.index_list;
 				}
+
+				auto status = jtn.read(database_file.get(), location);
+				list_start = &jtn.data.index_list;
 
 				path = path + "->" + std::to_string(jtn.header.data_location);
 				system_monitoring_interface::global_mon->log_put(path, tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1111,8 +1114,9 @@ namespace corona
 				location = jtn.data.children[local_hash_code];
 				if (location == 0)
 					return;
-				list_start = &jtn.data.index_list;
 			}
+			auto status = jtn.read(database_file.get(), location);
+			list_start = &jtn.data.index_list;
 
 			log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
