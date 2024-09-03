@@ -240,15 +240,17 @@ namespace corona
 
 		virtual json process(query_context_base* _src) {
 			timer tx;
+			json_parser jp;
 			json stage_input = _src->get_data(stage_input_name);
 			if (stage_input.object()) {
+				json result = jp.create_array();
 				if (predicate and predicate->accepts(_src, stage_input)) {
-					stage_output = stage_input;
-					return stage_input;
+					result.push_back(stage_input);
+					stage_output = result;
+					return stage_output;
 				}
 			}
 			else if (stage_input.array()) {
-				json_parser jp;
 				json result = jp.create_array();
 				for (auto item : stage_input) {
 					if (predicate and predicate->accepts(_src, item)) {

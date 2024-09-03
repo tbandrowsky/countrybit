@@ -194,7 +194,7 @@
                                   "stage_input_name": "Candidates:",
                                   "predicate": {
                                     "class_name": "contains",
-                                    "textsrc": "search_event_form:Description"
+                                    "textsrc": "search_candidates_form:Description"
                                   }
                                 }
                               ]
@@ -255,18 +255,17 @@
                         "id_field": "ObjectId",
                         "columns": [
                           {
-                            "json_field_name": "EventDate",
-                            "label_text": "Year",
-                            "width": 100,
-                            "format": "%Y"
+                            "json_field_name": "FullName",
+                            "label_text": "Full Name",
+                            "width": 150
                           },
                           {
-                            "json_field_name": "Description",
-                            "label_text": "Name",
-                            "width": 300
+                            "json_field_name": "PoliticalParty",
+                            "label_text": "Party",
+                            "width": 150
                           },
                           {
-                            "json_field_name": "ObjectId",
+                            "json_field_name": "CandidateId",
                             "label_text": "Id",
                             "width": 100
                           }
@@ -339,17 +338,17 @@
                         },
                         "fields": [
                           {
-                            "json_field_name": "Description",
-                            "label_text": "Description",
+                            "json_field_name": "FullName",
+                            "label_text": "Full Name",
                             "class_name": "edit",
-                            "tooltip_text": "Event preview",
+                            "tooltip_text": "Name of candidate",
                             "is_default_focus": true
                           },
                           {
-                            "json_field_name": "EventDate",
-                            "label_text": "Date",
+                            "json_field_name": "PoliticalParty",
+                            "label_text": "Party",
                             "class_name": "edit",
-                            "tooltip_text": "The day of the event",
+                            "tooltip_text": "Political Party",
                             "is_default_focus": false,
                             "field_box": {
                               "width": "250 pixels",

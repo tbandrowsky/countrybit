@@ -2438,7 +2438,7 @@ private:
 				}
 			}
 
-			json object_list = jp.create_object();
+			json object_list = jp.create_array();
 
 			for (auto class_pair : class_names)
 			{
@@ -2454,6 +2454,7 @@ private:
 					json class_objects = class_data.update(empty_boy, [](int _index, json& _item)->json {
 						return _item;
 						}, update_json);
+					object_list.append_array(class_objects);
 				}
 			}
 

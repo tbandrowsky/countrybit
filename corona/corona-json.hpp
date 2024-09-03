@@ -3914,6 +3914,7 @@ namespace corona
 		json start = *this;
 
 		result.put_member("path", _path);
+		result.put_member("value", *this);
 
 		for (auto item : items)
 		{
@@ -3922,12 +3923,8 @@ namespace corona
 			{
 				result.put_member("object", start);
 				json new_start = start[item];
-				if (new_start.object() || new_start.array()) {
-					start = start[item];
-				}
-				else {
-					result.put_member("value", new_start);
-				}
+				start = new_start;
+				result.put_member("value", start);
 			}
 			else if (start.array())
 			{
@@ -3938,6 +3935,7 @@ namespace corona
 						return result;
 					}
 					start = start.get_element(idx);
+					result.put_member("value", start);
 				}
 				else {
 					std::vector<std::string> item_ops = split(item, '-');
@@ -3946,7 +3944,7 @@ namespace corona
 					}
 					std::string operation = item_ops[0];
 					std::string member_name = item_ops[1];
-					if (operation == "last")
+					if (item == "last")
 					{
 						int index_lists = start.size() - 1;
 						if (index_lists < 0)
@@ -3957,7 +3955,7 @@ namespace corona
 							return v;;
 						}
 					}
-					else if (operation == "first")
+					else if (item == "first")
 					{
 						int index_lists = start.size() - 1;
 						if (index_lists < 0)

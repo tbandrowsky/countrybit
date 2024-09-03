@@ -139,7 +139,7 @@ namespace corona
 			pages_config_mon.file_name = pages_config_file_name;
 			styles_config_mon.file_name = styles_config_file_name;
 
-			if (true or !app->file_exists(database_file_name)) 
+			if (true or not app->file_exists(database_file_name)) 
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(this, db_file);
