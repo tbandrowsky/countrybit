@@ -52,17 +52,11 @@ namespace corona
 	public:
 		int64_t			  object_id;
 		relative_ptr_type classes_location;
-		relative_ptr_type class_objects_location;
-		relative_ptr_type objects_location;
-		relative_ptr_type objects_by_name_location;
 
 		corona_db_header_struct() 
 		{
 			object_id = -1;
 			classes_location = -1;
-			class_objects_location = -1;
-			objects_location = -1;
-			objects_by_name_location = -1;
 		}
 	};
 
@@ -74,9 +68,6 @@ namespace corona
 		corona_db_header header;
 
 		json_table classes;
-		json_table class_objects;
-		json_table objects;
-		json_table objects_by_name;
 
 		json schema;
 
@@ -162,9 +153,6 @@ namespace corona
 
 				header.data.object_id = 1;
 				header.data.classes_location =  classes.create();
-				header.data.class_objects_location =  class_objects.create();
-				header.data.objects_location =  objects.create();
-				header.data.objects_by_name_location =  objects_by_name.create();
 
 				created_classes = jp.create_object();
 
@@ -621,6 +609,11 @@ private:
 			if (checked["Success"]) {
 				scope_lock lock(classes_rw_lock);
 				json adjusted_class = checked["Data"];
+				if (not adjusted_class.has_member("Table")) {
+					json_table class_data(database_file, { "ObjectId" });
+					relative_ptr_type rpt = class_data.create();
+					adjusted_class.put_member("Table", rpt);
+				}
 				relative_ptr_type ptr =  classes.put(adjusted_class);
 				if (ptr != null_row) {
 					json key = adjusted_class.extract({ "ClassName" });
@@ -981,19 +974,6 @@ private:
 						result.put_member("Definition", class_data);
 						result.put_member("Data", object_definition);
 					}
-
-					if (class_data.has_member("ImplementMap"))
-					{
-						json objects_by_name_key = jp.create_object();
-						json constraint_fields = class_data["ImplementMap"];
-						std::vector<std::string> constraint_names;
-						constraint_names.push_back("ClassName");
-						for (auto constraint_field : constraint_fields) {
-							constraint_names.push_back(constraint_field);
-						}
-						objects_by_name_key.set_compare_order(constraint_names);
-						result.put_member("ImplementMapKey", objects_by_name_key);
-					}
 				}
 				else
 				{
@@ -1146,66 +1126,83 @@ private:
 			json_parser jp;
 			json obj;
 
-			scope_lock lock_one(objects_rw_lock);
-
 			json class_key = _object_key.extract({ "ClassName" } );
-			json classdef;
+			json class_def;
 
 			class_key.set_compare_order({ "ClassName" });
-			classdef = classes.get(class_key);
+			class_def = classes.get(class_key);
 			
-			if (classdef.empty()) 
+			if (not class_def.empty()) 
 			{
-				return obj;
-			}
-
-			if (classdef.has_member("ImplementMap"))
-			{
-				json objects_by_name_key = jp.create_object();
-				json constraint_fields = classdef["ImplementMap"];
-				std::vector<std::string> constraint_names;
-				constraint_names.push_back("ClassName");
-				for (auto constraint_field : constraint_fields) {
-					constraint_names.push_back(constraint_field);
+				if (class_def.has_member("Table")) {
+					relative_ptr_type rpt = class_def["Table"];
+					json_table class_data(database_file, { "ObjectId" });
+					class_data.open(rpt);
+					obj = class_data.get(_object_key);
+					return obj;
 				}
-				objects_by_name_key.set_compare_order(constraint_names);
-				json name_id =  objects_by_name.get_first(objects_by_name_key, nullptr);
-				if (name_id.object()) {
-					json object_key = jp.create_object();
-					object_key.copy_member("ObjectId", name_id);
-					object_key.set_natural_order();
-					obj =  objects.get(object_key);
-				}
-			}
-			else if (_object_key.has_member("ObjectId"))
-			{
-				json object_key = jp.create_object();
-				object_key.copy_member("ObjectId", _object_key);
-				object_key.set_natural_order();
-				obj =  objects.get(object_key);
 			}
 
 			return obj;
 		}
 
-		json get_linked_object(json _object_definition)
+		json get_user(std::string _user_name)
 		{
 			json_parser jp;
-			json obj;
+			json obj, class_def;
 
-			if (_object_definition.is_member("ClassName", "SysReference"))
+			json class_key = jp.create_object();
+			class_key.put_member("ClassName", "SysUser");
+			class_def = classes.get(class_key);
+
+			if (not class_def.empty())
 			{
-				scope_lock lock_one(objects_rw_lock);
+				if (class_def.has_member("Table")) {
+					relative_ptr_type rpt = class_def["Table"];
+					json_table class_data(database_file, { "ObjectId" });
+					class_data.open(rpt);
+					obj = class_data.select([_user_name](int _index, json& _j)
+						{
+							json result;
+							std::string node_user_name = _j["UserName"];
+							if (node_user_name == _user_name)
+								result = _j;
+							return result;
 
-				json object_key = jp.create_object();
-				db_object_id_type object_id = (db_object_id_type)_object_definition["LinkObjectId"];
-				object_key.put_member("ObjectId", object_id);
-				object_key.set_natural_order();
-				obj =  objects.get(object_key);
+						});
+					return obj;
+				}
 			}
-			else if (_object_definition.object())
+
+			return obj;
+		}
+
+		json get_team(std::string _team_name)
+		{
+			json_parser jp;
+			json obj, class_def;
+
+			json class_key = jp.create_object();
+			class_key.put_member("ClassName", "SysTeam");
+			class_def = classes.get(class_key);
+
+			if (not class_def.empty())
 			{
-				obj = _object_definition;
+				if (class_def.has_member("Table")) {
+					relative_ptr_type rpt = class_def["Table"];
+					json_table class_data(database_file, { "ObjectId" });
+					class_data.open(rpt);
+					obj = class_data.select([_team_name](int _index, json& _j)
+						{
+							json result;
+							std::string node_user_name = _j["UserName"];
+							if (node_user_name == _team_name)
+								result = _j;
+							return result;
+
+						});
+					return obj;
+				}
 			}
 
 			return obj;
@@ -1247,7 +1244,7 @@ private:
 			{
 				json item = teams_list.get_element(i);
 
-				json team =  get_linked_object(item);
+				json team =  get_team(item);
 
 				if (team.is_member("ClassName", "Team")) {
 					json team_grants = team["Grants"];
@@ -1301,7 +1298,7 @@ private:
 			{
 				json item = teams_list.get_element(i);
 
-				json team =  get_linked_object(item);
+				json team =  get_team(item);
 
 				if (team.is_member("ClassName", "SysTeam")) 
 				{
@@ -1366,7 +1363,7 @@ private:
 			{
 				json item = teams_list.get_element(i);
 
-				json team =  get_linked_object(item);
+				json team =  get_team(item);
 
 				if (team.is_member("ClassName", "SysTeam"))
 				{
@@ -1454,10 +1451,7 @@ private:
 		corona_database(comm_bus_interface* _bus, std::shared_ptr<file> _database_file) :
 			bus(_bus),
 			database_file(_database_file),
-			classes(_database_file, { "ClassName" }),
-			class_objects(_database_file, { "ClassName", "ObjectId" }),
-			objects(_database_file, { "ObjectId" }),
-			objects_by_name(_database_file, { "ClassName", "Name", "ObjectId" })
+			classes(_database_file, { "ClassName" })
 		{
 			token_life = time_span(1, time_models::hours);	
 		}
@@ -1875,9 +1869,6 @@ private:
 
 			if (header_location != null_row) {
 				relative_ptr_type result =  classes.open(header.data.classes_location);
-				result =  class_objects.open(header.data.class_objects_location);
-				result =  objects_by_name.open(header.data.objects_by_name_location);
-				result =  objects.open(header.data.objects_location);
 			}
 
 			system_monitoring_interface::global_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1914,7 +1905,9 @@ private:
 				user_key.put_member("ClassName", user_class);
 				user_key.put_member("Name", user_name);
 				user_key.set_compare_order({ "ClassName", "Name" });
-				json existing_user_link =  objects_by_name.get(user_key);
+
+				// TODO: fix this so that finding an existing user will work
+				json existing_user_link = get_user(user_name);
 
 				if (existing_user_link.object()) 
 				{
@@ -2302,6 +2295,9 @@ private:
 				json adjusted_class = checked["Data"];
 				relative_ptr_type ptr =  classes.put(adjusted_class);
 				if (ptr != null_row) {
+					json_table class_data(database_file, { "ObjectId" });
+					relative_ptr_type rpt = class_data.create();
+					adjusted_class.put_member("Table", rpt);
 					json key = adjusted_class.extract({ "ClassName" });
 					json temp =  classes.get(key);
 					if (temp.empty()) {
@@ -2438,18 +2434,18 @@ private:
 
 			for (auto class_pair : class_names)
 			{
-				json_parser jp;
-				json search_key = jp.create_object("ClassName", class_pair.first);
-				search_key.set_compare_order({ "ClassName" });
-				json class_object_ids;
-
-				class_object_ids =  class_objects.update(search_key, [](int _index, json& _item)->json {
-					return _item;
-					}, update_json);
-
-				if (class_object_ids.array()) 
-				{
-					object_list = objects.get_list(class_object_ids);
+				json class_key;
+				class_key = jp.create_object();
+				class_key.put_member("ClassName", class_pair.first);
+				json class_def = classes.get(class_key);
+				if (class_def.has_member("Table")) {
+					relative_ptr_type rpt = class_def["Table"];
+					json_table class_data(database_file, { "ObjectId" });
+					class_data.open(rpt);
+					json empty_boy = jp.create_object();
+					json class_objects = class_data.update(empty_boy, [](int _index, json& _item)->json {
+						return _item;
+						}, update_json);
 				}
 			}
 
@@ -2625,46 +2621,32 @@ private:
 				if (data.array()) {
 					item_array = data;
 				}
-				else {
+				else 
+				{
 					item_array = jp.create_array();
 					item_array.push_back(data);
 				}
 
-				json objects_by_name_array = jp.create_array();
-				json objects_array = jp.create_array();
-				json class_objects_array = jp.create_array();
+				json grouped_by_class_name = item_array.group([](json& _item) -> std::string {
+					return _item["ClassName"];
+					});
 
+				auto classes_and_data = grouped_by_class_name.get_members();
 
-				for (json obj : item_array) {
+				for (auto class_pair : classes_and_data)
+				{
+					json class_key = jp.create_object();
+					class_key.put_member("ClassName", class_pair.first);
+					json class_def = classes.get(class_key);
 
-					json dobj = obj["Data"];
-					if (dobj.has_member("ImplementMapKey"))
-					{
-						json keys = dobj["ImplementMapKey"];
-						if (keys.array()) {
-							json key_index = jp.create_object();
-							std::vector<std::string> key_order;
-							for (auto skey : keys) {
-								std::string sskey = (std::string)skey;
-								key_index.copy_member(skey, obj);
-								key_order.push_back(skey);
-							}
-							key_index.set_compare_order(key_order);
-							key_index.copy_member("ObjectId", obj);
-							objects_by_name_array.push_back(key_index);
-						}
+					if (class_def.has_member("Table")) {
+						json empty;
+						relative_ptr_type rpt = class_def["Table"];
+						json_table class_data(database_file, { "ObjectId" });
+						class_data.open(rpt);
+						class_data.put_array(class_pair.second);
 					}
-
-					obj.put_member("Active", true);
-					objects_array.push_back(dobj);
-					json cobj = dobj.extract({ "ClassName", "ObjectId" });
-					cobj.put_member("Active", true);
-					class_objects_array.push_back(cobj);
 				}
-
-				objects.put_array(objects_array);
-				objects_by_name.put_array(objects_by_name_array);
-				class_objects.put_array(class_objects_array);
 
 				result = create_response(put_object_request, true, "Object(s) created", data, method_timer.get_elapsed_seconds());
 			}
@@ -2713,60 +2695,6 @@ private:
 			return result;
 		}
 
-		json pop_object(json pop_object_request)
-		{
-			timer method_timer;
-			json response;
-			json_parser jp;
-
-
-			date_time start_time = date_time::now();
-			timer tx;
-
-			system_monitoring_interface::global_mon->log_function_start("pop_object", "start", start_time, __FILE__, __LINE__);
-
-
-			if (not check_message(pop_object_request, { auth_general }))
-			{
-				response = create_response(pop_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
-				return response;
-			}
-
-			if (not check_object_key_permission(pop_object_request, "Delete")) {
-				json result = create_response(pop_object_request, false, "Cannot delete object", jp.create_object(), method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("pop_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			json object_key = pop_object_request["Data"];
-
-			scope_lock lock_one(objects_rw_lock);
-
-			if (object_key.has_member("ClassName")) {
-				json revised_key =  class_objects.get_first(object_key, nullptr);
-				object_key.copy_member("ObjectId", revised_key);
-			}
-
-			json object_def =  objects.get(object_key);
-
-			response = create_response(pop_object_request, false, "Failed", object_key, method_timer.get_elapsed_seconds());
-
-			if (object_def.object()) {
-				bool success =  class_objects.erase(object_def);
-				if (success) {
-					success =  objects.erase(object_key);
-					if (success) {
-						response = create_response(pop_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
-					}
-				}
-			}
-			else
-			{
-				response = create_response(pop_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
-			}
-			system_monitoring_interface::global_mon->log_function_stop("pop_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			return response;
-		}
 
 		json delete_object(json delete_object_request)
 		{
@@ -2795,24 +2723,20 @@ private:
 
 			json object_key = delete_object_request["Data"];
 
-			scope_lock lock_one(objects_rw_lock);
-
-			json object_def =  objects.get(object_key);
-			object_def.put_member("Active", false);
-
 			response = create_response(delete_object_request, false, "Failed", object_key, method_timer.get_elapsed_seconds());
 
-			if (object_def.object()) 
-			{
-				auto obj =  class_objects.get(object_key);
-				json cobj = obj.extract({ "ClassName", "ObjectId" });
-				cobj.put_member("Active", false);
-				relative_ptr_type classput_result =  class_objects.put(cobj);
-				relative_ptr_type objectput_result =  objects.put(object_def);
-				if (classput_result != null_row and objectput_result != null_row) 
-				{
-					response = create_response(delete_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
-				}
+			json class_key = jp.create_object();
+			json class_name = object_key["ClassName"];
+			class_key.put_member("ClassName", class_name);
+			json class_def = classes.get("class_key");
+
+			if (class_def.has_member("Table")) {
+				json empty;
+				relative_ptr_type rpt = class_def["Table"];
+				json_table class_data(database_file, { "ObjectId" });
+				class_data.open(rpt);
+				class_data.erase(object_key);
+				response = create_response(delete_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
 			}
 			else 
 			{

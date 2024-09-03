@@ -1655,8 +1655,9 @@ namespace corona
 				}
 				if (location == 0)
 					return empty;
-				list_start = &jtn.data.index_list;
 			}
+			auto status = jtn.read(database_file.get(), location);
+			list_start = &jtn.data.index_list;
 
 			if (list_start == nullptr) {
 				return empty;
