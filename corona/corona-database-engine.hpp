@@ -987,7 +987,8 @@ private:
 			}
 			header.write(database_file.get(), nullptr, nullptr);
 
-			result = create_response(check_object_request, true, "Objects processed", result_list, method_timer.get_elapsed_seconds());
+			result = create_response(check_object_request, true, "Objects processed", object_list, method_timer.get_elapsed_seconds());
+			result.put_member("Notes", result_list);
 			return result;
 		}
 
@@ -1751,7 +1752,6 @@ private:
 											timer tx;
 											json cor = create_system_request(datomatic);
 											 put_object(cor);
-											system_monitoring_interface::global_mon->log_warning("FileName and Delimiter can't be blank.");
 										}
 
 									}
@@ -2293,11 +2293,19 @@ private:
 			if (checked["Success"]) {
 				scope_lock lock(classes_rw_lock);
 				json adjusted_class = checked["Data"];
-				relative_ptr_type ptr =  classes.put(adjusted_class);
-				if (ptr != null_row) {
-					json_table class_data(database_file, { "ObjectId" });
-					relative_ptr_type rpt = class_data.create();
+				json_table class_data(database_file, { "ObjectId" });
+				relative_ptr_type ptr;
+				relative_ptr_type rpt;
+				if (not adjusted_class.has_member("Table")) {
+					rpt = class_data.create();
 					adjusted_class.put_member("Table", rpt);
+				}
+				else {
+					rpt = adjusted_class.get_member("Table");
+					rpt = class_data.open(rpt);
+				}
+				ptr = classes.put(adjusted_class);
+				if (ptr != null_row) {
 					json key = adjusted_class.extract({ "ClassName" });
 					json temp =  classes.get(key);
 					if (temp.empty()) {
