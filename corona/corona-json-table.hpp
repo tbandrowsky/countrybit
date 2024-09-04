@@ -818,6 +818,12 @@ namespace corona
 			}
 		}
 
+		class put_node_run {
+		public:
+			std::string hash_code;
+			json		nodes_array;
+		};
+
 		void put_nodes(json _array)
 		{
 			date_time start_time = date_time::now();
@@ -835,9 +841,20 @@ namespace corona
 
 			auto objects_by_hash = grouped_by_hash.get_members();
 
+			std::vector<put_node_run> run_list;
+
 			for (auto obj : objects_by_hash) {
-				put_node_list(obj.first, obj.second);
+				put_node_run rn;
+				rn.hash_code = obj.first;
+				rn.nodes_array = obj.second;
+				run_list.push_back(rn);
 			}
+
+			system_monitoring_interface::global_mon->log_information(std::format("{0} sets", run_list.size()));
+
+			comm_bus_interface::global_bus->run_each<put_node_run>(run_list, [this](put_node_run& prn) {
+				put_node_list(prn.hash_code, prn.nodes_array);
+			});
 
 			table_header.write_count(database_file.get());
 

@@ -320,6 +320,10 @@ namespace corona
 
 			int counter = 0;
 			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
+
+			if (bucket_size < _items.size())
+				bucket_size = _items.size();
+
 			for (int idx = 0; idx < _items.size(); ) {
 				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 				events.push_back(handle);
@@ -350,6 +354,10 @@ namespace corona
 
 			int counter = 0;
 			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
+
+			if (bucket_size < _items.size())
+				bucket_size = _items.size();
+
 			for (int idx = 0; idx < _items.size(); ) {
 				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 				events.push_back(handle);

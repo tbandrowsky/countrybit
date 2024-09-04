@@ -631,6 +631,15 @@ namespace corona
 			buffer_size = _size;
 		}
 
+		void init(const void *_src, size_t _size)
+		{
+			buffer_bytes = std::make_unique<char[]>(_size + 1);
+			unsigned char* p = (unsigned char *)buffer_bytes.get();
+			unsigned char* s = (unsigned char*)_src;
+			std::copy(s, s + _size, p);
+			buffer_size = _size;
+		}
+
 		buffer& operator = (const buffer& _src)
 		{
 			init(_src.buffer_size);
