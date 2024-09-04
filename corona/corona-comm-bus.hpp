@@ -91,10 +91,6 @@ namespace corona
 			log_command_start("comm_bus", "startup", t);
 
 			log_information("Thank you for flying with Country Video Games");
-
-			log_information("This is your Capt for this flight, TJ Bandrowsky,");
-			log_information("and we'll be travelling aboard the Corona Engine, ");
-			log_information("a new stack for Windows application developement.");
 			log_information("Corona is going to do a formal verification of itself");
 			log_information("and this environment.");
 
@@ -178,41 +174,9 @@ namespace corona
 				ready_for_polling = true;
 			}
 
-			log_information("Folks, the system test is just about complete.");
-
-			json_parser jp;
-			json advertisement = jp.parse_object(R"(
-{
-	"CountryVideoGames" : {
-	"Motto" : "For the few free who stand against the many.",
-	"Reminders" : [
-		{
-			"Name" : "Art",
-			"Description" : "This application is art"
-		},
-		{
-			"Name" : "Cigarettes",
-			"Description" : "Enjoy a Country Video Games smooth smoke!"
-		},
-		{
-			"Name" : "Whiskey",
-			"Description" : "Country Video Games bourbon makes life better!"
-		},
-		{
-			"Name" : "Apparel",
-			"Description" : "Let them know you are Revolution ready with these trinkets!"
-		}
-	]
-}
-)");
-			log_json(advertisement);
-
-			log_information("Thank you for flying Country Video Games.");
-			log_information("Your pilot for this show is TJ Bandrowsky.");
-			log_information("We are cleared for departure.");
 			log_command_stop("comm_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			log_information("Corona now running the application 'Revolution'");
+			log_information("Corona now running the application");
 			log_information("This is an immensely modable system.");
 			log_information("config.json - for networking stuff in the next release.");
 			log_information("revolution_schema.json - the database configuration is here.");
@@ -223,7 +187,7 @@ namespace corona
 			log_information("revolution_pages.json -  forms, plus the commands back to the engine.");
 			log_information("                         edit this guy to change the way the app works.");
 			log_information("user token and the database are in");
-			log_information("username/appdata/roaming/revolution");
+			log_information("username/appdata/roaming/appname");
 			log_information("The schema, styles and pages files can be edited live.");
 			log_information("We are cleared for departure.");
 		}
