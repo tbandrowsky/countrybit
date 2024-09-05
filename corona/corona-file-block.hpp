@@ -82,7 +82,7 @@ namespace corona
 			return old_top;
 		}
 
-		bool use(file *_fp, int64_t _location, int64_t _size)
+		bool use(std::shared_ptr<file> _fp, int64_t _location, int64_t _size)
 		{
 			bool can_use = false;
 
@@ -149,11 +149,11 @@ namespace corona
 	class file_block
 	{
 		std::vector<file_buffer> buffers;
-		file* fp;
+		std::shared_ptr<file> fp;
 
 	public:
 
-		file_block(file *_fp)
+		file_block(std::shared_ptr<file> _fp)
 		{
 			fp = _fp;
 		}
@@ -233,27 +233,45 @@ namespace corona
 			}
 			else
 			{
-				int64_t end_point;
 
-				end_point = location + _buffer_length;
+				result = fp->read(location, _buffer, _buffer_length);
 
-				file_buffer fb(location, end_point, false);
+				if (result.success) {
 
-				unsigned char* src = (unsigned char*)fb.buff.get_ptr() + location - fb.start;
-				unsigned char* dest = (unsigned char*)_buffer;
-				std::copy(src, src + _buffer_length, dest);
+					int64_t end_point;
 
-				result.buffer = (const char*)_buffer;
-				result.bytes_transferred = _buffer_length;
-				result.location = location;
-				result.success = true;
-				result.result = os_result(0);
+					end_point = location + _buffer_length;
 
-				buffers.push_back(fb);
+					file_buffer fb(location, end_point, false);
 
+					unsigned char* dest = (unsigned char*)fb.buff.get_ptr() + location - fb.start;
+					unsigned char* src = (unsigned char*)_buffer;
+					std::copy(src, src + _buffer_length, dest);
+
+					result.buffer = (const char*)_buffer;
+					result.bytes_transferred = _buffer_length;
+					result.location = location;
+					result.success = true;
+					result.result = os_result(0);
+
+					buffers.push_back(fb);
+				}
+				else {
+					system_monitoring_interface::global_mon->log_warning("Physical read failed", __FILE__, __LINE__);
+				}
 			}
 
 			return result;
+		}
+
+		virtual relative_ptr_type allocate_space(int64_t _size)
+		{
+			return add(_size);
+		}
+
+		virtual void free_space(int64_t _location)
+		{
+			;
 		}
 
 		int64_t add(int _buffer_length)
@@ -283,6 +301,7 @@ namespace corona
 				end_point = location + _buffer_length;
 
 				file_buffer fb(location, end_point, end_point);
+				fb.is_append = true;
 				buffers.push_back(fb);
 			}
 
@@ -318,9 +337,15 @@ namespace corona
 		{
 			for (auto& buff : buffers) {
 				if (buff.is_dirty) {
+					buff.is_dirty = false;
 					fp->write(buff.start, buff.buff.get_ptr(), buff.stop - buff.start);
 				}
 			}
+		}
+
+		void clear()
+		{
+			buffers.clear();
 		}
 
 		int64_t size()
