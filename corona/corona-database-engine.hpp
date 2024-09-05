@@ -989,7 +989,9 @@ private:
 				}
 				result_list.push_back(result);
 			}
-			header.write(database_file.get(), nullptr, nullptr);
+			file_block fb(database_file.get());
+			header.write(&fb, nullptr, nullptr);
+			fb.commit();
 
 			result = create_response(check_object_request, true, "Objects processed", object_list, method_timer.get_elapsed_seconds());
 			result.put_member("Notes", result_list);
@@ -1869,7 +1871,9 @@ private:
 
 			scope_lock lock_one(header_rw_lock);
 
-			relative_ptr_type header_location =  header.read(database_file.get(), _header_location);
+			file_block fb(database_file.get());
+
+			relative_ptr_type header_location =  header.read(&fb, _header_location);
 
 			if (header_location != null_row) {
 				relative_ptr_type result =  classes.open(header.data.classes_location);

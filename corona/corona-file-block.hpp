@@ -31,7 +31,7 @@ namespace corona
 			buff.init(stop - start);
 		}
 
-		file_buffer(file_buffer& _src)
+		file_buffer(const file_buffer& _src)
 		{
 			start = _src.start;
 			stop = _src.stop;
@@ -41,7 +41,28 @@ namespace corona
 			buff = _src.buff;
 		}
 
-		file_buffer& operator =(file_buffer& _src)
+		file_buffer(file_buffer&& _src)
+		{
+			start = _src.start;
+			stop = _src.stop;
+			top = _src.top;
+			is_append = _src.is_append;
+			is_dirty = _src.is_dirty;
+			buff = std::move(_src.buff);
+		}
+
+		file_buffer& operator =(file_buffer&& _src)
+		{
+			start = _src.start;
+			stop = _src.stop;
+			top = _src.top;
+			buff = std::move(_src.buff);
+			is_append = _src.is_append;
+			is_dirty = _src.is_dirty;
+			return *this;
+		}
+
+		file_buffer& operator =(const file_buffer& _src)
 		{
 			start = _src.start;
 			stop = _src.stop;
