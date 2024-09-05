@@ -143,12 +143,15 @@ namespace corona
 			system_monitoring_interface::global_mon->log_job_start("create_database", "start", start_time, __FILE__, __LINE__);
 			
 			{
+
+				file_block fb(database_file.get());
+
 				scope_lock lock_one(classes_rw_lock);
 				scope_lock lock_two(objects_rw_lock);
 
 				header.data.object_id = 1;
-				header_location = header.append(database_file.get(), [this](int64_t _size)->int64_t {
-					return database_file->add(_size);
+				header_location = header.append(&fb, [this, &fb](int64_t _size)->int64_t {
+					return fb.add(_size);
 					});
 
 				header.data.object_id = 1;
@@ -156,8 +159,9 @@ namespace corona
 
 				created_classes = jp.create_object();
 
-				header.write(database_file.get(), nullptr, nullptr);
+				header.write(&fb, nullptr, nullptr);
 
+				fb.commit();
 			}
 		
 			json response =  create_class(R"(

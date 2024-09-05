@@ -301,6 +301,11 @@ namespace corona
 				}
 			}
 		}
+
+		int64_t size()
+		{
+			return fp->size();
+		}
 	};
 
 }
