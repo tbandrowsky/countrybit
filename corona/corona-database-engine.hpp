@@ -142,28 +142,22 @@ namespace corona
 
 			system_monitoring_interface::global_mon->log_job_start("create_database", "start", start_time, __FILE__, __LINE__);
 			
-			{
+			file_block fb(database_file);
 
-				file_block fb(database_file.get());
+			scope_lock lock_one(classes_rw_lock);
+			scope_lock lock_two(objects_rw_lock);
 
-				scope_lock lock_one(classes_rw_lock);
-				scope_lock lock_two(objects_rw_lock);
+			header.data.object_id = 1;
+			header_location = header.append(&fb);
 
-				header.data.object_id = 1;
-				header_location = header.append(&fb, [this, &fb](int64_t _size)->int64_t {
-					return fb.add(_size);
-					});
+			header.data.object_id = 1;
+			header.data.classes_location =  classes.create();
 
-				header.data.object_id = 1;
-				header.data.classes_location =  classes.create();
+			created_classes = jp.create_object();
 
-				created_classes = jp.create_object();
-
-				header.write(&fb, nullptr, nullptr);
-
-				fb.commit();
-			}
-		
+			header.write(&fb);
+			fb.commit();
+	
 			json response =  create_class(R"(
 {	
 	"ClassName" : "SysObject",
@@ -584,6 +578,8 @@ namespace corona
 			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
 			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
 
+			fb.commit();
+
 			system_monitoring_interface::global_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
@@ -989,9 +985,10 @@ private:
 				}
 				result_list.push_back(result);
 			}
-			file_block fb(database_file.get());
-			header.write(&fb, nullptr, nullptr);
+			file_block fb(database_file);
+			header.write(&fb);
 			fb.commit();
+
 
 			result = create_response(check_object_request, true, "Objects processed", object_list, method_timer.get_elapsed_seconds());
 			result.put_member("Notes", result_list);
@@ -1871,7 +1868,7 @@ private:
 
 			scope_lock lock_one(header_rw_lock);
 
-			file_block fb(database_file.get());
+			file_block fb(database_file);
 
 			relative_ptr_type header_location =  header.read(&fb, _header_location);
 
@@ -2346,6 +2343,7 @@ private:
 						}
 					}
 					adjusted_class.put_member("ClassChanged", changed_class);
+					classes.commit();
 					result = create_response(check_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
 				}
 				else {
@@ -2463,6 +2461,7 @@ private:
 						return _item;
 						}, update_json);
 					object_list.append_array(class_objects);
+					class_data.commit();
 				}
 			}
 
@@ -2662,6 +2661,7 @@ private:
 						json_table class_data(database_file, { "ObjectId" });
 						class_data.open(rpt);
 						class_data.put_array(class_pair.second);
+						class_data.commit();
 					}
 				}
 
@@ -2753,6 +2753,7 @@ private:
 				json_table class_data(database_file, { "ObjectId" });
 				class_data.open(rpt);
 				class_data.erase(object_key);
+				class_data.commit();
 				response = create_response(delete_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
 			}
 			else 

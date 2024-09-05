@@ -402,7 +402,7 @@ namespace corona
 
 	};
 
-	class json_table : public file_block
+	class json_table : protected file_block
 	{
 	private:
 
@@ -425,8 +425,6 @@ namespace corona
 
 			jtn.data = {};
 			table_header.write(this);
-
-			commit();
 
 			return table_header.header.block_location;
 		}
@@ -826,8 +824,6 @@ namespace corona
 
 			table_header.write_count(this);
 
-			commit();
-
 			system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return;
@@ -1120,7 +1116,7 @@ namespace corona
 			// will have the right size.  so we know the first block is ok.
 			if (list_start.first_block)
 			{
-				fb->read(list_start.first_block, &free_block, sizeof(free_block));
+				read(list_start.first_block, &free_block, sizeof(free_block));
 				// this
 				if (list_start.last_block == list_start.first_block)
 				{
@@ -1132,18 +1128,18 @@ namespace corona
 					list_start.first_block = free_block.next_block;
 					free_block.next_block = 0;
 				}
-				table_header.write_free_list(fb, ai.index);
+				table_header.write_free_list(this, ai.index);
 				return free_block.data_location;
 			}
 
 			int64_t total_size = sizeof(block_header_struct) + ai.size;
-			int64_t base_space = fb->add(sizeof(block_header_struct) + ai.size);
+			int64_t base_space = add(sizeof(block_header_struct) + ai.size);
 			if (base_space > 0) {
 				free_block.block_type = block_id::allocated_space_id();
 				free_block.block_location = base_space;
 				free_block.data_location = base_space + sizeof(block_header_struct);
 				free_block.next_block = 0;
-				fb->write(base_space, &free_block, sizeof(free_block));
+				write(base_space, &free_block, sizeof(free_block));
 				return free_block.data_location;
 			}
 
@@ -1229,6 +1225,16 @@ namespace corona
 			json_parser jp;
 			header_key = jp.create_object();
 			table_header = {};
+		}
+
+		void commit()
+		{
+			file_block::commit();
+		}
+
+		void rollback()
+		{
+			file_block::commit();
 		}
 
 		json get_key(json& _object) 
@@ -1410,8 +1416,6 @@ namespace corona
 
 			system_monitoring_interface::global_mon->log_table_stop("table", "replace", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			commit();
-
 			return node_location;
 		}
 
@@ -1555,7 +1559,7 @@ namespace corona
 
 			for (level_index = 0; level_index < 8; level_index++)
 			{
-				auto status = jtn.read(&fb, location);
+				auto status = jtn.read(this, location);
 				for (int i = 0; i < jtn.data.children.capacity(); i++) {
 					location = jtn.data.children[i];
 					if (location > 0)
@@ -1564,7 +1568,7 @@ namespace corona
 				if (location == 0)
 					return empty;
 			}
-			auto status = jtn.read(&fb, location);
+			auto status = jtn.read(this, location);
 			list_start = &jtn.data.index_list;
 
 			if (list_start == nullptr) {
@@ -1574,7 +1578,7 @@ namespace corona
 			if (list_start->first_block)
 			{
 				auto block_location = list_start->first_block;
-				jn.read(&fb, block_location);
+				jn.read(this, block_location);
 				return jn.data;
 			};
 
@@ -2321,6 +2325,9 @@ namespace corona
 		proof_assertion.prove_member("is_true");
 		_proof.put_member("block", proof_assertion);
 
+		fb.commit();
+		fb.clear();
+
 		system_monitoring_interface::global_mon->log_function_stop("block proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
@@ -2357,9 +2364,7 @@ namespace corona
 
 		bool append_worked = true;
 
-		int64_t locfirst = jnfirst.append(&fb, [dtest, &fb](int64_t size)->int64_t {
-			return fb.add(size);
-			});
+		int64_t locfirst = jnfirst.append(&fb);
 
 		if (locfirst < 0)
 		{
@@ -2446,6 +2451,11 @@ namespace corona
 		proof_assertion.prove_member("is_true");
 
 		_proof.put_member("node", proof_assertion);
+
+
+		fb.commit();
+		fb.clear();
+
 
 		system_monitoring_interface::global_mon->log_function_stop("node proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
