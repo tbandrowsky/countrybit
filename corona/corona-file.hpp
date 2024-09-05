@@ -23,7 +23,7 @@ namespace corona
 }
 
 template <typename class_type>
-void* operator new(size_t size, class_type& _src, uint64_t, void*, int) {
+void* operator new(size_t size, class_type& _src, int64_t, void*, int) {
 	// Allocate memory and initialize with arguments
 	return ::operator new(size);
 }
@@ -57,7 +57,7 @@ namespace corona
 	{
 	public:
 		list_block_header 	 index_list;
-		iarray<int64_t, 256> children;
+		int64_t				 children[256];
 	};
 
 	struct index_header_struct
@@ -123,18 +123,24 @@ namespace corona
 
 		file_command_request  request;
 		file_command_result   result;
-		HANDLE				  whore_wait;
+
+		HANDLE io_complete_event;
 
 		file_command()
 		{
 			request = {};
 			result = {};
+			io_complete_event = CreateEvent(NULL, FALSE, FALSE, FALSE);
 		}
 
 		file_command(const file_command& _src) = default;
 		file_command(file_command&& _src) = default;
 		file_command& operator = (const file_command& _src) = default;
 		file_command& operator = (file_command&& _src) = default;
+
+		BOOL file_result;
+
+		int file_last_error;
 
 		virtual ~file_command()  noexcept
 		{
@@ -143,41 +149,49 @@ namespace corona
 
 		virtual bool queued(job_queue* _callingQueue)
 		{
-			bool r = false;
+			file_result = false;
 
-			whore_wait = CreateEvent(NULL, FALSE, FALSE, FALSE);
+			LARGE_INTEGER li;
+			container.ovp = {};
+
+			li.QuadPart = request.location;
+			container.ovp.Offset = li.LowPart;
+			container.ovp.OffsetHigh = li.HighPart;
+			container.ovp.hEvent = CreateEvent(NULL, FALSE, FALSE, FALSE);
+
 			result.buffer = (char*)request.buffer;
 			result.bytes_transferred = 0;
 			result.location = request.location;
 			result.result = os_result(0);
 
+			LPOVERLAPPED lp = &container.ovp;
+
 			switch (request.command) {
 			case file_commands::read:
-				r = ::ReadFile(request.hfile, (void*)request.buffer, request.size, nullptr, (LPOVERLAPPED)&container);
+				file_result = ::ReadFile(request.hfile, (void*)request.buffer, request.size, nullptr, lp);
 				break;
 			case file_commands::write:
-				r = ::WriteFile(request.hfile, (void*)request.buffer, request.size, nullptr, (LPOVERLAPPED)&container);
+				file_result = ::WriteFile(request.hfile, (void*)request.buffer, request.size, nullptr, lp);
 				break;
 			}
 
 			// because these are asynch, 
-			if (not r) {
-				r = ::GetLastError();
-				return r == ERROR_IO_PENDING;
+			if (not file_result) {
+				file_last_error = ::GetLastError();
+				if (file_last_error == ERROR_IO_PENDING)
+					return true;
 			}
-			return false;
+			return file_result;
 		}
 
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
 			job_notify jn;
 			jn.shouldDelete = false;
+			jn.setSignal(io_complete_event);
 
 			result.bytes_transferred = _bytesTransferred;
 			result.success = _success;
-
-			if (whore_wait) 
-				::SetEvent(whore_wait);
 
 			return jn;
 		}
@@ -189,18 +203,9 @@ namespace corona
 
 		file_command_result run()
 		{
-
-			container.ovp = {};
-			LARGE_INTEGER li;
-
-			li.QuadPart = request.location;
-			container.ovp.Offset = li.LowPart;
-			container.ovp.OffsetHigh = li.HighPart;
-
-			global_job_queue->listen_job(this);
-
-			::WaitForSingleObject(whore_wait, INFINITE);
-
+			if (global_job_queue->listen_job(this)) {
+				::WaitForSingleObject(io_complete_event, INFINITE);
+			}
 			return result;
 		}
 
@@ -371,7 +376,7 @@ namespace corona
 			}
 		}
 
-		uint64_t add(uint64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
+		int64_t add(int64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
 		{
 			if (hfile == INVALID_HANDLE_VALUE)
 				return -1;
@@ -390,7 +395,7 @@ namespace corona
 			return position.QuadPart;
 		}
 
-		file_command_result write(uint64_t location, void* _buffer, int _buffer_length)
+		file_command_result write(int64_t location, void* _buffer, int _buffer_length)
 		{		
 			file_command_request fcr(file_commands::write, file_name, hfile, location, _buffer_length, _buffer);
 			file_command fc;
@@ -399,7 +404,7 @@ namespace corona
 			return result;
 		}
 
-		file_command_result read(uint64_t location, void* _buffer, int _buffer_length)
+		file_command_result read(int64_t location, void* _buffer, int _buffer_length)
 		{
 			file_command_request fcr(file_commands::read, file_name, hfile, location, _buffer_length, _buffer);
 			file_command fc;
@@ -418,7 +423,7 @@ namespace corona
 			return fc;
 		}
 
-		uint64_t size()
+		int64_t size()
 		{
 			if (hfile == INVALID_HANDLE_VALUE)
 				return 0;

@@ -387,7 +387,12 @@ namespace corona
 			system_monitoring_interface::global_mon->log_block_start("block", "write child", start_time, __FILE__, __LINE__);
 
 			int64_t child_base = offsetof(tree_block_header, children);
-			int64_t offset = child_base + _index * sizeof(data.children[0]);
+			int64_t offset = child_base + _index * sizeof(int64_t);
+
+			if (_index == 182)
+			{
+				DebugBreak();
+			}
 
 			file_command_result data_result = _file->write(header.data_location + offset, &data.children[_index], sizeof(data.children[0]));
 
@@ -585,7 +590,7 @@ namespace corona
 
 		using hashbytes = std::vector<byte>;
 
-		int64_t get_hash_bytes(uint64_t hash_code, hashbytes& _bytes)
+		uint64_t get_hash_bytes(uint64_t hash_code, hashbytes& _bytes)
 		{
 			int64_t thash_code = hash_code;
 
@@ -599,10 +604,10 @@ namespace corona
 			return hash_code;
 		}
 
-		int64_t get_hash_bytes(json& _node_key, hashbytes& _bytes)
+		uint64_t get_hash_bytes(json& _node_key, hashbytes& _bytes)
 		{
 			uint64_t hash_code = _node_key.get_weak_ordered_hash(key_fields);
-			int64_t thash_code = hash_code;
+			uint64_t thash_code = hash_code;
 
 			_bytes.resize(8);
 
@@ -616,7 +621,6 @@ namespace corona
 
 		void put_node_list(std::string _hash_code, json _object_array)
 		{
-			std::map<int64_t, json_tree_node> node_cache;
 			json_tree_node jtn;
 			timer tx;
 
@@ -646,25 +650,25 @@ namespace corona
 
 			for (level_index = 0; level_index < 8; level_index++)
 			{
-				if (node_cache.contains(location))
-				{
-					jtn = node_cache[location];
-				}
-				else
-				{
-					auto status = jtn.read(this, location);
-					node_cache.insert_or_assign(location, jtn);
-				}
-				byte local_hash_code = hash_bytes[level_index];
+				auto status = jtn.read(this, location);
+				int local_hash_code = hash_bytes[level_index];
 				path = path + std::to_string(local_hash_code) + ".";
 				location = jtn.data.children[local_hash_code];
 				if (location == 0) {
 					json_tree_node ntn;
 					ntn.data = {};
 					location = ntn.append(this);
+					if (location > 100000000000i64)
+					{
+						DebugBreak();
+					}
 					jtn.data.children[local_hash_code] = location;
 					jtn.write_child(this, local_hash_code);
 				}
+			}
+			if (location > 100000000000i64)
+			{
+				DebugBreak();
 			}
 
 			auto status = jtn.read(this, location);
@@ -1464,7 +1468,7 @@ namespace corona
 				return;
 			}
 
-			for (int i = 0; i < jtn.data.children.capacity(); i++)
+			for (int i = 0; i < 256; i++)
 			{
 				int64_t child = jtn.data.children[i];
 				if (child) 
@@ -1560,7 +1564,7 @@ namespace corona
 			for (level_index = 0; level_index < 8; level_index++)
 			{
 				auto status = jtn.read(this, location);
-				for (int i = 0; i < jtn.data.children.capacity(); i++) {
+				for (int i = 0; i < 256; i++) {
 					location = jtn.data.children[i];
 					if (location > 0)
 						break;
@@ -2327,6 +2331,20 @@ namespace corona
 
 		fb.commit();
 		fb.clear();
+
+		dbounds.read(&fb, dboundslocation);
+
+		borders_after = dbounds.get_string();
+		if (borders_after != borders)
+		{
+			growth.put_member("peristent", false);
+			system_monitoring_interface::global_mon->log_warning("reading physical didn't work", __FILE__, __LINE__);
+		}
+		else
+		{
+			growth.put_member("persistent", true);
+		}
+
 
 		system_monitoring_interface::global_mon->log_function_stop("block proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}

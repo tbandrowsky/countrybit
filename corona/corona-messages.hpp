@@ -54,15 +54,15 @@ namespace corona
 	class os_result : public base_result
 	{
 	public:
-		uint64_t error_code;
+		int64_t error_code;
 		os_result();
-		os_result(uint64_t _error_code);
+		os_result(int64_t _error_code);
 	};
 
 	std::ostream& operator <<(std::ostream& output, const os_result& src);
 
 
-	os_result::os_result(uint64_t last_error)
+	os_result::os_result(int64_t last_error)
 	{
 		error_code = last_error;
 		if (error_code) {

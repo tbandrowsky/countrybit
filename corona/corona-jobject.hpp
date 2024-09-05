@@ -32,7 +32,7 @@ namespace corona {
 
 		object_name			model_name;
 		uint32_t			max_objects;
-		uint64_t			collection_size_bytes;
+		int64_t			collection_size_bytes;
 
 		relative_ptr_type	objects_id;
 
@@ -860,7 +860,7 @@ namespace corona {
 			return the_field;
 		}
 
-		uint64_t get_max_object_size(relative_ptr_type* _class_ids)
+		int64_t get_max_object_size(relative_ptr_type* _class_ids)
 		{
 
 			if (not _class_ids)
@@ -889,7 +889,7 @@ namespace corona {
 
 		bool reserve_collection(jcollection_ref* ref)
 		{
-			uint64_t total_size = ref->collection_size_bytes;
+			int64_t total_size = ref->collection_size_bytes;
 
 			ref->objects_id = object_collection::reserve_table(ref->data, ref->max_objects, total_size, true);
 

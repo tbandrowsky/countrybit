@@ -612,6 +612,7 @@ private:
 				if (not adjusted_class.has_member("Table")) {
 					json_table class_data(database_file, { "ObjectId" });
 					relative_ptr_type rpt = class_data.create();
+					class_data.commit();
 					adjusted_class.put_member("Table", rpt);
 				}
 				relative_ptr_type ptr =  classes.put(adjusted_class);
@@ -985,10 +986,6 @@ private:
 				}
 				result_list.push_back(result);
 			}
-			file_block fb(database_file);
-			header.write(&fb);
-			fb.commit();
-
 
 			result = create_response(check_object_request, true, "Objects processed", object_list, method_timer.get_elapsed_seconds());
 			result.put_member("Notes", result_list);
@@ -2303,6 +2300,7 @@ private:
 				relative_ptr_type rpt;
 				if (not adjusted_class.has_member("Table")) {
 					rpt = class_data.create();
+					class_data.commit();
 					adjusted_class.put_member("Table", rpt);
 				}
 				else {
@@ -2649,6 +2647,8 @@ private:
 
 				auto classes_and_data = grouped_by_class_name.get_members();
 
+				std::vector<json_table *> tables;
+
 				for (auto class_pair : classes_and_data)
 				{
 					json class_key = jp.create_object();
@@ -2658,12 +2658,20 @@ private:
 					if (class_def.has_member("Table")) {
 						json empty;
 						relative_ptr_type rpt = class_def["Table"];
-						json_table class_data(database_file, { "ObjectId" });
-						class_data.open(rpt);
-						class_data.put_array(class_pair.second);
-						class_data.commit();
+						json_table *class_data = new json_table(database_file, { "ObjectId" });
+						class_data->open(rpt);
+						class_data->put_array(class_pair.second);
+						tables.push_back(class_data);
 					}
 				}
+
+				for (auto tb : tables) {
+					tb->commit();
+				}
+
+				file_block fb(database_file);
+				header.write(&fb);
+				fb.commit();
 
 				result = create_response(put_object_request, true, "Object(s) created", data, method_timer.get_elapsed_seconds());
 			}
