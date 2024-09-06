@@ -2553,7 +2553,7 @@ namespace corona
 		using return_type = bool;
 
 		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "corona_table.ctb");
-		file_block fp(fb);
+		file_block fp(f);
 
 		json_parser jp;
 		json proof_assertion = jp.create_object();
@@ -2590,7 +2590,7 @@ namespace corona
 		test_write.put_member("Name", "Joe");
 		json test_key = test_write.extract({ "ObjectId" });
 
-		json_table test_table(&fb, {"ObjectId"});
+		json_table test_table(&fp, {"ObjectId"});
 
 		relative_ptr_type table_loc = test_table.create();
 
