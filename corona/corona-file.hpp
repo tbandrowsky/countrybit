@@ -60,11 +60,10 @@ namespace corona
 		int64_t				 children[256];
 	};
 
-	struct index_header_struct
+	struct table_header_struct
 	{
 	public:
 		int64_t								 count;
-		iarray<list_block_header, 62>		 free_lists;
 		int64_t								 data_root_location;
 	};
 
@@ -314,7 +313,11 @@ namespace corona
 			last_result = os_result(0);
 		}
 
+
 	public:
+
+		friend class file_block;
+		friend class file_buffer;
 
 		void copy(const file& _src)
 		{
@@ -338,6 +341,7 @@ namespace corona
 			copy(_src);
 			return *this;
 		}
+
 
 		file(job_queue* _queue, KNOWNFOLDERID _folder_id, const file_path& _filename, file_open_types _file_open_type)
 			: queue(_queue), file_name(_filename), hfile(INVALID_HANDLE_VALUE),
@@ -376,6 +380,25 @@ namespace corona
 			}
 		}
 
+
+		file_command_result write(int64_t location, void* _buffer, int _buffer_length)
+		{
+			file_command_request fcr(file_commands::write, file_name, hfile, location, _buffer_length, _buffer);
+			file_command fc;
+			fc.request = fcr;
+			file_command_result result = fc.run();
+			return result;
+		}
+
+		file_command_result read(int64_t location, void* _buffer, int _buffer_length)
+		{
+			file_command_request fcr(file_commands::read, file_name, hfile, location, _buffer_length, _buffer);
+			file_command fc;
+			fc.request = fcr;
+			file_command_result result = fc.run();
+			return result;
+		}
+
 		int64_t add(int64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
 		{
 			if (hfile == INVALID_HANDLE_VALUE)
@@ -393,24 +416,6 @@ namespace corona
 			::SetEvent(resize_event);
 
 			return position.QuadPart;
-		}
-
-		file_command_result write(int64_t location, void* _buffer, int _buffer_length)
-		{		
-			file_command_request fcr(file_commands::write, file_name, hfile, location, _buffer_length, _buffer);
-			file_command fc;
-			fc.request = fcr;
-			file_command_result result = fc.run();
-			return result;
-		}
-
-		file_command_result read(int64_t location, void* _buffer, int _buffer_length)
-		{
-			file_command_request fcr(file_commands::read, file_name, hfile, location, _buffer_length, _buffer);
-			file_command fc;
-			fc.request = fcr;
-			file_command_result result = fc.run();
-			return result;
 		}
 
 		file_command_result append(void* _buffer, int _buffer_length)

@@ -50,8 +50,9 @@ namespace corona
 	class corona_db_header_struct
 	{
 	public:
-		int64_t			  object_id;
-		relative_ptr_type classes_location;
+		int64_t								object_id;
+		relative_ptr_type					classes_location;
+		iarray<list_block_header, 62>		free_lists;
 
 		corona_db_header_struct() 
 		{
@@ -60,14 +61,28 @@ namespace corona
 		}
 	};
 
-	using corona_db_header = poco_node<corona_db_header_struct>;
 	using class_method_key = std::tuple<std::string, std::string>;
 
-	class corona_database 
+	class corona_db_header : public poco_node<corona_db_header_struct>
+	{
+	public:
+
+		int64_t write_free_list(file_block* _file, int _index)
+		{
+			auto offset = offsetof(corona_db_header_struct, free_lists) + _index * sizeof(list_block_header);
+			auto size = sizeof(list_block_header);
+			memcpy(bytes.get_ptr() + offset, (const char*)&data + offset, size);
+			auto r = write_piece(_file, offset, size);
+			return r;
+		}
+
+
+	};
+
+
+	class corona_database : public file_block
 	{
 		corona_db_header header;
-
-		json_table classes;
 
 		json schema;
 
@@ -78,8 +93,6 @@ namespace corona
 
 		std::string send_grid_api_key;
 		bool watch_polling;
-
-		std::shared_ptr<file> database_file;
 
 		std::map<std::string, bool> allowed_field_types = {
 			{ "object", true },
@@ -123,9 +136,135 @@ namespace corona
 		lockable objects_rw_lock;
 		lockable header_rw_lock;
 
+		std::shared_ptr<json_table> classes;
+
 	public:
 
 		bool trace_check_class = false;
+
+		allocation_index get_allocation_index(int64_t _size)
+		{
+			allocation_index ai = data_block::get_allocation_index(_size);
+			if (ai.index >= header.data.free_lists.capacity()) {
+				std::string msg = std::format("{0} bytes is too big to allocate as a block.", _size);
+				system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
+				ai.index = header.data.free_lists.capacity() - 1;
+			}
+			return ai;
+		}
+
+		virtual relative_ptr_type allocate_space(int64_t _size) override
+		{
+			relative_ptr_type pt = 0;
+
+			allocation_index ai = get_allocation_index(_size);
+
+			auto& list_start = header.data.free_lists[ai.index];
+
+			block_header_struct free_block = {};
+
+			// get_allocation index always returns an index such that any block in that index
+			// will have the right size.  so we know the first block is ok.
+			if (list_start.first_block)
+			{
+				read(list_start.first_block, &free_block, sizeof(free_block));
+				// this
+				if (list_start.last_block == list_start.first_block)
+				{
+					list_start.last_block = 0;
+					list_start.first_block = 0;
+				}
+				else
+				{
+					list_start.first_block = free_block.next_block;
+					free_block.next_block = 0;
+				}
+				header.write_free_list(this, ai.index);
+				return free_block.data_location;
+			}
+
+			int64_t total_size = sizeof(block_header_struct) + ai.size;
+			int64_t base_space = add(sizeof(block_header_struct) + ai.size);
+			if (base_space > 0) {
+				free_block.block_type = block_id::allocated_space_id();
+				free_block.block_location = base_space;
+				free_block.data_location = base_space + sizeof(block_header_struct);
+				free_block.next_block = 0;
+				write(base_space, &free_block, sizeof(free_block));
+				return free_block.data_location;
+			}
+
+			return 0;
+		}
+
+
+		virtual void free_space(int64_t _location) override
+		{
+
+			relative_ptr_type block_start = _location - sizeof(block_header_struct);
+
+			block_header_struct free_block = {};
+
+			/* ah, the forgiveness of this can be evil.  Here we say, if we truly cannot verify this
+			_location can be freed, then do not free it.  Better to keep some old block around than it is
+			to stomp on a good one with a mistake.  */
+
+			file_command_result fcr = read(block_start, &free_block, sizeof(free_block));
+
+			// did we read the block
+			if (fcr.success) {
+
+				// is this actually an allocated space block, and, is it the block we are trying to free
+				if (free_block.block_type.is_allocated_space() and free_block.data_location == _location) {
+
+					// ok, now let's have a go and see where this is in our allocation index.
+					allocation_index ai = get_allocation_index(free_block.data_capacity);
+
+					// this check says, don't try to free the block if there is a mismatch between its 
+					// allocation size, and the size it says it has.
+					if (free_block.data_capacity == ai.size)
+					{
+						// and now, we can look at the free list, and put ourselves at the 
+						// end of it.  In this way, deletes and reallocates will tend to 
+						// want to reuse the same space so handy for kill and fills.
+						auto& list_start = header.data.free_lists[ai.index];
+
+						// there is a last block, so we are at the end
+						if (list_start.last_block) {
+							relative_ptr_type old_last_block = list_start.last_block;
+							block_header_struct last_free;
+							auto fr = read(old_last_block, &last_free, sizeof(last_free));
+							if (fr.success) {
+								list_start.last_block = block_start;
+								last_free.next_block = block_start;
+								free_block.next_block = 0;
+								write(old_last_block, &last_free, sizeof(last_free));
+								write(block_start, &free_block, sizeof(free_block));
+
+								// this basically says, just write out the list header for this index
+								// not the whole header
+								header.write_free_list(this, ai.index);
+							}
+						}
+						else
+						{
+							// the list is empty and we add to it.
+							free_block.next_block = 0;
+							list_start.last_block = free_block.block_location;
+							list_start.last_block = free_block.block_location;
+
+							// this basically says, now save our block.
+							write(block_start, &free_block, sizeof(free_block));
+
+							// this basically says, just write out the list header for this index
+							// not the whole header
+							header.write_free_list(this, ai.index);
+						}
+					}
+				}
+			}
+		}
+
 
 		json create_database()
 		{
@@ -142,21 +281,19 @@ namespace corona
 
 			system_monitoring_interface::global_mon->log_job_start("create_database", "start", start_time, __FILE__, __LINE__);
 			
-			file_block fb(database_file);
-
 			scope_lock lock_one(classes_rw_lock);
 			scope_lock lock_two(objects_rw_lock);
 
 			header.data.object_id = 1;
-			header_location = header.append(&fb);
+			header_location = header.append(this);
 
 			header.data.object_id = 1;
-			header.data.classes_location =  classes.create();
+			header.data.classes_location =  classes->create();
 
 			created_classes = jp.create_object();
 
-			header.write(&fb);
-			fb.commit();
+			header.write(this);
+			commit();
 	
 			json response =  create_class(R"(
 {	
@@ -180,7 +317,7 @@ namespace corona
 				return result;
 			}
 
-			json test =  classes.get(R"({"ClassName":"SysObject"})");
+			json test =  classes->get(R"({"ClassName":"SysObject"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysObject after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -214,7 +351,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysSchemas"})");
+			test =  classes->get(R"({"ClassName":"SysSchemas"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseErrors")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysSchemas after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -250,7 +387,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysSchemas"})");
+			test =  classes->get(R"({"ClassName":"SysSchemas"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysDatasets after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -279,7 +416,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysReference"})");
+			test =  classes->get(R"({"ClassName":"SysReference"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysParseError after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -317,7 +454,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysUser"})");
+			test =  classes->get(R"({"ClassName":"SysUser"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysUser after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -352,7 +489,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysLogin"})");
+			test =  classes->get(R"({"ClassName":"SysLogin"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysLogin after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -382,7 +519,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysPermission"})");
+			test =  classes->get(R"({"ClassName":"SysPermission"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysPermission after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -418,7 +555,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysMember"})");
+			test =  classes->get(R"({"ClassName":"SysMember"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysMember after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -449,7 +586,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysGrant"})");
+			test =  classes->get(R"({"ClassName":"SysGrant"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysGrant after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
@@ -474,7 +611,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysClassGrant"})");
+			test =  classes->get(R"({"ClassName":"SysClassGrant"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysGlassGrant after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -501,7 +638,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysObjectGrant"})");
+			test =  classes->get(R"({"ClassName":"SysObjectGrant"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysObjectGrant after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -536,7 +673,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes.get(R"({"ClassName":"SysTeam"})");
+			test =  classes->get(R"({"ClassName":"SysTeam"})");
 			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysTeam after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -578,7 +715,7 @@ namespace corona
 			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
 			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
 
-			fb.commit();
+			commit();
 
 			system_monitoring_interface::global_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
@@ -610,15 +747,16 @@ private:
 				scope_lock lock(classes_rw_lock);
 				json adjusted_class = checked["Data"];
 				if (not adjusted_class.has_member("Table")) {
-					json_table class_data(database_file, { "ObjectId" });
+					json_table class_data(this, { "ObjectId" });
 					relative_ptr_type rpt = class_data.create();
-					class_data.commit();
 					adjusted_class.put_member("Table", rpt);
 				}
-				relative_ptr_type ptr =  classes.put(adjusted_class);
+
+
+				relative_ptr_type ptr =  classes->put(adjusted_class);
 				if (ptr != null_row) {
 					json key = adjusted_class.extract({ "ClassName" });
-					json temp =  classes.get(key); 
+					json temp =  classes->get(key); 
 					if (temp.empty()) {
 						response = create_response(check_request, false, "save check failed", adjusted_class, method_timer.get_elapsed_seconds());
 						return response;
@@ -631,7 +769,7 @@ private:
 								std::string acn = acp.first;
 								json class_key = jp.create_object();
 								class_key.put_member("ClassName", acn);
-								auto ancestor_class =  classes.get(class_key);
+								auto ancestor_class =  classes->get(class_key);
 								json descendants;
 								if (ancestor_class.has_member("Descendants")) {
 									descendants = ancestor_class["Descendants"];
@@ -642,7 +780,7 @@ private:
 								}
 								descendants.put_member(acn, acn);
 								ancestor_class.put_member("Descendants", descendants);
-								 classes.put(ancestor_class);
+								 classes->put(ancestor_class);
 							}
 						}
 					}
@@ -683,7 +821,6 @@ private:
 		{
 			timer method_timer;
 			json result;
-
 			json class_definition = check_class_request["Data"];
 
 			date_time start_time = date_time::now();
@@ -721,7 +858,7 @@ private:
 				{
 					scope_lock lock_one(classes_rw_lock);
 
-					base_class_def =  classes.get(base_class_key);
+					base_class_def =  classes->get(base_class_key);
 				}
 
 				if (trace_check_class)
@@ -884,7 +1021,7 @@ private:
 			for (auto class_def : class_list) {
 
 				key_boy.put_member("ClassName", class_def.first);
-				json class_data = classes.get(key_boy);
+				json class_data = classes->get(key_boy);
 				std::string class_name = key_boy["ClassName"];
 				classes_ahead.insert_or_assign(class_name, class_data);
 			}
@@ -1130,14 +1267,15 @@ private:
 			json class_key = _object_key.extract({ "ClassName" } );
 			json class_def;
 
+
 			class_key.set_compare_order({ "ClassName" });
-			class_def = classes.get(class_key);
+			class_def = classes->get(class_key);
 			
 			if (not class_def.empty()) 
 			{
 				if (class_def.has_member("Table")) {
 					relative_ptr_type rpt = class_def["Table"];
-					json_table class_data(database_file, { "ObjectId" });
+					json_table class_data(this, { "ObjectId" });
 					class_data.open(rpt);
 					obj = class_data.get(_object_key);
 					return obj;
@@ -1154,13 +1292,13 @@ private:
 
 			json class_key = jp.create_object();
 			class_key.put_member("ClassName", "SysUser");
-			class_def = classes.get(class_key);
+			class_def = classes->get(class_key);
 
 			if (not class_def.empty())
 			{
 				if (class_def.has_member("Table")) {
 					relative_ptr_type rpt = class_def["Table"];
-					json_table class_data(database_file, { "ObjectId" });
+					json_table class_data(this, { "ObjectId" });
 					class_data.open(rpt);
 					obj = class_data.select([_user_name](int _index, json& _j)
 						{
@@ -1185,13 +1323,13 @@ private:
 
 			json class_key = jp.create_object();
 			class_key.put_member("ClassName", "SysTeam");
-			class_def = classes.get(class_key);
+			class_def = classes->get(class_key);
 
 			if (not class_def.empty())
 			{
 				if (class_def.has_member("Table")) {
 					relative_ptr_type rpt = class_def["Table"];
-					json_table class_data(database_file, { "ObjectId" });
+					json_table class_data(this, { "ObjectId" });
 					class_data.open(rpt);
 					obj = class_data.select([_team_name](int _index, json& _j)
 						{
@@ -1407,7 +1545,7 @@ private:
 			json class_key = jp.create_object("ClassName", _base_class);
 			class_key.set_natural_order();
 
-			json class_obj =  classes.get(class_key);
+			json class_obj =  classes->get(class_key);
 
 			if (not class_obj.empty())
 			{
@@ -1425,7 +1563,8 @@ private:
 			json class_key = jp.create_object("ClassName", _class_to_check);
 			class_key.set_natural_order();
 
-			json class_obj =  classes.get(class_key);
+
+			json class_obj =  classes->get(class_key);
 
 			if (not class_obj.empty())
 			{
@@ -1451,9 +1590,10 @@ private:
 
 		corona_database(comm_bus_interface* _bus, std::shared_ptr<file> _database_file) :
 			bus(_bus),
-			database_file(_database_file),
-			classes(_database_file, { "ClassName" })
+			file_block(_database_file)
 		{
+			std::vector<std::string> class_key_fields({ "ClassName" });
+			classes = std::make_shared<json_table>(this, class_key_fields);
 			token_life = time_span(1, time_models::hours);	
 		}
 
@@ -1865,13 +2005,9 @@ private:
 
 			scope_lock lock_one(header_rw_lock);
 
-			file_block fb(database_file);
+			relative_ptr_type header_location =  header.read(this, _header_location);
 
-			relative_ptr_type header_location =  header.read(&fb, _header_location);
-
-			if (header_location != null_row) {
-				relative_ptr_type result =  classes.open(header.data.classes_location);
-			}
+			relative_ptr_type result = classes->open(header.data.classes_location);
 
 			system_monitoring_interface::global_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -2124,7 +2260,7 @@ private:
 				return result;
 			}
 
-			result_list =  classes.select([this, get_classes_request](int _index, json& _item) {
+			result_list =  classes->select([this, get_classes_request](int _index, json& _item) {
 				json_parser jp;
 				json token = get_classes_request["Token"];
 				bool has_permission = has_class_permission(token, _item["ClassName"], "Get");
@@ -2192,7 +2328,7 @@ private:
 
 			{
 				scope_lock lock_one(classes_rw_lock);
-				result =  classes.get(key);
+				result =  classes->get(key);
 			}
 
 
@@ -2279,7 +2415,7 @@ private:
 			json class_key = jp.create_object();
 			class_key.put_member("ClassName", class_name);
 			class_key.set_compare_order({ "ClassName" });
-			json class_exists = classes.get(class_key);
+			json class_exists = classes->get(class_key);
 			
 			bool changed_class = false;
 
@@ -2295,22 +2431,21 @@ private:
 			if (checked["Success"]) {
 				scope_lock lock(classes_rw_lock);
 				json adjusted_class = checked["Data"];
-				json_table class_data(database_file, { "ObjectId" });
+				json_table class_data(this, { "ObjectId" });
 				relative_ptr_type ptr;
 				relative_ptr_type rpt;
 				if (not adjusted_class.has_member("Table")) {
 					rpt = class_data.create();
-					class_data.commit();
 					adjusted_class.put_member("Table", rpt);
 				}
 				else {
 					rpt = adjusted_class.get_member("Table");
 					rpt = class_data.open(rpt);
 				}
-				ptr = classes.put(adjusted_class);
+				ptr = classes->put(adjusted_class);
 				if (ptr != null_row) {
 					json key = adjusted_class.extract({ "ClassName" });
-					json temp =  classes.get(key);
+					json temp =  classes->get(key);
 					if (temp.empty()) {
 						result = create_response(check_request, false, "save check failed", adjusted_class, method_timer.get_elapsed_seconds());
 						system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -2325,7 +2460,7 @@ private:
 								std::string acn = acp.first;
 								json class_key = jp.create_object();
 								class_key.put_member("ClassName", acn);
-								auto ancestor_class =  classes.get(class_key);
+								auto ancestor_class =  classes->get(class_key);
 								json descendants;
 								if (ancestor_class.has_member("Descendants")) {
 									descendants = ancestor_class["Descendants"];
@@ -2424,7 +2559,7 @@ private:
 
 			json class_key = query_class_request["Data"]
 								.extract({ "ClassName" });
-			class_def =  classes.get(class_key);
+			class_def =  classes->get(class_key);
 			std::string class_name = class_def["ClassName"];
 
 			std::map<std::string, bool> class_names;
@@ -2449,17 +2584,16 @@ private:
 				json class_key;
 				class_key = jp.create_object();
 				class_key.put_member("ClassName", class_pair.first);
-				json class_def = classes.get(class_key);
+				json class_def = classes->get(class_key);
 				if (class_def.has_member("Table")) {
 					relative_ptr_type rpt = class_def["Table"];
-					json_table class_data(database_file, { "ObjectId" });
+					json_table class_data(this, { "ObjectId" });
 					class_data.open(rpt);
 					json empty_boy = jp.create_object();
 					json class_objects = class_data.update(empty_boy, [](int _index, json& _item)->json {
 						return _item;
 						}, update_json);
 					object_list.append_array(class_objects);
-					class_data.commit();
 				}
 			}
 
@@ -2515,7 +2649,7 @@ private:
 
 			{
 				scope_lock lock_one(classes_rw_lock);
-				class_data =  classes.get(class_key);
+				class_data =  classes->get(class_key);
 			}
 
 			if (class_data.object()) {
@@ -2653,25 +2787,20 @@ private:
 				{
 					json class_key = jp.create_object();
 					class_key.put_member("ClassName", class_pair.first);
-					json class_def = classes.get(class_key);
+					json class_def = classes->get(class_key);
 
 					if (class_def.has_member("Table")) {
 						json empty;
 						relative_ptr_type rpt = class_def["Table"];
-						json_table *class_data = new json_table(database_file, { "ObjectId" });
+						json_table *class_data = new json_table(this, { "ObjectId" });
 						class_data->open(rpt);
 						class_data->put_array(class_pair.second);
 						tables.push_back(class_data);
 					}
 				}
 
-				for (auto tb : tables) {
-					tb->commit();
-				}
-
-				file_block fb(database_file);
-				header.write(&fb);
-				fb.commit();
+				header.write(this);
+				commit();
 
 				result = create_response(put_object_request, true, "Object(s) created", data, method_timer.get_elapsed_seconds());
 			}
@@ -2753,15 +2882,14 @@ private:
 			json class_key = jp.create_object();
 			json class_name = object_key["ClassName"];
 			class_key.put_member("ClassName", class_name);
-			json class_def = classes.get("class_key");
+			json class_def = classes->get("class_key");
 
 			if (class_def.has_member("Table")) {
 				json empty;
 				relative_ptr_type rpt = class_def["Table"];
-				json_table class_data(database_file, { "ObjectId" });
+				json_table class_data(this, { "ObjectId" });
 				class_data.open(rpt);
 				class_data.erase(object_key);
-				class_data.commit();
 				response = create_response(delete_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
 			}
 			else 

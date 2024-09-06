@@ -8,8 +8,7 @@ namespace corona
 
 	enum feast_types {
 		feast_read = 1,
-		feast_write = 2,
-		feast_add = 3
+		feast_write = 2
 	};
 
 	class file_buffer
@@ -19,13 +18,11 @@ namespace corona
 		int64_t stop;
 		int64_t top;
 		buffer  buff;
-		bool is_append;
 		bool is_dirty;
 
 		file_buffer() 
 		{
 			start = stop = top = {};
-			is_append = false;
 			is_dirty = false;
 		}
 
@@ -34,7 +31,6 @@ namespace corona
 			start = _start;
 			stop = _stop;
 			top = _is_append ? start : stop;
-			is_append = _is_append;
 			buff.init(stop - start);
 		}
 
@@ -43,7 +39,6 @@ namespace corona
 			start = _src.start;
 			stop = _src.stop;
 			top = _src.top;
-			is_append = _src.is_append;
 			is_dirty = _src.is_dirty;
 			buff = _src.buff;
 		}
@@ -53,7 +48,6 @@ namespace corona
 			start = _src.start;
 			stop = _src.stop;
 			top = _src.top;
-			is_append = _src.is_append;
 			is_dirty = _src.is_dirty;
 			buff = std::move(_src.buff);
 		}
@@ -64,7 +58,6 @@ namespace corona
 			stop = _src.stop;
 			top = _src.top;
 			buff = std::move(_src.buff);
-			is_append = _src.is_append;
 			is_dirty = _src.is_dirty;
 			return *this;
 		}
@@ -75,7 +68,6 @@ namespace corona
 			stop = _src.stop;
 			top = _src.top;
 			buff = _src.buff;
-			is_append = _src.is_append;
 			is_dirty = _src.is_dirty;
 			return *this;
 		}
@@ -185,12 +177,7 @@ namespace corona
 	{
 		std::vector<std::shared_ptr<file_buffer>> buffers;
 		std::shared_ptr<file> fp;
-
-		struct feast_result
-		{
-
-
-		};
+		std::shared_ptr<file_buffer> append_buffer;
 
 		std::shared_ptr<file_buffer> feast(int64_t _start, int64_t _length, feast_types _feast)
 		{
@@ -199,6 +186,12 @@ namespace corona
 			int64_t new_start = _start,
 					new_stop = _stop;
 
+			if (append_buffer and append_buffer->start <= _start and append_buffer->stop >= _start) {
+				if ((append_buffer->start + _length) > append_buffer->stop)
+					throw std::logic_error("Out of bounds i/o on an append buffer");
+				return append_buffer;
+			}
+
 			std::vector<std::shared_ptr<file_buffer>> eaten_buffers;
 			std::vector<std::shared_ptr<file_buffer>> new_buffers;
 
@@ -206,8 +199,10 @@ namespace corona
 			{
 				if (fb->start <= _start and fb->stop >= _stop)
 					return fb;
-				else if ((fb->start <= _start and fb->stop >= _start) or
-					(fb->start <= _stop and fb->stop >= _stop))
+				else if 
+					((fb->start <= _start and fb->stop >= _start) or
+					(fb->start <= _stop and fb->stop >= _stop) or 
+					(_start <= fb->start and _stop >= fb->stop))
 				{
 					if (fb->start < new_start) 
 					{
@@ -226,15 +221,7 @@ namespace corona
 			}
 
 			std::shared_ptr<file_buffer> new_buffer;
-
-			if (_feast == feast_types::feast_add) 
-			{
-				new_buffer = std::make_shared<file_buffer>(new_start, new_stop, true);
-			}
-			else 
-			{
-				new_buffer = std::make_shared<file_buffer>(new_start, new_stop, false);
-			}
+			new_buffer = std::make_shared<file_buffer>(new_start, new_stop, false);
 
 			int64_t track_start = new_start;
 
@@ -355,15 +342,17 @@ namespace corona
 			file_command_result result;
 			int64_t location = -1;
 
-			auto found = std::find_if(buffers.begin(), buffers.end(), [this, _bytes_to_add](file_buffer& fb) {
-				return fb.is_append;
-				});
+			if (!append_buffer) {
+				int64_t buffer_size = 1;
 
-			if (found != std::end(buffers))
-			{
-				std::shared_ptr<file_buffer> fb = *found;
-				location = fb->add( _bytes_to_add );
+				while (buffer_size < 65536 or buffer_size < _bytes_to_add)
+					buffer_size *= 2;
+
+				location = fp->add(buffer_size);
+				append_buffer = std::make_shared<file_buffer>(location, location + buffer_size, true);
 			}
+
+			location = append_buffer->add( _bytes_to_add );
 
 			if (location < 0)
 			{
@@ -372,8 +361,11 @@ namespace corona
 					buffer_size = 65536;
 
 				location = fp->add(buffer_size);
-
-				feast(location, buffer_size, feast_types::feast_add);
+				if (location != append_buffer->stop) {
+					throw std::logic_error("Someone else grew the file so I have no clue what to do now.");
+				}
+				append_buffer->grow(buffer_size);
+				location = append_buffer->add(_bytes_to_add);
 			}
 
 			return location;
@@ -383,15 +375,6 @@ namespace corona
 		{
 			int64_t file_position = add(_buffer_length);
 
-			auto found = std::find_if(buffers.begin(), buffers.end(), [this, file_position, _buffer_length](file_buffer& fb) {
-				return fb.use(nullptr, file_position, _buffer_length);
-				});
-
-			if (found == std::end(buffers))
-			{
-				system_monitoring_interface::global_mon->log_warning("Tried to append but couldn't find the buffer after add", __FILE__, __LINE__);
-			}
-
 			auto fc = write(file_position, _buffer, _buffer_length);
 
 			return fc;
@@ -399,6 +382,9 @@ namespace corona
 
 		void commit()
 		{
+			if (append_buffer) {
+				fp->write(append_buffer->start, append_buffer->buff.get_ptr(), append_buffer->top - append_buffer->start);
+			}
 			for (auto& buff : buffers) {
 				if (buff->is_dirty) {
 					buff->is_dirty = false;
@@ -407,8 +393,14 @@ namespace corona
 			}
 		}
 
+		int buffer_count()
+		{
+			return buffers.size();
+		}
+
 		void clear()
 		{
+			append_buffer = nullptr;
 			buffers.clear();
 		}
 

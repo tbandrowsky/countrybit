@@ -328,22 +328,13 @@ namespace corona
 
 	};
 
-	class json_table_header : public poco_node<index_header_struct>
+	class json_table_header : public poco_node<table_header_struct>
 	{
 	public:
 
-		int64_t write_free_list(file_block *_file, int _index)
-		{
-			auto offset = offsetof(index_header_struct, free_lists) + _index * sizeof(list_block_header);
-			auto size = sizeof(list_block_header);
-			memcpy(bytes.get_ptr() + offset, (const char*)&data + offset, size);
-			auto r = write_piece(_file, offset, size);
-			return r;
-		}
-
 		int64_t write_count(file_block * _file)
 		{
-			auto offset = offsetof(index_header_struct, count);
+			auto offset = offsetof(table_header_struct, count);
 			auto size = sizeof(data.count);
 			memcpy(bytes.get_ptr() + offset, (const char*)&data + offset, size);
 			auto r = write_piece(_file, offset, size);
@@ -407,7 +398,7 @@ namespace corona
 
 	};
 
-	class json_table : protected file_block
+	class json_table 
 	{
 	private:
 
@@ -417,6 +408,8 @@ namespace corona
 		using KEY = json;
 		using VALUE = json_node;
 		using UPDATE_VALUE = json;
+
+		file_block* fb;
 		
 		std::vector<std::string> key_fields;
 		json header_key;
@@ -424,12 +417,12 @@ namespace corona
 		relative_ptr_type create_header()
 		{
 			json_parser jp;
-			table_header.append(this);
+			table_header.append(fb);
 
 			json_tree_node jtn;
 
 			jtn.data = {};
-			table_header.write(this);
+			table_header.write(fb);
 
 			return table_header.header.block_location;
 		}
@@ -478,11 +471,11 @@ namespace corona
 
 				for (level_index = 0; level_index < 8; level_index++)
 				{
-					auto status = jtn.read(this, location);
+					auto status = jtn.read(fb, location);
 					byte local_hash_code = hash_bytes[level_index];
 					location = jtn.data.children[local_hash_code];
 				}
-				auto status = jtn.read(this, location);
+				auto status = jtn.read(fb, location);
 				list_start = &jtn.data.index_list;
 
 
@@ -503,7 +496,7 @@ namespace corona
 
 					while (block_location)
 					{
-						jn.read(this, block_location);
+						jn.read(fb, block_location);
 						std::string key_value = jn.data[key_name];
 						system_monitoring_interface::global_mon->log_information("check node:" + key_value);
 						if (grouped.has_member(key_value))
@@ -540,13 +533,13 @@ namespace corona
 
 			for (level_index = 0; level_index < 8; level_index++)
 			{
-				auto status = jtn.read(this, location);
+				auto status = jtn.read(fb, location);
 				byte local_hash_code = hash_bytes[level_index];
 				location = jtn.data.children[local_hash_code];
 				if (location == 0)
 					return null_row;
 			}
-			auto status = jtn.read(this, location);
+			auto status = jtn.read(fb, location);
 			list_start = &jtn.data.index_list;
 
 			log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -559,7 +552,7 @@ namespace corona
 
 				while (block_location)
 				{
-					jn.read(this, block_location);
+					jn.read(fb, block_location);
 					int c = _key.compare(jn.data);
 					if (c == 0) {
 						return block_location;
@@ -639,8 +632,8 @@ namespace corona
 				json_tree_node jtn;
 				jtn.data = {};
 				jtn.header.next_block = 0;
-				table_header.data.data_root_location = jtn.append(this);
-				table_header.write(this);
+				table_header.data.data_root_location = jtn.append(fb);
+				table_header.write(fb);
 				log_put("new root", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			};
 
@@ -650,20 +643,20 @@ namespace corona
 
 			for (level_index = 0; level_index < 8; level_index++)
 			{
-				auto status = jtn.read(this, location);
+				auto status = jtn.read(fb, location);
 				int local_hash_code = hash_bytes[level_index];
 				path = path + std::to_string(local_hash_code) + ".";
 				location = jtn.data.children[local_hash_code];
 				if (location == 0) {
 					json_tree_node ntn;
 					ntn.data = {};
-					location = ntn.append(this);
+					location = ntn.append(fb);
 					if (location > 100000000000i64)
 					{
 						DebugBreak();
 					}
 					jtn.data.children[local_hash_code] = location;
-					jtn.write_child(this, local_hash_code);
+					jtn.write_child(fb, local_hash_code);
 				}
 			}
 			if (location > 100000000000i64)
@@ -671,7 +664,7 @@ namespace corona
 				DebugBreak();
 			}
 
-			auto status = jtn.read(this, location);
+			auto status = jtn.read(fb, location);
 			list_start = &jtn.data.index_list;
 
 			path = path + "->" + std::to_string(jtn.header.block_location);
@@ -697,17 +690,17 @@ namespace corona
 					// first, check to see if this is larger than anything at the end of the block, then we'll just append it...
 					int comparison = 0;
 
-					current_node.read(this, list_start->last_block);
+					current_node.read(fb, list_start->last_block);
 					comparison = node_key.compare(current_node.data);
 					if (comparison > 0) {
 						system_monitoring_interface::global_mon->log_put("append new node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						new_node.data = _data;
 						new_node.header.next_block = 0;
-						new_node.append(this);
+						new_node.append(fb);
 						current_node.header.next_block = new_node.header.block_location;
-						current_node.write(this);
+						current_node.write(fb);
 						list_start->last_block = new_node.header.block_location;
-						jtn.write(this);
+						jtn.write(fb);
 						InterlockedIncrement64(&table_header.data.count);
 						continue;
 					}
@@ -716,7 +709,7 @@ namespace corona
 
 					while (block_location)
 					{
-						current_node.read(this, block_location);
+						current_node.read(fb, block_location);
 
 						comparison = node_key.compare(current_node.data);
 
@@ -736,16 +729,16 @@ namespace corona
 						new_node.data = _data;
 						if (previous_block_location > 0) {
 							new_node.header.next_block = current_node.header.block_location;
-							new_node.append(this);
+							new_node.append(fb);
 							previous_node.header.next_block = new_node.header.block_location;
-							previous_node.write(this);
+							previous_node.write(fb);
 						}
 						else {
 							new_node.header.next_block = list_start->first_block;
 							new_node.data = _data;
-							new_node.append(this);
+							new_node.append(fb);
 							list_start->first_block = new_node.header.block_location;
-							jtn.write(this);
+							jtn.write(fb);
 						}
 						// this is an insert, so we do write the count
 						InterlockedIncrement64(&table_header.data.count);
@@ -754,7 +747,7 @@ namespace corona
 					else if (block_location > 0 and comparison == 0) {
 						system_monitoring_interface::global_mon->log_put("update existing", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						current_node.data = _data;
-						current_node.write(this);
+						current_node.write(fb);
 						system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						// this is an update, so we do not write the count
 						continue;
@@ -764,11 +757,11 @@ namespace corona
 						system_monitoring_interface::global_mon->log_put("add to end", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						new_node.data = _data;
 						new_node.header.next_block = 0;
-						new_node.append(this);
+						new_node.append(fb);
 						current_node.header.next_block = new_node.header.block_location;
-						current_node.write(this);
+						current_node.write(fb);
 						list_start->last_block = new_node.header.block_location;
-						jtn.write(this);
+						jtn.write(fb);
 						InterlockedIncrement64(&table_header.data.count);
 						continue;
 					}
@@ -780,9 +773,9 @@ namespace corona
 					system_monitoring_interface::global_mon->log_put("new block", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					new_node.data = _data;
 					new_node.header.next_block = 0;
-					new_node.append(this);
+					new_node.append(fb);
 					list_start->first_block = list_start->last_block = new_node.header.block_location;
-					jtn.write(this);
+					jtn.write(fb);
 					InterlockedIncrement64(&table_header.data.count);
 				}
 			}
@@ -826,7 +819,7 @@ namespace corona
 				put_node_list(prn.hash_code, prn.nodes_array);
 			}
 
-			table_header.write_count(this);
+			table_header.write_count(fb);
 
 			system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -860,8 +853,8 @@ namespace corona
 				json_tree_node jtn;
 				jtn.data = {};
 				jtn.header.next_block = 0;
-				table_header.data.data_root_location = jtn.append(this);
-				table_header.write(this);
+				table_header.data.data_root_location = jtn.append(fb);
+				table_header.write(fb);
 				log_put("new root", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			};
 
@@ -872,19 +865,19 @@ namespace corona
 			for (level_index = 0; level_index < 8; level_index++)
 			{
 				path = path + std::to_string(location) + ".";
-				auto status = jtn.read(this, location);
+				auto status = jtn.read(fb, location);
 				byte local_hash_code = hash_bytes[level_index];
 				location = jtn.data.children[local_hash_code];
 				if (location == 0) {
 					json_tree_node ntn;
 					ntn.data = {};
-					location = ntn.append(this);
+					location = ntn.append(fb);
 					jtn.data.children[local_hash_code] = location;
-					jtn.write_child(this, local_hash_code);
+					jtn.write_child(fb, local_hash_code);
 				}
 			}
 
-			auto status = jtn.read(this, location);
+			auto status = jtn.read(fb, location);
 			list_start = &jtn.data.index_list;
 
 			path = path + "->" + std::to_string(jtn.header.data_location);
@@ -907,19 +900,19 @@ namespace corona
 				int comparison = 0;
 
 				if (list_start->last_block) {
-					current_node.read(this, list_start->last_block);
+					current_node.read(fb, list_start->last_block);
 					comparison = node_key.compare(current_node.data);
 					if (comparison > 0) {
 						system_monitoring_interface::global_mon->log_put("append new node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						new_node.data = _data;
 						new_node.header.next_block = 0;
-						new_node.append(this);
+						new_node.append(fb);
 						current_node.header.next_block = new_node.header.block_location;
-						current_node.write(this);
+						current_node.write(fb);
 						list_start->last_block = new_node.header.block_location;
-						jtn.write(this);
+						jtn.write(fb);
 						table_header.data.count++;
-						table_header.write_count(this);
+						table_header.write_count(fb);
 						return new_node;
 					}
 				}
@@ -928,7 +921,7 @@ namespace corona
 
 				while (block_location)
 				{
-					current_node.read(this, block_location);
+					current_node.read(fb, block_location);
 
 					comparison = node_key.compare(current_node.data);
 
@@ -948,26 +941,26 @@ namespace corona
 					new_node.data = _data;
 					if (previous_block_location > 0) {
 						new_node.header.next_block = current_node.header.block_location;
-						new_node.append(this);
+						new_node.append(fb);
 						previous_node.header.next_block = new_node.header.block_location;
-						previous_node.write(this);
+						previous_node.write(fb);
 					}
 					else {
 						new_node.header.next_block = list_start->first_block;
 						new_node.data = _data;
-						new_node.append(this);
+						new_node.append(fb);
 						list_start->first_block = new_node.header.block_location;
-						jtn.write(this);
+						jtn.write(fb);
 					}
 					// this is an insert, so we do write the count
 					table_header.data.count++;
-					table_header.write_count(this);
+					table_header.write_count(fb);
 					return new_node;
 				}
 				else if (block_location > 0 and comparison == 0) {
 					system_monitoring_interface::global_mon->log_put("update existing", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					current_node.data = _data;
-					current_node.write(this);
+					current_node.write(fb);
 					system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					// this is an update, so we do not write the count
 					return current_node;
@@ -977,13 +970,13 @@ namespace corona
 					system_monitoring_interface::global_mon->log_put("add to end", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					new_node.data = _data;
 					new_node.header.next_block = 0;
-					new_node.append(this);
+					new_node.append(fb);
 					current_node.header.next_block = new_node.header.block_location;
-					current_node.write(this);
+					current_node.write(fb);
 					list_start->last_block= new_node.header.block_location;
-					jtn.write(this);
+					jtn.write(fb);
 					table_header.data.count++;
-					table_header.write_count(this);
+					table_header.write_count(fb);
 					return new_node;
 				}
 
@@ -994,12 +987,12 @@ namespace corona
 				system_monitoring_interface::global_mon->log_put("new block", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				new_node.data = _data;
 				new_node.header.next_block = 0;
-				new_node.append(this);
+				new_node.append(fb);
 				list_start->first_block = list_start->last_block = new_node.header.block_location;
-				jtn.write(this);
+				jtn.write(fb);
 
 				table_header.data.count++;
-				table_header.write_count(this);
+				table_header.write_count(fb);
 			}
 
 			system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1010,7 +1003,7 @@ namespace corona
 		json_node get_node(relative_ptr_type _node_location)
 		{
 			json_node node;
-			node.read(this, _node_location);
+			node.read(fb, _node_location);
 			return node;
 		}
 
@@ -1042,13 +1035,13 @@ namespace corona
 
 			for (level_index = 0; level_index < 8; level_index++)
 			{
-				auto status = jtn.read(this, location);
+				auto status = jtn.read(fb, location);
 				byte local_hash_code = hash_bytes[level_index];
 				location = jtn.data.children[local_hash_code];
 				if (location == 0)
 					return;
 			}
-			auto status = jtn.read(this, location);
+			auto status = jtn.read(fb, location);
 			list_start = &jtn.data.index_list;
 
 			log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1063,21 +1056,21 @@ namespace corona
 
 				while (block_location)
 				{
-					current_node.read(this, block_location);
+					current_node.read(fb, block_location);
 
 					if (block_location == _node_location) {
 						if (previous_block_location) {
 							json_node previous_node;
-							previous_node.read(this, previous_block_location);
+							previous_node.read(fb, previous_block_location);
 							previous_node.header.next_block = current_node.header.next_block;
-							previous_node.write(this);
+							previous_node.write(fb);
 						}
 						if (list_start->first_block == block_location)
 							list_start->first_block = current_node.header.next_block;
 						if (list_start->last_block == block_location)
 							list_start->last_block == current_node.header.next_block;
-						jtn.write(this);
-						current_node.erase(this);
+						jtn.write(fb);
+						current_node.erase(fb);
 						block_location = 0;
 					}
 					else 
@@ -1089,156 +1082,22 @@ namespace corona
 
 				// and now we gotta put this node into our index
 				table_header.data.count--;
-				table_header.write_count(this);
+				table_header.write_count(fb);
 			}
 
 			system_monitoring_interface::global_mon->log_json_stop("json_table", "get_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
 
-		allocation_index get_allocation_index(int64_t _size)
-		{
-			allocation_index ai = data_block::get_allocation_index(_size);
-			if (ai.index >= table_header.data.free_lists.capacity()) {
-				std::string msg = std::format("{0} bytes is too big to allocate as a block.", _size);
-				system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
-				ai.index = table_header.data.free_lists.capacity() - 1;
-			}
-			return ai;
-		}
-
-		virtual relative_ptr_type allocate_space(int64_t _size) override
-		{
-			relative_ptr_type pt = 0;
-
-			allocation_index ai = get_allocation_index(_size);
-
-			auto& list_start = table_header.data.free_lists[ai.index];
-
-			block_header_struct free_block = {};
-
-			// get_allocation index always returns an index such that any block in that index
-			// will have the right size.  so we know the first block is ok.
-			if (list_start.first_block)
-			{
-				read(list_start.first_block, &free_block, sizeof(free_block));
-				// this
-				if (list_start.last_block == list_start.first_block)
-				{
-					list_start.last_block = 0;
-					list_start.first_block = 0;
-				}
-				else
-				{
-					list_start.first_block = free_block.next_block;
-					free_block.next_block = 0;
-				}
-				table_header.write_free_list(this, ai.index);
-				return free_block.data_location;
-			}
-
-			int64_t total_size = sizeof(block_header_struct) + ai.size;
-			int64_t base_space = add(sizeof(block_header_struct) + ai.size);
-			if (base_space > 0) {
-				free_block.block_type = block_id::allocated_space_id();
-				free_block.block_location = base_space;
-				free_block.data_location = base_space + sizeof(block_header_struct);
-				free_block.next_block = 0;
-				write(base_space, &free_block, sizeof(free_block));
-				return free_block.data_location;
-			}
-
-			return 0;
-		}
-
-
-		virtual void free_space(int64_t _location) override
-		{
-
-			scope_lock my_lock(space_lock);
-
-			relative_ptr_type block_start = _location - sizeof(block_header_struct);
-
-			block_header_struct free_block = {};
-
-			/* ah, the forgiveness of this can be evil.  Here we say, if we truly cannot verify this 
-			_location can be freed, then do not free it.  Better to keep some old block around than it is 
-			to stomp on a good one with a mistake.  */
-
-			file_command_result fcr = read(block_start, &free_block, sizeof(free_block));
-			
-			// did we read the block
-			if (fcr.success) {
-
-				// is this actually an allocated space block, and, is it the block we are trying to free
-				if (free_block.block_type.is_allocated_space() and free_block.data_location == _location) {
-
-					// ok, now let's have a go and see where this is in our allocation index.
-					allocation_index ai = get_allocation_index(free_block.data_capacity);
-
-					// this check says, don't try to free the block if there is a mismatch between its 
-					// allocation size, and the size it says it has.
-					if (free_block.data_capacity == ai.size) 
-					{
-						// and now, we can look at the free list, and put ourselves at the 
-						// end of it.  In this way, deletes and reallocates will tend to 
-						// want to reuse the same space so handy for kill and fills.
-						auto& list_start = table_header.data.free_lists[ai.index];
-
-						// there is a last block, so we are at the end
-						if (list_start.last_block) {
-							relative_ptr_type old_last_block = list_start.last_block;
-							block_header_struct last_free;
-							auto fr = read(old_last_block, &last_free, sizeof(last_free));
-							if (fr.success) {
-								list_start.last_block = block_start;
-								last_free.next_block = block_start;
-								free_block.next_block = 0;
-								write(old_last_block, &last_free, sizeof(last_free));
-								write(block_start, &free_block, sizeof(free_block));
-
-								// this basically says, just write out the list header for this index
-								// not the whole header
-								table_header.write_free_list(this, ai.index);
-							}
-						}
-						else 
-						{
-							// the list is empty and we add to it.
-							free_block.next_block = 0;
-							list_start.last_block = free_block.block_location;
-							list_start.last_block = free_block.block_location;
-
-							// this basically says, now save our block.
-							write(block_start, &free_block, sizeof(free_block));
-
-							// this basically says, just write out the list header for this index
-							// not the whole header
-							table_header.write_free_list(this, ai.index);
-						}
-					}
-				}
-			}
-		}
 
 	public:
 
-		json_table(std::shared_ptr<file> _database_file, std::vector<std::string> _key_fields) 
-			: file_block(_database_file), 
+		json_table(file_block *_fb, std::vector<std::string> _key_fields) 
+			: fb(_fb), 
 				key_fields(_key_fields)
 		{
 			json_parser jp;
 			header_key = jp.create_object();
 			table_header = {};
-		}
-
-		void commit()
-		{
-			file_block::commit();
-		}
-
-		void rollback()
-		{
-			file_block::commit();
 		}
 
 		json get_key(json& _object) 
@@ -1269,7 +1128,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
-			table_header.read(this, location);
+			table_header.read(fb, location);
 			system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return location;
 		}
@@ -1413,9 +1272,9 @@ namespace corona
 
 			if (node_location > -1) {
 				json_node jnz;
-				jnz.read(this, node_location);
+				jnz.read(fb, node_location);
 				jnz.data.assign_replace(value);
-				jnz.write(this);
+				jnz.write(fb);
 			}
 
 			system_monitoring_interface::global_mon->log_table_stop("table", "replace", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1463,7 +1322,7 @@ namespace corona
 			if (_node <= 0)
 				return;
 
-			if (jtn.read(this, _node) <= 0) 
+			if (jtn.read(fb, _node) <= 0) 
 			{
 				return;
 			}
@@ -1486,7 +1345,7 @@ namespace corona
 
 			while (block_location)
 			{
-				jn.read(this, block_location);
+				jn.read(fb, block_location);
 				if (_key_fragment.empty() or _key_fragment.compare(jn.data) == 0) {
 					relative_ptr_type process_result = _process_clause(_result.count, jn);
 					if (process_result > 0)
@@ -1563,7 +1422,7 @@ namespace corona
 
 			for (level_index = 0; level_index < 8; level_index++)
 			{
-				auto status = jtn.read(this, location);
+				auto status = jtn.read(fb, location);
 				for (int i = 0; i < 256; i++) {
 					location = jtn.data.children[i];
 					if (location > 0)
@@ -1572,7 +1431,7 @@ namespace corona
 				if (location == 0)
 					return empty;
 			}
-			auto status = jtn.read(this, location);
+			auto status = jtn.read(fb, location);
 			list_start = &jtn.data.index_list;
 
 			if (list_start == nullptr) {
@@ -1582,7 +1441,7 @@ namespace corona
 			if (list_start->first_block)
 			{
 				auto block_location = list_start->first_block;
-				jn.read(this, block_location);
+				jn.read(fb, block_location);
 				return jn.data;
 			};
 
@@ -1671,7 +1530,7 @@ namespace corona
 						count++;
 						if (_update.object() and _update.size()>0) {
 							_data.data.assign_update(_update);
-							_data.write(this);
+							_data.write(fb);
 						}
 					}
 					return count;
@@ -1754,10 +1613,217 @@ namespace corona
 	}
 
 	void test_object(json& _proof, std::shared_ptr<application> _app);
+	void test_file_block(json& _proof, std::shared_ptr<application> _app);
 	void test_file(json& _proof, std::shared_ptr<application> _app);
 	void test_data_block(json& _proof, std::shared_ptr<application> _app);
 	void test_json_node(json& _proof, std::shared_ptr<application> _app);
 	void test_json_table(json& _proof, std::shared_ptr<application> _app);
+
+	void test_file_block(json& _proof, std::shared_ptr<application> _app)
+	{
+
+		date_time start = date_time::now();
+		timer tx;
+
+		system_monitoring_interface::global_mon->log_function_start("test file_block", "start", start, __FILE__, __LINE__);
+
+		corona::json_parser jp;
+		corona::json		empty;
+
+		json proof_assertions = jp.create_object();
+
+		proof_assertions.put_member("test_name", "file_block");
+
+		std::shared_ptr<file> fp = _app->create_file_ptr("test_file_block.dat");
+
+		const char* pattern1 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		int pattern1_length = strlen(pattern1);
+		const char* pattern2 = "XXXXXXXXXXXXXXXXX";
+		int pattern2_length = strlen(pattern2);
+		const char* pattern3 = "YYYY";
+		int pattern3_length = strlen(pattern3);
+
+		file_block fb(fp);
+
+		const int size = 1 << 17;
+
+		for (int i = 0; i < size; i += pattern1_length)
+		{
+			fb.append((void*)pattern1, pattern1_length);
+		}
+
+		if (fb.buffer_count() == 0)
+		{
+			proof_assertions.put_member("append_continuous", true);
+		}
+		else
+		{
+			proof_assertions.put_member("append_continuous", false);
+			system_monitoring_interface::global_mon->log_warning("Continous append check failed", __FILE__, __LINE__);
+		}
+
+		fb.commit();
+
+		char check_buffer[size];
+		fp->read(0, check_buffer, size);
+		std::string temp;
+
+		bool file_contents_check = true;
+		const char* c = &check_buffer[0];
+		int l = 0;
+		int i = 0;
+
+		while (i < size)
+		{
+			if (l == pattern1_length) {
+				if (temp != pattern1) {
+					file_contents_check = false;
+					break;
+				}
+				l = 0;
+				temp = "";
+			}
+
+			temp += *c;
+
+			i++;
+			l++;
+			c++;
+		}
+
+		if (file_contents_check)
+		{
+			proof_assertions.put_member("file_contents", true);
+		}
+		else
+		{
+			proof_assertions.put_member("file_contents", false);
+			system_monitoring_interface::global_mon->log_warning("file_contents failed", __FILE__, __LINE__);
+		}
+
+		fb.clear();
+		if (fb.buffer_count() == 0)
+		{
+			proof_assertions.put_member("buffer_count", true);
+		}
+		else
+		{
+			proof_assertions.put_member("buffer_count", false);
+			system_monitoring_interface::global_mon->log_warning("buffer_count failed", __FILE__, __LINE__);
+		}
+
+		// test lone block read.
+
+		memset(check_buffer, 0, sizeof(check_buffer));
+		fb.read(pattern1_length, check_buffer, pattern1_length);
+		if (strcmp(pattern1, check_buffer) == 0)
+		{
+			proof_assertions.put_member("checklone", true);
+		}
+		else
+		{
+			proof_assertions.put_member("checklone", false);
+			system_monitoring_interface::global_mon->log_warning("checklone failed", __FILE__, __LINE__);
+		}
+
+		// test inner write
+		// we cleared the buffers, and now there are none. 
+		// writing should create a buffer.
+
+		fb.write(pattern1_length + 4, (void*)pattern3, pattern3_length);
+
+		memset(check_buffer, 0, sizeof(check_buffer));
+		fb.read(pattern1_length + 4, check_buffer, pattern3_length);
+
+		if (strcmp(pattern3, check_buffer) == 0 and fb.buffer_count() == 1)
+		{
+			proof_assertions.put_member("inner_write", true);
+		}
+		else
+		{
+			proof_assertions.put_member("inner_write", false);
+			system_monitoring_interface::global_mon->log_warning("inner_write failed", __FILE__, __LINE__);
+		}
+
+		// test tail write
+		// this should create another buffer
+
+		fb.write(pattern1_length * 2 + 4, (void*)pattern3, pattern3_length);
+
+		memset(check_buffer, 0, sizeof(check_buffer));
+		fb.read(pattern1_length * 2 + 4, check_buffer, pattern3_length);
+
+		if (strcmp(pattern3, check_buffer) == 0 and fb.buffer_count() == 2)
+		{
+			proof_assertions.put_member("tail_write", true);
+		}
+		else
+		{
+			proof_assertions.put_member("tail_write", false);
+			system_monitoring_interface::global_mon->log_warning("tail_write failed", __FILE__, __LINE__);
+		}
+
+		// test spanning read
+		// expect this should take us back down to one buffer,
+		// with the read being correct.
+
+		memset(check_buffer, 0, sizeof(check_buffer));
+		fb.read(0, check_buffer, pattern1_length * 3);
+
+		const char* test_pattern = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123YYYY89ABCDEFGHIJKLMNOPQRSTUVWXYZ0123YYYY89ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+		if (strcmp(test_pattern, check_buffer) == 0 and fb.buffer_count() == 1)
+		{
+			proof_assertions.put_member("read_span", true);
+		}
+		else
+		{
+			proof_assertions.put_member("read_span", false);
+			system_monitoring_interface::global_mon->log_warning("test_span failed", __FILE__, __LINE__);
+		}
+
+		fb.commit();
+		fb.clear();
+
+		// test fragmented writes, with a spanning read.
+
+		for (int i = 0; i < pattern1_length * 3; i += pattern1_length)
+		{
+			char write_it[10];
+			strcpy_s(write_it, "!");
+			fb.write(i + 10, (void*)write_it, 1);
+			memset(check_buffer, 0, 10);
+			fb.read(i + 10, check_buffer, 1);
+			check_buffer[7] = 0;
+			if (strcmp(check_buffer, "!") != 0) {
+				proof_assertions.put_member("read_frags", false);
+				system_monitoring_interface::global_mon->log_warning("read_frags failed", __FILE__, __LINE__);
+				break;
+			}
+		}
+
+		// and read back in.
+		memset(check_buffer, 0, sizeof(check_buffer));
+		fb.read(0, check_buffer, pattern1_length * 3);
+
+		const char* test_pattern2 = "0123456789!BCDEFGHIJKLMNOPQRSTUVWXYZ0123YYYY89!BCDEFGHIJKLMNOPQRSTUVWXYZ0123YYYY89!BCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+		if (strcmp(test_pattern2, check_buffer) == 0 and fb.buffer_count() == 1)
+		{
+			proof_assertions.put_member("read_frags", true);
+		}
+		else
+		{
+			proof_assertions.put_member("read_frags", false);
+			system_monitoring_interface::global_mon->log_warning("read_frags failed", __FILE__, __LINE__);
+		}
+
+		proof_assertions.prove_member("is_true");
+		_proof.put_member("file_block", proof_assertions);
+
+		system_monitoring_interface::global_mon->log_function_stop("test file_block", "stop", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+	}
 
 	void test_object(json& _proof, std::shared_ptr<application> _app)
 	{
@@ -2223,7 +2289,7 @@ namespace corona
     "read" : [ "file.read" ],
 	"write" : [ "file.write" ],
 	"append" : [ "file.append" ],
-	"grow" : [ "object.parse", "file.write", "file.apend" ]
+	"grow" : [ "object.parse", "file.write", "file.append" ]
 }
 )");
 		proof_assertion.put_member("dependencies", dependencies);
@@ -2487,6 +2553,7 @@ namespace corona
 		using return_type = bool;
 
 		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "corona_table.ctb");
+		file_block fp(fb);
 
 		json_parser jp;
 		json proof_assertion = jp.create_object();
@@ -2523,7 +2590,7 @@ namespace corona
 		test_write.put_member("Name", "Joe");
 		json test_key = test_write.extract({ "ObjectId" });
 
-		json_table test_table(f, {"ObjectId"});
+		json_table test_table(&fb, {"ObjectId"});
 
 		relative_ptr_type table_loc = test_table.create();
 

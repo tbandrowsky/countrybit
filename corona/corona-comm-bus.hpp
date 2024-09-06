@@ -203,6 +203,7 @@ namespace corona
 			log_job_start("verification", "verification start", t, __FILE__, __LINE__);
 
 			test_object(system_proof, app);
+			test_file_block(system_proof, app);
 			test_file(system_proof, app);
 			test_data_block(system_proof, app);
 			test_json_node(system_proof, app);
