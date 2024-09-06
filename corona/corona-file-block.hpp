@@ -266,6 +266,8 @@ namespace corona
 
 	public:
 
+		const int block_size = 65536;
+
 		file_block(std::shared_ptr<file> _fp)
 		{
 			fp = _fp;
@@ -305,7 +307,14 @@ namespace corona
 			if (_buffer_length < 0)
 				throw std::logic_error("read length < 0");
 
-			auto fb = feast(_location, _buffer_length, feast_types::feast_read);
+			int64_t block_start = _location / block_size * block_size;
+			int64_t block_end = block_start;
+			int64_t tblock_end = _location + _buffer_length;
+			while (block_end < tblock_end)
+				block_end += block_size;
+			int64_t final_length = block_end - block_start;
+
+			auto fb = feast(block_start, final_length, feast_types::feast_read);
 
 			unsigned char* src = (unsigned char*)fb->buff.get_ptr() + _location - fb->start;
 			unsigned char* dest = (unsigned char*)_buffer;
@@ -384,6 +393,7 @@ namespace corona
 		{
 			if (append_buffer) {
 				fp->write(append_buffer->start, append_buffer->buff.get_ptr(), append_buffer->top - append_buffer->start);
+				append_buffer = nullptr;
 			}
 			for (auto& buff : buffers) {
 				if (buff->is_dirty) {

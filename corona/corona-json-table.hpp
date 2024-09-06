@@ -380,11 +380,6 @@ namespace corona
 			int64_t child_base = offsetof(tree_block_header, children);
 			int64_t offset = child_base + _index * sizeof(int64_t);
 
-			if (_index == 182)
-			{
-				DebugBreak();
-			}
-
 			file_command_result data_result = _file->write(header.data_location + offset, &data.children[_index], sizeof(data.children[0]));
 
 			if (data_result.success)

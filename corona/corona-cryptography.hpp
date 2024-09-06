@@ -247,11 +247,13 @@ namespace corona
 			if (key)
 			{
 				BCryptDestroyKey(key);
+				key = nullptr;
 			}
 
 			if (algorithm)
 			{
 				BCryptCloseAlgorithmProvider(algorithm, 0);
+				algorithm = nullptr;
 			}
 
 			return cipher_text;
