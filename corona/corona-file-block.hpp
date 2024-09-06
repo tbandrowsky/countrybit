@@ -6,6 +6,12 @@
 namespace corona
 {
 
+	enum feast_types {
+		feast_read = 1,
+		feast_write = 2,
+		feast_add = 3
+	};
+
 	class file_buffer
 	{
 	public:
@@ -173,52 +179,100 @@ namespace corona
 			return can_use;
 		}
 
-		void eat(file_buffer* _fb)
-		{
-			;
-		}
-
 	};
 
 	class file_block
 	{
-		std::vector<file_buffer> buffers;
+		std::vector<std::shared_ptr<file_buffer>> buffers;
 		std::shared_ptr<file> fp;
 
-		void merge_buffers()
+		struct feast_result
 		{
-			std::sort(buffers.begin(), buffers.end(), [](file_buffer& fb1, file_buffer& fb2) {
-				return fb1.start < fb2.start;
-				});
 
-			bool must_merge = false;
-			int64_t last_stop = 0;
-			for (auto fb : buffers) {
-				if (fb.start < last_stop) {
-					must_merge = true;
-					break;
-				}
-			}
 
-			if (must_merge) 
+		};
+
+		std::shared_ptr<file_buffer> feast(int64_t _start, int64_t _length, feast_types _feast)
+		{
+			int64_t _stop = _start + _length;
+
+			int64_t new_start = _start,
+					new_stop = _stop;
+
+			std::vector<std::shared_ptr<file_buffer>> eaten_buffers;
+			std::vector<std::shared_ptr<file_buffer>> new_buffers;
+
+			for (auto fb : buffers) 
 			{
-				std::vector<file_buffer> new_buffers;
-				file_buffer buffer;
-
-				auto bi = buffers.begin();
-				auto b0 = bi;
-				bi++;
-				while (bi != std::end(buffers))
+				if ((fb->start <= _start and fb->stop >= _start) or
+					(fb->start <= _stop and fb->stop >= _stop))
 				{
-					auto& bfi = *bi;
-					auto& bf0 = *b0;
-
-					if (bfi.start < bf0.stop) {
-						
+					if (fb->start < new_start) 
+					{
+						new_start = fb->start;
 					}
+					if (fb->stop > new_stop)
+					{
+						new_stop = fb->stop;
+					}
+					eaten_buffers.push_back(fb);
+				}
+				else 
+				{
+					new_buffers.push_back(fb);
+				}
+			}
+
+			std::shared_ptr<file_buffer> new_buffer;
+
+			if (_feast == feast_types::feast_add) 
+			{
+				new_buffer = std::make_shared<file_buffer>(new_start, new_stop, true);
+			}
+			else 
+			{
+				new_buffer = std::make_shared<file_buffer>(new_start, new_stop, false);
+			}
+
+			int64_t track_start = new_start;
+
+			if (_feast == feast_types::feast_read)
+			{
+				// read and fill the gaps!
+				for (auto fb : eaten_buffers)
+				{
+					if (fb->start > track_start) {
+						int64_t read_start = track_start;
+						int64_t read_length = fb->start - track_start;
+						unsigned char* dest = new_buffer->buff.get_uptr() + read_start - new_buffer->start;
+						fp->read(read_start, dest, read_length);
+					}
+					track_start = fb->stop;
 				}
 
+				if (track_start < new_stop)
+				{
+					int64_t read_start = track_start;
+					int64_t read_length = new_stop - track_start;
+					unsigned char* dest = new_buffer->buff.get_uptr() + read_start - new_buffer->start;
+					fp->read(read_start, dest, read_length);
+				}
 			}
+
+			for (auto fb : eaten_buffers)
+			{
+				if (fb->is_dirty)
+					new_buffer->is_dirty = true;
+				unsigned char *dest = new_buffer->buff.get_uptr() + fb->start - new_buffer->start;
+				unsigned char *src = fb->buff.get_uptr();
+				int64_t fb_size = fb->stop - fb->start;
+				std::copy(src, src + fb->stop - fb->start, dest);
+			}
+
+			buffers = new_buffers;
+			buffers.push_back(new_buffer);
+
+			return new_buffer;
 		}
 
 	public:
@@ -231,113 +285,48 @@ namespace corona
 		file_block(const file_block& _src) = delete;
 		file_block& operator = (const file_block& _src) = delete;
 
-		file_command_result write(int64_t location, void* _buffer, int _buffer_length)
+		file_command_result write(int64_t _location, void* _buffer, int _buffer_length)
 		{
 			file_command_result result;
 
 			if (_buffer_length < 0)
 				throw std::logic_error("write length < 0");
 
-			auto found = std::find_if(buffers.begin(), buffers.end(), [this, location, _buffer_length](file_buffer& fb) {
-				return fb.use(nullptr, location, _buffer_length);
-				});
+			auto fb = feast(_location, _buffer_length, feast_types::feast_write);
 
-			if (found != std::end(buffers)) 
-			{
-				file_buffer& fb = *found;
+			fb->is_dirty = true;
 
-				fb.is_dirty = true;
+			unsigned char* src = (unsigned char*)_buffer;
+			unsigned char* dest = (unsigned char*)fb->buff.get_ptr() + _location - fb->start;
+			std::copy(src, src + _buffer_length, dest);
 
-				unsigned char* src = (unsigned char*)_buffer;
-				unsigned char* dest = (unsigned char*)fb.buff.get_ptr() + location - fb.start;
-				std::copy(src, src + _buffer_length, dest);
-
-				result.buffer = (const char *)_buffer;
-				result.bytes_transferred = _buffer_length;
-				result.location = location;
-				result.success = true;
-				result.result = os_result(0);
-			}
-			else 
-			{
-				int64_t end_point;
-
-				end_point = location + _buffer_length;
-
-				file_buffer fb(location, end_point, false);
-
-				fb.is_dirty = true;
-
-				unsigned char* src = (unsigned char*)_buffer;
-				unsigned char* dest = (unsigned char*)fb.buff.get_ptr() + location - fb.start;
-				std::copy(src, src + _buffer_length, dest);
-
-				result.buffer = (const char*)_buffer;
-				result.bytes_transferred = _buffer_length;
-				result.location = location;
-				result.success = true;
-				result.result = os_result(0);
-
-				buffers.push_back(fb);
-			}
+			result.buffer = (const char *)_buffer;
+			result.bytes_transferred = _buffer_length;
+			result.location = _location;
+			result.success = true;
+			result.result = os_result(0);
 
 			return result;
 		}
 
-		file_command_result read(int64_t location, void* _buffer, int _buffer_length)
+		file_command_result read(int64_t _location, void* _buffer, int _buffer_length)
 		{
 			file_command_result result;
 
 			if (_buffer_length < 0)
 				throw std::logic_error("read length < 0");
 
-			auto found = std::find_if(buffers.begin(), buffers.end(), [this, location, _buffer_length](file_buffer& fb) {
-				return fb.use(fp, location, _buffer_length);
-				});
+			auto fb = feast(_location, _buffer_length, feast_types::feast_read);
 
-			if (found != std::end(buffers))
-			{
-				file_buffer& fb = *found;
+			unsigned char* src = (unsigned char*)fb->buff.get_ptr() + _location - fb->start;
+			unsigned char* dest = (unsigned char*)_buffer;
+			std::copy(src, src + _buffer_length, dest);
 
-				unsigned char* src = (unsigned char*)fb.buff.get_ptr() + location - fb.start;
-				unsigned char* dest = (unsigned char*)_buffer;
-				std::copy(src, src + _buffer_length, dest);
-
-				result.buffer = (const char*)_buffer;
-				result.bytes_transferred = _buffer_length;
-				result.location = location;
-				result.success = true;
-				result.result = os_result(0);
-			}
-			else
-			{
-
-				result = fp->read(location, _buffer, _buffer_length);
-
-				if (result.success) {
-
-					int64_t end_point;
-
-					end_point = location + _buffer_length;
-
-					file_buffer fb(location, end_point, false);
-
-					unsigned char* dest = (unsigned char*)fb.buff.get_ptr() + location - fb.start;
-					unsigned char* src = (unsigned char*)_buffer;
-					std::copy(src, src + _buffer_length, dest);
-
-					result.buffer = (const char*)_buffer;
-					result.bytes_transferred = _buffer_length;
-					result.location = location;
-					result.success = true;
-					result.result = os_result(0);
-
-					buffers.push_back(fb);
-				}
-				else {
-					system_monitoring_interface::global_mon->log_warning("Physical read failed", __FILE__, __LINE__);
-				}
-			}
+			result.buffer = (const char*)_buffer;
+			result.bytes_transferred = _buffer_length;
+			result.location = _location;
+			result.success = true;
+			result.result = os_result(0);
 
 			return result;
 		}
@@ -370,32 +359,8 @@ namespace corona
 
 			if (found != std::end(buffers))
 			{
-				file_buffer& fb = *found;
-
-				location = fb.add( _bytes_to_add );
-
-				if (location < 0) {
-					int64_t buffer_size = _bytes_to_add;
-					if (buffer_size < 65536)
-						buffer_size = 65536;
-
-					location = fp->add(buffer_size);
-
-					int64_t end_point;
-
-					end_point = location + buffer_size;
-
-					if (location == fb.stop) 
-					{
-						fb.grow(buffer_size);
-					}
-					else 
-					{
-						file_buffer fb(location, end_point, true);
-						location = fb.add(_bytes_to_add);
-						buffers.push_back(fb);
-					}
-				}
+				std::shared_ptr<file_buffer> fb = *found;
+				location = fb->add( _bytes_to_add );
 			}
 
 			if (location < 0)
@@ -405,13 +370,8 @@ namespace corona
 					buffer_size = 65536;
 
 				location = fp->add(buffer_size);
-				int64_t end_point;
 
-				end_point = location + buffer_size;
-
-				file_buffer fb(location, end_point, true);
-				location = fb.add(_bytes_to_add);
-				buffers.push_back(fb);
+				feast(location, buffer_size, feast_types::feast_add);
 			}
 
 			return location;
@@ -435,19 +395,12 @@ namespace corona
 			return fc;
 		}
 
-		void begin(int64_t location, int64_t _size)
-		{
-			file_buffer fb(location, location + _size, false);
-			fp->read(location, fb.buff.get_ptr(), _size);
-			buffers.push_back(fb);
-		}
-
 		void commit()
 		{
 			for (auto& buff : buffers) {
-				if (buff.is_dirty) {
-					buff.is_dirty = false;
-					fp->write(buff.start, buff.buff.get_ptr(), buff.stop - buff.start);
+				if (buff->is_dirty) {
+					buff->is_dirty = false;
+					fp->write(buff->start, buff->buff.get_ptr(), buff->stop - buff->start);
 				}
 			}
 		}
