@@ -2099,6 +2099,9 @@ private:
 			{
 				response = create_response(create_user_request, false, "User not created", data, method_timer.get_elapsed_seconds());
 			}
+
+			commit();
+
 			system_monitoring_interface::global_mon->log_function_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return response;
@@ -2159,6 +2162,8 @@ private:
 				response = create_response(_login_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("login_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			commit();
 
 			return response;
 		}
@@ -2343,6 +2348,8 @@ private:
 			date_time start_time = date_time::now();
 			timer tx;
 
+			json delete_filter = delete_request["Data"];
+
 			system_monitoring_interface::global_mon->log_function_start("delete_objects", "start", start_time, __FILE__, __LINE__);
 
 			timer method_timer;
@@ -2354,9 +2361,9 @@ private:
 				return result;
 			}
 
-			system_monitoring_interface::global_mon->log_function_stop("delete_objects", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			commit();
 
-			json delete_filter = delete_request["Data"];
+			system_monitoring_interface::global_mon->log_function_stop("delete_objects", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		}
 
@@ -2471,12 +2478,11 @@ private:
 								}
 								descendants.put_member(acn, acn);
 								ancestor_class.put_member("Descendants", descendants);
-								classes.put(ancestor_class);
+								classes->put(ancestor_class);
 							}
 						}
 					}
 					adjusted_class.put_member("ClassChanged", changed_class);
-					classes.commit();
 					result = create_response(check_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
 				}
 				else {
@@ -2487,6 +2493,7 @@ private:
 			{
 				result = checked;
 			}
+			commit();
 			system_monitoring_interface::global_mon->log_function_stop("put_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return result;
 		}
@@ -2598,6 +2605,8 @@ private:
 			}
 
 			response = create_response(query_class_request, true, "Query completed", object_list, method_timer.get_elapsed_seconds());
+			commit();
+
 			system_monitoring_interface::global_mon->log_function_stop("update", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
@@ -2725,6 +2734,8 @@ private:
 				response = create_response(create_object_request, false, "Couldn't find class", class_key, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
+			commit();
+
 			return response;
 			
 		}
@@ -2809,6 +2820,8 @@ private:
 				result = create_response(put_object_request, false, result["Message"], result["Warnings"], method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			commit();
 
 			return result;
 		}
@@ -2897,6 +2910,9 @@ private:
 				response = create_response(delete_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			commit();
+
 			return response;
 		}
 
