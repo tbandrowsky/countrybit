@@ -204,7 +204,9 @@ namespace corona
 
 			for (auto fb : buffers) 
 			{
-				if ((fb->start <= _start and fb->stop >= _start) or
+				if (fb->start <= _start and fb->stop >= _stop)
+					return fb;
+				else if ((fb->start <= _start and fb->stop >= _start) or
 					(fb->start <= _stop and fb->stop >= _stop))
 				{
 					if (fb->start < new_start) 
