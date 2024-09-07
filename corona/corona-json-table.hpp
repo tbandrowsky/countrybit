@@ -498,7 +498,7 @@ namespace corona
 
 			json_node header = get_header();
 
-			if (!_key.keys_compatible(key_fields)) {
+			if (_key.empty() or !_key.keys_compatible(key_fields)) {
 				return header.forward[0];
 			}
 
@@ -941,7 +941,12 @@ namespace corona
 			{
 				json_node node;
 				node = get_node(location);
-				int comparison = _key_fragment.compare(node.data);
+				int comparison;
+				if (_key_fragment.empty())
+					comparison = 0;
+				else 
+					comparison = _key_fragment.compare(node.data);
+
 				if (comparison == 0)
 				{
 					relative_ptr_type process_result = _process_clause(index, node);
