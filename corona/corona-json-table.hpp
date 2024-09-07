@@ -666,13 +666,6 @@ namespace corona
 			return nd;
 		}
 
-		json_node get_node(relative_ptr_type _node_location)
-		{
-			json_node node;
-			node.read(fb, _node_location);
-			return node;
-		}
-
 	public:
 
 		json_table(file_block *_fb, std::vector<std::string> _key_fields) 
@@ -941,10 +934,6 @@ namespace corona
 
 			result.is_all = true;
 
-			date_time start_time = date_time::now();
-			timer tx;
-			system_monitoring_interface::global_mon->log_table_start("table", "co_for_each", start_time, __FILE__, __LINE__);
-
 			relative_ptr_type location = find_first_gte(_key_fragment);
 			int64_t index = 0;
 
@@ -958,7 +947,11 @@ namespace corona
 					relative_ptr_type process_result = _process_clause(index, node);
 					if (process_result > 0)
 					{
+						result.is_any = true;
 						index++;
+					}
+					else {
+						result.is_all = false;
 					}
 				}
 				location = node.forward[0];
