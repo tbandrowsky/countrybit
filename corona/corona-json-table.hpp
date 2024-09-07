@@ -1748,7 +1748,7 @@ namespace corona
 		memset(check_buffer, 0, sizeof(check_buffer));
 		fb.read(pattern1_length * 2 + 4, check_buffer, pattern3_length);
 
-		if (strcmp(pattern3, check_buffer) == 0 and fb.buffer_count() == 2)
+		if (strcmp(pattern3, check_buffer) == 0 and fb.buffer_count() == 1)
 		{
 			proof_assertions.put_member("tail_write", true);
 		}
