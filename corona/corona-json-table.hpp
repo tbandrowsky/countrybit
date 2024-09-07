@@ -256,18 +256,24 @@ namespace corona
 	{
 	public:
 
-		json				data;
+		json							data;
+		std::vector<relative_ptr_type>	forward;
 
 		json_node()
 		{
+		}
+
+		bool is_empty()
+		{
+			return data.empty();
 		}
 
 		void clear()
 		{
 			json_parser jp;
 			data = jp.create_object();
-			std::string x = data.to_json_typed();
-			bytes = buffer(x.c_str());
+			forward.clear();
+			on_write();
 		}
 
 		virtual void on_read()
@@ -275,17 +281,34 @@ namespace corona
 			const char *contents = bytes.get_ptr();
 			if (contents) {
 				json_parser jp;
-				if (contents[0] == '[') {
-					data = jp.parse_array(contents);
+				json container;
+				container = jp.parse_object(contents);
+				data = container["data"];
+				json forwards;
+				forwards = container["forward"];
+				forward.clear();
+				if (forwards.array()) {
+					for (auto fwd : forwards) {
+						relative_ptr_type ptr = fwd.get_int64s();
+						forward.push_back(ptr);
+					}
 				}
-				else 
-					data = jp.parse_object(contents);
 			}
 		}
 
 		virtual void on_write()
 		{
-			std::string x = data.to_json_typed();
+			json_parser jp;
+			json container;
+			container = jp.create_object();
+			container.put_member("data", data);
+			json forwards;
+			forwards = jp.create_array();
+			for (auto ptr : forward) {
+				forwards.push_back(ptr);
+			}
+			container.put_member("forward", forwards);
+			std::string x = container.to_json_typed();
 			bytes = buffer(x.c_str());
 		}
 
@@ -343,56 +366,6 @@ namespace corona
 
 	};
 
-	class json_tree_node : public poco_node<tree_block_header>
-	{
-	public:
-
-		json_tree_node() 
-		{
-			header = {};
-			data = {};
-		}
-
-		json_tree_node(const json_tree_node& _src)
-		{
-			header = _src.header;
-			data = _src.data;
-		}
-
-		json_tree_node &operator = (const json_tree_node& _src)
-		{
-			header = _src.header;
-			data = _src.data;
-			return *this;
-		}
-
-		relative_ptr_type write_child(file_block* _file, int _index)
-		{
-			if (header.block_location < 0)
-			{
-				throw std::invalid_argument("cannot append a partial write of a block");
-			}
-
-			date_time start_time = date_time::now();
-			timer tx;
-			system_monitoring_interface::global_mon->log_block_start("block", "write child", start_time, __FILE__, __LINE__);
-
-			int64_t child_base = offsetof(tree_block_header, children);
-			int64_t offset = child_base + _index * sizeof(int64_t);
-
-			file_command_result data_result = _file->write(header.data_location + offset, &data.children[_index], sizeof(data.children[0]));
-
-			if (data_result.success)
-			{
-				system_monitoring_interface::global_mon->log_block_stop("block", "write child", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return data_result.location;
-			}
-			system_monitoring_interface::global_mon->log_block_stop("block", "write child", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			return -1i64;
-		}
-
-	};
-
 	class json_table 
 	{
 	private:
@@ -403,6 +376,7 @@ namespace corona
 		using KEY = json;
 		using VALUE = json_node;
 		using UPDATE_VALUE = json;
+		const int SORT_ORDER = 1;
 
 		file_block* fb;
 		
@@ -414,585 +388,282 @@ namespace corona
 			json_parser jp;
 			table_header.append(fb);
 
-			json_tree_node jtn;
-
-			jtn.data = {};
+			json_node header = create_node(JsonTableMaxLevel, header_key);
+			table_header.data.data_root_location = header.header.block_location;
+			table_header.data.count = 0;
+			table_header.data.level = JsonTableMaxLevel;
 			table_header.write(fb);
-
+			header.write(fb);
 			return table_header.header.block_location;
 		}
 
-		json find_nodes(json _array)
+		json_node get_header()
 		{
-			json_parser jp;
+			json_node in;
 
-			json_node jn;
-			timer tx;
+			int64_t result = in.read(fb, table_header.data.data_root_location);
 
-			if (key_fields.size() > 1) {
-				comm_bus_interface::global_bus->log_warning("find_nodes doesn't work with multiple keys", __FILE__, __LINE__);
-			}
-
-			json results = jp.create_array();
-
-			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			json grouped_by_hash = _array.group([this](json& _item)->std::string {
-				json node_key = _item.extract(key_fields);
-				hashbytes hash_bytes;
-				uint64_t hash_code = get_hash_bytes(node_key, hash_bytes);
-				return std::to_string(hash_code);
-				});
-
-			json_tree_node jtn;
-
-			// if there is nothing in our tree, create a header
-
-			auto objects_by_hash = grouped_by_hash.get_members();
-
-			for (auto obj : objects_by_hash) {
-
-				hashbytes hash_bytes;
-				uint64_t hash_code = std::strtoull(obj.first.c_str(), nullptr, 10);
-				get_hash_bytes(hash_code, hash_bytes);
-
-				json_tree_node jtn;
-
-				int64_t location = table_header.data.data_root_location;
-
-				list_block_header* list_start = nullptr;
-
-				int level_index = 0;
-
-				for (level_index = 0; level_index < 8; level_index++)
-				{
-					auto status = jtn.read(fb, location);
-					byte local_hash_code = hash_bytes[level_index];
-					location = jtn.data.children[local_hash_code];
-				}
-				auto status = jtn.read(fb, location);
-				list_start = &jtn.data.index_list;
-
-
-				log_put("found hash", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				std::string key_name = key_fields[0];
-
-				json grouped = obj.second.group([key_name](json& _item) -> std::string {
-					return _item[key_name];
-					});
-
-				if (list_start->first_block)
-				{
-					system_monitoring_interface::global_mon->log_information("block scan:" + key_name + ":" + std::to_string(list_start->first_block));
-					auto block_location = list_start->first_block;
-
-					// see if our block is in here, if so, update it.
-
-					while (block_location)
-					{
-						jn.read(fb, block_location);
-						std::string key_value = jn.data[key_name];
-						system_monitoring_interface::global_mon->log_information("check node:" + key_value);
-						if (grouped.has_member(key_value))
-						{
-							results.push_back(jn.data);
-						}
-						block_location = jn.header.next_block;
-					}
-				};
-			}
-			return results;
-		}
-
-		relative_ptr_type find_node(json _key)
-		{
-			json_node jn;
-			timer tx;
-
-			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			hashbytes hash_bytes;
-
-			uint64_t hash_code = get_hash_bytes(_key, hash_bytes);
-
-			json_tree_node jtn;
-			
-			int64_t location = table_header.data.data_root_location;
-			if (location <= 0)
-				return null_row;
-
-			list_block_header* list_start = nullptr;
-			
-			int level_index = 0;
-
-			for (level_index = 0; level_index < 8; level_index++)
+			if (result < 0)
 			{
-				auto status = jtn.read(fb, location);
-				byte local_hash_code = hash_bytes[level_index];
-				location = jtn.data.children[local_hash_code];
-				if (location == 0)
-					return null_row;
+				throw std::logic_error("Couldn't read table header.");
 			}
-			auto status = jtn.read(fb, location);
-			list_start = &jtn.data.index_list;
 
-			log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			if (list_start->first_block)
-			{
-				auto block_location = list_start->first_block;
-
-				// see if our block is in here, if so, update it.
-
-				while (block_location)
-				{
-					jn.read(fb, block_location);
-					int c = _key.compare(jn.data);
-					if (c == 0) {
-						return block_location;
-					}
-					else if (c > 0)
-					{
-						block_location = jn.header.next_block;
-					}
-					else {
-						return null_row;
-					}
-				}
-			};
-
-			return -1i64;
+			return in;
 		}
 
-
-		void log_put(std::string _place, json_tree_node& _jtn, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
+		json_node create_node(int _max_level, json _data)
 		{
-			std::string msg = std::format("{0:10} {1:<10}",
-				_place,
-				_jtn.header.block_location);
-
-			system_monitoring_interface::global_mon->log_put(msg, _elapsed_seconds, _file, _line);
-
-		}
-
-		using hashbytes = std::vector<byte>;
-
-		uint64_t get_hash_bytes(uint64_t hash_code, hashbytes& _bytes)
-		{
-			int64_t thash_code = hash_code;
-
-			_bytes.resize(8);
-
-			for (int i = 7; i >= 0; i--) {
-				_bytes[i] = thash_code % 256;
-				thash_code >>= 8;
-			}
-
-			return hash_code;
-		}
-
-		uint64_t get_hash_bytes(json& _node_key, hashbytes& _bytes)
-		{
-			uint64_t hash_code = _node_key.get_weak_ordered_hash(key_fields);
-			uint64_t thash_code = hash_code;
-
-			_bytes.resize(8);
-
-			for (int i = 7; i >= 0; i--) {
-				_bytes[i] = thash_code % 256;
-				thash_code >>= 8;
-			}
-
-			return hash_code;
-		}
-
-		void put_node_list(std::string _hash_code, json _object_array)
-		{
-			json_tree_node jtn;
-			timer tx;
-
-			hashbytes hash_bytes;
-			uint64_t hash_code = std::strtoull(_hash_code.c_str(), nullptr, 10);
-			get_hash_bytes(hash_code, hash_bytes);
-
-			list_block_header* list_start = nullptr;
-
-			int level_index = 0;
-			int64_t location;
-
-			log_put("start put", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			if (table_header.data.data_root_location == 0) {
-				json_tree_node jtn;
-				jtn.data = {};
-				jtn.header.next_block = 0;
-				table_header.data.data_root_location = jtn.append(fb);
-				table_header.write(fb);
-				log_put("new root", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			};
-
-			location = table_header.data.data_root_location;
-
-			std::string path = "";
-
-			for (level_index = 0; level_index < 8; level_index++)
-			{
-				auto status = jtn.read(fb, location);
-				int local_hash_code = hash_bytes[level_index];
-				path = path + std::to_string(local_hash_code) + ".";
-				location = jtn.data.children[local_hash_code];
-				if (location == 0) {
-					json_tree_node ntn;
-					ntn.data = {};
-					location = ntn.append(fb);
-					if (location > 100000000000i64)
-					{
-						DebugBreak();
-					}
-					jtn.data.children[local_hash_code] = location;
-					jtn.write_child(fb, local_hash_code);
-				}
-			}
-			if (location > 100000000000i64)
-			{
-				DebugBreak();
-			}
-
-			auto status = jtn.read(fb, location);
-			list_start = &jtn.data.index_list;
-
-			path = path + "->" + std::to_string(jtn.header.block_location);
-			system_monitoring_interface::global_mon->log_put(path, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			for (json _data : _object_array)
-			{
-				// walk the tree, to figure out which list to put it in
-				json node_key = _data.extract(key_fields);
-
-				// now that we have our list, find out where in the list it goes
-				json_node new_node;
-				int64_t previous_block_location = 0;
-
-				if (list_start->first_block)
-				{
-
-					system_monitoring_interface::global_mon->log_put("block exists", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-					auto block_location = list_start->first_block;
-					json_node current_node, previous_node;
-
-					// first, check to see if this is larger than anything at the end of the block, then we'll just append it...
-					int comparison = 0;
-
-					current_node.read(fb, list_start->last_block);
-					comparison = node_key.compare(current_node.data);
-					if (comparison > 0) {
-						system_monitoring_interface::global_mon->log_put("append new node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						new_node.data = _data;
-						new_node.header.next_block = 0;
-						new_node.append(fb);
-						current_node.header.next_block = new_node.header.block_location;
-						current_node.write(fb);
-						list_start->last_block = new_node.header.block_location;
-						jtn.write(fb);
-						InterlockedIncrement64(&table_header.data.count);
-						continue;
-					}
-
-					// see if our block is in here, if so, update it.
-
-					while (block_location)
-					{
-						current_node.read(fb, block_location);
-
-						comparison = node_key.compare(current_node.data);
-
-						if (comparison > 0) {
-							previous_block_location = block_location;
-							previous_node = current_node;
-							block_location = current_node.header.next_block;
-						}
-						else {
-							break;
-						}
-					}
-
-					if (block_location > 0 and comparison < 0) {
-						system_monitoring_interface::global_mon->log_put("insert into list", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-						new_node.data = _data;
-						if (previous_block_location > 0) {
-							new_node.header.next_block = current_node.header.block_location;
-							new_node.append(fb);
-							previous_node.header.next_block = new_node.header.block_location;
-							previous_node.write(fb);
-						}
-						else {
-							new_node.header.next_block = list_start->first_block;
-							new_node.data = _data;
-							new_node.append(fb);
-							list_start->first_block = new_node.header.block_location;
-							jtn.write(fb);
-						}
-						// this is an insert, so we do write the count
-						InterlockedIncrement64(&table_header.data.count);
-						continue;
-					}
-					else if (block_location > 0 and comparison == 0) {
-						system_monitoring_interface::global_mon->log_put("update existing", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						current_node.data = _data;
-						current_node.write(fb);
-						system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						// this is an update, so we do not write the count
-						continue;
-					}
-					else
-					{
-						system_monitoring_interface::global_mon->log_put("add to end", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						new_node.data = _data;
-						new_node.header.next_block = 0;
-						new_node.append(fb);
-						current_node.header.next_block = new_node.header.block_location;
-						current_node.write(fb);
-						list_start->last_block = new_node.header.block_location;
-						jtn.write(fb);
-						InterlockedIncrement64(&table_header.data.count);
-						continue;
-					}
-
-					system_monitoring_interface::global_mon->log_warning("Should not be here", __FILE__, __LINE__);
-				}
-				else
-				{
-					system_monitoring_interface::global_mon->log_put("new block", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					new_node.data = _data;
-					new_node.header.next_block = 0;
-					new_node.append(fb);
-					list_start->first_block = list_start->last_block = new_node.header.block_location;
-					jtn.write(fb);
-					InterlockedIncrement64(&table_header.data.count);
-				}
-			}
-		}
-
-		class put_node_run {
-		public:
-			std::string hash_code;
-			json		nodes_array;
-		};
-
-		void put_nodes(json _array)
-		{
-			date_time start_time = date_time::now();
-			timer tx;
-			system_monitoring_interface::global_mon->log_json_start("json_table", "put_node", start_time, __FILE__, __LINE__);
-
-			json grouped_by_hash = _array.group([this](json& _item)->std::string {
-				json node_key = _item.extract(key_fields);
-				hashbytes hash_bytes;
-				uint64_t hash_code = get_hash_bytes(node_key, hash_bytes);
-				return std::to_string(hash_code);
-			});
-
-			// if there is nothing in our tree, create a header
-
-			auto objects_by_hash = grouped_by_hash.get_members();
-
-			std::vector<put_node_run> run_list;
-
-			for (auto obj : objects_by_hash) {
-				put_node_run rn;
-				rn.hash_code = obj.first;
-				rn.nodes_array = obj.second;
-				run_list.push_back(rn);
-			}
-
-			system_monitoring_interface::global_mon->log_information(std::format("{0} sets", run_list.size()));
-
-			for (auto prn : run_list) {
-				put_node_list(prn.hash_code, prn.nodes_array);
-			}
-
-			table_header.write_count(fb);
-
-			system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			return;
-		}
-
-		json_node put_node(json _data)
-		{
-
-			date_time start_time = date_time::now();
-			timer tx;
-			system_monitoring_interface::global_mon->log_json_start("json_table", "put_node", start_time, __FILE__, __LINE__);
-
-			json node_key = _data.extract(key_fields);
-			hashbytes hash_bytes;
-
-			uint64_t hash_code = get_hash_bytes(node_key, hash_bytes);
-
-			json_tree_node jtn;
-
-			// if there is nothing in our tree, create a header
-
-			list_block_header* list_start = nullptr;
-
-			int level_index = 0;
-			int64_t location;
-
-			log_put("start put", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			if (table_header.data.data_root_location == 0) {
-				json_tree_node jtn;
-				jtn.data = {};
-				jtn.header.next_block = 0;
-				table_header.data.data_root_location = jtn.append(fb);
-				table_header.write(fb);
-				log_put("new root", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			};
-
-			location = table_header.data.data_root_location;
-
-			std::string path = "";
-
-			for (level_index = 0; level_index < 8; level_index++)
-			{
-				path = path + std::to_string(location) + ".";
-				auto status = jtn.read(fb, location);
-				byte local_hash_code = hash_bytes[level_index];
-				location = jtn.data.children[local_hash_code];
-				if (location == 0) {
-					json_tree_node ntn;
-					ntn.data = {};
-					location = ntn.append(fb);
-					jtn.data.children[local_hash_code] = location;
-					jtn.write_child(fb, local_hash_code);
-				}
-			}
-
-			auto status = jtn.read(fb, location);
-			list_start = &jtn.data.index_list;
-
-			path = path + "->" + std::to_string(jtn.header.data_location);
-			system_monitoring_interface::global_mon->log_put(path, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			// walk the tree, to figure out which list to put it in
-
-			// now that we have our list, find out where in the list it goes
 			json_node new_node;
-			int64_t previous_block_location = 0;
 
-			if (list_start->first_block) 
+			int level_bounds = _max_level + 1;
+
+			for (int i = 0; i < level_bounds; i++)
 			{
-				system_monitoring_interface::global_mon->log_put("block exists", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				auto block_location = list_start->first_block;
-				json_node current_node, previous_node;
-
-				// first, check to see if this is larger than anything at the end of the block, then we'll just append it...
-				int comparison = 0;
-
-				if (list_start->last_block) {
-					current_node.read(fb, list_start->last_block);
-					comparison = node_key.compare(current_node.data);
-					if (comparison > 0) {
-						system_monitoring_interface::global_mon->log_put("append new node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-						new_node.data = _data;
-						new_node.header.next_block = 0;
-						new_node.append(fb);
-						current_node.header.next_block = new_node.header.block_location;
-						current_node.write(fb);
-						list_start->last_block = new_node.header.block_location;
-						jtn.write(fb);
-						table_header.data.count++;
-						table_header.write_count(fb);
-						return new_node;
-					}
-				}
-
-				// see if our block is in here, if so, update it.
-
-				while (block_location)
-				{
-					current_node.read(fb, block_location);
-
-					comparison = node_key.compare(current_node.data);
-
-					if (comparison > 0) {
-						previous_block_location = block_location;
-						previous_node = current_node;
-						block_location = current_node.header.next_block;
-					}
-					else {
-						break;
-					}
-				}
-
-				if (block_location > 0 and comparison < 0) {
-					system_monitoring_interface::global_mon->log_put("insert into list", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-					new_node.data = _data;
-					if (previous_block_location > 0) {
-						new_node.header.next_block = current_node.header.block_location;
-						new_node.append(fb);
-						previous_node.header.next_block = new_node.header.block_location;
-						previous_node.write(fb);
-					}
-					else {
-						new_node.header.next_block = list_start->first_block;
-						new_node.data = _data;
-						new_node.append(fb);
-						list_start->first_block = new_node.header.block_location;
-						jtn.write(fb);
-					}
-					// this is an insert, so we do write the count
-					table_header.data.count++;
-					table_header.write_count(fb);
-					return new_node;
-				}
-				else if (block_location > 0 and comparison == 0) {
-					system_monitoring_interface::global_mon->log_put("update existing", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					current_node.data = _data;
-					current_node.write(fb);
-					system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					// this is an update, so we do not write the count
-					return current_node;
-				}
-				else 
-				{
-					system_monitoring_interface::global_mon->log_put("add to end", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					new_node.data = _data;
-					new_node.header.next_block = 0;
-					new_node.append(fb);
-					current_node.header.next_block = new_node.header.block_location;
-					current_node.write(fb);
-					list_start->last_block= new_node.header.block_location;
-					jtn.write(fb);
-					table_header.data.count++;
-					table_header.write_count(fb);
-					return new_node;
-				}
-
-				system_monitoring_interface::global_mon->log_warning("Should not be here", __FILE__, __LINE__);
-			}
-			else 
-			{
-				system_monitoring_interface::global_mon->log_put("new block", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				new_node.data = _data;
-				new_node.header.next_block = 0;
-				new_node.append(fb);
-				list_start->first_block = list_start->last_block = new_node.header.block_location;
-				jtn.write(fb);
-
-				table_header.data.count++;
-				table_header.write_count(fb);
+				relative_ptr_type rit = null_row;
+				new_node.forward.push_back(rit);
 			}
 
-			system_monitoring_interface::global_mon->log_json_stop("json_table", "put_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			new_node.data = _data;
+			new_node.append(fb);
 
 			return new_node;
+		}
+
+		json_node get_node(relative_ptr_type _node_location)
+		{
+			json_node node;
+
+			node.read(fb, _node_location);
+			return node;
+		}
+
+		// compare a node to a key for equality
+		// return -1 if the node < key
+		// return 1 if the node > key
+		// return 0 if the node == key
+
+		relative_ptr_type compare_node(json_node _nd, KEY _id_key)
+		{
+			KEY ndkey = get_key(_nd.data);
+			int k = -_id_key.compare(ndkey); // the - is here because the comparison is actually backwards. 
+			if (k < 0)
+				return -SORT_ORDER;
+			else if (k > 0)
+				return SORT_ORDER;
+			else
+				return 0;
+		}
+
+		relative_ptr_type find_node(relative_ptr_type* update, KEY _key)
+		{
+			relative_ptr_type found = null_row, p, q;
+			json_node hdr = get_header();
+
+			for (int k = table_header.data.level; k >= 0; k--)
+			{
+				p = table_header.data.data_root_location;
+				if (p <= 0) {
+					throw std::exception("table header node location not set");
+				}
+				json_node jn = hdr;
+				q = jn.forward[k];
+				int comp = 1;
+				json_node qnd;
+				if (q != null_row) {
+					qnd = get_node(q);
+					comp = compare_node(qnd, _key);
+				}
+				while (comp < 0)
+				{
+					p = q;
+					jn = qnd;
+					q = jn.forward[k];
+					comp = 1;
+					if (q != null_row) {
+						qnd = get_node(q);
+						comp = compare_node(qnd, _key);
+					}
+				}
+				if (comp == 0)
+					found = q;
+				update[k] = p;
+			}
+
+			return found;
+		}
+
+		relative_ptr_type find_first_gte(KEY _key)
+		{
+			relative_ptr_type found = null_row, p, q, last_link;
+
+			json_node header = get_header();
+
+			if (!_key.keys_compatible(key_fields)) {
+				return header.forward[0];
+			}
+
+			for (int k = table_header.data.level; k >= 0; k--)
+			{
+				p = header.forward[k];
+				json_node jn = get_node(p);
+				q = jn.forward[k];
+				last_link = q;
+				json_node qnd;
+				int comp = 1;
+				if (q != null_row) {
+					qnd = get_node(q);
+					comp = compare_node(qnd, _key);
+				}
+				while (comp < 0)
+				{
+					p = q;
+					last_link = q;
+					json_node jn = qnd;
+					q = jn.forward[k];
+					comp = 1;
+					if (q != null_row) {
+						qnd = get_node(q);
+						comp = compare_node(qnd, _key);
+					}
+				}
+				if (comp == 0)
+					found = q;
+				else if (comp < 0)
+					found = last_link;
+			}
+
+			return found;
+		}
+
+		relative_ptr_type update_node(KEY _key, std::function<void(UPDATE_VALUE& existing_value)> predicate)
+		{
+			int k;
+
+			relative_ptr_type update[JsonTableMaxNumberOfLevels];
+
+			json_node header = get_header();
+
+			relative_ptr_type location = header.forward[0];
+
+			relative_ptr_type q = find_node(update, _key);
+			json_node qnd;
+
+			if (q != null_row)
+			{
+				qnd = get_node(q);
+				predicate(qnd.data);
+				qnd.write(fb);
+				return qnd.header.block_location;
+			}
+
+			k = randomLevel();
+			if (k > table_header.data.level)
+			{
+				table_header.data.level++;
+				k = table_header.data.level;
+				update[k] = header.header.block_location;
+			}
+
+			UPDATE_VALUE initial_value;
+			try {
+				predicate(initial_value);
+			}
+			catch (std::exception exc)
+			{
+				std::cout << __FILE__ << " " << __LINE__ << ":Initialization of new object failed when inserting node into table." << std::endl;
+				return -1;
+			}
+
+			qnd = create_node(k, initial_value);
+			table_header.data.count;
+
+			do
+			{
+				json_node pnd = get_node(update[k]);
+				qnd.forward[k] = pnd.forward[k];
+				pnd.forward[k] = qnd.header.block_location;
+
+				qnd.write(fb);
+				pnd.write(fb);
+
+			} while (--k >= 0);
+
+			table_header.write(fb);
+
+			return qnd.header.block_location;
+		}
+
+		relative_ptr_type find_first_gte(relative_ptr_type* update, KEY _key)
+		{
+			relative_ptr_type found = null_row, p, q, last_link;
+
+			json_node header = get_header();
+
+			if (!_key.keys_compatible(key_fields)) {
+				return header.forward[0];
+			}
+
+			for (int k = table_header.data.level; k >= 0; k--)
+			{
+				p = header.forward[k];
+				json_node jn = get_node(p);
+				q = jn.forward[k];
+				last_link = q;
+				json_node qnd;
+				int comp = 1;
+				if (q != null_row) {
+					qnd = get_node(q);
+					comp = compare_node(qnd, _key);
+				}
+				while (comp < 0)
+				{
+					p = q;
+					last_link = q;
+					json_node jn = qnd;
+					q = jn.forward[k];
+					comp = 1;
+					if (q != null_row) {
+						qnd = get_node(q);
+						comp = compare_node(qnd, _key);
+					}
+				}
+				if (comp == 0)
+					found = q;
+				else if (comp < 0)
+					found = last_link;
+				update[k] = p;
+			}
+
+			return found;
+		}
+
+		relative_ptr_type find_node(const KEY& key)
+		{
+#ifdef	TIME_SKIP_LIST
+			benchmark::auto_timer_type methodtimer("skip_list_type::search");
+#endif
+			relative_ptr_type update[JsonTableMaxNumberOfLevels];
+			relative_ptr_type value = find_node(update, key);
+			return value;
+		}
+
+		json_node first_node()
+		{
+			json_node jn;
+			auto header = get_header();
+			if (header.forward[0] != null_row) {
+				jn = get_node(header.forward[0]);
+			}
+			return jn;
+		}
+
+		json_node next_node(json_node _node)
+		{
+			if (_node.is_empty())
+				return _node;
+
+			json_node nd = get_node(_node.forward[0]);
+			return nd;
 		}
 
 		json_node get_node(relative_ptr_type _node_location)
@@ -1001,88 +672,6 @@ namespace corona
 			node.read(fb, _node_location);
 			return node;
 		}
-
-		void erase_node(relative_ptr_type _node_location)
-		{
-			date_time start_time = date_time::now();
-			timer tx;
-			system_monitoring_interface::global_mon->log_json_start("json_table", "erase_node", start_time, __FILE__, __LINE__);
-
-			auto jn = get_node(_node_location);
-
-			json node_key = jn.data.extract(key_fields);
-
-			system_monitoring_interface::global_mon->log_put("find_node start", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			hashbytes hash_bytes;
-
-			get_hash_bytes(node_key, hash_bytes);
-
-			json_tree_node jtn;
-
-			int64_t location = table_header.data.data_root_location;
-			if (location <= 0)
-				return;
-
-			list_block_header* list_start = nullptr;
-
-			int level_index = 0;
-
-			for (level_index = 0; level_index < 8; level_index++)
-			{
-				auto status = jtn.read(fb, location);
-				byte local_hash_code = hash_bytes[level_index];
-				location = jtn.data.children[local_hash_code];
-				if (location == 0)
-					return;
-			}
-			auto status = jtn.read(fb, location);
-			list_start = &jtn.data.index_list;
-
-			log_put("found", jtn, tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			if (list_start->first_block)
-			{
-				int64_t previous_block_location = 0;
-				int64_t block_location = list_start->first_block;
-				json_node current_node;
-
-				// see if our block is in here, if so, update it.
-
-				while (block_location)
-				{
-					current_node.read(fb, block_location);
-
-					if (block_location == _node_location) {
-						if (previous_block_location) {
-							json_node previous_node;
-							previous_node.read(fb, previous_block_location);
-							previous_node.header.next_block = current_node.header.next_block;
-							previous_node.write(fb);
-						}
-						if (list_start->first_block == block_location)
-							list_start->first_block = current_node.header.next_block;
-						if (list_start->last_block == block_location)
-							list_start->last_block == current_node.header.next_block;
-						jtn.write(fb);
-						current_node.erase(fb);
-						block_location = 0;
-					}
-					else 
-					{
-						previous_block_location = block_location;
-						block_location = current_node.header.next_block;
-					}
-				}
-
-				// and now we gotta put this node into our index
-				table_header.data.count--;
-				table_header.write_count(fb);
-			}
-
-			system_monitoring_interface::global_mon->log_json_stop("json_table", "get_node", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-		}
-
 
 	public:
 
@@ -1137,17 +726,6 @@ namespace corona
 			relative_ptr_type result =  find_node(key);
 			system_monitoring_interface::global_mon->log_table_stop("table", "contains complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return  result != null_row;
-		}
-
-		json get_list(json _array)
-		{
-			date_time start_time = date_time::now();
-			timer tx;
-			system_monitoring_interface::global_mon->log_table_start("table", "get_list", start_time, __FILE__, __LINE__);
-			json object_list = find_nodes(_array);
-
-			system_monitoring_interface::global_mon->log_table_stop("table", "get_list", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			return object_list;
 		}
 
 		json get(std::string _key)
@@ -1222,7 +800,11 @@ namespace corona
 			timer tx;
 			system_monitoring_interface::global_mon->log_table_start("table", "put_array", start_time, __FILE__, __LINE__);
 
-			put_nodes(_array);
+			if (_array.array()) {
+				for (auto item : _array) {
+					put(item);
+				}
+			}
 			system_monitoring_interface::global_mon->log_table_stop("table", "put_array", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
 
@@ -1232,10 +814,16 @@ namespace corona
 			timer tx;
 			system_monitoring_interface::global_mon->log_table_start("table", "put", start_time, __FILE__, __LINE__);
 
-			json_node nd = put_node(value);
+			auto key = get_key(value);
+			relative_ptr_type modified_node = this->update_node(key,
+				[value](UPDATE_VALUE& dest) {
+					dest.assign_update(value);
+				}
+			);
+
 			system_monitoring_interface::global_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			return nd.header.block_location;
+			return modified_node;
 		}
 
 		relative_ptr_type put(std::string _json)
@@ -1249,10 +837,11 @@ namespace corona
 			if (jx.empty() or jx.is_member("ClassName", "SysParseError")) {
 				return null_row;
 			}
-			json_node jn = put_node(jx);
+			auto key = get_key(jx);
+			relative_ptr_type modified_node = this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_update(jx); });
 			system_monitoring_interface::global_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			return jn.header.block_location;
+			return modified_node;
 		}
 
 		relative_ptr_type replace(json value)
@@ -1290,17 +879,48 @@ namespace corona
 			timer tx;
 			system_monitoring_interface::global_mon->log_table_start("table", "erase", start_time, __FILE__, __LINE__);
 
-			int64_t node_location = find_node(key);
+			int k;
+			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
+			json_node qnd, pnd;
 
-			bool deleted = false;
+			relative_ptr_type q = find_node(update, key);
 
-			if (node_location > 0) {
-				erase_node(node_location);
-				deleted = true;
+			if (q != null_row)
+			{
+				k = 0;
+				p = update[k];
+				qnd = get_node(q);
+				pnd = get_node(p);
+				int m = table_header.data.level;
+				while (k <= m && pnd.forward[k] == q)
+				{
+					pnd.forward[k] = qnd.forward[k];
+					pnd.write(fb);
+					k++;
+					if (k <= m) {
+						p = update[k];
+						pnd = get_node(p);
+					}
+				}
+
+				table_header.data.count;
+
+				json_node header = get_header();
+
+				while (header.forward[m] == null_row && m > 0) {
+					m--;
+				}
+				table_header.data.level = m;
+				header.write(fb);
+				table_header.write(fb);
+				system_monitoring_interface::global_mon->log_table_stop("table", "erase complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return true;
 			}
-
-			system_monitoring_interface::global_mon->log_table_stop("table", "erase failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			return deleted;
+			else
+			{
+				system_monitoring_interface::global_mon->log_table_stop("table", "erase failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return false;
+			}
 		}
 
 		class for_each_result {
@@ -1309,54 +929,6 @@ namespace corona
 			bool is_all;
 			int64_t count;
 		};
-
-		void visit(int64_t _node, for_each_result& _result, json _key_fragment, std::function<relative_ptr_type(int _index, json_node& _item)>& _process_clause)
-		{
-			json_tree_node jtn;
-
-			if (_node <= 0)
-				return;
-
-			if (jtn.read(fb, _node) <= 0) 
-			{
-				return;
-			}
-
-			for (int i = 0; i < 256; i++)
-			{
-				int64_t child = jtn.data.children[i];
-				if (child) 
-				{
-					visit( child, _result, _key_fragment, _process_clause);
-				}
-			}
-
-			auto list_start = jtn.data.index_list;
-			auto block_location = list_start.first_block;
-
-			// see if our block is in here, if so, update it.
-
-			json_node jn;
-
-			while (block_location)
-			{
-				jn.read(fb, block_location);
-				if (_key_fragment.empty() or _key_fragment.compare(jn.data) == 0) {
-					relative_ptr_type process_result = _process_clause(_result.count, jn);
-					if (process_result > 0)
-					{
-						_result.is_any = true;
-						_result.count++;
-					}
-					else
-					{
-						_result.is_all = false;
-					}
-				}
-				block_location = jn.header.next_block;
-			}
-
-		}
 
 		for_each_result for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json_node& _item)> _process_clause)
 		{
@@ -1369,7 +941,28 @@ namespace corona
 
 			result.is_all = true;
 
-			visit(table_header.data.data_root_location, result, _key_fragment, _process_clause);
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "co_for_each", start_time, __FILE__, __LINE__);
+
+			relative_ptr_type location = find_first_gte(_key_fragment);
+			int64_t index = 0;
+
+			while (location != null_row)
+			{
+				json_node node;
+				node = get_node(location);
+				int comparison = _key_fragment.compare(node.data);
+				if (comparison == 0)
+				{
+					relative_ptr_type process_result = _process_clause(index, node);
+					if (process_result > 0)
+					{
+						index++;
+					}
+				}
+				location = node.forward[0];
+			}
 
 			system_monitoring_interface::global_mon->log_table_stop("table", "for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -1401,45 +994,26 @@ namespace corona
 
 			json_node jn;
 
-			uint64_t hash_code = _key_fragment.get_weak_ordered_hash(key_fields);
+			int64_t index = 0;
+			json result_data;
 
-			json_tree_node jtn;
+			relative_ptr_type location = find_first_gte(_key_fragment);
 
-			int64_t location = table_header.data.data_root_location;
-			if (location <= 0)
-				return empty;
-
-			list_block_header* list_start = nullptr;
-
-			int64_t last_node_location = 0;
-
-			int level_index;
-
-			for (level_index = 0; level_index < 8; level_index++)
+			while (location != null_row)
 			{
-				auto status = jtn.read(fb, location);
-				for (int i = 0; i < 256; i++) {
-					location = jtn.data.children[i];
-					if (location > 0)
-						break;
+				json_node node;
+				node = get_node(location);
+				int comparison = _key_fragment.compare(node.data);
+				if (comparison == 0 && _fn(node.data))
+				{
+					result_data = node.data;
+					location = null_row;
 				}
-				if (location == 0)
-					return empty;
+				else
+				{
+					location = node.forward[0];
+				}
 			}
-			auto status = jtn.read(fb, location);
-			list_start = &jtn.data.index_list;
-
-			if (list_start == nullptr) {
-				return empty;
-			}
-
-			if (list_start->first_block)
-			{
-				auto block_location = list_start->first_block;
-				jn.read(fb, block_location);
-				return jn.data;
-			};
-
 			system_monitoring_interface::global_mon->log_table_stop("table", "get_first complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return empty;
