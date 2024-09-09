@@ -161,7 +161,7 @@ namespace corona
 
 			auto& list_start = header.data.free_lists[ai.index];
 
-			block_header_struct free_block = {};
+			allocation_block_struct free_block = {};
 
 			// get_allocation index always returns an index such that any block in that index
 			// will have the right size.  so we know the first block is ok.
@@ -183,12 +183,10 @@ namespace corona
 				return free_block.data_location;
 			}
 
-			int64_t total_size = sizeof(block_header_struct) + ai.size;
-			int64_t base_space = add(sizeof(block_header_struct) + ai.size);
+			int64_t total_size = sizeof(allocation_block_struct) + ai.size;
+			int64_t base_space = add(sizeof(allocation_block_struct) + ai.size);
 			if (base_space > 0) {
-				free_block.block_type = block_id::allocated_space_id();
-				free_block.block_location = base_space;
-				free_block.data_location = base_space + sizeof(block_header_struct);
+				free_block.data_location = base_space + sizeof(allocation_block_struct);
 				free_block.next_block = 0;
 				write(base_space, &free_block, sizeof(free_block));
 				return free_block.data_location;
@@ -201,9 +199,9 @@ namespace corona
 		virtual void free_space(int64_t _location) override
 		{
 
-			relative_ptr_type block_start = _location - sizeof(block_header_struct);
+			relative_ptr_type block_start = _location - sizeof(allocation_block_struct);
 
-			block_header_struct free_block = {};
+			allocation_block_struct free_block = {};
 
 			/* ah, the forgiveness of this can be evil.  Here we say, if we truly cannot verify this
 			_location can be freed, then do not free it.  Better to keep some old block around than it is
@@ -215,7 +213,7 @@ namespace corona
 			if (fcr.success) {
 
 				// is this actually an allocated space block, and, is it the block we are trying to free
-				if (free_block.block_type.is_allocated_space() and free_block.data_location == _location) {
+				if (free_block.data_location == _location) {
 
 					// ok, now let's have a go and see where this is in our allocation index.
 					allocation_index ai = get_allocation_index(free_block.data_capacity);
@@ -232,7 +230,7 @@ namespace corona
 						// there is a last block, so we are at the end
 						if (list_start.last_block) {
 							relative_ptr_type old_last_block = list_start.last_block;
-							block_header_struct last_free;
+							allocation_block_struct last_free;
 							auto fr = read(old_last_block, &last_free, sizeof(last_free));
 							if (fr.success) {
 								list_start.last_block = block_start;
@@ -250,8 +248,8 @@ namespace corona
 						{
 							// the list is empty and we add to it.
 							free_block.next_block = 0;
-							list_start.last_block = free_block.block_location;
-							list_start.last_block = free_block.block_location;
+							list_start.last_block = free_block.data_location - sizeof(allocation_block_struct);
+							list_start.last_block = free_block.data_location - sizeof(allocation_block_struct);
 
 							// this basically says, now save our block.
 							write(block_start, &free_block, sizeof(free_block));
@@ -1865,7 +1863,7 @@ private:
 											new_object.erase_member("ObjectId");
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
 											datomatic.push_back(new_object);
-											if (datomatic.size() > 1000) {
+											if (datomatic.size() > 100) {
 												timer tx;
 												json cor = create_system_request(datomatic);
 												json put_result =  put_object(cor);
@@ -1891,7 +1889,22 @@ private:
 										if (datomatic.size() > 0) {
 											timer tx;
 											json cor = create_system_request(datomatic);
-											 put_object(cor);
+											json put_result = put_object(cor);
+											if (put_result["Success"]) {
+												double e = tx.get_elapsed_seconds();
+												total_row_count += datomatic.size();
+												std::string msg = std::format("import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
+												system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
+												datomatic = jp.create_array();
+											}
+											else {
+												std::string msg = std::format("Error saving object {0}", (std::string)put_result["Message"]);
+												system_monitoring_interface::global_mon->log_warning(msg);
+												system_monitoring_interface::global_mon->log_information("Return result");
+												system_monitoring_interface::global_mon->log_json(put_result);
+												system_monitoring_interface::global_mon->log_information("Object that failed.");
+												break;
+											}
 										}
 
 									}

@@ -451,6 +451,7 @@ namespace corona
 		}
 	};
 
+	/*
 	struct block_header_struct
 	{
 		block_id	block_type;
@@ -459,6 +460,22 @@ namespace corona
 		int64_t		data_capacity;
 		int64_t		data_size;
 		int64_t		next_block;
+	};
+	*/
+
+	struct data_block_struct
+	{
+		int64_t		block_location;
+		int64_t		data_location;
+		int32_t		data_capacity;
+		int32_t		data_size;
+	}
+
+	struct allocation_block_struct
+	{
+		int64_t		data_location;
+		int64_t		next_block;
+		int32_t		data_capacity;
 	};
 
 	template <typename blocked_type> concept named_block =

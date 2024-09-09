@@ -19,8 +19,6 @@ For Future Consideration
 namespace corona 
 {
 
-	class json_node;
-
 	const int debug_json_table = 0;
 
 	// data blocks
@@ -28,9 +26,6 @@ namespace corona
 
 	// poco nodes
 	template <typename T> class poco_node;
-
-	// json nodes
-	class json_node;
 
 	struct allocation_index
 	{
@@ -44,13 +39,12 @@ namespace corona
 	{
 	public:
 
-		block_header_struct				header;
+		data_block_struct				header;
 		buffer							bytes;
 
 		data_block()
 		{
 			header = {};
-			header.block_type = block_id::general_id();
 		}
 
 		static allocation_index get_allocation_index(int64_t _size)
@@ -225,7 +219,6 @@ namespace corona
 			system_monitoring_interface::global_mon->log_block_start("block", "append", start_time, __FILE__, __LINE__);
 
 			header.block_location = _file->allocate_space(sizeof(header));
-			header.block_type = block_id::table_id();
 			header.data_size = bytes.get_size();
 			header.data_capacity = size_ai.size;
 			header.data_location = _file->allocate_space(size_ai.size);
@@ -252,14 +245,14 @@ namespace corona
 		}
 	};
 
-	class json_node : public data_block
+
+	class json_data_node : public data_block
 	{
 	public:
 
 		json							data;
-		std::vector<relative_ptr_type>	forward;
 
-		json_node()
+		json_data_node()
 		{
 		}
 
@@ -272,8 +265,6 @@ namespace corona
 		{
 			json_parser jp;
 			data = jp.create_object();
-			forward.clear();
-			on_write();
 		}
 
 		virtual void on_read()
@@ -281,35 +272,74 @@ namespace corona
 			const char *contents = bytes.get_ptr();
 			if (contents) {
 				json_parser jp;
-				json container;
-				container = jp.parse_object(contents);
-				data = container["data"];
-				json forwards;
-				forwards = container["forward"];
-				forward.clear();
-				if (forwards.array()) {
-					for (auto fwd : forwards) {
-						relative_ptr_type ptr = fwd.get_int64s();
-						forward.push_back(ptr);
-					}
-				}
+				data = jp.parse_object(contents);
 			}
 		}
 
 		virtual void on_write()
 		{
-			json_parser jp;
-			json container;
-			container = jp.create_object();
-			container.put_member("data", data);
-			json forwards;
-			forwards = jp.create_array();
-			for (auto ptr : forward) {
-				forwards.push_back(ptr);
-			}
-			container.put_member("forward", forwards);
-			std::string x = container.to_json_typed();
+			std::string x = data.to_json_typed();
 			bytes = buffer(x.c_str());
+		}
+
+	};
+
+	class json_key_node : public data_block
+	{
+	public:
+
+		std::vector<int64_t> foward;
+		int64_t				 json_location;
+		uint64_t			 hash_code;
+
+		void clear()
+		{
+			foward.clear();
+			json_location = 0;
+			hash_code = 0;
+		}
+
+		virtual void on_read()
+		{
+			char* base = bytes.get_ptr();
+			int16_t* foward_count = (int16_t*)base;
+			base += sizeof(int16_t);
+			int64_t* ptr = (int64_t*)base;
+			for (int i = 0; i < *foward_count; i++) {
+				foward.push_back(*ptr);
+				ptr++;
+			}
+			json_location = *ptr;
+			ptr++;
+			hash_code = *ptr;
+		}
+
+		virtual void on_write()
+		{
+			int32_t size_bytes =
+				sizeof(int16_t) +
+				sizeof(int64_t) * foward.size() + 
+				sizeof(json_location) +
+				sizeof(hash_code);
+
+			bytes.init(size_bytes);
+			char* base = bytes.get_ptr();
+			int16_t* foward_count = (int16_t*)base;
+			*foward_count = foward.size();
+			base += sizeof(int16_t);
+			int64_t* ptr = (int64_t*)base;
+			for (int i = 0; i < foward.size(); i++) {
+				*ptr = foward[i];
+				ptr++;
+			}
+			*ptr = json_location;
+		}
+
+		json_data_node get_node(file_block* _file)
+		{
+			json_data_node node_to_read;
+			node_to_read.read(_file, json_location);
+			return node_to_read;
 		}
 
 	};
@@ -388,7 +418,7 @@ namespace corona
 			json_parser jp;
 			table_header.append(fb);
 
-			json_node header = create_node(JsonTableMaxLevel, header_key);
+			json_key_node header = create_node(JsonTableMaxLevel, header_key);
 			table_header.data.data_root_location = header.header.block_location;
 			table_header.data.count = 0;
 			table_header.data.level = JsonTableMaxLevel;
@@ -397,9 +427,9 @@ namespace corona
 			return table_header.header.block_location;
 		}
 
-		json_node get_header()
+		json_key_node get_header()
 		{
-			json_node in;
+			json_key_node in;
 
 			int64_t result = in.read(fb, table_header.data.data_root_location);
 
@@ -411,30 +441,41 @@ namespace corona
 			return in;
 		}
 
-		json_node create_node(int _max_level, json _data)
+		json_key_node create_node(int _max_level)
 		{
-			json_node new_node;
+			json_key_node new_node;
 
 			int level_bounds = _max_level + 1;
 
 			for (int i = 0; i < level_bounds; i++)
 			{
 				relative_ptr_type rit = null_row;
-				new_node.forward.push_back(rit);
+				new_node.foward.push_back(rit);
 			}
 
-			new_node.data = _data;
 			new_node.append(fb);
 
 			return new_node;
 		}
 
-		json_node get_node(relative_ptr_type _node_location)
+		json_key_node get_key_node(relative_ptr_type _node_location)
 		{
-			json_node node;
+			json_key_node node;
 
 			node.read(fb, _node_location);
 			return node;
+		}
+
+		json_data_node get_node(relative_ptr_type _node_location)
+		{
+			json_key_node node;
+
+			node.read(fb, _node_location);
+
+			json_data_node json_data;
+			json_data.read(fb, node.json_location);
+
+			return json_data;
 		}
 
 		// compare a node to a key for equality
@@ -442,9 +483,17 @@ namespace corona
 		// return 1 if the node > key
 		// return 0 if the node == key
 
-		relative_ptr_type compare_node(json_node _nd, KEY _id_key)
+		relative_ptr_type compare_node(json_key_node _nd, KEY _id_key, uint64_t _key_hash)
 		{
-			KEY ndkey = get_key(_nd.data);
+
+			if (_nd.hash_code < _key_hash)
+				return -SORT_ORDER;
+			else if (_nd.hash_code > 0)
+				return SORT_ORDER;
+
+			auto jd = _nd.get_node(fb);
+
+			KEY ndkey = get_key(jd.data);
 			int k = -_id_key.compare(ndkey); // the - is here because the comparison is actually backwards. 
 			if (k < 0)
 				return -SORT_ORDER;
@@ -457,7 +506,10 @@ namespace corona
 		relative_ptr_type find_node(relative_ptr_type* update, KEY _key)
 		{
 			relative_ptr_type found = null_row, p, q;
-			json_node hdr = get_header();
+
+			uint64_t key_hash = _key.get_weak_ordered_hash(key_fields);
+
+			json_key_node hdr = get_header();
 
 			for (int k = table_header.data.level; k >= 0; k--)
 			{
@@ -465,23 +517,23 @@ namespace corona
 				if (p <= 0) {
 					throw std::exception("table header node location not set");
 				}
-				json_node jn = hdr;
-				q = jn.forward[k];
+				json_key_node jn = hdr;
+				q = jn.foward[k];
 				int comp = 1;
-				json_node qnd;
+				json_key_node qnd;
 				if (q != null_row) {
-					qnd = get_node(q);
-					comp = compare_node(qnd, _key);
+					qnd.read(fb, q);
+					comp = compare_node(qnd, _key, key_hash);
 				}
 				while (comp < 0)
 				{
 					p = q;
 					jn = qnd;
-					q = jn.forward[k];
+					q = jn.foward[k];
 					comp = 1;
 					if (q != null_row) {
-						qnd = get_node(q);
-						comp = compare_node(qnd, _key);
+						qnd = get_key_node(q);
+						comp = compare_node(qnd, _key, key_hash);
 					}
 				}
 				if (comp == 0)
@@ -496,34 +548,36 @@ namespace corona
 		{
 			relative_ptr_type found = null_row, p, q, last_link;
 
-			json_node header = get_header();
+			uint64_t key_hash = _key.get_weak_ordered_hash(key_fields);
+
+			json_key_node header = get_header();
 
 			if (_key.empty() or !_key.keys_compatible(key_fields)) {
-				return header.forward[0];
+				return header.foward[0];
 			}
 
 			for (int k = table_header.data.level; k >= 0; k--)
 			{
-				p = header.forward[k];
-				json_node jn = get_node(p);
-				q = jn.forward[k];
+				p = header.foward[k];
+				json_key_node jn = get_key_node(p);
+				q = jn.foward[k];
 				last_link = q;
-				json_node qnd;
+				json_key_node qnd;
 				int comp = 1;
 				if (q != null_row) {
-					qnd = get_node(q);
-					comp = compare_node(qnd, _key);
+					qnd = get_key_node(q);
+					comp = compare_node(qnd, _key, key_hash);
 				}
 				while (comp < 0)
 				{
 					p = q;
 					last_link = q;
-					json_node jn = qnd;
-					q = jn.forward[k];
+					json_key_node jn = qnd;
+					q = jn.foward[k];
 					comp = 1;
 					if (q != null_row) {
-						qnd = get_node(q);
-						comp = compare_node(qnd, _key);
+						qnd = get_key_node(q);
+						comp = compare_node(qnd, _key, key_hash);
 					}
 				}
 				if (comp == 0)
@@ -539,22 +593,28 @@ namespace corona
 		{
 			int k;
 
+			uint64_t key_hash = _key.get_weak_ordered_hash(key_fields);
+
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
 
-			json_node header = get_header();
+			json_key_node header = get_header();
 
-			relative_ptr_type location = header.forward[0];
+			relative_ptr_type location = header.foward[0];
 
 			relative_ptr_type q = find_node(update, _key);
-			json_node qnd;
 
 			if (q != null_row)
 			{
-				qnd = get_node(q);
+				json_key_node jkn;
+				jkn.read(fb, q);
+				json_data_node qnd;
+				qnd = jkn.get_node(fb);
 				predicate(qnd.data);
 				qnd.write(fb);
-				return qnd.header.block_location;
+				return q;
 			}
+
+			json_key_node qnd;
 
 			k = randomLevel();
 			if (k > table_header.data.level)
@@ -574,20 +634,25 @@ namespace corona
 				return -1;
 			}
 
-			qnd = create_node(k, initial_value);
-			table_header.data.count;
+			json_key_node key_node = create_node(k);
+			uint64_t hash_code = key_hash;
+
+			json_data_node value_node;
+			value_node.data = initial_value;
+			key_node.json_location = value_node.append(fb);
+
+			table_header.data.count++;
 
 			do
 			{
-				json_node pnd = get_node(update[k]);
-				qnd.forward[k] = pnd.forward[k];
-				pnd.forward[k] = qnd.header.block_location;
-
-				qnd.write(fb);
+				json_key_node pnd = get_key_node(update[k]);
+				key_node.foward[k] = pnd.foward[k];
+				pnd.foward[k] = key_node.header.block_location;
 				pnd.write(fb);
 
 			} while (--k >= 0);
 
+			key_node.write(fb);
 			table_header.write(fb);
 
 			return qnd.header.block_location;
@@ -597,34 +662,36 @@ namespace corona
 		{
 			relative_ptr_type found = null_row, p, q, last_link;
 
-			json_node header = get_header();
+			json_key_node header = get_header();
 
 			if (!_key.keys_compatible(key_fields)) {
-				return header.forward[0];
+				return header.foward[0];
 			}
+
+			uint64_t hash_code = _key.get_weak_ordered_hash(key_fields);
 
 			for (int k = table_header.data.level; k >= 0; k--)
 			{
-				p = header.forward[k];
-				json_node jn = get_node(p);
-				q = jn.forward[k];
+				p = header.foward[k];
+				json_key_node jn = get_key_node(p);
+				q = jn.foward[k];
 				last_link = q;
-				json_node qnd;
+				json_key_node qnd;
 				int comp = 1;
 				if (q != null_row) {
-					qnd = get_node(q);
-					comp = compare_node(qnd, _key);
+					qnd.read(fb, q);
+					comp = compare_node(qnd, _key, hash_code);
 				}
 				while (comp < 0)
 				{
 					p = q;
 					last_link = q;
-					json_node jn = qnd;
-					q = jn.forward[k];
+					json_key_node jn = qnd;
+					q = jn.foward[k];
 					comp = 1;
 					if (q != null_row) {
-						qnd = get_node(q);
-						comp = compare_node(qnd, _key);
+						qnd.read(fb, q);
+						comp = compare_node(qnd, _key, hash_code);
 					}
 				}
 				if (comp == 0)
@@ -647,22 +714,24 @@ namespace corona
 			return value;
 		}
 
-		json_node first_node()
+		json_key_node first_node()
 		{
-			json_node jn;
+			json_key_node jn;
 			auto header = get_header();
-			if (header.forward[0] != null_row) {
-				jn = get_node(header.forward[0]);
+			if (header.foward[0] != null_row) {
+				jn.read(fb, header.foward[0]);
 			}
 			return jn;
 		}
 
-		json_node next_node(json_node _node)
+		json_key_node next_node(json_key_node _node)
 		{
-			if (_node.is_empty())
-				return _node;
+			json_key_node jn;
 
-			json_node nd = get_node(_node.forward[0]);
+			if (_node.foward.size() == 0)
+				return jn;
+
+			json_key_node nd = get_key_node(_node.foward[0]);
 			return nd;
 		}
 
@@ -743,8 +812,9 @@ namespace corona
 			json result;
 			relative_ptr_type n =  find_node(key);
 			if (n != null_row) {
-				json_node r =  get_node(n);
-				result = r.data;
+				json_key_node r =  get_key_node(n);
+				json_data_node dn = r.get_node(fb);
+				result = dn.data;
 			}
 			system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -760,8 +830,9 @@ namespace corona
 			json result;
 			relative_ptr_type n =  find_node(key);
 			if (n != null_row) {
-				json_node r =  get_node(n);
-				result = r.data;
+				json_key_node r = get_key_node(n);
+				json_data_node dn = r.get_node(fb);
+				result = dn.data;
 			}
 			system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -777,10 +848,9 @@ namespace corona
 			json result;
 			relative_ptr_type n =  find_node(key);
 			if (n != null_row) {
-				json_node r =  get_node(n);
-				if (not r.data.empty()) {
-					result = r.data.extract(include_fields);
-				}
+				json_key_node r =  get_key_node(n);
+				json_data_node dn = r.get_node(fb);
+				result = dn.data;
 			}
 			system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -848,10 +918,11 @@ namespace corona
 			auto node_location = find_node(key);
 
 			if (node_location > -1) {
-				json_node jnz;
+				json_key_node jnz;
 				jnz.read(fb, node_location);
-				jnz.data.assign_replace(value);
-				jnz.write(fb);
+				json_data_node jdn = jnz.get_node(fb);
+				jdn.data.assign_replace(value);
+				jdn.write(fb);
 			}
 
 			system_monitoring_interface::global_mon->log_table_stop("table", "replace", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -874,7 +945,7 @@ namespace corona
 
 			int k;
 			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
-			json_node qnd, pnd;
+			json_key_node qnd, pnd;
 
 			relative_ptr_type q = find_node(update, key);
 
@@ -882,21 +953,21 @@ namespace corona
 			{
 				k = 0;
 				p = update[k];
-				qnd = get_node(q);
-				pnd = get_node(p);
+				qnd = get_key_node(q);
+				pnd = get_key_node(p);
 				int m = table_header.data.level;
-				while (k <= m && pnd.forward[k] == q)
+				while (k <= m && pnd.foward[k] == q)
 				{
-					pnd.forward[k] = qnd.forward[k];
+					pnd.foward[k] = qnd.foward[k];
 					pnd.write(fb);
 					k++;
 					if (k <= m) {
 						p = update[k];
-						pnd = get_node(p);
+						pnd = get_key_node(p);
 					}
 				}
 
-				table_header.data.count;
+				table_header.data.count--;
 
 				json_node header = get_header();
 

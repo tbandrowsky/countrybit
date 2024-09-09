@@ -451,7 +451,18 @@ namespace corona
 		}
 		virtual std::string to_json()
 		{
-			return "\"" + value + "\"";
+			char oldChar = '"';
+			// TODO: recognize the escape character when parsing!!!
+			std::string temp;
+			temp += '"';
+			for (auto c : value) {
+				if (c == oldChar) {
+					temp.push_back('\\');
+				}
+				temp.push_back(c);
+			}
+			temp += '"';
+			return temp;
 		}
 
 		virtual std::string to_json_typed()
@@ -2757,6 +2768,7 @@ namespace corona
 		}
 
 	private:
+
 
 		void check_line(const char* nl)
 		{
