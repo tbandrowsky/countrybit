@@ -40,7 +40,7 @@ namespace corona
 		open_always
 	};
 
-	static const int JsonTableMaxNumberOfLevels = 40;
+	static const int JsonTableMaxNumberOfLevels = 32;
 	static const int JsonTableMaxLevel = JsonTableMaxNumberOfLevels - 1;
 
 	class file_batch;

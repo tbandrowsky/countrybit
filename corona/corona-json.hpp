@@ -2009,7 +2009,6 @@ namespace corona
 				throw std::logic_error("At least one of the being compared must be json_object (not array or value, yet)");
 			}
 
-
 			for (auto m : comparison_fields)
 			{
 				std::string key = std::get<1>(m);
@@ -2020,8 +2019,8 @@ namespace corona
 					return 1;
 				}				
 
-				auto member_dest = _item[key];
 				auto member_src = json(member_value);
+				auto member_dest = _item[key];
 
 				if (member_src.is_string()) 
 				{

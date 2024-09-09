@@ -469,7 +469,7 @@ namespace corona
 		int64_t		data_location;
 		int32_t		data_capacity;
 		int32_t		data_size;
-	}
+	};
 
 	struct allocation_block_struct
 	{
