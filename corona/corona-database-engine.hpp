@@ -1863,7 +1863,7 @@ private:
 											new_object.erase_member("ObjectId");
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
 											datomatic.push_back(new_object);
-											if (datomatic.size() > 100) {
+											if (datomatic.size() > 1000) {
 												timer tx;
 												json cor = create_system_request(datomatic);
 												json put_result =  put_object(cor);
