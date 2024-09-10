@@ -1387,7 +1387,11 @@ namespace corona
 
 		json get_first_element() const
 		{
-			return get_element(0);
+			json result;
+			if (array_impl and array_impl->elements.size() > 0) {
+				result = get_element(0);
+			}
+			return result;
 		}
 
 		json get_last_element() const

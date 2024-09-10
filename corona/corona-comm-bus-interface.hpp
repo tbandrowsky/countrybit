@@ -388,6 +388,10 @@ namespace corona
 
 			int counter = 0;
 			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
+
+			if (bucket_size < _items.size())
+				bucket_size = _items.size();
+
 			for (int idx = 0; idx < _items.size(); ) {
 				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 				events.push_back(handle);
@@ -412,24 +416,6 @@ namespace corona
 				::WaitForSingleObject(evt, INFINITE);
 				CloseHandle(evt);
 			}
-		}
-
-		template <typename IOParams> void run_io(job_queue* queue, IOParams params, std::function<bool(HANDLE hevent, IOParams* _src)> runner)
-		{
-			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
-			debug_functions&& std::cout << "run_io_task start:" << GetCurrentThreadId() << std::endl;
-			if (runner) {
-				if (runner(hevent, &params)) {
-					debug_functions&& std::cout << "run_io await_suspend away : " << GetCurrentThreadId() << std::endl;
-					::WaitForSingleObject(hevent, INFINITE);
-					debug_functions&& std::cout << "run_io await_suspend finished:" << GetCurrentThreadId() << std::endl;
-				}
-				else
-				{
-					debug_functions&& std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
-				}
-			}
-			::CloseHandle(hevent);
 		}
 
 		virtual control_base* find_control(int _id) = 0;

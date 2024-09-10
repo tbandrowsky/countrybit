@@ -329,7 +329,6 @@ namespace corona
 	"ClassName" : "SysSchemas",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Database script changes",
-	"ImplementMap" : [ "SchemaName", "SchemaVersion" ],
 	"Fields" : {			
 			"SchemaName" : "string",
 			"SchemaDescription" : "string",
@@ -364,7 +363,6 @@ namespace corona
 	"ClassName" : "SysDatasets",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Database script changes",
-	"ImplementMap" : [ "DatasetName", "DatasetVersion" ],
 	"Fields" : {			
 			"DatasetName" : "string",
 			"DatasetDescription" : "string",
@@ -426,12 +424,11 @@ namespace corona
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysUser",
 	"ClassDescription" : "A user",
-	"ImplementMap" : [ "Name" ],
 	"Fields" : {			
 			"ClassName" : "string",
 			"FirstName" : "string",
 			"LastName" : "string",
-			"Name" : "string",
+			"UserName" : "string",
 			"Email" : "string",
 			"Mobile" : "string",
 			"Street" : "string",
@@ -466,9 +463,8 @@ namespace corona
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysLogin",
 	"ClassDescription" : "A login of a user",
-	"ImplementMap" : [ "Name" ],
 	"Fields" : {			
-			"Name" : "string",
+			"UserName" : "string",
 			"Password" : "string",
 			"ConfirmCode" : "string",
 			"LoginState" : "string",
@@ -650,10 +646,9 @@ namespace corona
 	"ClassName" : "SysTeam",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "A team",
-	"ImplementMap" : [ "Name" ],
 	"Fields" : {			
-			"Name" : "string",
-			"Description" : "string",
+			"TeamName" : "string",
+			"TeamDescription" : "string",
 			"Members" : {
 				"FieldType":"array"
 			},
@@ -704,7 +699,7 @@ namespace corona
 
 			new_user_data = jp.create_object();
 			new_user_data.put_member("ClassName", "SysUser");
-			new_user_data.put_member("Name", default_user);
+			new_user_data.put_member("UserName", default_user);
 			new_user_data.put_member("Email", default_email_address);
 
 			new_user_request = create_system_request(new_user_data);
@@ -803,13 +798,11 @@ private:
 			json classA = jp.create_object();
 			classA.copy_member("BaseClassName", _classA);
 			classA.copy_member("Fields", _classA);
-			classA.copy_member("ImplementMap", _classA);
 			std::string sa = classA.to_json_typed();
 
 			json classB = jp.create_object();
 			classB.copy_member("BaseClassName", _classB);
 			classB.copy_member("Fields", _classB);
-			classB.copy_member("ImplementMap", _classB);
 			std::string sb = classB.to_json_typed();
 
 			return sa == sb;
@@ -912,21 +905,6 @@ private:
 					}
 				}
 
-				if (class_definition.has_member("ImplementMap")) {
-					json class_fields = class_definition["Fields"];
-					json unique_names = class_definition["ImplementMap"];
-					if (unique_names.array()) {
-						for (auto jfield_name : unique_names) {
-							std::string field_name = (std::string)jfield_name;
-							if (not class_fields.has_member(jfield_name)) {
-								std::string msg = std::format("map key field {0} does not exist in class {1}", (std::string)jfield_name, (std::string)class_name);
-								result = create_response(check_class_request, false, msg, class_definition, method_timer.get_elapsed_seconds());
-								return result;
-							}
-						}
-					}					
-				}
-
 			} 
 			else 
 			{
@@ -987,9 +965,11 @@ private:
 			timer method_timer;
 			json result;
 			json_parser jp;
+			date_time current_date = date_time::now();
 
 			json object_load = check_object_request["Data"];
 			bool strict_enabled = (bool)check_object_request["Strict"];
+			std::string user = check_object_request.query("Token.Name")["value"];
 
 			result = create_response(check_object_request, true, "Ok", object_load, method_timer.get_elapsed_seconds());
 
@@ -1043,12 +1023,15 @@ private:
 				if (object_definition.has_member("ObjectId"))
 				{
 					object_id = object_definition["ObjectId"].get_int64s();
+					object_definition.put_member("Modified", current_date);
+					object_definition.put_member("ModifiedBy", user);
 				}
 				else
 				{
 					object_id =  get_next_object_id();
 
 					object_definition.put_member_i64("ObjectId", object_id);
+					object_definition.put_member("Created", user);
 				}
 
 				json warnings = jp.create_array();
@@ -1145,7 +1128,7 @@ private:
 
 			json payload = jp.create_object();
 			json token = jp.create_object();
-			token.put_member("Name", _user_name);
+			token.put_member("UserName", _user_name);
 			token.put_member("Authorization", _authorization);
 			date_time expiration = date_time::utc_now() + this->token_life;
 			std::string hash = crypter.hash(_data);
@@ -1170,7 +1153,7 @@ private:
 			json token = jp.create_object();
 			json src_token = _request["Token"];
 			
-			token.copy_member("Name", src_token);
+			token.copy_member("UserName", src_token);
 			token.copy_member("Authorization", src_token);
 			date_time expiration = date_time::utc_now() + this->token_life;
 			token.put_member("TokenExpires", expiration);
@@ -1223,7 +1206,7 @@ private:
 			}
 
 			std::string authorization = token["Authorization"];
-			std::string user = token["Name"];
+			std::string user = token["UserName"];
 
 			if (authorization == "System" and user == "System")
 			{
@@ -1253,7 +1236,7 @@ private:
 			if (_token.has_member("Token")) {
 				_token = _token["Token"];
 			}
-			json token_name = _token.extract({ "Name" });
+			json token_name = _token.extract({ "UserName" });
 			return token_name;
 		}
 
@@ -1283,13 +1266,14 @@ private:
 			return obj;
 		}
 
-		json get_user(std::string _user_name)
+		json select_object(json _key)
 		{
 			json_parser jp;
 			json obj, class_def;
 
-			json class_key = jp.create_object();
-			class_key.put_member("ClassName", "SysUser");
+			_key.set_natural_order();
+
+			json class_key = _key.extract({ "ClassName" } );
 			class_def = classes->get(class_key);
 
 			if (not class_def.empty())
@@ -1298,51 +1282,56 @@ private:
 					relative_ptr_type rpt = class_def["Table"];
 					json_table class_data(this, { "ObjectId" });
 					class_data.open(rpt);
-					obj = class_data.select([_user_name](int _index, json& _j)
+					obj = class_data.select([&_key](int _index, json& _j)
 						{
 							json result;
-							std::string node_user_name = _j["UserName"];
-							if (node_user_name == _user_name)
+							if (_key.compare(_j) == 0)
 								result = _j;
 							return result;
 
 						});
-					return obj;
 				}
 			}
 
 			return obj;
 		}
 
+		json get_user(std::string _user_name)
+		{
+			json_parser jp;
+			json obj = jp.create_object();
+			obj.put_member("ClassName", "SysUser");
+			obj.put_member("UserName", _user_name);
+			return select_object(obj);
+		}
+
 		json get_team(std::string _team_name)
 		{
 			json_parser jp;
-			json obj, class_def;
+			json obj = jp.create_object();
+			obj.put_member("ClassName", "SysTeam");
+			obj.put_member("TeamName", _team_name);
+			return select_object(obj);
+		}
 
-			json class_key = jp.create_object();
-			class_key.put_member("ClassName", "SysTeam");
-			class_def = classes->get(class_key);
+		json get_schema(std::string schema_name, std::string schema_version)
+		{
+			json_parser jp;
+			json obj = jp.create_object();
+			obj.put_member("ClassName", "SysSchemas");
+			obj.put_member("SchemaName", schema_name);
+			obj.put_member("SchemaVersion", schema_version);
+			return select_object(obj);
+		}
 
-			if (not class_def.empty())
-			{
-				if (class_def.has_member("Table")) {
-					relative_ptr_type rpt = class_def["Table"];
-					json_table class_data(this, { "ObjectId" });
-					class_data.open(rpt);
-					obj = class_data.select([_team_name](int _index, json& _j)
-						{
-							json result;
-							std::string node_user_name = _j["UserName"];
-							if (node_user_name == _team_name)
-								result = _j;
-							return result;
-
-						});
-					return obj;
-				}
-			}
-
-			return obj;
+		json get_dataset(std::string dataset_name, std::string dataset_version)
+		{
+			json_parser jp;
+			json obj = jp.create_object();
+			obj.put_member("ClassName", "SysDatasets");
+			obj.put_member("DatasetName", dataset_name);
+			obj.put_member("DatasetVersion", dataset_version);
+			return select_object(obj);
 		}
 
 		bool has_class_permission(
@@ -1363,7 +1352,7 @@ private:
 
 			// extract the user key from the token and get the user object
 			json user_key = get_message_user(_token);
-			if ((std::string)user_key["Name"] == "System") {
+			if ((std::string)user_key["UserName"] == "System") {
 				return true;
 			}
 
@@ -1420,7 +1409,7 @@ private:
 			json user_key = get_message_user(_message);
 			user_key.put_member("ClassName", "SysUser");
 
-			if ((std::string)user_key["Name"] == "System") {
+			if ((std::string)user_key["UserName"] == "System") {
 				return true;
 			}
 
@@ -1483,13 +1472,12 @@ private:
 			json user_key = get_message_user(_request);
 			user_key.put_member("ClassName", "SysUser");
 
-			if ((std::string)user_key["Name"] == "System") {
+			if ((std::string)user_key["UserName"] == "System") {
 				return true;
 			}
 
 			// extract the user key from the token and get the user object
-			user_key.set_compare_order({ "ClassName", "Name" });
-			user =  acquire_object(user_key);
+			user =  get_user(user_key["UserName"]);
 			if (user.empty()) {
 				return false;
 			}
@@ -1649,10 +1637,10 @@ private:
 			json schema_key = jp.create_object();
 			schema_key.copy_member("SchemaName", _schema);
 			schema_key.copy_member("SchemaVersion", _schema);
-			schema_key.put_member("ClassName", "SysDatasets");
+			schema_key.put_member("ClassName", "SysSchemas");
 			schema_key.set_compare_order({ "SchemaName", "SchemaVersion" });
 
-			json schema_test =  acquire_object(schema_key);
+			json schema_test =  select_object(schema_key);
 
 			if (schema_test.object()) 
 			{
@@ -1748,60 +1736,39 @@ private:
 						timer txs;
 
 						json script_definition = script_array.get_element(i);
-						json script_key = jp.create_object();
-						script_key.copy_member("DatasetName", script_definition);
-						script_key.copy_member("DatasetVersion", script_definition);
-						script_key.put_member("ClassName", "SysDatasets");
 
-						system_monitoring_interface::global_mon->log_job_section_start("DataSet", script_definition["DatasetName"], start_dataset, __FILE__, __LINE__);
+						script_definition.put_member("ClassName", "SysDatasets");
+						std::string dataset_name = script_definition["DatasetName"];
+						std::string dataset_version = script_definition["DatasetVersion"];
+
+						system_monitoring_interface::global_mon->log_job_section_start("DataSet", dataset_name + " Start", start_dataset, __FILE__, __LINE__);
 
 						bool script_run = (bool)script_definition["RunOnChange"];
-						json existing_script =  acquire_object(script_key);
+						json existing_scripts = get_dataset(dataset_name, dataset_version);
+						json existing_script = existing_scripts.get_first_element();
 						bool run_script = false;
 						if (existing_script.empty() or script_run)
 							run_script = true;
 
-						script_definition.put_member("ClassName", "SysDatasets");
-						json put_script_request = create_system_request(script_definition);
-						// in corona, creating an object doesn't actually persist anything 
-						// but a change in identifier.  It's a clean way of just getting the 
-						// "new chumpy" item for ya.  
-						json create_result =  create_object(put_script_request);
-						if (create_result["Success"]) {
+						if (existing_script.empty())
+						{
+							// in corona, creating an object doesn't actually persist anything 
+							// but a change in identifier.  It's a clean way of just getting the 
+							// "new chumpy" item for ya.  Or you can just shove it in there.
+							json put_script_request = create_system_request(script_definition);
 							json created_object = put_script_request["Data"];
-							json save_result =  put_object(put_script_request);
+							json save_result = put_object(put_script_request);
 							if (not save_result["Success"]) {
 								system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
 								system_monitoring_interface::global_mon->log_json<json>(save_result);
+								existing_script = save_result["Data"];
 							}
 							else
 								system_monitoring_interface::global_mon->log_information(save_result["Message"]);
 						}
 
-						json change_trigger = script_definition["RunOnChange"];
-						{
-							std::string class_to_watch = change_trigger["ClassToMonitor"];
-							if (changed_classes.contains(class_to_watch)) {
-								run_script = true;
-								bool kill_and_fill = (bool)change_trigger["KillAndFill"];
-								if (kill_and_fill) {
-									json update_data = jp.create_object();
-									update_data.put_member("ClassName", class_to_watch);
-									json request = create_system_request(update_data);
-									 update(request, R"({ "Active", false })"_jobject);
-								}
-							}
-						}
-
 						if (run_script and script_definition.has_member("Import"))
 						{
-							/*
-							        "Type": "csv",
-        "Delimiter": "|",
-        "FileName": "itcont.csv",
-        "TargetClass": "Individuals",
-        "ColumnMap": {
-*/
 							json import_spec = script_definition["Import"];
 							std::vector<std::string> missing;
 
@@ -1953,7 +1920,8 @@ private:
 										object_definition.copy_member("Success", create_result);
 										object_definition.copy_member("Message", create_result);
 									}
-									else {
+									else 
+									{
 										object_definition.copy_member("Success", create_result);
 										object_definition.copy_member("Message", create_result);
 										system_monitoring_interface::global_mon->log_warning(create_result["Message"], __FILE__, __LINE__);
@@ -1961,6 +1929,9 @@ private:
 									}
 								}
 							}
+
+							date_time completed_date = date_time::now();
+							script_definition.put_member("Completed", completed_date);
 							json put_script_request = create_system_request(script_definition);
 							json save_script_result =  put_object(put_script_request);
 							if (not save_script_result["Success"]) {
@@ -1971,9 +1942,7 @@ private:
 								system_monitoring_interface::global_mon->log_information(save_script_result["Message"]);
 						}
 
-						system_monitoring_interface::global_mon->log_job_section_stop("DataSet", script_definition["DatasetName"], txs.get_elapsed_seconds(), __FILE__, __LINE__);
-
-
+						system_monitoring_interface::global_mon->log_job_section_stop("DataSet", dataset_name + " Finished", txs.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 					system_monitoring_interface::global_mon->log_job_section_stop("DataSets", "", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
@@ -2042,7 +2011,7 @@ private:
 
 			json data = create_user_request["Data"];
 
-			std::string user_name = data["Name"];
+			std::string user_name = data["UserName"];
 			std::string user_class = data["ClassName"];
 
 			bool user_exists = true;
@@ -2052,12 +2021,6 @@ private:
 			{
 				scope_lock lock_one(objects_rw_lock);
 
-				json user_key = jp.create_object();
-				user_key.put_member("ClassName", user_class);
-				user_key.put_member("Name", user_name);
-				user_key.set_compare_order({ "ClassName", "Name" });
-
-				// TODO: fix this so that finding an existing user will work
 				json existing_user_link = get_user(user_name);
 
 				if (existing_user_link.object()) 
@@ -2079,7 +2042,7 @@ private:
 
 			json create_user_params = data;
 			create_user_params.put_member("ClassName", user_class);
-			create_user_params.put_member("Name", user_name);
+			create_user_params.put_member("UserName", user_name);
 			json create_object_request = create_request(create_user_request, create_user_params);
 			json user_result =  put_object(create_object_request);
 			if (user_result["Success"]) {
@@ -2090,7 +2053,7 @@ private:
 					json create_login_params = jp.create_object();
 					create_login_params.put_member("ClassName", "SysLogin");
 					create_login_params.put_member("Password", hashed_pw);
-					create_login_params.put_member("Name", user_name);
+					create_login_params.put_member("UserName", user_name);
 					create_login_params.put_member("LoginState", "UserCreated");
 					if (new_user.has_member("ObjectId")) {
 						db_object_id_type objid = new_user["ObjectId"].get_int64();
@@ -2133,12 +2096,12 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("login_user", "start", start_time, __FILE__, __LINE__);
 
 			json data = _login_request;
-			std::string user_name = data["Name"];
+			std::string user_name = data["UserName"];
 			std::string user_password = data["Password"];
 			std::string hashed_user_password;
 
 			json user_key = jp.create_object();
-			user_key.put_member("Name", user_name);
+			user_key.put_member("UserName", user_name);
 			user_key.put_member("ClassName", "SysLogin");
 			json gor = create_request(_login_request, user_key);		
 
@@ -2531,6 +2494,7 @@ private:
 					error_message.append(comma);
 					error_message.append(m);
 				}
+				system_monitoring_interface::global_mon->log_warning(error_message, __FILE__, __LINE__);
 				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
@@ -2546,6 +2510,7 @@ private:
 					error_message.append(comma);
 					error_message.append(m);
 				}
+				system_monitoring_interface::global_mon->log_warning(error_message, __FILE__, __LINE__);
 				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
@@ -2984,7 +2949,7 @@ private:
 
 			json payload = jp.create_object();
 			json token = jp.create_object();
-			token.put_member("Name", "System");
+			token.put_member("UserName", "System");
 			token.put_member("Authorization", "System");
 			date_time expiration = date_time::utc_now() + this->token_life;
 			token.put_member("TokenExpires", expiration);
@@ -3007,7 +2972,7 @@ private:
 			json src_token = _request["Token"];
 			json token = jp.create_object();
 
-			token.copy_member("Name", src_token);
+			token.copy_member("UserName", src_token);
 			token.copy_member("Authorization", src_token);
 			date_time expiration = date_time::utc_now() + this->token_life;
 			token.put_member("TokenExpires", expiration);
@@ -3298,7 +3263,7 @@ private:
 		json user = jp.parse_object(R"(
 {
 "ClassName" : "SysUser",
-"Name" : "testuser",
+"UserName" : "testuser",
 "FirstName" : "Jake",
 "LastName" : "Rogers",
 "Email" : "todd.bandrowsky@gmail.com",

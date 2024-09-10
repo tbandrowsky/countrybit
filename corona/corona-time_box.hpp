@@ -312,14 +312,14 @@ namespace corona
 		date_time parse(std::string _src)
 		{
 			std::string formats[8] = {
-				"%m/%d/%Y",
+				"%Y-%m-%dT%H:%M:%SZ",
+				"%Y-%m-%dT%H:%M:%S",
+				"%Y-%m-%d %H:%M:%S",
+				"%Y-%m-%d %H:%M",
 				"%Y-%m-%d",
 				"%m/%d/%Y %H:%M:%S",
-				"%Y-%m-%d %H:%M:%S",
 				"%m/%d/%Y %H:%M",
-				"%Y-%m-%d %H:%M",
-				"%Y-%m-%dT%H:%M:%S",
-				"%Y-%m-%dT%H:%M:%SZ"
+				"%m/%d/%Y"
 			};
 
 			for (auto format : formats) {
@@ -444,18 +444,20 @@ namespace corona
 
 		int compare(const date_time& _src) const
 		{
-			int c = 0;
-			const WORD* st_me = &system_time.wYear;
-			const WORD* st_src = &_src.system_time.wYear;
-			while (c < 8) 
-			{
-				int x = *st_me - *st_src;
-				if (x) return x;
-				c++;
-				st_me++;
-				st_src++;
-			}
-			return 0;
+			FILETIME fthis, fsrc;
+			SystemTimeToFileTime(&system_time, &fthis);
+			SystemTimeToFileTime(&_src.system_time, &fsrc);
+			LARGE_INTEGER lithis, lisrc;
+			lithis.HighPart = fthis.dwHighDateTime;
+			lithis.LowPart = fthis.dwLowDateTime;
+			lisrc.HighPart = fsrc.dwHighDateTime;
+			lisrc.LowPart = fsrc.dwLowDateTime;
+			if (lithis.QuadPart < lisrc.QuadPart)
+				return -1;
+			else if (lithis.QuadPart > lisrc.QuadPart)
+				return 1;
+			else
+				return 0;
 		}
 	};
 

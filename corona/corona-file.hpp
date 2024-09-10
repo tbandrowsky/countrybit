@@ -381,6 +381,34 @@ namespace corona
 			}
 		}
 
+		std::string read()
+		{
+			file_command_result fcr;
+
+			std::unique_ptr<char[]> buffer_bytes;
+
+			int file_size = size();
+			int blen = file_size + 8;
+			buffer_bytes = std::make_unique<char[]>(file_size + 8);
+			char* s = buffer_bytes.get();
+			std::fill(s, s + blen, 0);
+			read(0, s, file_size);
+
+			std::string temp = s;
+			return temp;
+		}
+
+		file_command_result write(const std::string& _src)
+		{
+			file_command_result fcr;
+
+			if (not _src.empty()) {
+				int length = _src.size();
+				int64_t location = add(length);
+				fcr = write(location, (void *)_src.c_str(), length);
+			}
+			return fcr;
+		}
 
 		file_command_result write(int64_t location, void* _buffer, int _buffer_length)
 		{

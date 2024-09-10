@@ -39,7 +39,6 @@ namespace corona
 
 		json								admin_user;
 		json								admin_user_token;
-		buffer								io_buffer;
 
 	public:
 
@@ -87,11 +86,12 @@ namespace corona
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
 			date_time t = date_time::now();
+			json_parser jp;
 
 			log_command_start("comm_bus", "startup", t);
 
 			log_information("Thank you for flying with Country Video Games");
-			log_information("Corona is going to do a formal verification of itself");
+			log_information("Country Video Games Corona is going to do a formal verification of itself");
 			log_information("and this environment.");
 
 			ready_for_polling = false;
@@ -135,7 +135,7 @@ namespace corona
 			pages_config_mon.file_name = pages_config_file_name;
 			styles_config_mon.file_name = styles_config_file_name;
 
-			if (true or not app->file_exists(database_file_name)) 
+			if (not app->file_exists(database_file_name)) 
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(this, db_file);
@@ -153,10 +153,9 @@ namespace corona
 				admin_user_token = admin_user["Token"];
 
 				if (admin_user.object()) {
-					std::string suser_json = admin_user.to_json();
-					io_buffer.set_buffer(suser_json);
+					std::string suser_json = admin_user.to_json_typed();
 					file user_file = app->open_file(user_file_name, file_open_types::create_always);
-					user_file.write(0, io_buffer.get_ptr(), io_buffer.get_size());
+					user_file.write(suser_json);
 				}
 
 				relative_ptr_type result = database_config_mon.poll(app.get());
@@ -167,16 +166,18 @@ namespace corona
 				db_file = app->open_file_ptr(database_file_name, file_open_types::open_existing);
 				local_db = std::make_shared<corona_database>(this, db_file);
 				local_db->open_database(0);
-				json_file_watcher user_file_watcher;
-				user_file_watcher.file_name = user_file_name;
-				user_file_watcher.poll_contents(app.get(), admin_user);
+				std::string suser_json;
+				file user_file = app->open_file(user_file_name, file_open_types::open_existing);
+				suser_json = user_file.read();
+				admin_user = jp.parse_object(suser_json);
 				admin_user_token = admin_user["Token"];
+
+				relative_ptr_type result = database_config_mon.poll(app.get());
 				ready_for_polling = true;
 			}
 
 			log_command_stop("comm_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			log_information("Corona now running the application");
 			log_information("This is an immensely modable system.");
 			log_information("config.json - for networking stuff in the next release.");
 			log_information("revolution_schema.json - the database configuration is here.");
