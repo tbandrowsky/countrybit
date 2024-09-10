@@ -44,16 +44,16 @@
               "view_style": {
                 "box_fill_brush": {
                   "class_name": "solid_brush",
-                  "color": "211012AA"
+                  "color": "313136"
                 },
                 "box_border_brush": {
                   "class_name": "solid_brush",
-                  "color": "21101277"
+                  "color": "313136"
                 },
                 "box_border_thickness": 8
               },
               "padding": {
-                "amount": 10,
+                "amount": 0,
                 "units": "pixels"
               },
               "content_alignment": "near",
@@ -208,19 +208,8 @@
                 {
                   "class_name": "column",
                   "box": {
-                    "width": "0.30 container",
-                    "height": "0.8 container"
-                  },
-                  "view_style": {
-                    "box_fill_brush": {
-                      "class_name": "solid_brush",
-                      "color": "211012AA"
-                    },
-                    "box_border_brush": {
-                      "class_name": "solid_brush",
-                      "color": "21101277"
-                    },
-                    "box_border_thickness": 8
+                    "width": "0.50 container",
+                    "height": "1.0 container"
                   },
                   "content_alignment": "near",
                   "content_cross_alignment": "near",
@@ -286,17 +275,6 @@
                   "box": {
                     "width": "1.0 remaining",
                     "height": "0.8 container"
-                  },
-                  "view_style": {
-                    "box_fill_brush": {
-                      "class_name": "solid_brush",
-                      "color": "211012AA"
-                    },
-                    "box_border_brush": {
-                      "class_name": "solid_brush",
-                      "color": "21101277"
-                    },
-                    "box_border_thickness": 8
                   },
                   "content_alignment": "near",
                   "content_cross_alignment": "near",
@@ -393,7 +371,7 @@
                     },
                     {
                       "class_name": "push_button",
-                      "text": "Save Event",
+                      "text": "Save",
                       "box": {
                         "width": {
                           "amount": 100,

@@ -1433,7 +1433,7 @@ namespace corona
 				throw std::logic_error("Not an object");
 			}
 			std::string search_key = _key;
-			if (_source.has_member(search_key)) {
+			if (_source.object() and _source.has_member(search_key)) {
 				json member = _source.get_member(search_key);
 				put_member(_key, member);
 			}

@@ -1,7 +1,7 @@
 {
   "styles": [
     {
-      "style_sheet_name": "Donation Finder Styles",
+      "style_sheet_name": "Candidate Research",
       "primary_font": "TW Cent MT, Century Gothic, Arial",
       "colors": {
         "Blue": [
@@ -109,7 +109,7 @@
               "position": 0.1
             },
             {
-              "color": "#051510",
+              "color": "#353540",
               "position": 1.0
             }
           ]
@@ -223,7 +223,7 @@
         "text_style": {
           "font_name": "Arial",
           "font_size": 17,
-          "underline": true
+          "underline": false
         },
         "shape_fill_brush": {
           "class_name": "solid_brush",
@@ -231,7 +231,7 @@
         },
         "box_fill_brush": {
           "class_name": "solid_brush",
-          "color": "00000044"
+          "color": "242429"
         }
       },
       "paragraph_style": {

@@ -105,18 +105,18 @@
           },
           "stops": [
             {
-              "color": "#050501",
+              "color": "#353531",
               "position": 0.1
             },
             {
-              "color": "#151510",
+              "color": "#353570",
               "position": 1.0
             }
           ]
         },
         "shape_fill_brush": {
           "class_name": "solid_brush",
-          "color": "00FF00"
+          "color": "000020"
         }
       },
       "caption_style": {

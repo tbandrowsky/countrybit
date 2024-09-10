@@ -18,8 +18,7 @@
         "City": "string",
         "State": "string",
         "Zip": "string"
-      },
-      "UniqueConstraintKey": [ "CandidateId" ]
+      }
     },
     {
       "ClassName": "Committees",
@@ -29,8 +28,7 @@
         "CommitteeId": "string",
         "CommitteeName": "string",
         "PoliticalParty": "string"
-      },
-      "UniqueConstraintKey": [ "CommitteeId" ]
+      }
     },
     {
       "ClassName": "CommitteeCandidates",
@@ -41,8 +39,7 @@
         "CandidateId": "string",
         "ElectionYear": "string",
         "LinkageId" :  "string"
-      },
-      "UniqueConstraintKey": [ "LinkageId" ]
+      }
     },
     {
       "ClassName": "Individuals",

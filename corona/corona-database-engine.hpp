@@ -2399,7 +2399,7 @@ private:
 			class_key.put_member("ClassName", class_name);
 			class_key.set_compare_order({ "ClassName" });
 			json class_exists = classes->get(class_key);
-			
+
 			bool changed_class = false;
 
 			if (compare_classes(class_exists, class_definition)) {
@@ -2414,6 +2414,7 @@ private:
 			if (checked["Success"]) {
 				scope_lock lock(classes_rw_lock);
 				json adjusted_class = checked["Data"];
+				adjusted_class.copy_member("Table", class_exists);
 				json_table class_data(this, { "ObjectId" });
 				relative_ptr_type ptr;
 				relative_ptr_type rpt;
