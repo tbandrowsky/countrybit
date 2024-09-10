@@ -37,8 +37,7 @@ namespace corona
 			topic_waiters.erase(_topic);
 		}
 
-		json								admin_user;
-		json								admin_user_token;
+		json								local_db_config;
 
 	public:
 
@@ -128,7 +127,6 @@ namespace corona
 			pages_config_file_name = _config_file_name_base + "pages.json";
 			styles_config_file_name = _config_file_name_base + "styles.json";
 			database_file_name = app->get_data_filename("corona.cdb");
-			user_file_name = app->get_data_filename("user.json");
 
 			database_schema_mon.file_name = database_schema_file_name;
 			database_config_mon.file_name = database_config_file_name;
@@ -140,37 +138,29 @@ namespace corona
 				db_file = app->open_file_ptr(database_file_name, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(this, db_file);
 
-				json temp;
-				if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
-					local_db->apply_config(temp);
+				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {
+					local_db->apply_config(local_db_config);
 				}
 
 				json create_database_response = local_db->create_database();
 
-				// when you create the database you get back your user object
-				// to login to it.
-				admin_user = create_database_response["Data"];
-				admin_user_token = admin_user["Token"];
-
-				if (admin_user.object()) {
-					std::string suser_json = admin_user.to_json_typed();
-					file user_file = app->open_file(user_file_name, file_open_types::create_always);
-					user_file.write(suser_json);
-				}
-
 				relative_ptr_type result = database_config_mon.poll(app.get());
 				ready_for_polling = true;
+
+				json token = get_local_token();
 			} 
 			else 
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::open_existing);
 				local_db = std::make_shared<corona_database>(this, db_file);
+
+				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {
+					local_db->apply_config(local_db_config);
+				}
+
 				local_db->open_database(0);
-				std::string suser_json;
-				file user_file = app->open_file(user_file_name, file_open_types::open_existing);
-				suser_json = user_file.read();
-				admin_user = jp.parse_object(suser_json);
-				admin_user_token = admin_user["Token"];
+
+				json token = get_local_token();
 
 				relative_ptr_type result = database_config_mon.poll(app.get());
 				ready_for_polling = true;
@@ -187,7 +177,7 @@ namespace corona
 			log_information("revolution_styles.json -  similar to CSS, lets you change colors and fonts.");
 			log_information("revolution_pages.json -  forms, plus the commands back to the engine.");
 			log_information("                         edit this guy to change the way the app works.");
-			log_information("user token and the database are in");
+			log_information("the database is in");
 			log_information("username/appdata/roaming/appname");
 			log_information("The schema, styles and pages files can be edited live.");
 			log_information("We are cleared for departure.");
@@ -382,7 +372,8 @@ namespace corona
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user_token);
+			json token = get_local_token();
+			request.put_member("Token", token);
 			request.put_member("Data", user_information);
 			json j =  local_db->create_user(request);
 			if (j.error())
@@ -404,15 +395,30 @@ namespace corona
 			return response;
 		}
 
+		json get_local_token()
+		{
+			json_parser jp;
+			json login_request = jp.create_object();
+			json server_config = local_db_config["Server"];
+			std::string user_name = server_config["DefaultUserName"];
+			std::string password = server_config["DefaultUserPassword"];
+			login_request.put_member("UserName", user_name);
+			login_request.put_member("Password", password);
+			json result = local_db->login_user(login_request);
+			return result["Token"];
+		}
+
 		virtual json  create_object(std::string class_name)
 		{
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("create_object", class_name, dt);
+
+			json token = get_local_token();
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user_token);
+			request.put_member("Token", token);
 			json data = jp.create_object();
 			data.put_member("ClassName", class_name);
 			request.put_member("Data", data);
@@ -430,9 +436,11 @@ namespace corona
 			dt = date_time::now();
 			log_command_start("put_object", object_information["ClassName"], dt);
 			timer tx;
+			json token = get_local_token();
+
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user_token);
+			request.put_member("Token", token);
 			request.put_member("Data", object_information);
 			json response =  local_db->put_object(request);
 			if (response.error())
@@ -450,7 +458,8 @@ namespace corona
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user_token);
+			json token = get_local_token();
+			request.put_member("Token", token);
 			request.put_member("Data", object_information);
 			json response =  local_db->get_object(request);
 			if (response.error())
@@ -468,7 +477,8 @@ namespace corona
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user_token);
+			json token = get_local_token();
+			request.put_member("Token", token);
 			request.put_member("Data", object_information);
 			json response =  local_db->put_object(request);
 			if (response.error())
@@ -487,7 +497,8 @@ namespace corona
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user_token);
+			json token = get_local_token();
+			request.put_member("Token", token);
 			request.put_member("Data", pop_info);
 			json response =  local_db->put_object(request);
 			if (response.error())
@@ -505,7 +516,8 @@ namespace corona
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user_token);
+			json token = get_local_token();
+			request.put_member("Token", token);
 			request.put_member("Data", query_information);
 			json response =  local_db->query_class(request);
 			if (response.error())
@@ -528,7 +540,8 @@ namespace corona
 			table_data td;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user_token);
+			json token = get_local_token();
+			request.put_member("Token", token);
 			request.put_member("Data", query_information);
 			json table = query_information["Table"];
 			td.put_json(table);
@@ -550,7 +563,8 @@ namespace corona
 			list_data ld;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user_token);
+			json token = get_local_token();
+			request.put_member("Token", token);
 			request.put_member("Data", query_information);
 			json lst = query_information["List"];
 			ld.put_json(lst);

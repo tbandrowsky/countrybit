@@ -237,7 +237,7 @@ namespace corona
 				source.top = 0;
 				source.bottom = bounds.h;
 				source.right = bounds.w;
-				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_LINEAR, &source);
+				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC, &source);
 			}
 			for (auto &child : children)
 			{

@@ -2003,8 +2003,8 @@ namespace corona
 				source.left = 0;
 				source.top = 0;
 				source.bottom = bounds.h;
-				source.right = bounds.w;
-				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_LINEAR, &source);
+				source.right = bounds.w;				
+				_dest->DrawBitmap(bm, &dest, 1.0);
 			}
 			for (auto& child : children)
 			{

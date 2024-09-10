@@ -27,7 +27,7 @@
               "class_name": "caption_bar",
               "corporate_name": "country video games",
               "image_file": "cockade.png",
-              "title_name": "Candidate Research",
+              "title_name": "CANDIDATE RESEARCH",
               "subtitle_name": "Country Video Games",
               "title_start": "0.28 container",
               "box": {
@@ -246,6 +246,16 @@
                           {
                             "json_field_name": "FullName",
                             "label_text": "Full Name",
+                            "width": 250
+                          },
+                          {
+                            "json_field_name": "City",
+                            "label_text": "City",
+                            "width": 150
+                          },
+                          {
+                            "json_field_name": "State",
+                            "label_text": "State",
                             "width": 150
                           },
                           {

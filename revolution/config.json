@@ -3,7 +3,7 @@
     "ListenPoint": "http://localhost:5678/corona",
     "DefaultUserName": "system",
     "DefaultUserPassword": "systempassword",
-    "DefaultUserEmailAddress": "willieotis@countryvideogames.com",
+    "DefaultUserEmailAddress": "noemail@nowhere.com",
     "DefaultGuestTeam": "Guests"
   }
 }

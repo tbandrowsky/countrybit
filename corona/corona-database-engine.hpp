@@ -105,9 +105,8 @@ namespace corona
 			{ "function", true }
 		};
 
-		const std::string auth_login_user = "auth_login_user";
-		const std::string auth_create_user = "auth_create_user";
 		const std::string auth_general = "auth-general";
+		const std::string auth_system = "auth-system";
 		
 		/*
 		* authorizations in tokens, methods and progressions
@@ -460,40 +459,6 @@ namespace corona
 
 			response =  create_class(R"(
 {	
-	"BaseClassName" : "SysObject",
-	"ClassName" : "SysLogin",
-	"ClassDescription" : "A login of a user",
-	"Fields" : {			
-			"UserName" : "string",
-			"Password" : "string",
-			"ConfirmCode" : "string",
-			"LoginState" : "string",
-			"CurrentObjectId" : "int64",
-			"Status" : "string",
-			"ConfirmationCode" : "string",
-			"Password" : "string"
-	}
-}
-)");
-
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysLogin put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test =  classes->get(R"({"ClassName":"SysLogin"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysLogin after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			created_classes.put_member("SysLogin", true);
-
-			response =  create_class(R"(
-{	
 	"ClassName" : "SysPermission",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Permissions flags",
@@ -701,6 +666,8 @@ namespace corona
 			new_user_data.put_member("ClassName", "SysUser");
 			new_user_data.put_member("UserName", default_user);
 			new_user_data.put_member("Email", default_email_address);
+			new_user_data.put_member("Password1", default_password);
+			new_user_data.put_member("Password2", default_password);
 
 			new_user_request = create_system_request(new_user_data);
 			json new_user_result =  create_user(new_user_request);
@@ -1208,7 +1175,7 @@ private:
 			std::string authorization = token["Authorization"];
 			std::string user = token["UserName"];
 
-			if (authorization == "System" and user == "System")
+			if (authorization == auth_system and user == default_user)
 			{
 				return true;
 			}
@@ -1352,13 +1319,14 @@ private:
 
 			// extract the user key from the token and get the user object
 			json user_key = get_message_user(_token);
-			if ((std::string)user_key["UserName"] == "System") {
+			std::string user_name = user_key["UserName"];
+
+			if (user_name == default_user) 
+			{
 				return true;
 			}
 
-			user_key.put_member("ClassName", "SysUser");
-
-			user =  acquire_object(user_key);
+			user =  get_user(user_name);
 			if (user.empty()) {
 				return false;
 			}
@@ -1372,7 +1340,7 @@ private:
 
 				json team =  get_team(item);
 
-				if (team.is_member("ClassName", "Team")) {
+				if (team.is_member("ClassName", "SysTeam")) {
 					json team_grants = team["Grants"];
 
 					for (int i = 0; i < team_grants.size(); i++)
@@ -1384,69 +1352,6 @@ private:
 							bool has_permissions = (bool)grant["Permissions"][_permission];
 							if (has_permissions) {
 								granted = has_permissions;
-								return granted;
-							}
-						}
-					}
-				}
-			}
-			return granted;
-		}
-
-		bool check_object_key_permission(
-			json _message,
-			std::string _permission)
-		{
-
-			bool granted = false;
-
-			json_parser jp;
-			json user;
-
-			json object_key = _message["Data"];
-
-			// extract the user key from the token and get the user object
-			json user_key = get_message_user(_message);
-			user_key.put_member("ClassName", "SysUser");
-
-			if ((std::string)user_key["UserName"] == "System") {
-				return true;
-			}
-
-			user =  acquire_object(user_key);
-			if (user.empty()) {
-				return false;
-			}
-
-			json teams_list = user["Teams"];
-
-			for (int i = 0; i < teams_list.size(); i++)
-			{
-				json item = teams_list.get_element(i);
-
-				json team =  get_team(item);
-
-				if (team.is_member("ClassName", "SysTeam")) 
-				{
-					json team_grants = team["Grants"];
-
-					for (int i = 0; i < team_grants.size(); i++)
-					{
-						json grant = team_grants.get_element(i);
-
-						if (grant.is_member("ClassName", "SysObjectGrant"))
-						{
-							json filter = grant["ObjectFilter"];
-
-							json obj =  acquire_object(object_key);
-
-							bool has_matching_key = filter.compare(obj);
-
-							bool has_permissions = (bool)grant["Permissions"][_permission];
-
-							granted = has_permissions or has_matching_key;
-
-							if (granted) {
 								return granted;
 							}
 						}
@@ -1472,7 +1377,7 @@ private:
 			json user_key = get_message_user(_request);
 			user_key.put_member("ClassName", "SysUser");
 
-			if ((std::string)user_key["UserName"] == "System") {
+			if ((std::string)user_key["UserName"] == default_user) {
 				return true;
 			}
 
@@ -1502,7 +1407,7 @@ private:
 						{
 							json filter = grant["ObjectFilter"];
 
-							bool has_matching_key = filter.compare(object);
+							bool has_matching_key = filter.compare(object) == 0;
 
 							bool has_permissions = (bool)grant["Permissions"][_permission];
 
@@ -1603,6 +1508,7 @@ private:
 				default_email_address = server["DefaultUserEmailAddress"];
 				default_guest_team = server["DefaultGuestTeam"];
 			}
+
 			system_monitoring_interface::global_mon->log_job_stop("apply_config", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		}
@@ -1996,7 +1902,6 @@ private:
 			return header_location;
 		}
 
-		// this creates a user account, using an email and a phone number to send a confirmation code to.
 		json create_user(json create_user_request)
 		{
 			timer method_timer;
@@ -2012,7 +1917,16 @@ private:
 			json data = create_user_request["Data"];
 
 			std::string user_name = data["UserName"];
-			std::string user_class = data["ClassName"];
+			std::string user_password1 = data["Password1"];
+			std::string user_password2 = data["Password2"];
+			std::string user_class = "SysUser";
+
+			if (user_password1 != user_password2) 
+			{
+				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				response = create_response(create_user_request, false, "Passwords don't match", data, method_timer.get_elapsed_seconds());
+				return response;
+			}
 
 			bool user_exists = true;
 			int attempt_count = 0;
@@ -2038,38 +1952,26 @@ private:
 
 			} while (user_exists);
 
-			std::string hashed_pw = crypter.hash(data);
+			std::string hashed_pw = crypter.hash(user_password1);
 
-			json create_user_params = data;
+			json create_user_params = jp.create_object();
 			create_user_params.put_member("ClassName", user_class);
 			create_user_params.put_member("UserName", user_name);
+			create_user_params.put_member("Password", hashed_pw);
+			create_user_params.copy_member("FirstName", data);
+			create_user_params.copy_member("LastName", data);
+			create_user_params.copy_member("Email", data);
+			create_user_params.copy_member("Mobile", data);
+			create_user_params.copy_member("Street", data);
+			create_user_params.copy_member("City", data);
+			create_user_params.copy_member("State", data);
+			create_user_params.copy_member("Zip", data);
+
 			json create_object_request = create_request(create_user_request, create_user_params);
 			json user_result =  put_object(create_object_request);
 			if (user_result["Success"]) {
 				json new_user_wrapper = user_result["Data"];
-				if (new_user_wrapper.array() and new_user_wrapper.size()> 0) {
-					json new_user = new_user_wrapper.get_element(0);
-
-					json create_login_params = jp.create_object();
-					create_login_params.put_member("ClassName", "SysLogin");
-					create_login_params.put_member("Password", hashed_pw);
-					create_login_params.put_member("UserName", user_name);
-					create_login_params.put_member("LoginState", "UserCreated");
-					if (new_user.has_member("ObjectId")) {
-						db_object_id_type objid = new_user["ObjectId"].get_int64();
-						create_login_params.put_member("CurrentObjectId", objid);
-					}
-					json put_object_request = create_request(create_user_request, create_login_params);
-					json put_response =  put_object(put_object_request);
-
-					bool succeeded = (bool)put_response["Success"];
-					if (succeeded)
-					{
-						data.put_member("Password", hashed_pw);
-						response = create_response(user_name, auth_login_user, true, "User created", data, method_timer.get_elapsed_seconds());
-					}
-				} else 
-					response = create_response(user_name, auth_login_user, false, "User created", data, method_timer.get_elapsed_seconds());
+				response = create_response(user_name, auth_general, true, "User created", data, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
@@ -2100,37 +2002,20 @@ private:
 			std::string user_password = data["Password"];
 			std::string hashed_user_password;
 
-			json user_key = jp.create_object();
-			user_key.put_member("UserName", user_name);
-			user_key.put_member("ClassName", "SysLogin");
-			json gor = create_request(_login_request, user_key);		
+			std::string hashed_pw = crypter.hash(user_password);
 
-			json user_login =  get_object(gor);
+			json users = get_user(user_name);
 
-			/*   
-			
-			consider checking that when a user is a new user, you cannot log into it.
+			json user = users.get_first_element();
+			std::string pw = user["Password"];
 
-			create_login_params.put_member("LoginState", "UserCreated");  */
-
-			if (user_login["Success"]) 
+			if (pw == hashed_pw)
 			{
-				json ul = user_login["Data"];
-				std::string lstest = ul["LoginState"];
-				std::string existing_hashed_password = ul["Password"];
-				if (hashed_user_password == existing_hashed_password)
-				{
-					ul.put_member("LoginState", "PasswordAccepted");
-					json porq = create_request(_login_request, ul);
-					 put_object(porq);
-
-					data.copy_member("ObjectId", ul);
-
-					response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
+				if (user_name == default_user and default_user.size() > 0) {
+					response = create_response(user_name, auth_system, true, "Ok", data, method_timer.get_elapsed_seconds());
 				}
-				else 
-				{
-					response = create_response(_login_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
+				else {
+					response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
 				}
 			}
 			else
@@ -2861,7 +2746,7 @@ private:
 				return response;
 			}
 
-			if (not check_object_key_permission(delete_object_request, "Delete")) {
+			if (not check_object_permission(delete_object_request, "Delete")) {
 				json result = create_response(delete_object_request, false, "Cannot delete object", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
@@ -2950,8 +2835,8 @@ private:
 
 			json payload = jp.create_object();
 			json token = jp.create_object();
-			token.put_member("UserName", "System");
-			token.put_member("Authorization", "System");
+			token.put_member("UserName", default_user);
+			token.put_member("Authorization", auth_system);
 			date_time expiration = date_time::utc_now() + this->token_life;
 			token.put_member("TokenExpires", expiration);
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
