@@ -24,7 +24,7 @@
     <ClInclude Include="app_guitar.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="app_revolution.hpp">
+    <ClInclude Include="app_candidate.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="app_aura.hpp">
@@ -67,10 +67,9 @@
     </CopyFileToFolders>
     <CopyFileToFolders Include="reparations_schema.json" />
     <CopyFileToFolders Include="config.json" />
-    <CopyFileToFolders Include="revolution_pages.json" />
-    <CopyFileToFolders Include="revolution_schema.json" />
-    <CopyFileToFolders Include="revolution_styles.json" />
-    <CopyFileToFolders Include="itcont.csv" />
+    <CopyFileToFolders Include="candidate_pages.json" />
+    <CopyFileToFolders Include="candidate_schema.json" />
+    <CopyFileToFolders Include="candidate_styles.json" />
     <CopyFileToFolders Include="ccl.csv" />
     <CopyFileToFolders Include="cm.csv" />
     <CopyFileToFolders Include="cn.csv" />

@@ -1,5 +1,5 @@
 {
-  "SchemaName": "Country Video Games Donation Finder",
+  "SchemaName": "Country Video Games Candidate",
   "SchemaDescription": "This schema creates a simple searchable database using FEC donations as a source.",
   "SchemaVersion": "1.0",
   "SchemaAuthors": [ "TJ Bandrowsky" ],

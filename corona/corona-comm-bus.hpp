@@ -645,12 +645,12 @@ namespace corona
 			});
 		}
 
-		virtual void select_page(std::string _page, std::string _target_frame, std::string _frame_contents_page, json _obj)
+		virtual void select_page(std::string _page, std::string _target_frame, std::string _frame_contents_page, std::string _form_to_load, json _obj)
 		{
 			date_time dt = date_time::now();
 			log_command_start("select_page", _page, dt);
 
-			run_ui([this, _page, _target_frame, _frame_contents_page, _obj]() ->void {
+			run_ui([this, _page, _target_frame, _frame_contents_page, _form_to_load, _obj]() ->void {
 				timer tx;
 				if (not presentation_layer->is_current_page(_page)) {
 					presentation_layer->select_page(_page);
@@ -668,6 +668,12 @@ namespace corona
 						}
 						if (not cb->set_items(_obj)) {
 							cb->set_data(_obj);
+						}
+						if (not _form_to_load.empty()) {
+							control_base* formx = find_control(_form_to_load);
+							if (formx) {
+								formx->set_data(_obj);
+							}
 						}
 						presentation_layer->onResize();
 					}

@@ -1,13 +1,13 @@
-#define APPLICATION_REVOLUTION 1
+#define APPLICATION_CANDIDATE 1
 #define APPLICATION_GUITAR 2
 #define APPLICATION_AURA 3
 #define APPLICATION_REPARATIONS 4
 #define APPLICATION_DONATION_FINDER 5
-#define APPLICATION_ID APPLICATION_REVOLUTION
+#define APPLICATION_ID APPLICATION_CANDIDATE
 
-#if APPLICATION_ID == APPLICATION_REVOLUTION
-#include "app_revolution.hpp"
-#define application_function(a,b) corona::run_revolution_application(a,b);
+#if APPLICATION_ID == APPLICATION_CANDIDATE
+#include "app_candidate.hpp"
+#define application_function(a,b) corona::run_candidate_application(a,b);
 #endif
 
 #if APPLICATION_ID == APPLICATION_AURA
