@@ -573,23 +573,35 @@ namespace corona
 		relative_ptr_type find_first_gte(KEY _key)
 		{
 			relative_ptr_type found = null_row, last_link;
+			json_parser jp;
 
-			uint64_t key_hash = _key.get_weak_ordered_hash(key_fields);
+			json table_key = jp.create_object();
+
+			for (auto key : key_fields) {
+				if (_key.has_member(_key)) {
+					table_key.copy_member(key, _key);
+				}
+				else {
+					table_key = jp.create_object();
+				}
+			}
+
+			uint64_t key_hash = table_key.get_weak_ordered_hash(key_fields);
 
 			json_key_node x = get_header();
 
-			if (_key.empty() or !_key.keys_compatible(key_fields)) {
+			if (table_key.empty()) {
 				return x.foward[0];
 			}
 
 			for (int k = table_header.data.level; k >= 0; k--)
 			{
 				int comp = -1;
-				relative_ptr_type nl = find_advance(x, k, _key, key_hash, &found);
+				relative_ptr_type nl = find_advance(x, k, table_key, key_hash, &found);
 				while (nl != null_row)
 				{
 					x.read(fb, nl);
-					nl = find_advance(x, k, _key, key_hash, &found);
+					nl = find_advance(x, k, table_key, key_hash, &found);
 				}
 			}
 
@@ -1018,6 +1030,7 @@ namespace corona
 				json_key_node jkn = get_key_node(location);
 				json_data_node node = jkn.get_node(fb);
 				int comparison;
+
 				if (_key_fragment.empty())
 					comparison = 0;
 				else 

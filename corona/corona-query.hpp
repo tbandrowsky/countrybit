@@ -4,6 +4,7 @@
 
 namespace corona
 {
+
 	class query_context_base
 	{
 		json froms;

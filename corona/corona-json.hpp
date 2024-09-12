@@ -3384,6 +3384,10 @@ namespace corona
 		}
 		else {
 			std::string temp = (std::string)*this;
+			std::transform(temp.begin(), temp.end(), temp.begin(),
+				[](unsigned char c) { return std::tolower(c); });
+			std::transform(_text.begin(), _text.end(), _text.begin(),
+				[](unsigned char c) { return std::tolower(c); });
 			if (temp.find(_text) != std::string::npos) {
 				return true;
 			}

@@ -52,6 +52,7 @@ namespace corona
 	public:
 		int64_t								object_id;
 		relative_ptr_type					classes_location;
+		relative_ptr_type					indexes_location;
 		iarray<list_block_header, 62>		free_lists;
 
 		corona_db_header_struct() 
@@ -75,10 +76,7 @@ namespace corona
 			auto r = write_piece(_file, offset, size);
 			return r;
 		}
-
-
 	};
-
 
 	class corona_database : public file_block
 	{
@@ -136,6 +134,7 @@ namespace corona
 		lockable header_rw_lock;
 
 		std::shared_ptr<json_table> classes;
+		std::shared_ptr<json_table> indexes;
 
 	public:
 
@@ -286,6 +285,7 @@ namespace corona
 
 			header.data.object_id = 1;
 			header.data.classes_location =  classes->create();
+			header.data.indexes_location = indexes->create();
 
 			created_classes = jp.create_object();
 
@@ -1215,10 +1215,9 @@ private:
 			json class_key = _object_key.extract({ "ClassName" } );
 			json class_def;
 
-
 			class_key.set_compare_order({ "ClassName" });
 			class_def = classes->get(class_key);
-			
+
 			if (not class_def.empty()) 
 			{
 				if (class_def.has_member("Table")) {
@@ -1226,6 +1225,9 @@ private:
 					json_table class_data(this, { "ObjectId" });
 					class_data.open(rpt);
 					obj = class_data.get(_object_key);
+					if (_object_key.is_member("GetChildren", true)) {
+						get_children(class_def, obj);
+					}
 					return obj;
 				}
 			}
@@ -1236,12 +1238,13 @@ private:
 		json select_object(json _key)
 		{
 			json_parser jp;
-			json obj, class_def;
+			json obj, class_def, index_def;
 
 			_key.set_natural_order();
 
 			json class_key = _key.extract({ "ClassName" } );
 			class_def = classes->get(class_key);
+			index_def = indexes->get(class_key);
 
 			if (not class_def.empty())
 			{
@@ -1249,14 +1252,104 @@ private:
 					relative_ptr_type rpt = class_def["Table"];
 					json_table class_data(this, { "ObjectId" });
 					class_data.open(rpt);
-					obj = class_data.select([&_key](int _index, json& _j)
-						{
-							json result;
-							if (_key.compare(_j) == 0)
-								result = _j;
-							return result;
 
-						});
+					// Now, if there is an index set specified, let's go see if we can find one and use it 
+					// rather than scanning the table
+
+					if (index_def.object()) 
+					{
+						std::string matched_index_name;
+						int max_matched_key_count = 0;
+						std::shared_ptr<std::vector<std::string>> matched_index_keys = nullptr;
+
+						auto indeces = index_def.get_members();
+
+						// go through each index
+
+						for (auto index_pair : indeces)
+						{
+							json index = index_pair.second;
+							json key_fields = index["Key"];
+
+							// and here, let's go see if all the keys except the object_id, hit the filter.
+							// if they do, we can use this index,
+							// but, we want to use the index that matches the most keys
+							//
+							int matched_key_count = 0;
+
+							std::shared_ptr<std::vector<std::string>> index_keys = std::make_shared< std::vector<std::string>>();
+
+							for (auto key_field : key_fields)
+							{
+								std::string name = key_field;
+
+								index_keys->push_back(name);
+
+								if (name == "ObjectId")
+									continue;
+
+								if (not _key.has_member(name))
+								{
+									matched_key_count = 0;
+								}
+								else
+								{
+									matched_key_count++;
+								}
+							}
+
+							if (matched_key_count > max_matched_key_count)
+							{
+								max_matched_key_count = matched_key_count;
+								matched_index_name = index_pair.first;
+								matched_index_keys = index_keys;
+							}
+						}
+
+						// so now, if we have an index, we can use it.
+						if (max_matched_key_count > 0) 
+						{
+							json index_to_use = index_def[matched_index_name];
+							// it's stupid because, the json table depends on the keys being constructed with it.
+							int64_t location = index_to_use["Location"];
+							json_table index_table(this, *matched_index_keys.get());
+							index_table.open(location);
+
+							obj = jp.create_array();
+							json object_key = jp.create_object();
+							object_key.copy_member("ClassName", class_key);
+
+							index_table.select(_key, [&object_key, &obj, &class_data](int _idx, json& _item) -> json {
+								object_key.copy_member("ObjectId", _item);
+								json objfound = class_data.get(object_key);
+								if (not objfound.empty()) {
+									obj.push_back(objfound);
+								}
+							});
+						}
+						else 
+						{
+							obj = class_data.select([&_key](int _index, json& _j)
+								{
+									json result;
+									if (_key.compare(_j) == 0)
+										result = _j;
+									return result;
+
+								});
+						}
+					}
+					else 
+					{
+						obj = class_data.select([&_key](int _index, json& _j)
+							{
+								json result;
+								if (_key.compare(_j) == 0)
+									result = _j;
+								return result;
+
+							});
+					}
 				}
 			}
 
@@ -1484,7 +1577,9 @@ private:
 			file_block(_database_file)
 		{
 			std::vector<std::string> class_key_fields({ "ClassName" });
+			std::vector<std::string> indexes_key_fields({ "ClassName" });
 			classes = std::make_shared<json_table>(this, class_key_fields);
+			indexes = std::make_shared<json_table>(this, indexes_key_fields);
 			token_life = time_span(1, time_models::hours);	
 		}
 
@@ -2239,7 +2334,6 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_start("put_class", "start", start_time, __FILE__, __LINE__);
 
-
 			std::vector<std::string> missing_elements;
 			if (not put_class_request.has_members(missing_elements, { "Token", "Data" })) {
 				std::string error_message;
@@ -2277,8 +2371,6 @@ private:
 				return result;
 			}
 
-			scope_lock lock_one(classes_rw_lock);
-
 			std::string class_name = class_definition["ClassName"];
 			json class_key = jp.create_object();
 			class_key.put_member("ClassName", class_name);
@@ -2300,6 +2392,7 @@ private:
 				scope_lock lock(classes_rw_lock);
 				json adjusted_class = checked["Data"];
 				adjusted_class.copy_member("Table", class_exists);
+				adjusted_class.copy_member("Indeces", class_exists);
 				json_table class_data(this, { "ObjectId" });
 				relative_ptr_type ptr;
 				relative_ptr_type rpt;
@@ -2344,6 +2437,61 @@ private:
 							}
 						}
 					}
+
+					if (adjusted_class.has_member("Children")) {
+						json children = adjusted_class["Children"];
+						if (children.array()) {
+							for (auto child : children) {
+								std::string name = child["Name"];
+								if (not name.empty()) {
+									json froms = child["From"];
+									if (froms.array()) {
+										for (auto fromc : froms) {
+											std::string sep = "_";
+											std::string index_name = name;
+											json index_class_name = fromc["ClassName"];
+											json jindex_key = fromc["On"];
+											std::vector<std::string> index_definition;
+											for (auto key_component : jindex_key) {
+												index_name += sep;
+												index_name += key_component;
+												index_definition.push_back(key_component);
+											}
+											json index_class_key = jp.create_object();
+											index_class_key.put_member("ClassName", index_class_name);
+											json index = indexes->get(index_class_key);
+											if (index.empty()) {
+												index = index_class_key.clone();
+											}
+											json existing_index = index[index_name];
+											// TODO: This means you have to rebuild the index for existing data
+											// And, you have to clean up the old one.
+											/*
+												the index is structured like
+
+												{
+													"ClassName" : "IndexedClassName"
+													"Key" : [ "field0", "field1"..."fieldn' ]
+													"Location" : int64_t 
+												}											
+											
+											*/
+											if (existing_index.empty()) {
+												existing_index = jp.create_object();
+												jindex_key.push_back("ObjectId");
+												existing_index.put_member("Key", jindex_key);
+												json_table index_table(this, index_definition);
+												relative_ptr_type index_location = index_table.create();
+												existing_index.put_member_i64("Location", index_location);
+												index.put_member(index_name, existing_index);
+												indexes->put(index);
+											}
+										}
+									}
+								}
+							}
+						}
+					}
 					adjusted_class.put_member("ClassChanged", changed_class);
 					result = create_response(check_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
 				}
@@ -2360,7 +2508,7 @@ private:
 			return result;
 		}
 
-		json update(json query_class_request, json update_json)
+		json query_class_base(json query_class_request, json update_json)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2481,7 +2629,7 @@ private:
 			json_parser jp;
 			json jx; // not creating an object, leaving it empty.  should work with empty objects
 			// or with an object that has no members.
-			return update(query_class_request, jx);
+			return query_class_base(query_class_request, jx);
 		}
 
 		json create_object(json create_object_request)
@@ -2656,8 +2804,6 @@ private:
 
 				auto classes_and_data = grouped_by_class_name.get_members();
 
-				std::vector<json_table *> tables;
-
 				for (auto class_pair : classes_and_data)
 				{
 					json class_key = jp.create_object();
@@ -2665,12 +2811,35 @@ private:
 					json class_def = classes->get(class_key);
 
 					if (class_def.has_member("Table")) {
+						// now that we have our class, we can go ahead and open the storage for it
 						json empty;
 						relative_ptr_type rpt = class_def["Table"];
 						json_table *class_data = new json_table(this, { "ObjectId" });
 						class_data->open(rpt);
+						// and then write the data in a batch
 						class_data->put_array(class_pair.second);
-						tables.push_back(class_data);
+						// update the indexes
+						json indeces = indexes->get(class_key);
+						if (indeces.object()) {
+							auto class_indexes = indeces.get_members();
+							for (auto class_index : class_indexes) {
+								json index = class_index.second;
+								json fields = index["Key"];
+								relative_ptr_type location = index["Location"];
+								if ((location > 0) and (not fields.empty())) {
+									std::vector<std::string> index_def;
+									for (auto field : fields) {
+										index_def.push_back(field);
+									}
+									json indexed_objects = class_pair.second.map([&index_def](std::string _member, int _index, json& _item) -> json {
+										return _item.extract(index_def);
+										});
+									json_table index_to_update(this, index_def);
+									index_to_update.open(location);
+									index_to_update.put_array(indexed_objects);
+								}
+							}
+						}
 					}
 				}
 
@@ -2688,6 +2857,64 @@ private:
 			commit();
 
 			return result;
+		}
+
+		void get_child(json _parent, json& _extract_results, std::string _extract_name, int _index, json _from_list)
+		{
+			json_parser jp;
+
+			if (_index >= _from_list.size())
+				return;
+
+			json from_item = _from_list.get_element(_index);
+
+			if (from_item.object()) 
+			{
+				json on_fields = from_item["On"];
+
+				if (on_fields.array()) {
+					json key = jp.create_object();
+					std::string class_name = from_item["ClassName"];
+
+					key.put_member("ClassName", class_name);
+					for (int i = 0; i < on_fields.size(); i++) {
+						std::string on_field = on_fields.get_element(i);
+						key.copy_member(on_field, _parent);
+					}
+
+					json children = select_object(key);
+					for (auto child : children) {
+						for (int i = 0; i < on_fields.size(); i++) {
+							std::string on_field = on_fields.get_element(i);
+							child.copy_member(on_field, _parent);
+						}
+						get_child(child, _extract_results, _extract_name, _index + 1, _from_list);
+						if (_extract_name == class_name) {
+							_extract_results.push_back(child);
+						}
+					}
+				}
+			}
+		}
+
+		json get_children(json _class_def, json _object)
+		{
+			json_parser jp;
+			json results;
+			if (_class_def.has_member("Children")) {
+				json children = _class_def["Children"];
+				for (auto child : children) {
+					std::string extract_name = "Committees";
+					json context = _object;
+					json froms = child["Froms"];
+					if (froms.array()) {
+						json extract_array = jp.create_array();
+						get_child(_object, extract_array, extract_name, 0, froms);
+						_object.put_member(extract_name, extract_array);
+					}
+				}
+			}
+			return _object;
 		}
 
 		json get_object(
