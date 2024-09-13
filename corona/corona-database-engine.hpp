@@ -78,6 +78,327 @@ namespace corona
 		}
 	};
 
+	class validation_error
+	{
+	public:
+		std::string class_name;
+		std::string field_name;
+		std::string message;
+		std::string file_name;
+		int			line_number;
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("ClassName", class_name);
+			_dest.put_member("FieldName", field_name);
+			_dest.put_member("Message", message);
+			_dest.put_member("FileName", file_name);
+			_dest.put_member("LineNumber", line_number);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			class_name = _src["ClassName"];
+			field_name = _src["FieldName"];
+			message = _src["Message"];
+			file_name = _src["FileName"];
+			line_number = _src["LineNumber"];
+		}
+	};
+
+	class field_options_base
+	{
+	public:
+		bool required;
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("required", required);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			required = (bool)_src["required"]);
+		}
+	};
+
+	class array_field_options : public field_options_base
+	{
+	public:
+		int maximum_length;
+		int minimum_length;
+		std::string match_pattern;
+
+		virtual void get_json(json& _dest)
+		{
+			field_options_base::get_json(_dest);
+			_dest.put_member_i64("maximum_length", maximum_length);
+			_dest.put_member_i64("mininum_length", minimum_length);
+			_dest.put_member("match_pattern", match_pattern);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_options_base::put_json(_src);
+			minimum_length = _src["mininum_length"];
+			maximum_length = _src["maximum_length"];
+			match_pattern = _src["match_pattern"];
+		}
+	};
+
+	class object_field_options : public field_options_base
+	{
+	public:
+		int maximum_length;
+		int minimum_length;
+		std::string match_pattern;
+
+		virtual void get_json(json& _dest)
+		{
+			field_options_base::get_json(_dest);
+			_dest.put_member_i64("maximum_length", maximum_length);
+			_dest.put_member_i64("mininum_length", minimum_length);
+			_dest.put_member("match_pattern", match_pattern);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_options_base::put_json(_src);
+			minimum_length = _src["mininum_length"];
+			maximum_length = _src["maximum_length"];
+			match_pattern = _src["match_pattern"];
+		}
+	};
+
+	class string_field_options : public field_options_base
+	{
+	public:
+		int maximum_length;
+		int minimum_length;
+		std::string match_pattern;
+
+		virtual void get_json(json& _dest)
+		{
+			field_options_base::get_json(_dest);
+			_dest.put_member_i64("maximum_length", maximum_length);
+			_dest.put_member_i64("mininum_length", minimum_length);
+			_dest.put_member("match_pattern", match_pattern);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_options_base::put_json(_src);
+			minimum_length = _src["mininum_length"];
+			maximum_length = _src["maximum_length"];
+			match_pattern = _src["match_pattern"];
+		}
+	};
+
+	class int64_field_options : public field_options_base
+	{
+	public:
+		int64_t min_value;
+		int64_t max_value;
+
+		virtual void get_json(json& _dest)
+		{
+			field_options_base::get_json(_dest);
+			_dest.put_member_i64("min_value", min_value);
+			_dest.put_member_i64("max_value", max_value);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_options_base::put_json(_src);
+			min_value = (int64_t)_src["min_value"];
+			max_value = (int64_t)_src["max_value"];
+		}
+	};
+
+	template <typename scalar_type> class general_field_options : public field_options_base
+	{
+	public:
+		scalar_type min_value;
+		scalar_type max_value;
+
+		virtual void get_json(json& _dest)
+		{
+			field_options_base::get_json(_dest);
+			_dest.put_member("min_value", min_value);
+			_dest.put_member("max_value", max_value);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_options_base::put_json(_src);
+			min_value = (scalar_type)_src["min_value"];
+			max_value = (scalar_type)_src["max_value"];
+		}
+	};
+
+	class choice_field_options : public field_options_base
+	{
+	public:
+		std::string class_source;
+		std::string id_field_name;
+		std::string description_field_name;
+
+		virtual void get_json(json& _dest)
+		{
+			field_options_base::get_json(_dest);
+			_dest.put_member("class_source", class_source);
+			_dest.put_member("id_field_name", id_field_name);
+			_dest.put_member("description_field_name", description_field_name);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_options_base::put_json(_src);
+			class_source = _src["class_source"];
+			id_field_name = _src["id_field_name"];
+			description_field_name = _src["description_field_name"];
+		}
+	};
+
+	class field_definition {
+	public:
+		std::string field_type;
+		std::shared_ptr<field_options_base> options;
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+			json joptions = jp.create_object();
+			_dest.put_member("field_type", field_type);
+			if (options) {
+				options->get_json(joptions);
+				_dest.put_member("options", joptions);
+			}
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_type = _src["field_type"];
+			json joptions = _src["options"];
+
+			if (field_type == "object") 
+			{
+				options = std::make_shared<object_field_options>();
+				options->put_json(joptions);
+			}
+			else if (field_type == "array")
+			{
+				options = std::make_shared<array_field_options>();
+				options->put_json(joptions);
+			}
+			else if (field_type == "number" || field_type == "double")
+			{
+				options = std::make_shared<general_field_options<double>>();
+				options->put_json(joptions);
+			}
+			else if (field_type == "int64")
+			{
+				options = std::make_shared<int64_field_options>();
+				options->put_json(joptions);
+			}
+			else if (field_type == "string")
+			{
+				options = std::make_shared<string_field_options>();
+				options->put_json(joptions);
+			}
+			else if (field_type == "bool")
+			{
+				options = std::make_shared<field_options_base>();
+				options->put_json(joptions);
+			}
+			else if (field_type == "datetime")
+			{
+				options = std::make_shared<general_field_options<date_time>>();
+				options->put_json(joptions);
+			}
+			else if (field_type == "function")
+			{
+				;
+			}
+		}
+
+	};
+
+	class index_definition 
+	{
+	public:
+		std::string index_name;
+		std::vector<std::string> index_keys;
+		int64_t index_location;
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+			_dest.put_member("class_source", index_name);
+
+			json jindex_keys = jp.create_array();
+			for (auto ikey : index_keys) {
+				jindex_keys.push_back(ikey);
+			}
+			_dest.put_member("index_keys", jindex_keys);
+			_dest.put_member_i64("index_location", index_location);
+		}
+
+		virtual void put_json(json& _src)
+		{			
+			index_name = _src["index_name"];
+
+			json jindex_keys = _src["index_keys"];
+			if (jindex_keys.array())
+			{
+				index_keys.clear();
+				for (auto key : index_keys) {
+					std::string key_name = key;
+					index_keys.push_back(key);
+				}
+			}
+			index_location = (int64_t)_src["index_location"];
+		}
+	};
+
+	class class_definition 
+	{
+	public:
+		std::string class_name;
+		std::string base_class_name;
+		int64_t		table_location;
+		std::vector<field_definition> fields;
+		std::vector<index_definition> indeces;
+		std::vector<std::string> class_ancestors;
+		std::vector<std::string> class_descendants;
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			_dest.put_member("class_name", class_name);
+			_dest.put_member("base_class_name", base_class_name);
+			_dest.put_member_i64("table_location", table_location);
+
+			if (fields.size() > 0) {
+				json jfield_array = jp.create_array();
+			}
+
+			if (indeces.size() > 0) {
+				json index_array = jp.create_object();
+			}
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_options_base::put_json(_src);
+			class_source = _src["class_source"];
+			id_field_name = _src["id_field_name"];
+			description_field_name = _src["description_field_name"];
+		}
+
+	};
+
 	class corona_database : public file_block
 	{
 		corona_db_header header;
@@ -782,8 +1103,8 @@ private:
 			json class_definition = check_class_request["Data"];
 
 			date_time start_time = date_time::now();
-			if (trace_check_class) {
-				bus->log_activity("check_class", start_time);
+			if (trace_check_class) {				
+				system_monitoring_interface::global_mon->log_activity("check_class", start_time);
 			}
 
 			result = create_response(check_class_request, true, "Ok", class_definition, method_timer.get_elapsed_seconds());
@@ -794,8 +1115,8 @@ private:
 			}
 
 			if (trace_check_class) {
-				bus->log_information("Supplied class definition");
-				bus->log_json<json>(class_definition);
+				system_monitoring_interface::global_mon->log_information("Supplied class definition");
+				system_monitoring_interface::global_mon->log_json<json>(class_definition);
 			}
 
 			std::string class_name = class_definition["ClassName"];
@@ -821,8 +1142,8 @@ private:
 
 				if (trace_check_class)
 				{
-					bus->log_information("Base class definition");
-					bus->log_json<json>(base_class_def);
+					system_monitoring_interface::global_mon->log_information("Base class definition");
+					system_monitoring_interface::global_mon->log_json<json>(base_class_def);
 				}
 
 				if (not base_class_def.object())
@@ -842,8 +1163,8 @@ private:
 
 				if (trace_check_class)
 				{
-					bus->log_information("Class ancestors");
-					bus->log_json<json>(ancestors);
+					system_monitoring_interface::global_mon->log_information("Class ancestors");
+					system_monitoring_interface::global_mon->log_json<json>(ancestors);
 				}
 
 				auto inh_fields = base_class_def["Fields"];
@@ -851,7 +1172,7 @@ private:
 					auto inherited_fields = inh_fields.get_members();
 					if (trace_check_class)
 					{
-						bus->log_information("Inherited fields");
+						system_monitoring_interface::global_mon->log_information("Inherited fields");
 					}
 
 					if (not class_definition.has_member("Fields")) {
@@ -862,13 +1183,13 @@ private:
 						fieldso.put_member(field.first, field.second);
 						if (trace_check_class)
 						{
-							bus->log_information(field.first);
+							system_monitoring_interface::global_mon->log_information(field.first);
 						}
 					}
 
 					if (trace_check_class) {
-						bus->log_information("Apply inherited fields");
-						bus->log_json<json>(class_definition);
+						system_monitoring_interface::global_mon->log_information("Apply inherited fields");
+						system_monitoring_interface::global_mon->log_json<json>(class_definition);
 					}
 				}
 
@@ -913,6 +1234,16 @@ private:
 							json err_field = jpx.create_object("Name", member.first);
 							result = create_response(check_class_request, false, "Bad field type", err_field, method_timer.get_elapsed_seconds());
 							return result;
+						}
+						// also remember that allowed children should be a thing here
+						if (field_type == "array" or field_type == "object") {
+							if (jp.has_member("ElementClassNames")) {
+								json j = jp["ElementClassNames"];
+								if (not j.array()) {
+									json err_field = jpx.create_object("Name", member.first);
+									result = create_response(check_class_request, false, "ElementClassNames must be an array", err_field, method_timer.get_elapsed_seconds());
+								}
+							}
 						}
 					}
 					else
@@ -1104,7 +1435,10 @@ private:
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 			token.put_member("Signature", cipher_text);
 
-			payload.put_member("Token", token);
+			std::string token_string = token.to_json();
+			std::string base64_token_string = base64_encode(token_string );
+
+			payload.put_member("Token", base64_token_string);
 			payload.put_member("Success", _success);
 			payload.put_member("Message", _message);
 			payload.put_member("Data", _data);
@@ -1127,7 +1461,10 @@ private:
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 			token.put_member("Signature", cipher_text);
 
-			payload.put_member("Token", token);
+			std::string token_string = token.to_json();
+			std::string base64_token_string = base64_encode(token_string);
+
+			payload.put_member("Token", base64_token_string);
 			payload.put_member("Success", _success);
 			payload.put_member("Message", _message);
 			payload.put_member("Data", _data);
@@ -1135,16 +1472,21 @@ private:
 			return payload;
 		}
 
-		bool check_token(json& token, std::vector<std::string> _authorizations)
+		json check_token(std::string _encoded_token, std::vector<std::string> _authorizations)
 		{
+			json_parser jp;
+			json empty;
+			std::string decoded_token = base64_decode(_encoded_token);
+			json token = jp.parse_object(decoded_token);
+
 			if (not token.object())
 			{
-				return false;
+				return empty;
 			}
 
 			if (not token.has_member("Signature"))
 			{
-				return false;
+				return empty;
 			}
 
 			std::string signature = token["Signature"];
@@ -1159,17 +1501,17 @@ private:
 
 			if (current > expiration)
 			{
-				return false;
+				return empty;
 			}
 
 			if (cipher_text != signature)
 			{
-				return false;
+				return empty;
 			}
 
 			if (not token.has_member("Authorization"))
 			{
-				return false;
+				return empty;
 			}
 
 			std::string authorization = token["Authorization"];
@@ -1177,25 +1519,26 @@ private:
 
 			if (authorization == auth_system and user == default_user)
 			{
-				return true;
+				return token;
 			}
 
 			for (auto _authorization : _authorizations)
 			{
 				if (_authorization == authorization)
-					return true;
+					return token;
 			}
 
-			return false;
+			return empty;
 		}
 
 		bool check_message(json& _message, std::vector<std::string> _authorizations)
 		{
-			json token = _message["Token"];
+			std::string token = _message["Token"];
 
-			bool result = check_token(token, _authorizations);
+			json result = check_token(token, _authorizations);
+			bool is_ok = not result.empty();
 
-			return result;
+			return is_ok;
 		}
 
 		json get_message_user(json _token)
@@ -1319,12 +1662,10 @@ private:
 							json object_key = jp.create_object();
 							object_key.copy_member("ClassName", class_key);
 
-							index_table.select(_key, [&object_key, &obj, &class_data](int _idx, json& _item) -> json {
+							obj = index_table.select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
 								object_key.copy_member("ObjectId", _item);
 								json objfound = class_data.get(object_key);
-								if (not objfound.empty()) {
-									obj.push_back(objfound);
-								}
+								return objfound;
 							});
 						}
 						else 
@@ -1395,7 +1736,7 @@ private:
 		}
 
 		bool has_class_permission(
-			json _token,
+			std::string _token,
 			std::string _class_name,
 			std::string _permission)
 		{
@@ -1405,13 +1746,14 @@ private:
 			json_parser jp;
 			json user;
 
+			json token = check_token(_token, { auth_general });
 			// check the token to make sure it is valid - this includes signature verification
-			if (not check_token(_token, { auth_general })) {
+			if (token.empty()) {
 				return false;
 			}
 
 			// extract the user key from the token and get the user object
-			json user_key = get_message_user(_token);
+			json user_key = get_message_user(token);
 			std::string user_name = user_key["UserName"];
 
 			if (user_name == default_user) 
@@ -1562,18 +1904,15 @@ private:
 
 	public:
 
-		std::string listen_point;
 		std::string default_user;
 		std::string default_password;
 		std::string default_email_address;
 		std::string default_guest_team;
 		time_span token_life;
-		comm_bus_interface* bus;
 
 		// constructing and opening a database
 
-		corona_database(comm_bus_interface* _bus, std::shared_ptr<file> _database_file) :
-			bus(_bus),
+		corona_database(std::shared_ptr<file> _database_file) :
 			file_block(_database_file)
 		{
 			std::vector<std::string> class_key_fields({ "ClassName" });
@@ -1589,6 +1928,7 @@ private:
 			start = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_job_start("apply_config", "start", start, __FILE__, __LINE__);
+
 			if (_config.has_member("SendGrid"))
 			{
 				json send_grid = _config["SendGrid"];
@@ -1597,7 +1937,6 @@ private:
 			if (_config.has_member("Server"))
 			{
 				json server = _config["Server"];
-				listen_point = server["ListenPoint"];
 				default_user = server["DefaultUserName"];
 				default_password = server["DefaultUserPassword"];
 				default_email_address = server["DefaultUserEmailAddress"];
@@ -1672,7 +2011,7 @@ private:
 
 							if (class_result.error()) 
 							{
-								bus->log_error(class_result, __FILE__, __LINE__);
+								system_monitoring_interface::global_mon->log_warning(class_result, __FILE__, __LINE__);
 							}
 							else 
 							{
@@ -1991,6 +2330,7 @@ private:
 			relative_ptr_type header_location =  header.read(this, _header_location);
 
 			relative_ptr_type result = classes->open(header.data.classes_location);
+			result = indexes->open(header.data.indexes_location);
 
 			system_monitoring_interface::global_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -2438,7 +2778,7 @@ private:
 						}
 					}
 
-					if (adjusted_class.has_member("Children")) {
+					if (adjusted_class.has_member("Indexes")) {
 						json children = adjusted_class["Children"];
 						if (children.array()) {
 							for (auto child : children) {
@@ -3103,357 +3443,334 @@ private:
 		}
 
 
-		json get_banner()
-		{
-			json_parser jp;
-			json body = jp.parse_object(R"(
-{
-	"Name":"Corona Server",
-	"Version":"1.0"
-}
-)");
-			return body;
-		}
-
-		http_handler_function corona_test = [this](http_action_request _request)-> void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->get_banner();
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_login_start = [this](http_action_request _request)-> void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			auto fn_response = this->login_user(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-
-		http_handler_function corona_classes_get = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			auto fn_response = this->get_classes(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_classes_create = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->create_class(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_classes_put = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->put_class(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_users_create = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->create_user(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_objects_get = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->get_object(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_objects_query = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->query_class(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_objects_create = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->create_object(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_objects_put = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->put_object(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_objects_delete = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->delete_object(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		http_handler_function corona_objects_edit = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			json fn_response = this->edit_object(parsed_request);
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
-		json parse_request(http_request _request)
-		{
-			json_parser jph;
-			json request;
-
-			if (_request.body.get_size() > 1)
-			{
-				json request = jph.parse_object(_request.body.get_ptr());
-			}
-			else
-			{
-				request = jph.create_object();
-			}
-
-			return request;
-		}
-
-		http_response check_parse_error(json _request)
-		{
-			http_response response;
-
-			response.content_type = "application/json";
-			response.http_status_code = 200;
-
-			if (_request.is_member("ClassName", "SysParseError")) {
-				response.http_status_code = 504;
-				response.response_body = (buffer)_request;
-				response.content_length = response.response_body.get_size();
-				return response;
-			}
-
-			return response;
-		}
-
-		http_response create_response(int _http_status_code, json _source)
-		{
-			http_response response;
-
-			response.http_status_code = _http_status_code;
-			response.content_type = "application/json";
-			response.response_body = (buffer)_source;
-			response.content_length = response.response_body.get_size();
-			response.server = "Corona 1.0";
-			response.system_result = os_result(0);
-			return response;
-		}
-
-		void bind_web_server(http_server& _server)
-		{
-			std::string _root_path = listen_point;
-
-			if (not _root_path.ends_with('/')) {
-				_root_path += "/";
-			}
-
-			std::string path = _root_path + "test/";
-			_server.put_handler( HTTP_VERB::HttpVerbGET, path, corona_test);
-
-			path = _root_path + "login/createuser/";
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_create);
-
-			path = _root_path + "login/start/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_login_start );
-
-			path = _root_path + "classes/get/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
-
-			path = _root_path + "classes/create/";
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_create);
-
-			path = _root_path + "classes/put/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
-
-			path = _root_path + "objects/get/";
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_get);
-
-			path = _root_path + "objects/query/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
-
-			path = _root_path + "objects/create/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_create);
-
-			path = _root_path + "objects/put/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_put);
-
-			path = _root_path + "objects/delete/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_delete );
-
-			path = _root_path + "objects/edit/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
-
-		}
-
-	};
-
-
-	bool test_database_engine(std::shared_ptr<application> _app)
+	bool test_database_engine(json& _proof, std::shared_ptr<application> _app)
 	{
 		bool success = true;
 		std::shared_ptr<file> dtest = std::make_shared<file>();
 
-		*dtest = _app->create_file(FOLDERID_Documents, "corona_json_database_test.ctb");
+		date_time st = date_time::now();
+		timer tx;
+		system_monitoring_interface::global_mon->log_function_start("table proof", "start", st, __FILE__, __LINE__);
+
+		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "corona_database.cdb");
+
+		json_parser jp;
+		json proof_assertion = jp.create_object();
+
+		proof_assertion.put_member("test_name", "database");
+
+		json dependencies = jp.parse_object(R"( 
+{ 
+	"create" : [  "table.get", "table.put", "table.create", "table.select" ],
+	"login" : [  "table.get", "table.put",  "table.select" ],
+    "class" : [ "table.get", "table.put", "table.create", "table.select" ],
+	"class_index" : [ "table.get", "table.put", "table.create", "table.select" ],
+	"create" : [ "table.get", "table.put", "table.select" ],
+	"put" : [ "table.get", "table.put", "table.select" ],
+	"put_index" : [ "table.get", "table.put", "table.select" ],
+	"get" : [ "table.get" ],
+	"get_index" : [ "table.get", "table.select" ],
+	"delete" : [ "table.erase" ],
+	"team_class" : [ "table.get", "table.put", "table.create", "table.select" ],
+	"team_get" : [ "table.get", "table.select" ],
+	"team_put" : [ "table.get", "table.put", "table.select" ],
+	"team_delete" : [ "table.get", "table.put", "table.create", "table.select" ]
+}
+)");
+
+		bool create_success;
+		bool login_success;
+		bool class_success;
+		bool put_success;
+		bool get_success;
+		bool class_index_success;
+		bool put_index_success;
+		bool get_index_success;
+		bool delete_success;
+		bool team_class_success;
+		bool team_get_success;
+		bool team_put_success;
+		bool team_delete_success;
 
 		date_time start_schema = date_time::now();
 		timer tx;
 		system_monitoring_interface::global_mon->log_job_start("test_database_engine", "start", start_schema, __FILE__, __LINE__);
 
-		corona_database db(nullptr, dtest);
+		corona_database db(dtest);
+		json_parser jp;
 
-		json_file_watcher jf;
-		json db_config, schema_config;
-
-		jf.file_name = "db.json";
-		jf.poll_contents(_app.get(), db_config);
-		jf.file_name = "schema.json";
-		jf.poll_contents(_app.get(), schema_config);
+		proof_assertion.put_member("dependencies", dependencies);
+		json db_config = jp.create_object();
+		json server_config = jp.create_object();
+		server_config.put_member("DefaultUserName", "todd");
+		server_config.put_member("DefaultUserPassword", "randomite");
+		server_config.put_member("DefaultUserEmailAddress", "todd.bandrowsky@gmail.com");
+		server_config.put_member("DefaultGuestTeam", "GuestTeam");
+		db_config.put_member("Server", server_config);
 
 		db.apply_config(db_config);
-		auto schema_task = db.apply_schema(schema_config);
-
-		system_monitoring_interface::global_mon->log_information("create_database");
 
 		relative_ptr_type database_location = db.create_database();
 
-		json_parser jp;
-		json user = jp.parse_object(R"(
+		login_success = true;
+
+		json login_positive_request = R"(
 {
-"ClassName" : "SysUser",
-"UserName" : "testuser",
-"FirstName" : "Jake",
-"LastName" : "Rogers",
-"Email" : "todd.bandrowsky@gmail.com",
-"Mobile" : "443 877 8606",
-"Street" : "120 West McLellan Rd",
-"City" : "Bowling Green",
-"State" : "KY",
-"Zip" : "42101"
+	"UserName" : "todd",
+	"Password" : "randomite"
 }
-)");
+)"_jobject;
 
-		json sys_request = db.create_system_request(user);
+		json login_negative_request = R"(
+{
+	"UserName" : "todd",
+	"Password" : "reachio"
+}
+)"_jobject;
 
-		json user_result =  db.create_user(sys_request);
+		json login_result;
+
+		login_result = db.login_user(login_negative_request);
+
+		if (login_result["Success"]) {
+			login_success = false;
+			system_monitoring_interface::global_mon->log_warning("able to login with bad account", __FILE__, __LINE__);
+		}
+
+		login_result = db.login_user(login_positive_request);
+
+		if (not login_result["Success"]) {
+			login_success = false;
+			system_monitoring_interface::global_mon->log_warning("can't with good account", __FILE__, __LINE__);
+		}
+
+		json create_class_request = R"(
+{
+	"ClassName" : "Document",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "Document Base Class",
+	"Fields" : {			
+		"DocumentName": "string",
+		"DocumentDescription": "string",
+		"DocumentUrl": "string"
+	}
+}
+)"_jobject;
+
+		create_class_request = R"(
+{
+	"ClassName" : "Encounter",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "ContactBase",
+	"Fields" : {			
+		"EncounterName": "string",
+		"EncounterDescription": "string",
+		"EncounterComments": "string",
+		"EncounterDate": "datetime",
+		"EncounterDocuments" : {
+				"FieldType" : "array",
+				"ElementClassNames" : [ "Document" ]
+		}
+	}
+}
+)"_jobject;
+
+		create_class_request = R"(
+{
+	"ClassName" : "Contact",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "A Person and how to connect with them, along with documentation for them",
+	"Fields" : {			
+		"ContactName": "string",
+		"ContactDescription": "string",
+		"ContactStreet1": "string",
+		"ContactStreet2": "string",
+		"ContactCity": "string",
+		"ContactState": "string",
+		"ContactZip": "string",
+		"ClientPhone": "string",
+		"Documents": "array",
+		"Encounters": "array",
+	}
+}
+)"_jobject;
+
+		create_class_request = R"(
+{
+	"ClassName" : "Employee",
+	"BaseClassName" : "Contact",
+	"ClassDescription" : "A Person that works for you",
+	"Fields" : {			
+		"EmployeeTitle": "string",
+		"EmployeeJobDescription": "string",
+		"Documents": {
+				"FieldType" : "array",
+				"ElementClassNames" : [ "Document" ]
+		},
+		"DirectReports": {
+				"FieldType" : "array",
+				"ElementClassNames" : [ "Employee" ]
+		}
+	}
+}
+)"_jobject;
+
+		create_class_request = R"(
+{
+	"ClassName" : "Property",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "Base of all property",
+	"Fields" : {			
+		"PropertyCode",
+		"PropertyName",
+		"PropertyDescription",
+		"PropertyValue"
+	}
+}
+)"_jobject;
+
+		create_class_request = R"(
+{
+	"ClassName" : "Furniture",
+	"BaseClassName" : "Property",
+	"ClassDescription" : "Furniture",
+	"Fields" : {			
+		"YearMade",
+		"Manufacturer"
+	}
+}
+)"_jobject;
+
+		create_class_request = R"(
+{
+	"ClassName" : "Vehicle",
+	"BaseClassName" : "Property",
+	"ClassDescription" : "Cars and Trucks",
+	"Fields" : {			
+		"VehicleMake",
+		"VehicleModel",
+		"VehicleYear",
+		"VehicleMiles"
+	}
+}
+)"_jobject;
+
+		create_class_request = R"(
+{
+	"ClassName" : "Electronics",
+	"BaseClassName" : "Property",
+	"ClassDescription" : "Computers, Game Consoles, Radios",
+	"Fields" : {			
+		"ElectronicBrand",
+		"ElectronicYear"
+	}
+}
+)"_jobject;
+
+
+		create_class_request = R"(
+{
+	"ClassName" : "Building",
+	"BaseClassName" : "Property",
+	"ClassDescription" : "Base of all property",
+	"Fields" : {			
+		"ConstructionCode": "string",
+		"OccupancyCode": "string",
+		"Street1": "string",
+		"Street2": "string",
+		"City": "string",
+		"State": "string",
+		"Zip": "string",
+		"Geocodes" : "string",
+		"Contents" : {
+			"FieldType"
+
+		}
+	}
+}
+)"_jobject;
+
+		// now, with my login, it's the default, or "sa" login
+		// so, let's see if we can create a class
+
+		create_class_request = R"(
+{
+	"ClassName" : "Coverage",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "Base of all coverages",
+	"Fields" : {			
+		"CoverageCode",
+		"DamageName",
+		"DamageDescription"
+	}
+}
+)"_jobject;
+
+		// now, with my login, it's the default, or "sa" login
+// so, let's see if we can create a class
+
+		create_class_request = R"(
+{
+	"ClassName" : "CoveredRisk",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "Quotes",
+	"Fields" : {			
+		"Coverages" : {
+
+		},
+		"Properties" : {
+
+		},
+		"AttachmentPoint" : {
+
+		},
+		"Limit" : {
+
+		},
+		"Deductible" : {
+
+		}
+	}
+}
+)"_jobject;
+
+		// now, with my login, it's the default, or "sa" login
+// so, let's see if we can create a class
+
+		create_class_request = R"(
+{
+	"ClassName" : "Quote",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "Quotes",
+	"Fields" : {			
+		"Coverages" : {
+
+		}
+	}
+}
+)"_jobject;
+
+		create_class_request = R"(
+{
+	"ClassName" : "Client",
+	"BaseClassName" : "Contact",
+	"ClassDescription" : "ContactBase",
+	"Fields" : {
+		"People" : {
+			"FieldType":"array",
+			"ElementClassNames" : ["Contact"],
+		},
+		"PolicyQuotes" : {
+			"FieldType" : "array",
+			"ElementClassNames" : ["PolicyQuote"],
+		}
+	}
+}
+)"_jobject;
 
 		system_monitoring_interface::global_mon->log_job_stop("test_database_engine", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		return success;
-	}
-
-	bool run_server(std::shared_ptr<application> _app)
-	{
-		date_time start_schema = date_time::now();
-		timer tx;
-		try
-		{
-			system_monitoring_interface::global_mon->log_command_start("run_server", "start", start_schema, __FILE__, __LINE__);
-
-			std::shared_ptr<file> dtest = std::make_shared<file>();
-			*dtest = _app->create_file(FOLDERID_Documents, "corona_json_database_test.ctb");
-
-			corona_database db(nullptr, dtest);
-
-			corona_database *pdb = &db;
-
-			json_file_watcher jf;
-			json db_config, schema_config;
-
-			jf.file_name = "db.json";
-			jf.poll_contents(_app.get(), db_config);
-			jf.file_name = "schema.json";
-			jf.poll_contents(_app.get(), schema_config);
-
-			db.apply_config(db_config);
-			db.apply_schema(schema_config);
-			
-			relative_ptr_type database_location = db.create_database();
-
-			http_server db_api_server;
-
-			db.bind_web_server(db_api_server);
-			db_api_server.start();
-
-			while (true)
-			{
-				jf.file_name = "db.json";
-				if (jf.poll_contents(_app.get(), db_config) != null_row) {
-					db.apply_config(db_config);
-				}
-
-				jf.file_name = "schema.json";
-				if (jf.poll_contents(_app.get(), schema_config) != null_row) {
-					auto schema_task = db.apply_schema(schema_config);
-				}
-
-				 db_api_server.next_request();
-			}
-
-		}
-		catch (std::exception exc)
-		{
-			system_monitoring_interface::global_mon->log_exception(exc);
-		}
-
-		system_monitoring_interface::global_mon->log_command_stop("run_server", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-		return true;
 	}
 
 	bool collection_tests()
@@ -3732,7 +4049,6 @@ private:
 			return false;
 		}
 	}
-
 }
 
 #endif

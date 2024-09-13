@@ -517,7 +517,7 @@ namespace corona
 
 			on_create = [this](draw_control* _ctrl) ->void
 				{
-					comm_bus_interface::global_bus->run_ui([this]() ->void {
+					comm_bus_app_interface::global_bus->run_ui([this]() ->void {
 						start();
 						});
 				};

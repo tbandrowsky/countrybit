@@ -59,7 +59,7 @@ namespace corona
 
 		comm_bus_interface* bus;
 
-		directApplicationWin32(comm_bus_interface* _bus, std::shared_ptr<directXAdapter>  _factory);
+		directApplicationWin32(comm_bus_app_interface* _bus, std::shared_ptr<directXAdapter>  _factory);
 		virtual ~directApplicationWin32();
 
 		ccolor backgroundColor;
@@ -194,7 +194,7 @@ namespace corona
 
 	directApplicationWin32* directApplicationWin32::current;
 
-	directApplicationWin32::directApplicationWin32(comm_bus_interface* _bus, std::shared_ptr<directXAdapter> _factory) : 
+	directApplicationWin32::directApplicationWin32(comm_bus_app_interface* _bus, std::shared_ptr<directXAdapter> _factory) : 
 		factory(_factory), 
 		colorCapture(false), 
 		bus(_bus)

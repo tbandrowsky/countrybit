@@ -1263,8 +1263,8 @@ namespace corona
 			choices.put_json(jlist_data);
 			json command = _src["select_command"];
 			if (command.empty()) {
-				comm_bus_interface::global_bus->log_information("comboboxex control missing select_command", __FILE__, __LINE__);
-				comm_bus_interface::global_bus->log_json(_src);
+				comm_bus_app_interface::global_bus->log_information("comboboxex control missing select_command", __FILE__, __LINE__);
+				comm_bus_app_interface::global_bus->log_json(_src);
 			}
 
 			corona::put_json(select_command, command);

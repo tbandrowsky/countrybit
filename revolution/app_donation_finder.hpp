@@ -49,7 +49,7 @@ namespace corona
 
 		EnableGuiStdOuts();
 
-		comm_bus bus("DonationFinder", "DonationFinder", "donation_finder_");
+		comm_app_bus bus("DonationFinder", "DonationFinder", "donation_finder_");
 
 		bus.run_app_ui(hInstance, lpszCmdParam, false);
 

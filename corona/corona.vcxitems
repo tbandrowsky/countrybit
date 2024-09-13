@@ -18,6 +18,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-application.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-application_base.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-assert_if.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-base64.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-bitmaps.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-bitmap_filters.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-brushes.hpp" />
@@ -25,6 +26,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-color_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-bus-interface.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-bus-commands.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-service-bus.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-concept_lock.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-constants.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-controller.hpp" />
@@ -102,7 +104,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-windows-lite.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-motion-detect.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-bus.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-app-bus.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-publicity-stunts.hpp" />
   </ItemGroup>
   <ItemGroup>

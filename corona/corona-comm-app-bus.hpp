@@ -1,12 +1,12 @@
 #pragma once
 
-#ifndef CORONA_COMM_BUS_H
-#define CORONA_COMM_BUS_H
+#ifndef CORONA_COMM_APP_BUS_H
+#define CORONA_COMM_APP_BUS_H
 
 namespace corona
 {
 
-	class comm_bus : public comm_bus_interface
+	class comm_app_bus : public comm_bus_app_interface
 	{
 	protected:
 
@@ -78,7 +78,7 @@ namespace corona
 
 		json system_proof;
 
-		comm_bus(std::string _application_name, 
+		comm_app_bus(std::string _application_name,
 			std::string _application_folder_name,
 			std::string _config_file_name_base)
 		{
@@ -87,7 +87,7 @@ namespace corona
 			date_time t = date_time::now();
 			json_parser jp;
 
-			log_command_start("comm_bus", "startup", t);
+			log_command_start("comm_app_bus", "startup", t);
 
 			log_information("Thank you for flying with Country Video Games");
 			log_information("Country Video Games Corona is going to do a formal verification of itself");
@@ -152,7 +152,7 @@ namespace corona
 			else 
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::open_existing);
-				local_db = std::make_shared<corona_database>(this, db_file);
+				local_db = std::make_shared<corona_database>(db_file);
 
 				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {
 					local_db->apply_config(local_db_config);
@@ -166,7 +166,7 @@ namespace corona
 				ready_for_polling = true;
 			}
 
-			log_command_stop("comm_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("comm_app_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			log_information("This is an immensely modable system.");
 			log_information("config.json - for networking stuff in the next release.");

@@ -40,7 +40,7 @@ namespace corona {
 		point last_mouse_click;
 		json json_pages;
 
-		comm_bus_interface *bus;
+		comm_bus_app_interface *bus;
 
 	public:
 		int default_focus_id;
@@ -49,7 +49,7 @@ namespace corona {
 		std::map<std::string, std::shared_ptr<page>> pages;
 		std::weak_ptr<applicationBase> window_host;
 
-		presentation(comm_bus_interface* _com_bus) : bus(_com_bus)
+		presentation(comm_bus_app_interface* _com_bus) : bus(_com_bus)
 		{
 			default_push_button_id = 0;
 			default_focus_id = 0;
@@ -57,7 +57,7 @@ namespace corona {
 			last_mouse_click = {};
 		}
 
-		presentation(comm_bus_interface *_com_bus, std::weak_ptr<applicationBase> _window_host) : window_host(_window_host), bus(_com_bus)
+		presentation(comm_bus_app_interface *_com_bus, std::weak_ptr<applicationBase> _window_host) : window_host(_window_host), bus(_com_bus)
 		{
 			default_push_button_id = 0;
 			default_focus_id = 0;

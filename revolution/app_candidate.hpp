@@ -48,7 +48,7 @@ namespace corona
 
 		EnableGuiStdOuts();
 
-		comm_bus bus("candidate", "candidate", "candidate_");
+		comm_app_bus bus("candidate", "candidate", "candidate_");
 
 		bus.run_app_ui(hInstance, lpszCmdParam, false);
 

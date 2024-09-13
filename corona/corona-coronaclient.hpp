@@ -25,14 +25,14 @@ namespace corona
 		std::string host;
 		std::string path;
 		int port;
-		comm_bus_interface* cbi;
+		comm_bus_app_interface* cbi;
 
 		corona_client() : cbi(nullptr)
 		{
 			
 		}
 
-		corona_client(comm_bus_interface *_cbi, std::string _host, int _port)
+		corona_client(comm_bus_app_interface *_cbi, std::string _host, int _port)
 		{
 			cbi = _cbi;
 			host = _host;

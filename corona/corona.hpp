@@ -69,6 +69,7 @@ namespace corona {
 	void log_warning(const std::string &_src);
 }
 
+#include "corona-base64.hpp"
 #include "corona-constants.hpp"
 #include "corona-function-bag.hpp"
 #include "corona-wchart_convert.hpp"
@@ -256,6 +257,14 @@ namespace corona {
 // application to talk to each.  It also implements publish / subscribe.
 // it's not really complete per se, but it is so much easier now
 // that this will continue.
-#include "corona-comm-bus.hpp"
+// this one is for GUI applications
+#include "corona-comm-app-bus.hpp"
+
+// the communication bus allows all the services in a corona 
+// application to talk to each.  It also implements publish / subscribe.
+// it's not really complete per se, but it is so much easier now
+// that this will continue.
+// this one is for Service applications 
+#include "corona-comm-service-bus.hpp"
 
 #endif

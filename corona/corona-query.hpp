@@ -923,7 +923,7 @@ namespace corona
 					else 
 					{
 						std::string msg = std::format("projection member '{0}' has a path '{1}' that requires a projection source and none was supplied.", member.first, path);
-						comm_bus_interface::global_bus->log_warning(msg, __FILE__, __LINE__);
+						comm_bus_app_interface::global_bus->log_warning(msg, __FILE__, __LINE__);
 					}
 				}
 			}

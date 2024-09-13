@@ -2243,7 +2243,7 @@ namespace corona
 
 		json_parser jp;
 		json proof_assertion = jp.create_object();
-		proof_assertion.put_member("test_name", "json_table");
+		proof_assertion.put_member("test_name", "table");
 
 		json dependencies = jp.parse_object(R"( 
 { 

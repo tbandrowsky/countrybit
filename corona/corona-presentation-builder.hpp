@@ -192,7 +192,7 @@ namespace corona
 
 	public:
 
-		comm_bus_interface* bus;
+		comm_bus_app_interface* bus;
 
 		template <typename control_type> std::shared_ptr<control_type> get(int _id)
 		{
@@ -1260,12 +1260,12 @@ namespace corona
 				if (field_def.label_box.width.empty())
 				{
 					std::string msg = std::format("'{0}' {1} missing label_box width", field_def.label_text, field_def.class_name);
-					comm_bus_interface::global_bus->log_warning(msg);
+					comm_bus_app_interface::global_bus->log_warning(msg);
 				}
 				if (field_def.label_box.height.empty())
 				{
 					std::string msg = std::format("'{0}' {1} missing label_box height", field_def.label_text, field_def.class_name);
-					comm_bus_interface::global_bus->log_warning(msg);
+					comm_bus_app_interface::global_bus->log_warning(msg);
 				}
 
 				cb.label(label_id, [this](label_control& _settings) {
@@ -1299,12 +1299,12 @@ namespace corona
 			if (field_def.field_box.width.empty())
 			{
 				std::string msg = std::format("'{0}' {1} missing field_box width", field_def.label_text, field_def.class_name);
-				comm_bus_interface::global_bus->log_warning(msg);
+				comm_bus_app_interface::global_bus->log_warning(msg);
 			}
 			if (field_def.field_box.height.empty())
 			{
 				std::string msg = std::format("'{0}' {1} missing field_box height", field_def.label_text, field_def.class_name);
-				comm_bus_interface::global_bus->log_warning(msg);
+				comm_bus_app_interface::global_bus->log_warning(msg);
 			}
 
 			edit_row.from_json(field_def.control_settings);

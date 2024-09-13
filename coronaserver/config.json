@@ -1,7 +1,12 @@
 {
+  "SendGrid": {
+    "ApiKey": "Your key goes here"
+  },
   "Server": {
     "ListenPoint": "http://localhost:5678/corona",
-    "DatabaseFilename" :  "corona.cdb",
+    "ApplicationName": "coronademo",
+    "SchemaFilename": "c:\\data\\corona-schema.json",
+    "DatabaseFilename": "c:\\data\\corona.cdb",
     "DefaultUserName": "system",
     "DefaultUserPassword": "systempassword",
     "DefaultUserEmailAddress": "todd.bandrowsky@gmail.com",

@@ -49,7 +49,7 @@ namespace corona
 
 		EnableGuiStdOuts();
 
-		comm_bus bus("Reparations", "Reparations", "reparations_");
+		comm_app_bus bus("Reparations", "Reparations", "reparations_");
 
 		bus.run_app_ui(hInstance, lpszCmdParam, false);
 

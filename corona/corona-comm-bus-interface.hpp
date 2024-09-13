@@ -209,7 +209,7 @@ namespace corona
 
 	};
 
-	class comm_bus_interface : public system_monitoring_interface
+	class comm_bus_app_interface : public system_monitoring_interface
 	{
 
 		std::multimap<UINT, windows_event_waiter> windows_waiters;
@@ -217,16 +217,16 @@ namespace corona
 
 	public:
 
-		static comm_bus_interface* global_bus;
+		static comm_bus_app_interface* global_bus;
 
-		comm_bus_interface()
+		comm_bus_app_interface()
 		{
 			if (global_bus == nullptr) {
 				global_bus = this;
 			}
 		}
 
-		virtual ~comm_bus_interface()
+		virtual ~comm_bus_app_interface()
 		{
 			if (global_bus == this) {
 				global_bus = nullptr;
@@ -424,19 +424,19 @@ namespace corona
 		virtual void run_command(std::shared_ptr<corona_bus_command> _command) = 0;
 	};
 
-	comm_bus_interface* comm_bus_interface::global_bus = nullptr;
+	comm_bus_app_interface* comm_bus_app_interface::global_bus = nullptr;
 
 	class corona_bus_command : public json_serializable
 	{
 	public:
-		comm_bus_interface* bus;
+		comm_bus_app_interface* bus;
 
 		corona_bus_command() : bus(nullptr)
 		{
 			;
 		}
 
-		corona_bus_command(comm_bus_interface *_bus) : bus(_bus)
+		corona_bus_command(comm_bus_app_interface *_bus) : bus(_bus)
 		{
 			;
 		}
