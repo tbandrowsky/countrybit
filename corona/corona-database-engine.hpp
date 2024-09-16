@@ -87,6 +87,12 @@ namespace corona
 		std::string file_name;
 		int			line_number;
 
+		validation_error() = default;
+		validation_error(const validation_error& _src) = default;
+		validation_error(validation_error&& _src) = default;
+		validation_error& operator = (const validation_error& _src) = default;
+		validation_error& operator = (validation_error&& _src) = default;
+
 		virtual void get_json(json& _dest)
 		{
 			_dest.put_member("ClassName", class_name);
@@ -111,6 +117,13 @@ namespace corona
 	public:
 		bool required;
 
+		field_options_base() = default;
+		field_options_base(const field_options_base& _src) = default;
+		field_options_base(field_options_base&& _src) = default;
+		field_options_base& operator = (const field_options_base& _src) = default;
+		field_options_base& operator = (field_options_base&& _src) = default;
+		virtual ~field_options_base() = default;
+
 		virtual void get_json(json& _dest)
 		{
 			_dest.put_member("required", required);
@@ -128,6 +141,14 @@ namespace corona
 		int maximum_length;
 		int minimum_length;
 		std::string match_pattern;
+
+		array_field_options() = default;
+		array_field_options(const array_field_options& _src) = default;
+		array_field_options(array_field_options&& _src) = default;
+		array_field_options& operator = (const array_field_options& _src) = default;
+		array_field_options& operator = (array_field_options&& _src) = default;
+		virtual ~array_field_options() = default;
+
 
 		virtual void get_json(json& _dest)
 		{
@@ -153,6 +174,14 @@ namespace corona
 		int minimum_length;
 		std::string match_pattern;
 
+		object_field_options() = default;
+		object_field_options(const object_field_options& _src) = default;
+		object_field_options(object_field_options&& _src) = default;
+		object_field_options& operator = (const object_field_options& _src) = default;
+		object_field_options& operator = (object_field_options&& _src) = default;
+		virtual ~object_field_options() = default;
+
+
 		virtual void get_json(json& _dest)
 		{
 			field_options_base::get_json(_dest);
@@ -177,6 +206,14 @@ namespace corona
 		int minimum_length;
 		std::string match_pattern;
 
+		string_field_options() = default;
+		string_field_options(const string_field_options& _src) = default;
+		string_field_options(string_field_options&& _src) = default;
+		string_field_options& operator = (const string_field_options& _src) = default;
+		string_field_options& operator = (string_field_options&& _src) = default;
+		virtual ~string_field_options() = default;
+
+
 		virtual void get_json(json& _dest)
 		{
 			field_options_base::get_json(_dest);
@@ -200,6 +237,14 @@ namespace corona
 		int64_t min_value;
 		int64_t max_value;
 
+		int64_field_options() = default;
+		int64_field_options(const int64_field_options& _src) = default;
+		int64_field_options(int64_field_options&& _src) = default;
+		int64_field_options& operator = (const int64_field_options& _src) = default;
+		int64_field_options& operator = (int64_field_options&& _src) = default;
+		virtual ~int64_field_options() = default;
+
+
 		virtual void get_json(json& _dest)
 		{
 			field_options_base::get_json(_dest);
@@ -220,6 +265,13 @@ namespace corona
 	public:
 		scalar_type min_value;
 		scalar_type max_value;
+
+		general_field_options() = default;
+		general_field_options(const general_field_options& _src) = default;
+		general_field_options(general_field_options&& _src) = default;
+		general_field_options& operator = (const general_field_options& _src) = default;
+		general_field_options& operator = (general_field_options&& _src) = default;
+		virtual ~general_field_options() = default;
 
 		virtual void get_json(json& _dest)
 		{
@@ -243,6 +295,14 @@ namespace corona
 		std::string id_field_name;
 		std::string description_field_name;
 
+		choice_field_options() = default;
+		choice_field_options(const choice_field_options& _src) = default;
+		choice_field_options(choice_field_options&& _src) = default;
+		choice_field_options& operator = (const choice_field_options& _src) = default;
+		choice_field_options& operator = (choice_field_options&& _src) = default;
+		virtual ~choice_field_options() = default;
+
+
 		virtual void get_json(json& _dest)
 		{
 			field_options_base::get_json(_dest);
@@ -262,14 +322,27 @@ namespace corona
 
 	class field_definition {
 	public:
+		std::string field_name;
 		std::string field_type;
 		std::shared_ptr<field_options_base> options;
+
+		field_definition() = default;
+		field_definition(const field_definition& _src) = default;
+		field_definition(field_definition&& _src) = default;
+		field_definition& operator = (const field_definition& _src) = default;
+		field_definition& operator = (field_definition&& _src) = default;
+		virtual ~field_definition() = default;
+
 
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
+
 			json joptions = jp.create_object();
+
+			_dest.put_member("field_name", field_name);
 			_dest.put_member("field_type", field_type);
+
 			if (options) {
 				options->get_json(joptions);
 				_dest.put_member("options", joptions);
@@ -279,6 +352,8 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			field_type = _src["field_type"];
+			field_name = _src["field_name"];
+
 			json joptions = _src["options"];
 
 			if (field_type == "object") 
@@ -331,6 +406,17 @@ namespace corona
 		std::vector<std::string> index_keys;
 		int64_t index_location;
 
+		index_definition() = default;
+		index_definition(const index_definition& _src) = default;
+		index_definition(index_definition&& _src) = default;
+		index_definition& operator = (const index_definition& _src) = default;
+		index_definition& operator = (index_definition&& _src) = default;
+
+		std::string index_key_string()
+		{
+			return join(index_keys, ".");
+		}
+
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
@@ -365,36 +451,125 @@ namespace corona
 	{
 	public:
 		std::string class_name;
+		std::string class_description;
 		std::string base_class_name;
 		int64_t		table_location;
-		std::vector<field_definition> fields;
-		std::vector<index_definition> indeces;
-		std::vector<std::string> class_ancestors;
-		std::vector<std::string> class_descendants;
+		std::map<std::string, std::shared_ptr<field_definition>> fields;
+		std::map<std::string, std::shared_ptr<index_definition>> indexes;
+		std::map<std::string, bool> ancestors;
+		std::map<std::string, bool> descendants;
+
+		class_definition() = default;
+		class_definition(const class_definition& _src) = default;
+		class_definition(class_definition&& _src) = default;
+		class_definition& operator = (const class_definition& _src) = default;
+		class_definition& operator = (class_definition&& _src) = default;
+
+		bool empty()
+		{
+			return class_name.empty();
+		}
 
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
 
 			_dest.put_member("class_name", class_name);
+			_dest.put_member("class_description", class_description);
 			_dest.put_member("base_class_name", base_class_name);
 			_dest.put_member_i64("table_location", table_location);
 
 			if (fields.size() > 0) {
 				json jfield_array = jp.create_array();
+				for (auto field : fields) {
+					json jfield_definition = jp.create_object();
+					field.second->get_json(jfield_definition);
+					jfield_array.push_back(jfield_definition);
+				
+				}
+				_dest.put_member("fields", jfield_array);
 			}
 
-			if (indeces.size() > 0) {
-				json index_array = jp.create_object();
+			if (indexes.size() > 0) {
+				json jindex_array = jp.create_array();
+				for (auto index : indexes) {
+					json jindex_definition = jp.create_object();
+					index.second->get_json(jindex_definition);
+					jindex_array.push_back(jindex_definition);
+
+				}
+				_dest.put_member("indexes", jindex_array);
 			}
+
+			if (ancestors.size() > 0) {
+				json jancestor_array = jp.create_array();
+				for (auto class_ancestor : ancestors) {
+					jancestor_array.push_back(class_ancestor.first);
+				}
+				_dest.put_member("ancestors", jancestor_array);
+			}
+
+			if (descendants.size() > 0) {
+				json jdescendants_array = jp.create_array();
+				for (auto class_descendant : descendants) {
+					jdescendants_array.push_back(class_descendant.first);
+				}
+				_dest.put_member("descendants", jdescendants_array);
+			}
+
 		}
 
 		virtual void put_json(json& _src)
 		{
-			field_options_base::put_json(_src);
-			class_source = _src["class_source"];
-			id_field_name = _src["id_field_name"];
-			description_field_name = _src["description_field_name"];
+			class_name = _src["class_name"];
+			class_description = _src["class_description"];
+			base_class_name = _src["base_class_name"];
+			table_location = (int64_t)_src["table_location"];
+
+			json jfields, jindexes, jancestors, jdescendants;
+
+			fields.clear();
+			jfields = _src["fields"];
+			if (jfields.array()) {
+				for (auto jfield : jfields) {
+					std::shared_ptr<field_definition> field = std::make_shared<field_definition>();
+					field->put_json(jfield);
+					fields.insert_or_assign(field->field_name, field);
+				}
+			}
+
+			indexes.clear();
+			jindexes = _src["indexes"];
+			if (jindexes.array()) {
+				for (auto jindex : jindexes) {
+					std::shared_ptr<index_definition> index = std::make_shared<index_definition>();
+					index->put_json(jindex);
+					indexes.insert_or_assign(index->index_name, index);
+				}
+			}
+
+			ancestors.clear();
+			jancestors = _src["ancestors"];
+			if (jancestors.array()) 
+			{
+				for (auto jancestor : jancestors)
+				{
+					std::string ancestor = jancestor;
+					ancestors.insert_or_assign(ancestor, true);
+				}
+			}
+
+			descendants.clear();
+			jdescendants = _src["descendants"];
+			if (jdescendants.array()) 
+			{
+				for (auto jancestor : jancestors)
+				{
+					std::string ancestor = jancestor;
+					ancestors.insert_or_assign(ancestor, true);
+				}
+			}
+
 		}
 
 	};
@@ -1006,256 +1181,15 @@ private:
 
 		json create_class(std::string _text)
 		{
-			timer method_timer;
 			json_parser jp;
-			json j = jp.parse_object(_text);
-			json response;
-			json check_request = create_system_request(j);
 
-			if (j.error()) {
-				response = create_response(check_request, false, "parse error on class", j, method_timer.get_elapsed_seconds());
-				return response;
-			}
+			json jclass_def = jp.parse_object(_text);
 
-			json checked =  check_class(check_request);
+			json sys_request = create_system_request(jclass_def);
 
-			date_time start_time = date_time::now();
-			timer tx;
-
-			system_monitoring_interface::global_mon->log_function_start("create_class", "start", start_time, __FILE__, __LINE__);
-
-			if (checked["Success"]) {
-				scope_lock lock(classes_rw_lock);
-				json adjusted_class = checked["Data"];
-				if (not adjusted_class.has_member("Table")) {
-					json_table class_data(this, { "ObjectId" });
-					relative_ptr_type rpt = class_data.create();
-					adjusted_class.put_member("Table", rpt);
-				}
-
-
-				relative_ptr_type ptr =  classes->put(adjusted_class);
-				if (ptr != null_row) {
-					json key = adjusted_class.extract({ "ClassName" });
-					json temp =  classes->get(key); 
-					if (temp.empty()) {
-						response = create_response(check_request, false, "save check failed", adjusted_class, method_timer.get_elapsed_seconds());
-						return response;
-					}
-					if (adjusted_class.has_member("Ancestors")) {
-						auto ancestors = adjusted_class["Ancestors"];
-						if (ancestors.object()) {
-							auto ancestor_classes = ancestors.get_members_raw();
-							for (auto acp : ancestor_classes) {
-								std::string acn = acp.first;
-								json class_key = jp.create_object();
-								class_key.put_member("ClassName", acn);
-								auto ancestor_class =  classes->get(class_key);
-								json descendants;
-								if (ancestor_class.has_member("Descendants")) {
-									descendants = ancestor_class["Descendants"];
-								}
-								else 
-								{
-									descendants = jp.create_object();
-								}
-								descendants.put_member(acn, acn);
-								ancestor_class.put_member("Descendants", descendants);
-								 classes->put(ancestor_class);
-							}
-						}
-					}
-					response = create_response(check_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
-				}
-				else {
-					response = create_response(check_request, false, "didn't save", checked, method_timer.get_elapsed_seconds());
-				}
-			}
-			else 
-			{
-				response = checked;
-			}
-			system_monitoring_interface::global_mon->log_function_stop("create_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			json response = put_class(sys_request);
 
 			return response;
-		}
-
-		bool compare_classes(json _classA, json _classB)
-		{
-			json_parser jp;
-			json classA = jp.create_object();
-			classA.copy_member("BaseClassName", _classA);
-			classA.copy_member("Fields", _classA);
-			std::string sa = classA.to_json_typed();
-
-			json classB = jp.create_object();
-			classB.copy_member("BaseClassName", _classB);
-			classB.copy_member("Fields", _classB);
-			std::string sb = classB.to_json_typed();
-
-			return sa == sb;
-		}
-
-		json check_class(json check_class_request)
-		{
-			timer method_timer;
-			json result;
-			json class_definition = check_class_request["Data"];
-
-			date_time start_time = date_time::now();
-			if (trace_check_class) {				
-				system_monitoring_interface::global_mon->log_activity("check_class", start_time);
-			}
-
-			result = create_response(check_class_request, true, "Ok", class_definition, method_timer.get_elapsed_seconds());
-
-			if (not class_definition.has_member("ClassName"))
-			{
-				result = create_response(check_class_request, false, "Class must have a name", class_definition, method_timer.get_elapsed_seconds());
-			}
-
-			if (trace_check_class) {
-				system_monitoring_interface::global_mon->log_information("Supplied class definition");
-				system_monitoring_interface::global_mon->log_json<json>(class_definition);
-			}
-
-			std::string class_name = class_definition["ClassName"];
-
-			// here we are going to grab the ancestor chain for this class.
-
-			if (class_definition.has_member("BaseClassName"))
-			{
-
-				std::string base_class_name = class_definition["BaseClassName"];
-
-				json_parser jp;
-				json base_class_key = jp.create_object();
-				base_class_key.put_member("ClassName", base_class_name);
-				base_class_key.set_compare_order({ "ClassName" });
-				json base_class_def;
-
-				{
-					scope_lock lock_one(classes_rw_lock);
-
-					base_class_def =  classes->get(base_class_key);
-				}
-
-				if (trace_check_class)
-				{
-					system_monitoring_interface::global_mon->log_information("Base class definition");
-					system_monitoring_interface::global_mon->log_json<json>(base_class_def);
-				}
-
-				if (not base_class_def.object())
-				{
-					result = create_response(check_class_request, false, "Base class not found", class_definition, method_timer.get_elapsed_seconds());
-				}
-
-				json ancestors = base_class_def["Ancestors"];
-				if (not ancestors.empty()) {
-					ancestors.put_member(base_class_name, base_class_name);
-					class_definition.put_member("Ancestors", ancestors);
-				}
-				else 
-				{
-					class_definition.put_member_object("Ancestors");
-				}
-
-				if (trace_check_class)
-				{
-					system_monitoring_interface::global_mon->log_information("Class ancestors");
-					system_monitoring_interface::global_mon->log_json<json>(ancestors);
-				}
-
-				auto inh_fields = base_class_def["Fields"];
-				if (inh_fields.object()) {
-					auto inherited_fields = inh_fields.get_members();
-					if (trace_check_class)
-					{
-						system_monitoring_interface::global_mon->log_information("Inherited fields");
-					}
-
-					if (not class_definition.has_member("Fields")) {
-						class_definition.put_member_object("Fields");
-					}
-					json fieldso = class_definition["Fields"];
-					for (auto field : inherited_fields) {
-						fieldso.put_member(field.first, field.second);
-						if (trace_check_class)
-						{
-							system_monitoring_interface::global_mon->log_information(field.first);
-						}
-					}
-
-					if (trace_check_class) {
-						system_monitoring_interface::global_mon->log_information("Apply inherited fields");
-						system_monitoring_interface::global_mon->log_json<json>(class_definition);
-					}
-				}
-
-			} 
-			else 
-			{
-				class_definition.put_member_object("Ancestors");
-			}
-
-			if (not class_definition.has_member("ClassDescription"))
-			{
-				result = create_response(check_class_request, false, "Class must have a description", class_definition, method_timer.get_elapsed_seconds());
-			}
-
-			if (not class_definition.has_member("Fields") or !class_definition["Fields"].object())
-			{
-				result = create_response(check_class_request, false, "Class needs some fields", class_definition, method_timer.get_elapsed_seconds());
-			}
-			else
-			{
-				json fields_object = class_definition["Fields"];
-				auto members = fields_object.get_members();
-				for (auto& member : members)
-				{
-					json_parser jpx;
-					json jp = member.second;
-					if (jp.is_string())
-					{
-						std::string field_type = jp.get_string();
-						if (not allowed_field_types.contains(field_type))
-						{
-							json err_field = jpx.create_object("Name", member.first);
-							result = create_response(check_class_request, false, "Bad field type", err_field, method_timer.get_elapsed_seconds());
-							return result;
-						}
-					}
-					else if (jp.object())
-					{
-						std::string field_type = jp["FieldType"];
-						if (not allowed_field_types.contains(field_type))
-						{
-							json err_field = jpx.create_object("Name", member.first);
-							result = create_response(check_class_request, false, "Bad field type", err_field, method_timer.get_elapsed_seconds());
-							return result;
-						}
-						// also remember that allowed children should be a thing here
-						if (field_type == "array" or field_type == "object") {
-							if (jp.has_member("ElementClassNames")) {
-								json j = jp["ElementClassNames"];
-								if (not j.array()) {
-									json err_field = jpx.create_object("Name", member.first);
-									result = create_response(check_class_request, false, "ElementClassNames must be an array", err_field, method_timer.get_elapsed_seconds());
-								}
-							}
-						}
-					}
-					else
-					{
-						json err_field = jpx.create_object("Name", member.first);
-						result = create_response(check_class_request, false, "Class field incorrect", err_field, method_timer.get_elapsed_seconds());
-					}
-				}
-				result = create_response(check_class_request, true, "Ok", class_definition, method_timer.get_elapsed_seconds());
-			}
-
-			return result;
 		}
 
 		json check_object(json check_object_request)
@@ -1945,6 +1879,26 @@ private:
 
 			system_monitoring_interface::global_mon->log_job_stop("apply_config", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
+		}
+
+		class_definition get_class(std::string _class_name)
+		{
+			json_parser jp;
+			json key = jp.create_object();
+			key.put_member("ClassName", _class_name);
+			json class_def = classes->get(key);
+			class_definition cd;
+			cd.put_json(class_def);
+			return cd;
+		}
+
+		json save_class(class_definition& _class_to_save)
+		{
+			json_parser jp;
+			json class_def = jp.create_object();
+			_class_to_save.get_json(class_def);
+			classes->put(class_def);
+			return class_def;
 		}
 
 		json apply_schema(json _schema)
@@ -2697,152 +2651,148 @@ private:
 			}
 
 			json token = put_class_request["Token"];
-			json class_definition = put_class_request["Data"];
+			json jclass_definition = put_class_request["Data"];
+			std::string class_name = jclass_definition["ClassName"];
 
 			bool can_put_class =  has_class_permission(
 				token,
-				class_definition["ClassName"],
+				class_name,
 				"Put");
 
 			if (not can_put_class) {
-				result = create_response(put_class_request, false, "Denied", class_definition, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, false, "Denied", jclass_definition, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
 			}
 
-			std::string class_name = class_definition["ClassName"];
-			json class_key = jp.create_object();
-			class_key.put_member("ClassName", class_name);
-			class_key.set_compare_order({ "ClassName" });
-			json class_exists = classes->get(class_key);
+			class_definition existing_class = get_class(class_name);
+			class_definition class_def;
+			class_def.put_json(jclass_definition);
 
-			bool changed_class = false;
-
-			if (compare_classes(class_exists, class_definition)) {
-				class_exists.put_member("RunScript", true);
-				result = create_response(put_class_request, true, "Class has not changed", class_exists, method_timer.get_elapsed_seconds());
+			if (trace_check_class) {
+				system_monitoring_interface::global_mon->log_activity("check_class", start_time);
 			}
 
-			changed_class = true;
+			result = create_response(put_class_request, true, "Ok", jclass_definition, method_timer.get_elapsed_seconds());
 
-			json check_request = create_request(put_class_request, class_definition);
-			json checked =  check_class(check_request);
-			if (checked["Success"]) {
-				scope_lock lock(classes_rw_lock);
-				json adjusted_class = checked["Data"];
-				adjusted_class.copy_member("Table", class_exists);
-				adjusted_class.copy_member("Indeces", class_exists);
-				json_table class_data(this, { "ObjectId" });
-				relative_ptr_type ptr;
-				relative_ptr_type rpt;
-				if (not adjusted_class.has_member("Table")) {
-					rpt = class_data.create();
-					adjusted_class.put_member("Table", rpt);
-				}
-				else {
-					rpt = adjusted_class.get_member("Table");
-					rpt = class_data.open(rpt);
-				}
-				ptr = classes->put(adjusted_class);
-				if (ptr != null_row) {
-					json key = adjusted_class.extract({ "ClassName" });
-					json temp =  classes->get(key);
-					if (temp.empty()) {
-						result = create_response(check_request, false, "save check failed", adjusted_class, method_timer.get_elapsed_seconds());
-						system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			if (class_def.class_name.empty())
+			{
+				result = create_response(put_class_request, false, "Class must have a name", jclass_definition, method_timer.get_elapsed_seconds());
+			}
 
-						return result;
-					}
-					if (adjusted_class.has_member("Ancestors")) {
-						auto ancestors = adjusted_class["Ancestors"];
-						if (ancestors.object()) {
-							auto ancestor_classes = ancestors.get_members_raw();
-							for (auto acp : ancestor_classes) {
-								std::string acn = acp.first;
-								json class_key = jp.create_object();
-								class_key.put_member("ClassName", acn);
-								auto ancestor_class =  classes->get(class_key);
-								json descendants;
-								if (ancestor_class.has_member("Descendants")) {
-									descendants = ancestor_class["Descendants"];
-								}
-								else
-								{
-									descendants = jp.create_object();
-								}
-								descendants.put_member(acn, acn);
-								ancestor_class.put_member("Descendants", descendants);
-								classes->put(ancestor_class);
-							}
-						}
-					}
+			if (class_def.class_description.empty())
+			{
+				result = create_response(put_class_request, false, "Class must have a description", jclass_definition, method_timer.get_elapsed_seconds());
+			}
 
-					if (adjusted_class.has_member("Indexes")) {
-						json children = adjusted_class["Children"];
-						if (children.array()) {
-							for (auto child : children) {
-								std::string name = child["Name"];
-								if (not name.empty()) {
-									json froms = child["From"];
-									if (froms.array()) {
-										for (auto fromc : froms) {
-											std::string sep = "_";
-											std::string index_name = name;
-											json index_class_name = fromc["ClassName"];
-											json jindex_key = fromc["On"];
-											std::vector<std::string> index_definition;
-											for (auto key_component : jindex_key) {
-												index_name += sep;
-												index_name += key_component;
-												index_definition.push_back(key_component);
-											}
-											json index_class_key = jp.create_object();
-											index_class_key.put_member("ClassName", index_class_name);
-											json index = indexes->get(index_class_key);
-											if (index.empty()) {
-												index = index_class_key.clone();
-											}
-											json existing_index = index[index_name];
-											// TODO: This means you have to rebuild the index for existing data
-											// And, you have to clean up the old one.
-											/*
-												the index is structured like
+			std::string class_name = class_def.class_name;
 
-												{
-													"ClassName" : "IndexedClassName"
-													"Key" : [ "field0", "field1"..."fieldn' ]
-													"Location" : int64_t 
-												}											
-											
-											*/
-											if (existing_index.empty()) {
-												existing_index = jp.create_object();
-												jindex_key.push_back("ObjectId");
-												existing_index.put_member("Key", jindex_key);
-												json_table index_table(this, index_definition);
-												relative_ptr_type index_location = index_table.create();
-												existing_index.put_member_i64("Location", index_location);
-												index.put_member(index_name, existing_index);
-												indexes->put(index);
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-					adjusted_class.put_member("ClassChanged", changed_class);
-					result = create_response(check_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
+			// here we are going to grab the ancestor chain for this class.
+
+			if (not class_def.base_class_name.empty())
+			{
+				std::string base_class_name = class_def.base_class_name;
+
+				class_definition base_class = get_class(base_class_name);
+
+				if (base_class.empty())
+				{
+					result = create_response(put_class_request, false, "Base class not found", jclass_definition, method_timer.get_elapsed_seconds());
 				}
-				else {
-					result = create_response(check_request, false, "didn't save", checked, method_timer.get_elapsed_seconds());
+
+				class_def.ancestors = base_class.ancestors;
+				class_def.ancestors.insert_or_assign(base_class_name, true);
+
+				base_class.descendants.insert_or_assign(class_name, true);
+				class_def.descendants = base_class.descendants;	
+
+				for (auto temp_field : base_class.fields)
+				{
+					class_def.fields.insert_or_assign(temp_field.first, temp_field.second);
 				}
+
+				for (auto descendant : class_def.descendants)
+				{
+					auto desc_class = get_class(descendant.first);
+					desc_class.ancestors.insert_or_assign(class_name, true);
+					save_class(desc_class);
+				}
+			}
+
+			class_def.table_location = existing_class.table_location;
+
+			json_table class_data(this, { "ObjectId" });
+			relative_ptr_type rpt;
+
+			if (class_def.table_location == 0) {
+				rpt = class_data.create();
+				class_def.table_location = rpt;
 			}
 			else
 			{
-				result = checked;
+				rpt = class_def.table_location;
+				class_data.open(rpt);
 			}
+
+			// The object id always part of the index key
+			// and I check it here, before looping through the existing indexes.
+
+			for (auto& new_index : class_def.indexes)
+			{
+				auto first = std::find_if(new_index.second->index_keys.begin(), new_index.second->index_keys.begin(), [](std::string& _key) {
+							if (_key == "ObjectId") {
+								return true;
+							}
+							return false;
+						});
+				if (first == new_index.second->index_keys.end()) {
+					new_index.second->index_keys.push_back("ObjectId");
+				}
+			}
+
+			// loop through existing indexes,
+			// dropping old ones that don't match
+			for (auto old_index : existing_class.indexes)
+			{
+				auto index = old_index.second;
+				auto existing = class_def.indexes.find(index->index_name);
+				if (existing == class_def.indexes.end() or 
+					existing->second->index_key_string() != index->index_key_string()) {
+					json_table index_table(this, index->index_keys);
+					if (index->index_location)
+					{
+						index_table.open(index->index_location);
+						index_table.clear();
+						index->index_location = 0;
+					}
+				}
+			}
+
+			// and once again through the indexes
+
+			for (auto& new_index : class_def.indexes)
+			{
+				// don't trust the inbounnd table locations
+				new_index.second->index_location = 0;
+
+				auto existing = existing_class.indexes.find(new_index.first);
+
+				if (existing != existing_class.indexes.end()) 
+				{
+					new_index.second->index_location = existing->second->index_location;
+				}
+
+				if (new_index.second->index_location == 0) 
+				{
+					json_table table(this, new_index.second->index_keys);
+					new_index.second->index_location = table.create();
+				}
+			}
+
+			json saved_class = save_class(class_def);	
+			result = create_response(put_class_request, true, "Ok", saved_class, method_timer.get_elapsed_seconds());
+
 			commit();
 			system_monitoring_interface::global_mon->log_function_stop("put_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return result;

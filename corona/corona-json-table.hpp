@@ -798,6 +798,11 @@ namespace corona
 			return location;
 		}
 
+		void clear()
+		{
+			// fill this out at some point;
+		}
+
 		bool contains(const KEY key)
 		{
 			date_time start_time = date_time::now();
