@@ -3041,39 +3041,24 @@ private:
 
 				for (auto class_pair : classes_and_data)
 				{
-					json class_key = jp.create_object();
-					class_key.put_member("ClassName", class_pair.first);
-					json class_def = classes->get(class_key);
+					class_definition cd = load_class(class_pair.second);
 
-					if (class_def.has_member("Table")) {
-						// now that we have our class, we can go ahead and open the storage for it
-						json empty;
-						relative_ptr_type rpt = class_def["Table"];
-						json_table *class_data = new json_table(this, { "ObjectId" });
-						class_data->open(rpt);
-						// and then write the data in a batch
-						class_data->put_array(class_pair.second);
-						// update the indexes
-						json indeces = indexes->get(class_key);
-						if (indeces.object()) {
-							auto class_indexes = indeces.get_members();
-							for (auto class_index : class_indexes) {
-								json index = class_index.second;
-								json fields = index["Key"];
-								relative_ptr_type location = index["Location"];
-								if ((location > 0) and (not fields.empty())) {
-									std::vector<std::string> index_def;
-									for (auto field : fields) {
-										index_def.push_back(field);
-									}
-									json indexed_objects = class_pair.second.map([&index_def](std::string _member, int _index, json& _item) -> json {
-										return _item.extract(index_def);
-										});
-									json_table index_to_update(this, index_def);
-									index_to_update.open(location);
-									index_to_update.put_array(indexed_objects);
-								}
-							}
+					// now that we have our class, we can go ahead and open the storage for it
+					relative_ptr_type rpt = cd.table_location;
+					json_table class_data(this, { "ObjectId" });
+					class_data.open(rpt);
+					class_data.put_array(class_pair.second);
+
+					// update the indexes
+					for (auto class_index : cd.indexes) {
+						relative_ptr_type location = class_index.second->index_location;
+						if (location > 0) {
+							json indexed_objects = class_pair.second.map([&class_index](std::string _member, int _index, json& _item) -> json {
+								return _item.extract(class_index.second->index_keys);
+								});
+							json_table index_to_update(this, class_index.second->index_keys);
+							index_to_update.open(location);
+							index_to_update.put_array(indexed_objects);
 						}
 					}
 				}
