@@ -138,9 +138,7 @@ namespace corona
 	class array_field_options : public field_options_base
 	{
 	public:
-		int maximum_length;
-		int minimum_length;
-		std::string match_pattern;
+		std::map<std::string, bool> allowed_classes;
 
 		array_field_options() = default;
 		array_field_options(const array_field_options& _src) = default;
@@ -149,30 +147,37 @@ namespace corona
 		array_field_options& operator = (array_field_options&& _src) = default;
 		virtual ~array_field_options() = default;
 
-
 		virtual void get_json(json& _dest)
 		{
 			field_options_base::get_json(_dest);
-			_dest.put_member_i64("maximum_length", maximum_length);
-			_dest.put_member_i64("mininum_length", minimum_length);
-			_dest.put_member("match_pattern", match_pattern);
+
+			json_parser jp;
+			json jallowed = jp.create_object();
+
+			for (auto ac : allowed_classes) {
+				jallowed.put_member(ac.first, true);
+			}
+
+			_dest.put_member("allowed_classes", jallowed);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			field_options_base::put_json(_src);
-			minimum_length = _src["mininum_length"];
-			maximum_length = _src["maximum_length"];
-			match_pattern = _src["match_pattern"];
+
+			json jallowed = _src["allowed_classes"];
+			auto members = jallowed.get_members();
+			allowed_classes.clear();
+			for (auto member : members) {
+				allowed_classes.insert_or_assign(member.first, bool);
+			}
 		}
 	};
 
 	class object_field_options : public field_options_base
 	{
 	public:
-		int maximum_length;
-		int minimum_length;
-		std::string match_pattern;
+		std::map<std::string, bool> allowed_classes;
 
 		object_field_options() = default;
 		object_field_options(const object_field_options& _src) = default;
@@ -181,21 +186,30 @@ namespace corona
 		object_field_options& operator = (object_field_options&& _src) = default;
 		virtual ~object_field_options() = default;
 
-
 		virtual void get_json(json& _dest)
 		{
 			field_options_base::get_json(_dest);
-			_dest.put_member_i64("maximum_length", maximum_length);
-			_dest.put_member_i64("mininum_length", minimum_length);
-			_dest.put_member("match_pattern", match_pattern);
+
+			json_parser jp;
+			json jallowed = jp.create_object();
+
+			for (auto ac : allowed_classes) {
+				jallowed.put_member(ac.first, true);
+			}
+
+			_dest.put_member("allowed_classes", jallowed);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			field_options_base::put_json(_src);
-			minimum_length = _src["mininum_length"];
-			maximum_length = _src["maximum_length"];
-			match_pattern = _src["match_pattern"];
+
+			json jallowed = _src["allowed_classes"];
+			auto members = jallowed.get_members();
+			allowed_classes.clear();
+			for (auto member : members) {
+				allowed_classes.insert_or_assign(member.first, bool);
+			}
 		}
 	};
 
@@ -1223,17 +1237,14 @@ private:
 				return _item["ClassName"];
 				});
 
-			std::map<std::string, json> classes_ahead;
+			std::map<std::string, class_definition> classes_ahead;
 
 			auto class_list = classes_group.get_members();
-			json key_boy = jp.create_object();
 
-			for (auto class_def : class_list) {
+			for (auto class_pair : class_list) {
 
-				key_boy.put_member("ClassName", class_def.first);
-				json class_data = classes->get(key_boy);
-				std::string class_name = key_boy["ClassName"];
-				classes_ahead.insert_or_assign(class_name, class_data);
+				auto class_def = load_class(class_pair.first);
+				classes_ahead.insert_or_assign(class_pair.first, class_def);
 			}
 
 			for (auto object_definition : object_list)
@@ -1270,20 +1281,18 @@ private:
 
 				std::string class_name = object_definition["ClassName"];
 
-				json class_data = classes_ahead[class_name];
+				class_definition& class_data = classes_ahead[class_name];
 
 				if (not class_data.empty())
 				{
-					result.put_member("ClassDefinition", class_data);
 					// check the object against the class definition for correctness
 					// first we see which fields are in the class not in the object
-					json field_definition = class_data["Fields"];
-					auto class_members = field_definition.get_members();
-					for (auto kv : class_members) {
+
+					for (auto kv : class_data.fields) {
 						json err_field = jp.create_object("Name", kv.first);
 						if (object_definition.has_member(kv.first)) {
 							std::string obj_type = object_definition[kv.first]->get_type_name();
-							std::string member_type = kv.second;
+							std::string member_type = kv.second->field_type;
 							if (member_type != obj_type) {
 								object_definition.change_member_type(kv.first, member_type);
 							}
@@ -1296,14 +1305,12 @@ private:
 							warnings.push_back(warning);
 						}
 					}
+
 					// then we see which fields are in the object that are not 
 					// in the class definition.
 					auto object_members = object_definition.get_members();
 					for (auto om : object_members) {
-						if (field_definition.has_member(om.first)) {
-							;
-						}
-						else {
+						if (not class_data.fields.contains(om.first)) {
 							json warning = jp.create_object();
 							warning.put_member("Error", "Field not found in class definition");
 							warning.put_member("FieldName", om.first);
@@ -1316,13 +1323,11 @@ private:
 						result.put_member("Message", msg);
 						result.put_member("Success", 0);
 						result.put_member("Warnings", warnings);
-						result.put_member("Definition", class_data);
 						result.put_member("Data", object_definition);
 					}
 					else {
 						result.put_member("Message", "Ok");
 						result.put_member("Success", 1);
-						result.put_member("Definition", class_data);
 						result.put_member("Data", object_definition);
 					}
 				}
@@ -1332,7 +1337,6 @@ private:
 					result.put_member("Message", msg);
 					result.put_member("Success", 0);
 					result.put_member("Data", object_definition);
-					result = class_data;
 				}
 				result_list.push_back(result);
 			}
@@ -1489,24 +1493,16 @@ private:
 			json_parser jp;
 			json obj;
 
-			json class_key = _object_key.extract({ "ClassName" } );
-			json class_def;
 
-			class_key.set_compare_order({ "ClassName" });
-			class_def = classes->get(class_key);
+			std::string class_name = _object_key["ClassName"];
+			class_definition classd = load_class(class_name);
 
-			if (not class_def.empty()) 
+			if (not classd.empty()) 
 			{
-				if (class_def.has_member("Table")) {
-					relative_ptr_type rpt = class_def["Table"];
-					json_table class_data(this, { "ObjectId" });
-					class_data.open(rpt);
-					obj = class_data.get(_object_key);
-					if (_object_key.is_member("GetChildren", true)) {
-						get_children(class_def, obj);
-					}
-					return obj;
-				}
+				json_table class_data(this, { "ObjectId" });
+				class_data.open(classd.table_location);
+				obj = class_data.get(_object_key);
+				return obj;
 			}
 
 			return obj;
@@ -1515,104 +1511,73 @@ private:
 		json select_object(json _key)
 		{
 			json_parser jp;
-			json obj, class_def, index_def;
+			json obj;
 
 			_key.set_natural_order();
 
-			json class_key = _key.extract({ "ClassName" } );
-			class_def = classes->get(class_key);
-			index_def = indexes->get(class_key);
+			std::string class_name = _key["ClassName"];
 
-			if (not class_def.empty())
+			class_definition classd = load_class(class_name);
+
+			if (not classd.empty())
 			{
-				if (class_def.has_member("Table")) {
-					relative_ptr_type rpt = class_def["Table"];
-					json_table class_data(this, { "ObjectId" });
-					class_data.open(rpt);
+				relative_ptr_type rpt = classd.table_location;
+				json_table class_data(this, { "ObjectId" });
+				class_data.open(rpt);
 
-					// Now, if there is an index set specified, let's go see if we can find one and use it 
-					// rather than scanning the table
+				// Now, if there is an index set specified, let's go see if we can find one and use it 
+				// rather than scanning the table
 
-					if (index_def.object()) 
+				if (classd.indexes.size() > 0)
+				{
+					std::shared_ptr<index_definition> matched_index;
+					int max_matched_key_count = 0;
+
+					// go through each index
+
+					for (auto index_pair : classd.indexes)
 					{
-						std::string matched_index_name;
-						int max_matched_key_count = 0;
-						std::shared_ptr<std::vector<std::string>> matched_index_keys = nullptr;
+						// and here, let's go see if all the keys except the object_id, hit the filter.
+						// if they do, we can use this index,
+						// but, we want to use the index that matches the most keys
+						//
+						int matched_key_count = 0;
 
-						auto indeces = index_def.get_members();
-
-						// go through each index
-
-						for (auto index_pair : indeces)
+						for (auto ikey : index_pair.second->index_keys)
 						{
-							json index = index_pair.second;
-							json key_fields = index["Key"];
-
-							// and here, let's go see if all the keys except the object_id, hit the filter.
-							// if they do, we can use this index,
-							// but, we want to use the index that matches the most keys
-							//
-							int matched_key_count = 0;
-
-							std::shared_ptr<std::vector<std::string>> index_keys = std::make_shared< std::vector<std::string>>();
-
-							for (auto key_field : key_fields)
+							if (not _key.has_member(ikey))
 							{
-								std::string name = key_field;
-
-								index_keys->push_back(name);
-
-								if (name == "ObjectId")
-									continue;
-
-								if (not _key.has_member(name))
-								{
-									matched_key_count = 0;
-								}
-								else
-								{
-									matched_key_count++;
-								}
+								matched_key_count = 0;
+								break;
 							}
-
-							if (matched_key_count > max_matched_key_count)
+							else
 							{
-								max_matched_key_count = matched_key_count;
-								matched_index_name = index_pair.first;
-								matched_index_keys = index_keys;
+								matched_key_count++;
 							}
 						}
 
-						// so now, if we have an index, we can use it.
-						if (max_matched_key_count > 0) 
+						if (matched_key_count > max_matched_key_count)
 						{
-							json index_to_use = index_def[matched_index_name];
-							// it's stupid because, the json table depends on the keys being constructed with it.
-							int64_t location = index_to_use["Location"];
-							json_table index_table(this, *matched_index_keys.get());
-							index_table.open(location);
-
-							obj = jp.create_array();
-							json object_key = jp.create_object();
-							object_key.copy_member("ClassName", class_key);
-
-							obj = index_table.select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
-								object_key.copy_member("ObjectId", _item);
-								json objfound = class_data.get(object_key);
-								return objfound;
-							});
+							matched_index = index_pair.second;
+							max_matched_key_count = matched_key_count;
 						}
-						else 
-						{
-							obj = class_data.select([&_key](int _index, json& _j)
-								{
-									json result;
-									if (_key.compare(_j) == 0)
-										result = _j;
-									return result;
+					}
 
-								});
-						}
+					// so now, if we have an index, we can use it.
+					if (matched_index)
+					{
+						json_table index_table(this, matched_index->index_keys);
+						index_table.open(matched_index->index_location);
+
+						obj = jp.create_array();
+						json object_key = jp.create_object();
+						object_key.put_member("ClassName", class_name);
+
+						obj = index_table.select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
+							object_key.copy_member("ObjectId", _item);
+							json objfound = class_data.get(object_key);
+							return objfound;
+						});
 					}
 					else 
 					{
@@ -1625,6 +1590,17 @@ private:
 
 							});
 					}
+				}
+				else 
+				{
+					obj = class_data.select([&_key](int _index, json& _j)
+						{
+							json result;
+							if (_key.compare(_j) == 0)
+								result = _j;
+							return result;
+
+						});
 				}
 			}
 
@@ -2943,78 +2919,57 @@ private:
 				return result;
 			}
 
-			json class_key = jp.create_object();
-			class_key.put_member("ClassName", class_name);
-			class_key.set_natural_order();
+			auto class_def = load_class(class_name);
 
-			json class_data;
+			if (not class_def.empty()) {
 
-			{
-				scope_lock lock_one(classes_rw_lock);
-				class_data =  classes->get(class_key);
-			}
-
-			if (class_data.object()) {
-				json field_definition = class_data["Fields"];
-				auto members = field_definition.get_members();
 				json new_object = jp.create_object();
 				new_object.put_member("ClassName", class_name);
 
-				for (auto& member : members)
+				for (auto& member : class_def.fields)
 				{
 					if (member.first == "ClassName")
 						continue;
 
-					json jpx = member.second;
-					if (jpx.is_string())
-					{
-						std::string field_type = jpx.get_string();
+					auto &field = member.second;
+					std::string &field_type = field->field_type;
 
-						if (field_type == "object") 
-						{
-							new_object.put_member_object(member.first);
-						}
-						else if (field_type == "array") 
-						{
-							new_object.put_member_array(member.first);
-						}
-						else if (field_type == "number") 
-						{
-							new_object.put_member(member.first, 0.0);
-						}
-						else if (field_type == "string") 
-						{
-							new_object.put_member(member.first, "");
-						}
-						else if (field_type == "int64") 
-						{
-							new_object.put_member_i64(member.first, 0);
-						}
-						else if (field_type == "datetime")
-						{
-							date_time dt;
-							new_object.put_member(member.first, dt);
-						}
-						else if (field_type == "function")
-						{
-							auto key = std::make_tuple(class_name, member.first);
-							if (functions.contains(key)) {
-								new_object.put_member_function(member.first, functions[key]);
-							}
-							else 
-							{
-								std::string err_message = std::format("function {0} {1} not defined", class_name, member.first);
-								new_object.put_member(member.first, err_message);
-							}
-						}
-					}
-					else if (jpx.object())
+					if (field_type == "object") 
 					{
 						new_object.put_member_object(member.first);
 					}
-					else if (jpx.array())
+					else if (field_type == "array") 
 					{
 						new_object.put_member_array(member.first);
+					}
+					else if (field_type == "number") 
+					{
+						new_object.put_member(member.first, 0.0);
+					}
+					else if (field_type == "string") 
+					{
+						new_object.put_member(member.first, "");
+					}
+					else if (field_type == "int64") 
+					{
+						new_object.put_member_i64(member.first, 0);
+					}
+					else if (field_type == "datetime")
+					{
+						date_time dt;
+						new_object.put_member(member.first, dt);
+					}
+					else if (field_type == "function")
+					{
+						auto key = std::make_tuple(class_name, member.first);
+						if (functions.contains(key)) {
+							new_object.put_member_function(member.first, functions[key]);
+						}
+						else 
+						{
+							std::string err_message = std::format("function {0} {1} not defined", class_name, member.first);
+							new_object.put_member(member.first, err_message);
+						}
 					}
 				}
 				response = create_response(create_object_request, true, "Object created", new_object, method_timer.get_elapsed_seconds());
@@ -3023,8 +2978,7 @@ private:
 			else {
 				std::string msg = std::format("create_object failed because the class '{0}' was never found.", class_name);
 				system_monitoring_interface::global_mon->log_warning(msg);
-				system_monitoring_interface::global_mon->log_json(class_key);
-				response = create_response(create_object_request, false, "Couldn't find class", class_key, method_timer.get_elapsed_seconds());
+				response = create_response(create_object_request, false, "Couldn't find class", create_object_request, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			commit();
