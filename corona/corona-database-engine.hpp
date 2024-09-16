@@ -1881,7 +1881,7 @@ private:
 
 		}
 
-		class_definition get_class(std::string _class_name)
+		class_definition load_class(std::string _class_name)
 		{
 			json_parser jp;
 			json key = jp.create_object();
@@ -2666,7 +2666,7 @@ private:
 				return result;
 			}
 
-			class_definition existing_class = get_class(class_name);
+			class_definition existing_class = load_class(class_name);
 			class_definition class_def;
 			class_def.put_json(jclass_definition);
 
@@ -2694,7 +2694,7 @@ private:
 			{
 				std::string base_class_name = class_def.base_class_name;
 
-				class_definition base_class = get_class(base_class_name);
+				class_definition base_class = load_class(base_class_name);
 
 				if (base_class.empty())
 				{
@@ -2714,7 +2714,7 @@ private:
 
 				for (auto descendant : class_def.descendants)
 				{
-					auto desc_class = get_class(descendant.first);
+					auto desc_class = load_class(descendant.first);
 					desc_class.ancestors.insert_or_assign(class_name, true);
 					save_class(desc_class);
 				}
@@ -2769,6 +2769,10 @@ private:
 				}
 			}
 
+			// reindex tables list
+
+			std::vector<std::shared_ptr<index_definition>> indexes_to_create;
+
 			// and once again through the indexes
 
 			for (auto& new_index : class_def.indexes)
@@ -2787,7 +2791,18 @@ private:
 				{
 					json_table table(this, new_index.second->index_keys);
 					new_index.second->index_location = table.create();
+					indexes_to_create.push_back(new_index.second);
 				}
+			}
+
+			// and populate the new indexes with any data that might exist
+			for (auto idc : indexes_to_create) {
+				json_table table(this, idc->index_keys);
+				table.open(idc->index_location);
+				class_data.for_each([idc, this, &table](int _idx, json& _item) -> relative_ptr_type {
+					json index_item = _item.extract(idc->index_keys);
+					table.put(index_item);
+				});
 			}
 
 			json saved_class = save_class(class_def);	
@@ -2854,7 +2869,6 @@ private:
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
-			json filter = manip["Filter"];
 
 			bool class_granted =  has_class_permission(token, base_class_name, "Get");
 			if (not class_granted)
@@ -2864,45 +2878,22 @@ private:
 				return response;
 			}
 
-			json class_def;
-
-			json class_key = query_class_request["Data"]
-								.extract({ "ClassName" });
-			class_def =  classes->get(class_key);
-			std::string class_name = class_def["ClassName"];
-
-			std::map<std::string, bool> class_names;
-
-			class_names.insert_or_assign(class_name, true);
-
-			json derived_classes = class_def["Descendants"];
-
-			if (derived_classes.object()) {
-				auto members = derived_classes.get_members();
-
-				for (auto member : members)
-				{
-					class_names.insert_or_assign(member.first, true);
-				}
-			}
+			class_definition class_def = load_class(base_class_name);
 
 			json object_list = jp.create_array();
 
-			for (auto class_pair : class_names)
+			json filter = manip["Filter"];
+
+			for (auto class_pair : class_def.descendants)
 			{
 				json class_key;
-				class_key = jp.create_object();
+				class_key = filter.clone();
 				class_key.put_member("ClassName", class_pair.first);
-				json class_def = classes->get(class_key);
-				if (class_def.has_member("Table")) {
-					relative_ptr_type rpt = class_def["Table"];
-					json_table class_data(this, { "ObjectId" });
-					class_data.open(rpt);
-					json empty_boy = jp.create_object();
-					json class_objects = class_data.update(empty_boy, [](int _index, json& _item)->json {
-						return _item;
-						}, update_json);
-					object_list.append_array(class_objects);
+				json objects = select_object(class_key);
+				if (objects.array()) {
+					for (auto obj : objects) {
+						object_list.push_back(obj);
+					}
 				}
 			}
 
@@ -3147,64 +3138,6 @@ private:
 			commit();
 
 			return result;
-		}
-
-		void get_child(json _parent, json& _extract_results, std::string _extract_name, int _index, json _from_list)
-		{
-			json_parser jp;
-
-			if (_index >= _from_list.size())
-				return;
-
-			json from_item = _from_list.get_element(_index);
-
-			if (from_item.object()) 
-			{
-				json on_fields = from_item["On"];
-
-				if (on_fields.array()) {
-					json key = jp.create_object();
-					std::string class_name = from_item["ClassName"];
-
-					key.put_member("ClassName", class_name);
-					for (int i = 0; i < on_fields.size(); i++) {
-						std::string on_field = on_fields.get_element(i);
-						key.copy_member(on_field, _parent);
-					}
-
-					json children = select_object(key);
-					for (auto child : children) {
-						for (int i = 0; i < on_fields.size(); i++) {
-							std::string on_field = on_fields.get_element(i);
-							child.copy_member(on_field, _parent);
-						}
-						get_child(child, _extract_results, _extract_name, _index + 1, _from_list);
-						if (_extract_name == class_name) {
-							_extract_results.push_back(child);
-						}
-					}
-				}
-			}
-		}
-
-		json get_children(json _class_def, json _object)
-		{
-			json_parser jp;
-			json results;
-			if (_class_def.has_member("Children")) {
-				json children = _class_def["Children"];
-				for (auto child : children) {
-					std::string extract_name = "Committees";
-					json context = _object;
-					json froms = child["Froms"];
-					if (froms.array()) {
-						json extract_array = jp.create_array();
-						get_child(_object, extract_array, extract_name, 0, froms);
-						_object.put_member(extract_name, extract_array);
-					}
-				}
-			}
-			return _object;
 		}
 
 		json get_object(
