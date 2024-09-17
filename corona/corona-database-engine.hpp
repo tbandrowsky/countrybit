@@ -1473,6 +1473,8 @@ private:
 				classes_ahead.insert_or_assign(class_pair.first, class_def);
 			}
 
+			bool all_objects_good = true;
+
 			for (auto object_definition : object_list)
 			{
 				if (not object_definition.object())
@@ -1560,6 +1562,7 @@ private:
 						result.put_member("Success", 0);
 						result.put_member("Errors", warnings);
 						result.put_member("Data", object_definition);
+						all_objects_good = false;
 					}
 					else {
 						result.put_member("Message", "Ok");
@@ -1573,12 +1576,12 @@ private:
 					result.put_member("Message", msg);
 					result.put_member("Success", 0);
 					result.put_member("Data", object_definition);
+					all_objects_good = false;
 				}
 				result_list.push_back(result);
 			}
 
-			result = create_response(check_object_request, true, "Objects processed", object_list, method_timer.get_elapsed_seconds());
-			result.put_member("Notes", result_list);
+			result = create_response(check_object_request, all_objects_good, "Objects processed", result_list, method_timer.get_elapsed_seconds());
 			return result;
 		}
 
@@ -3261,12 +3264,20 @@ private:
 
 				json item_array;
 				if (data.array()) {
-					item_array = data;
+					item_array = jp.create_object();
+					for (auto obj : item_array) {
+						if (obj["Success"]) {
+							json t = obj["Data"];
+							item_array.push_back(t);
+						}
+					}
 				}
 				else 
 				{
 					item_array = jp.create_array();
-					item_array.push_back(data);
+					if (data["Success"]) {
+						item_array.push_back(data["Data"]);
+					}
 				}
 
 				json grouped_by_class_name = item_array.group([](json& _item) -> std::string {
