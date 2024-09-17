@@ -548,6 +548,35 @@ namespace corona
 	const int style_busy = 3;
 	const int style_disabled = 4;
 
+	const std::string class_name_field = "class_name";
+	const std::string base_class_name_field = "base_class_name";
+	const std::string object_id_field = "object_id";
+	const std::string data_field = "data";
+	const std::string success_field = "success";
+	const std::string message_field = "message";
+	const std::string token_field = "token";
+	const std::string signature_field = "signature";
+	const std::string user_name_field = "user_name";
+	const std::string authorization_field = "authorization";
+	const std::string data_hash_field = "data_hash";
+	const std::string seconds_field = "seconds";
+	const std::string token_expires_field = "expires";
+	const std::string sys_user_name_field = "sys_user_name";
+	const std::string sys_user_password_field = "sys_password";
+	const std::string sys_user_email_field = "sys_email";
+	const std::string sys_default_team_field = "sys_default_team";
+
+	std::map<std::string, bool> allowed_field_types = {
+	{ "object", true },
+	{ "array", true },
+	{ "double", true },
+	{ "int64", true },
+	{ "string", true },
+	{ "bool", true },
+	{ "datetime", true },
+	{ "function", true }
+	};
+
 	auto toHex(unsigned char i)
 	{
 		struct char_pair

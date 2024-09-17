@@ -95,20 +95,20 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("ClassName", class_name);
-			_dest.put_member("FieldName", field_name);
-			_dest.put_member("Message", message);
-			_dest.put_member("FileName", file_name);
-			_dest.put_member("LineNumber", line_number);
+			_dest.put_member(class_name_field, class_name);
+			_dest.put_member("field_name", field_name);
+			_dest.put_member(message_field, message);
+			_dest.put_member("file_name", file_name);
+			_dest.put_member("line_number", line_number);
 		}
 
 		virtual void put_json(json& _src)
 		{
-			class_name = _src["ClassName"];
-			field_name = _src["FieldName"];
-			message = _src["Message"];
-			file_name = _src["FileName"];
-			line_number = _src["LineNumber"];
+			class_name = _src[class_name_field];
+			field_name = _src["field_anme"];
+			message = _src[message_field];
+			file_name = _src["file_name"];
+			line_number = _src["line_number"];
 		}
 	};
 
@@ -199,7 +199,7 @@ namespace corona
 					{
 						std::string object_class_name;
 						if (obj.object()) {
-							object_class_name = _object_to_test["ClassName"];
+							object_class_name = _object_to_test[class_name_field];
 						}
 						else if (obj.is_datetime())
 						{
@@ -292,7 +292,7 @@ namespace corona
 				{
 					std::string object_class_name;
 					if (_object_to_test.object()) {
-						object_class_name = _object_to_test["ClassName"];
+						object_class_name = _object_to_test[class_name_field];
 					}
 					if (allowed_classes.contains(object_class_name) or allowed_classes.contains("*"))
 					{
@@ -660,7 +660,7 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
-			_dest.put_member("class_source", index_name);
+			_dest.put_member("index_name", index_name);
 
 			json jindex_keys = jp.create_array();
 			for (auto ikey : index_keys) {
@@ -678,7 +678,7 @@ namespace corona
 			if (jindex_keys.array())
 			{
 				index_keys.clear();
-				for (auto key : index_keys) {
+				for (auto key : jindex_keys) {
 					std::string key_name = key;
 					index_keys.push_back(key);
 				}
@@ -714,31 +714,30 @@ namespace corona
 		{
 			json_parser jp;
 
-			_dest.put_member("class_name", class_name);
+			_dest.put_member(class_name_field, class_name);
 			_dest.put_member("class_description", class_description);
 			_dest.put_member("base_class_name", base_class_name);
 			_dest.put_member_i64("table_location", table_location);
 
 			if (fields.size() > 0) {
-				json jfield_array = jp.create_array();
+				json jfield_object = jp.create_object();
 				for (auto field : fields) {
 					json jfield_definition = jp.create_object();
 					field.second->get_json(jfield_definition);
-					jfield_array.push_back(jfield_definition);
+					jfield_object.put_member(field.first, jfield_definition);
 				
 				}
-				_dest.put_member("fields", jfield_array);
+				_dest.put_member("fields", jfield_object);
 			}
 
 			if (indexes.size() > 0) {
-				json jindex_array = jp.create_array();
+				json jindex_object = jp.create_object();
 				for (auto index : indexes) {
 					json jindex_definition = jp.create_object();
 					index.second->get_json(jindex_definition);
-					jindex_array.push_back(jindex_definition);
-
+					jindex_object.put_member(index.first, jindex_definition);
 				}
-				_dest.put_member("indexes", jindex_array);
+				_dest.put_member("indexes", jindex_object);
 			}
 
 			if (ancestors.size() > 0) {
@@ -761,7 +760,7 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
-			class_name = _src["class_name"];
+			class_name = _src[class_name_field];
 			class_description = _src["class_description"];
 			base_class_name = _src["base_class_name"];
 			table_location = (int64_t)_src["table_location"];
@@ -770,20 +769,34 @@ namespace corona
 
 			fields.clear();
 			jfields = _src["fields"];
-			if (jfields.array()) {
-				for (auto jfield : jfields) {
+
+			if (jfields.object()) {
+				auto jfield_members = jfields.get_members();
+				for (auto jfield : jfield_members) {
 					std::shared_ptr<field_definition> field = std::make_shared<field_definition>();
-					field->put_json(jfield);
-					fields.insert_or_assign(field->field_name, field);
+					field->field_name = jfield.first;
+					if (jfield.second.object()) 
+					{
+						field->put_json(jfield.second);
+					}
+					else if (jfield.second.is_string()) 
+					{
+						field->field_type = jfield.second;
+					}
+					if (allowed_field_types.contains(field->field_type)) {
+						fields.insert_or_assign(field->field_name, field);
+					}
 				}
 			}
 
 			indexes.clear();
 			jindexes = _src["indexes"];
-			if (jindexes.array()) {
-				for (auto jindex : jindexes) {
+			if (jindexes.object()) {
+				auto jindex_members = jindexes.get_members();
+				for (auto jindex : jindex_members) {
 					std::shared_ptr<index_definition> index = std::make_shared<index_definition>();
-					index->put_json(jindex);
+					index->put_json(jindex.second);
+					index->index_name = jindex.first;
 					indexes.insert_or_assign(index->index_name, index);
 				}
 			}
@@ -812,6 +825,7 @@ namespace corona
 
 		}
 
+
 	};
 
 	class corona_database : public file_block
@@ -827,17 +841,6 @@ namespace corona
 
 		std::string send_grid_api_key;
 		bool watch_polling;
-
-		std::map<std::string, bool> allowed_field_types = {
-			{ "object", true },
-			{ "array", true },
-			{ "number", true },
-			{ "int64", true },
-			{ "string", true },
-			{ "bool", true },
-			{ "datetime", true },
-			{ "function", true }
-		};
 
 		const std::string auth_general = "auth-general";
 		const std::string auth_system = "auth-system";
@@ -1030,363 +1033,192 @@ namespace corona
 	
 			json response =  create_class(R"(
 {	
-	"ClassName" : "SysObject",
-	"ClassDescription" : "Base of all objects",
-	"Fields" : {			
-			"ObjectId" : "int64",
-			"ClassName" : "string",
-			"Created" : "datetime",
-			"CreatedBy" : "string",
-			"Updated" : "datetime",
-			"UpdatedBy" : "string"
+	"class_name" : "sys_object",
+	"class_description" : "Base of all objects",
+	"fields" : {			
+			"object_id" : "int64",
+			"class_name" : "string",
+			"created" : "datetime",
+			"created_by" : "string",
+			"updated": "datetime",
+ 			"updated_by" :"string" 
 	}
 }
 )");
 
-			if (not response["Success"]) {
+			if (not response[success_field]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			json test =  classes->get(R"({"ClassName":"SysObject"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
+			json test =  classes->get(R"({"class_name":"sys_object"})");
+			if (test.empty() or test.is_member("class_name", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysObject after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			created_classes.put_member("SysObject", true);
+			created_classes.put_member("sys_object", true);
 
-			response =  create_class(R"(
+			json response = create_class(R"(
 {
-	"ClassName" : "SysSchemas",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Database script changes",
-	"Fields" : {			
-			"SchemaName" : "string",
-			"SchemaDescription" : "string",
-			"SchemaVersion" : "string",
-			"SchemaAuthors" : "array",
-			"Classes" : "array",
-			"Users" : "array",
-			"Datasets" : "array"
+	"class_name" : "sys_parent_child",
+	"base_class_name" : "sys_object",
+	"class_description" : "parent_child relationship",
+	"fields" : {
+		"parent_id" : "int64",
+		"parent_member" : "string",
+		"child_class" : "string",
+		"child_id" : "int64"
+	},
+	"indexes" : {
+		"parent_child_index" : {
+			"index_keys" : [ "parent_id", "parent_member" ]
+		}
 	}
 }
 )");
 
-			if (not response["Success"]) {
+			if (not response[success_field]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			test =  classes->get(R"({"ClassName":"SysSchemas"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseErrors")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysSchemas after creation.", __FILE__, __LINE__);
+			json test = classes->get(R"({"class_name":"sys_object"})");
+			if (test.empty() or test.is_member("class_name", "SysParseError")) {
+				system_monitoring_interface::global_mon->log_warning("could not find class SysObject after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
 				return result;
 			}
 
-			created_classes.put_member("SysSchemas", true);
+			created_classes.put_member("sys_object", true);
+
+
 
 			response =  create_class(R"(
 {
-	"ClassName" : "SysDatasets",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Database script changes",
-	"Fields" : {			
-			"DatasetName" : "string",
-			"DatasetDescription" : "string",
-			"DatasetVersion" : "string",
-			"DatasetAuthors" : "array",
-			"RunOnChange": "bool",
-			"Objects" : "array",
-			"Import" : "object"
+	"class_name" : "sys_schemas",
+	"base_class_name" : "sys_object",
+	"class_description" : "Database script changes",
+	"Fields" : [			
+			"schema_name" : "string",
+			"schema_description" : "string",
+			"schema_version" : "string",
+			"schema_authors" : "array",
+			"classes" : "array",
+			"users" : "array",
+			"datasets" : "array" 
+		]
 	}
 }
 )");
 
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysDatasets put failed", __FILE__, __LINE__);
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test =  classes->get(R"({"class_name":"sys_schemas"})");
+			if (test.empty() or test.is_member("class_name", "SysParseErrors")) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_schemas after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+			created_classes.put_member("sys_schemas", true);
+
+			response =  create_class(R"(
+{
+	"class_name" : "sys_datasets",
+	"base_class_name" : "sys_object",
+	"class_description" : "Database script changes",
+	"fields" : {
+			"dataset_name" : "string",
+			"dataset_description" : "string",
+			"dataset_version" : "string",
+			"dataset_authors" : "array",
+			"run_on_change": "bool",
+			"objects": "array",
+			"import" : "object"
+	}
+}
+)");
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class sys_datasets put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				std::cout << response.to_json() << std::endl;
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			test =  classes->get(R"({"ClassName":"SysSchemas"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysDatasets after creation.", __FILE__, __LINE__);
+			test =  classes->get(R"({"class_name":"sys_datasets"})");
+			if (test.empty() or test.is_member("class_name", "SysParseError")) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_datasets after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			created_classes.put_member("SysSchemas", true);
+			created_classes.put_member("sys_datasets", true);
 
 			response =  create_class(R"(
 {	
-	"ClassName" : "SysReference",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "A reference to another object",
+	"base_class_name" : "sys_object",
+	"class_name" : "sys_users",
+	"class_description" : "A user",
 	"Fields" : {			
-			"LinkObjectId" : "int64"
-	}
-}
-)");
-
-			created_classes.put_member("SysReference", true);
-
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysReference put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test =  classes->get(R"({"ClassName":"SysReference"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysParseError after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			response =  create_class(R"(
-{	
-	"BaseClassName" : "SysObject",
-	"ClassName" : "SysUser",
-	"ClassDescription" : "A user",
-	"Fields" : {			
-			"ClassName" : "string",
-			"FirstName" : "string",
-			"LastName" : "string",
-			"UserName" : "string",
-			"Email" : "string",
-			"Mobile" : "string",
-			"Street" : "string",
-			"City" : "string",
-			"State" : "string",
-			"Zip" : "string",
-			"Teams" : {
-				"FieldType" : "array"
+			"class_name" : "string",
+			"first_name" : "string",
+			"last_name" : "string",
+			"user_name" : "string",
+			"email" : "string",
+			"mobile" : "string",
+			"street1" : "string",
+			"street2" : "string",
+			"city" : "string",
+			"state" : "string",
+			"zip" : "string",
+			"teams" : {
+				"field_type" : "array"
 			}
 	}
 }
 )");
 
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysUser put failed", __FILE__, __LINE__);
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class sys_users put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			test =  classes->get(R"({"ClassName":"SysUser"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysUser after creation.", __FILE__, __LINE__);
+			test =  classes->get(R"({"class_name":"sys_users"})");
+			if (test.empty() or test.is_member("class_name", "SysParseError")) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_users after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			created_classes.put_member("SysUser", true);
-
-			response =  create_class(R"(
-{	
-	"ClassName" : "SysPermission",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Permissions flags",
-	"Fields" : {			
-			"Get" : "bool",
-			"Put" : "bool",
-			"Delete" : "bool",
-			"Replace" : "bool"
-	}
-}
-)");
-
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysPermission put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test =  classes->get(R"({"ClassName":"SysPermission"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysPermission after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			created_classes.put_member("SysPermission", true);
-
-
-			response =  create_class(R"(
-{	
-	"ClassName" : "SysMember",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Team member",
-	"Fields" : {
-			"Permissions" : 
-			{
-				"FieldType" : "object"
-			},
-			"GrantUser" : 
-			{
-				"FieldType" : "object"
-			}
-	}
-}
-)");
-
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysMember put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				std::cout << response.to_json() << std::endl;
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test =  classes->get(R"({"ClassName":"SysMember"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysMember after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			created_classes.put_member("SysMember", true);
-
-			response =  create_class(R"(
-{	
-	"ClassName" : "SysGrant",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Grant to an object",
-	"Fields" : {
-			"Permissions" : 
-			{
-					"FieldType" : "object"
-			},
-			"GrantClassName" : "string"
-	}
-}
-)");
-
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysGrant put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test =  classes->get(R"({"ClassName":"SysGrant"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysGrant after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			created_classes.put_member("SysGrant", true);
-
-			response =  create_class(R"(
-{	
-	"ClassName" : "SysClassGrant",
-	"BaseClassName" : "SysGrant",
-	"ClassDescription" : "Grant to a class"
-}
-)");
-
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysClassGrant put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test =  classes->get(R"({"ClassName":"SysClassGrant"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysGlassGrant after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			created_classes.put_member("SysClassGrant", true);
-
-			class_location =  create_class(R"(
-{	
-	"ClassName" : "SysObjectGrant",
-	"BaseClassName" : "SysGrant",
-	"ClassDescription" : "Grant to an object",
-	"Fields" : {
-			"ObjectFilter" : "object"
-	}
-}
-)");
-
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysObjectGrant put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test =  classes->get(R"({"ClassName":"SysObjectGrant"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysObjectGrant after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			created_classes.put_member("SysObjectGrant", true);
-
-			response =  create_class(R"(
-{	
-	"ClassName" : "SysTeam",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "A team",
-	"Fields" : {			
-			"TeamName" : "string",
-			"TeamDescription" : "string",
-			"Members" : {
-				"FieldType":"array"
-			},
-			"Grants" : {
-				"FieldType":"array"
-			}
-	}
-}
-)");
-
-			if (not response["Success"]) {
-				system_monitoring_interface::global_mon->log_warning("create_class SysTeam put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test =  classes->get(R"({"ClassName":"SysTeam"})");
-			if (test.empty() or test.is_member("ClassName", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysTeam after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			created_classes.put_member("SysTeam", true);
+			created_classes.put_member("sys_users", true);
 
 			json gc = jp.create_object();
 			json gcr = create_system_request( gc );
 
 			json classes_array_response =  get_classes(gcr);
-			json classes_array = classes_array_response["Data"];
+			json classes_array = classes_array_response[data_field];
 			json classes_grouped = classes_array.group([](json& _item) -> std::string {
-				return (std::string)_item["ClassName"];
+				return (std::string)_item[class_name_field];
 				});
 
 			bool missing = classes_array.any([classes_grouped](json& _item) {
-				return !classes_grouped.has_member(_item["ClassName"]);
+				return !classes_grouped.has_member(_item[class_name_field]);
 				});
 
 			if (missing) {
@@ -1399,15 +1231,15 @@ namespace corona
 			json new_user_data;
 
 			new_user_data = jp.create_object();
-			new_user_data.put_member("ClassName", "SysUser");
-			new_user_data.put_member("UserName", default_user);
-			new_user_data.put_member("Email", default_email_address);
-			new_user_data.put_member("Password1", default_password);
-			new_user_data.put_member("Password2", default_password);
+			new_user_data.put_member(class_name_field, "sys_users");
+			new_user_data.put_member(sys_user_name_field, default_user);
+			new_user_data.put_member(sys_user_email_field, default_email_address);
+			new_user_data.put_member("password1", default_password);
+			new_user_data.put_member("password2", default_password);
 
 			new_user_request = create_system_request(new_user_data);
 			json new_user_result =  create_user(new_user_request);
-			json new_user = new_user_result["Data"];
+			json new_user = new_user_result[data_field];
 			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
 			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
 
@@ -1418,6 +1250,143 @@ namespace corona
 		}
 
 private:
+
+		virtual void extract_child_objects(class_definition& _cdef, json& _child_objects, json& _src_list)
+		{
+			json_parser jp;
+			for (auto _src_obj : _src_list)
+			{
+				int64_t parent_object_id = (int64_t)_src_obj[object_id_field];
+				for (auto& fpair : _cdef.fields) {
+					auto& fld = fpair.second;
+					if (fld->field_type == "array")
+					{
+						json fld_array = _src_obj[fld->field_name];
+						if (fld_array.array()) {
+							json new_array = jp.create_array();
+							for (auto item : fld_array) {
+								if (item.object() and item.has_member(class_name_field)) {
+
+									int64_t child_object_id;
+									std::string child_class_name = item[class_name_field];
+
+									if (not item.has_member(object_id_field)) {
+										child_object_id = get_next_object_id();
+										item.put_member_i64(object_id_field, child_object_id);
+									}
+									else {
+										child_object_id = item[object_id_field];
+									}
+									_child_objects.push_back(item);
+
+									json parent_child = jp.create_object();
+									parent_child.put_member(class_name_field, "sys_parent_child");
+									parent_child.put_member_i64("parent_id", parent_object_id);
+									parent_child.put_member("parent_member", fld->field_name);
+									parent_child.put_member("child_class", child_class_name);
+									parent_child.put_member("child_id", child_object_id);
+									json existing_child = select_object(parent_child);
+									if (existing_child.array() and existing_child.size() == 0)
+									{
+										_child_objects.push_back(parent_child);
+									}
+								}
+								else
+								{
+									new_array.push_back(item);
+								}
+							}
+							_src_obj.put_member(fld->field_name, new_array);
+						}
+					}
+					else if (fld->field_type == "object")
+					{
+						json item = _src_obj[fld->field_name];
+						if (item.object() and item.has_member(class_name_field)) {
+							int64_t child_object_id;
+							std::string child_class_name = item[class_name_field];
+
+							if (not item.has_member(object_id_field)) {
+								child_object_id = get_next_object_id();
+								item.put_member_i64(object_id_field, child_object_id);
+							}
+							else {
+								child_object_id = item[object_id_field];
+							}
+							_child_objects.push_back(item);
+
+							json parent_child = jp.create_object();
+							parent_child.put_member(class_name_field, "sys_parent_child");
+							parent_child.put_member_i64("parent_id", parent_object_id);
+							parent_child.put_member("parent_member", fld->field_name);
+							parent_child.put_member("child_class", child_class_name);
+							parent_child.put_member("child_id", child_object_id);
+							json existing_child = select_object(parent_child);
+							if (existing_child.array() and existing_child.size() == 0)
+							{
+								_child_objects.push_back(parent_child);
+							}
+							json empty = jp.create_object();
+							_src_obj.put_member(fld->field_name, empty);
+						}
+					}
+				}
+			}
+		}
+
+		virtual void select_child_objects(class_definition& _cdef, json& _src_list)
+		{
+			json_parser jp;
+			for (auto _src_obj : _src_list)
+			{
+				json key = jp.create_object();
+				int64_t object_id = (int64_t)_src_obj[object_id_field];
+				key.put_member(class_name_field, "sys_parent_child");
+				key.put_member_i64("parent_id", object_id);
+				for (auto& fpair : _cdef.fields) {
+					auto& fld = fpair.second;
+					key.put_member("parent_member", fld->field_name);
+					json link_objects = select_object(key);
+
+					if (fld->field_type == "array")
+					{
+						json existing = _src_obj[fld->field_name];
+						if (not existing.array()) {
+							json new_array = jp.create_array();
+							_src_obj.put_member(fld->field_name, new_array);
+							existing = _src_obj[fld->field_name];
+						}
+						for (auto link_object : link_objects)
+						{
+							json child_select = jp.create_object();
+							std::string child_class = link_object["child_class"];
+							int64_t child_object_id = (int64_t)link_object["child_id"];
+							child_select.put_member(class_name_field, child_class);
+							child_select.put_member_i64(object_id_field, child_object_id);
+							auto child_objects = select_object(child_select);
+							for (auto child : child_objects) {
+								existing.push_back(child);
+							}
+						}
+					}
+					else if (fld->field_type == "object")
+					{
+						for (auto link_object : link_objects)
+						{
+							json child_select = jp.create_object();
+							std::string child_class = link_object["child_class"];
+							int64_t child_object_id = (int64_t)link_object["child_id"];
+							child_select.put_member(class_name_field, child_class);
+							child_select.put_member_i64(object_id_field, child_object_id);
+							auto child_objects = select_object(child_select);
+							for (auto child : child_objects) {
+								_src_obj.put_member(fld->field_name, child);
+							}
+						}
+					}
+				}
+			}
+		}
 
 		json create_class(std::string _text)
 		{
@@ -1439,9 +1408,9 @@ private:
 			json_parser jp;
 			date_time current_date = date_time::now();
 
-			json object_load = check_object_request["Data"];
+			json object_load = check_object_request[data_field];
 			bool strict_enabled = (bool)check_object_request["Strict"];
-			std::string user = check_object_request.query("Token.Name")["value"];
+			std::string user = check_object_request.query("token.user_name")["value"];
 
 			result = create_response(check_object_request, true, "Ok", object_load, method_timer.get_elapsed_seconds());
 
@@ -1460,7 +1429,7 @@ private:
 			result_list = jp.create_array();
 
 			json classes_group = object_list.group([](json _item) -> std::string {
-				return _item["ClassName"];
+				return _item[class_name_field];
 				});
 
 			std::map<std::string, class_definition> classes_ahead;
@@ -1483,7 +1452,7 @@ private:
 					result_list.push_back(result);
 				}
 
-				if (not object_definition.has_member("ClassName"))
+				if (not object_definition.has_member(class_name_field))
 				{
 					result = create_response(check_object_request, false, "Object must have class name", object_definition, method_timer.get_elapsed_seconds());
 					result_list.push_back(result);
@@ -1491,23 +1460,23 @@ private:
 
 				db_object_id_type object_id = -1;
 
-				if (object_definition.has_member("ObjectId"))
+				if (object_definition.has_member(object_id_field))
 				{
-					object_id = object_definition["ObjectId"].get_int64s();
-					object_definition.put_member("Modified", current_date);
-					object_definition.put_member("ModifiedBy", user);
+					object_id = object_definition[object_id_field].get_int64s();
+					object_definition.put_member("updated", current_date);
+					object_definition.put_member("updated_by", user);
 				}
 				else
 				{
 					object_id =  get_next_object_id();
-					object_definition.put_member_i64("ObjectId", object_id);
-					object_definition.put_member("Created", current_date);
-					object_definition.put_member("CreatedBy", user);
+					object_definition.put_member_i64(object_id_field, object_id);
+					object_definition.put_member("created", current_date);
+					object_definition.put_member("created_by", user);
 				}
 
 				json warnings = jp.create_array();
 
-				std::string class_name = object_definition["ClassName"];
+				std::string class_name = object_definition[class_name_field];
 
 				class_definition& class_data = classes_ahead[class_name];
 
@@ -1520,7 +1489,6 @@ private:
 					// first we see which fields are in the class not in the object
 
 					for (auto kv : class_data.fields) {
-						json err_field = jp.create_object("Name", kv.first);
 						if (object_definition.has_member(kv.first)) {
 							std::string obj_type = object_definition[kv.first]->get_type_name();
 							std::string member_type = kv.second->field_type;
@@ -1558,24 +1526,24 @@ private:
 							ve.get_json(jve);
 							warnings.push_back(jve);
 						}
-						result.put_member("Message", msg);
-						result.put_member("Success", 0);
+						result.put_member(message_field, msg);
+						result.put_member(success_field, 0);
 						result.put_member("Errors", warnings);
-						result.put_member("Data", object_definition);
+						result.put_member(data_field, object_definition);
 						all_objects_good = false;
 					}
 					else {
-						result.put_member("Message", "Ok");
-						result.put_member("Success", 1);
-						result.put_member("Data", object_definition);
+						result.put_member(message_field, "Ok");
+						result.put_member(success_field, 1);
+						result.put_member(data_field, object_definition);
 					}
 				}
 				else
 				{
 					std::string msg = std::format("'{0}' is not valid class_name", class_name);
-					result.put_member("Message", msg);
-					result.put_member("Success", 0);
-					result.put_member("Data", object_definition);
+					result.put_member(message_field, msg);
+					result.put_member(success_field, 0);
+					result.put_member(data_field, object_definition);
 					all_objects_good = false;
 				}
 				result_list.push_back(result);
@@ -1603,23 +1571,23 @@ private:
 
 			json payload = jp.create_object();
 			json token = jp.create_object();
-			token.put_member("UserName", _user_name);
-			token.put_member("Authorization", _authorization);
+			token.put_member(user_name_field, _user_name);
+			token.put_member(authorization_field, _authorization);
 			date_time expiration = date_time::utc_now() + this->token_life;
 			std::string hash = crypter.hash(_data);
-			token.put_member("DataHash", hash);
-			token.put_member("TokenExpires", expiration);
+			token.put_member(data_hash_field, hash);
+			token.put_member(token_expires_field, expiration);
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
-			token.put_member("Signature", cipher_text);
+			token.put_member(signature_field, cipher_text);
 
 			std::string token_string = token.to_json();
 			std::string base64_token_string = base64_encode(token_string );
 
-			payload.put_member("Token", base64_token_string);
-			payload.put_member("Success", _success);
-			payload.put_member("Message", _message);
-			payload.put_member("Data", _data);
-			payload.put_member("Seconds", _seconds);
+			payload.put_member(token_field, base64_token_string);
+			payload.put_member(success_field, _success);
+			payload.put_member(message_field, _message);
+			payload.put_member(data_field, _data);
+			payload.put_member(seconds_field, _seconds);
 
 			return payload;
 		}
@@ -1629,23 +1597,23 @@ private:
 			json_parser jp;
 			json payload = jp.create_object();
 			json token = jp.create_object();
-			json src_token = _request["Token"];
+			json src_token = _request[token_field];
 			
-			token.copy_member("UserName", src_token);
-			token.copy_member("Authorization", src_token);
+			token.copy_member(user_name_field, src_token);
+			token.copy_member(authorization_field, src_token);
 			date_time expiration = date_time::utc_now() + this->token_life;
-			token.put_member("TokenExpires", expiration);
+			token.put_member(token_expires_field, expiration);
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
-			token.put_member("Signature", cipher_text);
+			token.put_member(signature_field, cipher_text);
 
 			std::string token_string = token.to_json();
 			std::string base64_token_string = base64_encode(token_string);
 
-			payload.put_member("Token", base64_token_string);
-			payload.put_member("Success", _success);
-			payload.put_member("Message", _message);
-			payload.put_member("Data", _data);
-			payload.put_member_double("Seconds", _seconds);
+			payload.put_member(token_field, base64_token_string);
+			payload.put_member(success_field, _success);
+			payload.put_member(message_field, _message);
+			payload.put_member(data_field, _data);
+			payload.put_member_double(seconds_field, _seconds);
 			return payload;
 		}
 
@@ -1661,20 +1629,20 @@ private:
 				return empty;
 			}
 
-			if (not token.has_member("Signature"))
+			if (not token.has_member(signature_field))
 			{
 				return empty;
 			}
 
-			std::string signature = token["Signature"];
-			token.erase_member("Signature");
+			std::string signature = token[signature_field];
+			token.erase_member(signature_field);
 
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 
-			token.put_member("Signature", signature);
+			token.put_member(signature_field, signature);
 
 			date_time current = date_time::utc_now();
-			date_time expiration = (date_time)token["TokenExpires"];
+			date_time expiration = (date_time)token[token_expires_field];
 
 			if (current > expiration)
 			{
@@ -1686,13 +1654,13 @@ private:
 				return empty;
 			}
 
-			if (not token.has_member("Authorization"))
+			if (not token.has_member(authorization_field))
 			{
 				return empty;
 			}
 
-			std::string authorization = token["Authorization"];
-			std::string user = token["UserName"];
+			std::string authorization = token[authorization_field];
+			std::string user = token[user_name_field];
 
 			if (authorization == auth_system and user == default_user)
 			{
@@ -1710,7 +1678,7 @@ private:
 
 		bool check_message(json& _message, std::vector<std::string> _authorizations)
 		{
-			std::string token = _message["Token"];
+			std::string token = _message[token_field];
 
 			json result = check_token(token, _authorizations);
 			bool is_ok = not result.empty();
@@ -1720,10 +1688,10 @@ private:
 
 		json get_message_user(json _token)
 		{
-			if (_token.has_member("Token")) {
-				_token = _token["Token"];
+			if (_token.has_member(token_field)) {
+				_token = _token[token_field];
 			}
-			json token_name = _token.extract({ "UserName" });
+			json token_name = _token.extract({ user_name_field });
 			return token_name;
 		}
 
@@ -1733,12 +1701,12 @@ private:
 			json obj;
 
 
-			std::string class_name = _object_key["ClassName"];
+			std::string class_name = _object_key[class_name_field];
 			class_definition classd = load_class(class_name);
 
 			if (not classd.empty()) 
 			{
-				json_table class_data(this, { "ObjectId" });
+				json_table class_data(this, { object_id_field });
 				class_data.open(classd.table_location);
 				obj = class_data.get(_object_key);
 				return obj;
@@ -1750,18 +1718,18 @@ private:
 		json select_object(json _key)
 		{
 			json_parser jp;
-			json obj;
+			json obj = jp.create_array();
 
 			_key.set_natural_order();
 
-			std::string class_name = _key["ClassName"];
+			std::string class_name = _key[class_name_field];
 
 			class_definition classd = load_class(class_name);
 
 			if (not classd.empty())
 			{
 				relative_ptr_type rpt = classd.table_location;
-				json_table class_data(this, { "ObjectId" });
+				json_table class_data(this, { object_id_field });
 				class_data.open(rpt);
 
 				// Now, if there is an index set specified, let's go see if we can find one and use it 
@@ -1808,12 +1776,11 @@ private:
 						json_table index_table(this, matched_index->index_keys);
 						index_table.open(matched_index->index_location);
 
-						obj = jp.create_array();
 						json object_key = jp.create_object();
-						object_key.put_member("ClassName", class_name);
+						object_key.put_member(class_name_field, class_name);
 
 						obj = index_table.select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
-							object_key.copy_member("ObjectId", _item);
+							object_key.copy_member(object_id_field, _item);
 							json objfound = class_data.get(object_key);
 							return objfound;
 						});
@@ -1841,6 +1808,8 @@ private:
 
 						});
 				}
+
+				select_child_objects(classd, obj);
 			}
 
 			return obj;
@@ -1850,17 +1819,8 @@ private:
 		{
 			json_parser jp;
 			json obj = jp.create_object();
-			obj.put_member("ClassName", "SysUser");
-			obj.put_member("UserName", _user_name);
-			return select_object(obj);
-		}
-
-		json get_team(std::string _team_name)
-		{
-			json_parser jp;
-			json obj = jp.create_object();
-			obj.put_member("ClassName", "SysTeam");
-			obj.put_member("TeamName", _team_name);
+			obj.put_member(class_name_field, "sys_users");
+			obj.put_member(user_name_field, _user_name);
 			return select_object(obj);
 		}
 
@@ -1868,9 +1828,9 @@ private:
 		{
 			json_parser jp;
 			json obj = jp.create_object();
-			obj.put_member("ClassName", "SysSchemas");
-			obj.put_member("SchemaName", schema_name);
-			obj.put_member("SchemaVersion", schema_version);
+			obj.put_member(class_name_field, "sys_schemas");
+			obj.put_member("schema_name", schema_name);
+			obj.put_member("schema_version", schema_version);
 			return select_object(obj);
 		}
 
@@ -1878,9 +1838,9 @@ private:
 		{
 			json_parser jp;
 			json obj = jp.create_object();
-			obj.put_member("ClassName", "SysDatasets");
-			obj.put_member("DatasetName", dataset_name);
-			obj.put_member("DatasetVersion", dataset_version);
+			obj.put_member(class_name_field, "sys_datasets");
+			obj.put_member("dataset_name", dataset_name);
+			obj.put_member("dataset_version", dataset_version);
 			return select_object(obj);
 		}
 
@@ -1903,7 +1863,7 @@ private:
 
 			// extract the user key from the token and get the user object
 			json user_key = get_message_user(token);
-			std::string user_name = user_key["UserName"];
+			std::string user_name = user_key[user_name_field];
 
 			if (user_name == default_user) 
 			{
@@ -1915,33 +1875,7 @@ private:
 				return false;
 			}
 
-			// Now go through the teams the user is a member of and check the grants to see if we can access this
-			json teams_list = user["Teams"];
-
-			for (int i = 0; i < teams_list.size(); i++)
-			{
-				json item = teams_list.get_element(i);
-
-				json team =  get_team(item);
-
-				if (team.is_member("ClassName", "SysTeam")) {
-					json team_grants = team["Grants"];
-
-					for (int i = 0; i < team_grants.size(); i++)
-					{
-						json grant = team_grants.get_element(i);
-
-						if (grant.is_member("ClassName", "SysClassGrant"))
-						{
-							bool has_permissions = (bool)grant["Permissions"][_permission];
-							if (has_permissions) {
-								granted = has_permissions;
-								return granted;
-							}
-						}
-					}
-				}
-			}
+			
 			return granted;
 		}
 
@@ -1955,55 +1889,22 @@ private:
 			json_parser jp;
 			json user;
 
-			json object = _request["Data"];
+			json object = _request[data_field];
 
 			// check the token to make sure it is valid - this includes signature verification
 			json user_key = get_message_user(_request);
-			user_key.put_member("ClassName", "SysUser");
+			user_key.put_member(class_name_field, "sys_users");
 
-			if ((std::string)user_key["UserName"] == default_user) {
+			if ((std::string)user_key[user_name_field] == default_user) {
 				return true;
 			}
 
 			// extract the user key from the token and get the user object
-			user =  get_user(user_key["UserName"]);
+			user =  get_user(user_key[user_name_field]);
 			if (user.empty()) {
 				return false;
 			}
 
-			json teams_list = user["Teams"];
-
-			for (int i = 0; i < teams_list.size(); i++)
-			{
-				json item = teams_list.get_element(i);
-
-				json team =  get_team(item);
-
-				if (team.is_member("ClassName", "SysTeam"))
-				{
-					json team_grants = team["Grants"];
-
-					for (int i = 0; i < team_grants.size(); i++)
-					{
-						json grant = team_grants.get_element(i);
-
-						if (grant.is_member("ClassName", "SysObjectGrant"))
-						{
-							json filter = grant["ObjectFilter"];
-
-							bool has_matching_key = filter.compare(object) == 0;
-
-							bool has_permissions = (bool)grant["Permissions"][_permission];
-
-							granted = has_permissions or has_matching_key;
-
-							if (granted) {
-								return granted;
-							}
-						}
-					}
-				}
-			}
 			return granted;
 		}
 
@@ -2011,43 +1912,6 @@ private:
 		{
 			InterlockedIncrement64(&header.data.object_id);
 			return header.data.object_id;
-		}
-
-		bool is_ancestor(json _token, std::string _base_class, std::string _class_to_check)
-		{
-			json_parser jp;
-
-			json class_key = jp.create_object("ClassName", _base_class);
-			class_key.set_natural_order();
-
-			json class_obj =  classes->get(class_key);
-
-			if (not class_obj.empty())
-			{
-				bool has_ancestor = class_obj["Ancestors"].has_member(_class_to_check);
-				return has_ancestor;
-			}
-
-			return false;
-		}
-
-		bool is_descendant(json _token, std::string _base_class, std::string _class_to_check)
-		{
-			json_parser jp;
-
-			json class_key = jp.create_object("ClassName", _class_to_check);
-			class_key.set_natural_order();
-
-
-			json class_obj =  classes->get(class_key);
-
-			if (not class_obj.empty())
-			{
-				bool has_ancestor = class_obj["Ancestors"].has_member(_base_class);
-				return has_ancestor;
-			}
-
-			return false;
 		}
 
 
@@ -2064,8 +1928,8 @@ private:
 		corona_database(std::shared_ptr<file> _database_file) :
 			file_block(_database_file)
 		{
-			std::vector<std::string> class_key_fields({ "ClassName" });
-			std::vector<std::string> indexes_key_fields({ "ClassName" });
+			std::vector<std::string> class_key_fields({ class_name_field });
+			std::vector<std::string> indexes_key_fields({ class_name_field });
 			classes = std::make_shared<json_table>(this, class_key_fields);
 			indexes = std::make_shared<json_table>(this, indexes_key_fields);
 			token_life = time_span(1, time_models::hours);	
@@ -2086,10 +1950,10 @@ private:
 			if (_config.has_member("Server"))
 			{
 				json server = _config["Server"];
-				default_user = server["DefaultUserName"];
-				default_password = server["DefaultUserPassword"];
-				default_email_address = server["DefaultUserEmailAddress"];
-				default_guest_team = server["DefaultGuestTeam"];
+				default_user = server[sys_user_name_field];
+				default_password = server[sys_user_password_field];
+				default_email_address = server[sys_user_email_field];
+				default_guest_team = server[sys_default_team_field];
 			}
 
 			system_monitoring_interface::global_mon->log_job_stop("apply_config", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -2100,7 +1964,7 @@ private:
 		{
 			json_parser jp;
 			json key = jp.create_object();
-			key.put_member("ClassName", _class_name);
+			key.put_member(class_name_field, _class_name);
 			json class_def = classes->get(key);
 			class_definition cd;
 			cd.put_json(class_def);
@@ -2126,17 +1990,17 @@ private:
 
 			std::map<std::string, bool> changed_classes;
 
-			if (not _schema.has_member("SchemaName"))
+			if (not _schema.has_member("schema_name"))
 			{
 				system_monitoring_interface::global_mon->log_warning("Schema doesn't have a schema name");
 			}
 
-			if (not _schema.has_member("SchemaVersion"))
+			if (not _schema.has_member("schema_version"))
 			{
 				system_monitoring_interface::global_mon->log_warning("Schema doesn't have a schema version");
 			}
 
-			if (not _schema.has_member("SchemaAuthors"))
+			if (not _schema.has_member("schema_authors"))
 			{
 				system_monitoring_interface::global_mon->log_warning("Schema doesn't have a schema author");
 			}
@@ -2144,10 +2008,10 @@ private:
 			json_parser jp;
 
 			json schema_key = jp.create_object();
-			schema_key.copy_member("SchemaName", _schema);
-			schema_key.copy_member("SchemaVersion", _schema);
-			schema_key.put_member("ClassName", "SysSchemas");
-			schema_key.set_compare_order({ "SchemaName", "SchemaVersion" });
+			schema_key.copy_member("schema_name", _schema);
+			schema_key.copy_member("schema_version", _schema);
+			schema_key.put_member(class_name_field, "sys_schemas");
+			schema_key.set_compare_order({ "schema_name", "schema_version" });
 
 			json schema_test =  select_object(schema_key);
 
@@ -2156,13 +2020,13 @@ private:
 				new_database = false;
 			}
 
-			if (_schema.has_member("Classes"))
+			if (_schema.has_member("classes"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
 				system_monitoring_interface::global_mon->log_job_section_start("", "Classes", start_section, __FILE__, __LINE__);
 
-				json class_array = _schema["Classes"];
+				json class_array = _schema["classes"];
 				if (class_array.array())
 				{
 					for (int i = 0; i < class_array.size(); i++)
@@ -2171,7 +2035,7 @@ private:
 						timer txc;
 
 						json class_definition = class_array.get_element(i);
-						system_monitoring_interface::global_mon->log_function_start("put class", class_definition["ClassName"], start_class, __FILE__, __LINE__);
+						system_monitoring_interface::global_mon->log_function_start("put class", class_definition[class_name_field], start_class, __FILE__, __LINE__);
 
 						try {
 
@@ -2182,36 +2046,27 @@ private:
 							{
 								system_monitoring_interface::global_mon->log_warning(class_result, __FILE__, __LINE__);
 							}
-							else 
-							{
-								json class_data = class_result["Data"];
-								bool changed_class = (bool)class_data["ClassChanged"];
-								if (changed_class) {
-									std::string class_name = class_data["ClassName"];
-									changed_classes[class_name] = true;
-								}
-							}
 						}
 						catch (std::exception exc)
 						{
 							system_monitoring_interface::global_mon->log_exception(exc);
 						}
-						system_monitoring_interface::global_mon->log_function_stop("put class", class_definition["ClassName"], txc.get_elapsed_seconds(), __FILE__, __LINE__);
+						system_monitoring_interface::global_mon->log_function_stop("put class", class_definition[class_name_field], txc.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
 				system_monitoring_interface::global_mon->log_job_section_stop("", "Classes", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else
 			{
-				system_monitoring_interface::global_mon->log_warning("Classes not found in schema");
+				system_monitoring_interface::global_mon->log_warning("classes not found in schema");
 			}
 
-			if (_schema.has_member("Users"))
+			if (_schema.has_member("users"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
 				system_monitoring_interface::global_mon->log_job_section_start("", "Users", start_section, __FILE__, __LINE__);
-				json user_array = _schema["Users"];
+				json user_array = _schema["users"];
 				if (user_array.array())
 				{
 					for (int i = 0; i < user_array.size(); i++)
@@ -2220,23 +2075,22 @@ private:
 						timer txu;
 
 						json user_definition = user_array.get_element(i);
-						system_monitoring_interface::global_mon->log_function_start("put user", user_definition["UserName"], start_user, __FILE__, __LINE__);
+						system_monitoring_interface::global_mon->log_function_start("put user", user_definition[user_name_field], start_user, __FILE__, __LINE__);
 						json put_user_request = create_system_request(user_definition);
 						create_user(put_user_request);
-					    system_monitoring_interface::global_mon->log_function_stop("put class", user_definition["UserName"], txu.get_elapsed_seconds(), __FILE__, __LINE__);
+					    system_monitoring_interface::global_mon->log_function_stop("put user", user_definition[user_name_field], txu.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
 				system_monitoring_interface::global_mon->log_job_section_stop("", "Users", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 	
-			if (_schema.has_member("Datasets"))
+			if (_schema.has_member("datasets"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
 				system_monitoring_interface::global_mon->log_job_section_start("", "Datasets", start_section, __FILE__, __LINE__);
-				json user_array = _schema["Users"];
 
-				json script_array = _schema["Datasets"];
+				json script_array = _schema["datasets"];
 				if (script_array.array())
 				{
 					for (int i = 0; i < script_array.size(); i++)
@@ -2246,13 +2100,13 @@ private:
 
 						json script_definition = script_array.get_element(i);
 
-						script_definition.put_member("ClassName", "SysDatasets");
-						std::string dataset_name = script_definition["DatasetName"];
-						std::string dataset_version = script_definition["DatasetVersion"];
+						script_definition.put_member(class_name_field, "sys_datasets");
+						std::string dataset_name = script_definition["dataset_name"];
+						std::string dataset_version = script_definition["dataset_version"];
 
 						system_monitoring_interface::global_mon->log_job_section_start("DataSet", dataset_name + " Start", start_dataset, __FILE__, __LINE__);
 
-						bool script_run = (bool)script_definition["RunOnChange"];
+						bool script_run = (bool)script_definition["run_on_change"];
 						json existing_scripts = get_dataset(dataset_name, dataset_version);
 						json existing_script = existing_scripts.get_first_element();
 						bool run_script = false;
@@ -2265,23 +2119,23 @@ private:
 							// but a change in identifier.  It's a clean way of just getting the 
 							// "new chumpy" item for ya.  Or you can just shove it in there.
 							json put_script_request = create_system_request(script_definition);
-							json created_object = put_script_request["Data"];
+							json created_object = put_script_request[data_field];
 							json save_result = put_object(put_script_request);
-							if (not save_result["Success"]) {
-								system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
+							if (not save_result[success_field]) {
+								system_monitoring_interface::global_mon->log_warning(save_result[message_field]);
 								system_monitoring_interface::global_mon->log_json<json>(save_result);
-								existing_script = save_result["Data"];
+								existing_script = save_result[data_field];
 							}
 							else
-								system_monitoring_interface::global_mon->log_information(save_result["Message"]);
+								system_monitoring_interface::global_mon->log_information(save_result[message_field]);
 						}
 
-						if (run_script and script_definition.has_member("Import"))
+						if (run_script and script_definition.has_member("import"))
 						{
-							json import_spec = script_definition["Import"];
+							json import_spec = script_definition["import"];
 							std::vector<std::string> missing;
 
-							if (not import_spec.has_members(missing, { "TargetClass", "Type" })) {
+							if (not import_spec.has_members(missing, { "target_class", "type" })) {
 								system_monitoring_interface::global_mon->log_warning("Import missing:");
 								std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 									system_monitoring_interface::global_mon->log_warning(s);
@@ -2291,12 +2145,12 @@ private:
 								continue;
 							}
 
-							std::string target_class = import_spec["TargetClass"];
-							std::string import_type = import_spec["Type"];
+							std::string target_class = import_spec["target_class"];
+							std::string import_type = import_spec["type"];
 
 							if (import_type == "csv") {
 
-								if (not import_spec.has_members(missing, { "FileName", "Delimiter" })) {
+								if (not import_spec.has_members(missing, { "file_name", "delimiter" })) {
 									system_monitoring_interface::global_mon->log_warning("Import CSV missing:");
 									std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 										system_monitoring_interface::global_mon->log_warning(s);
@@ -2306,13 +2160,13 @@ private:
 									continue;
 								}
 
-								std::string file_name = import_spec["FileName"];
-								std::string delimiter = import_spec["Delimiter"];
+								std::string file_name = import_spec["file_name"];
+								std::string delimiter = import_spec["delimiter"];
 								if (file_name.empty() or delimiter.empty()) {
-									system_monitoring_interface::global_mon->log_warning("FileName and Delimiter can't be blank.");
+									system_monitoring_interface::global_mon->log_warning("file_name and delimiter can't be blank.");
 								}
 
-								json column_map = import_spec["ColumnMap"];
+								json column_map = import_spec["column_map"];
 
 								FILE* fp = nullptr;
 								int error_code = fopen_s(&fp, file_name.c_str(), "rS");
@@ -2324,26 +2178,26 @@ private:
 
 									// create template object
 									json codata = jp.create_object();
-									codata.put_member("ClassName", target_class);
+									codata.put_member(class_name_field, target_class);
 									json cor = create_system_request(codata);
 									json new_object_response =  create_object(cor);
 
-									if (new_object_response["Success"]) {
-										json new_object_template = new_object_response["Data"];
+									if (new_object_response[success_field]) {
+										json new_object_template = new_object_response[data_field];
 
 										// Read each line from the file and store it in the 'line' buffer.
 										int64_t total_row_count = 0;
 										while (fgets(line, sizeof(line), fp)) {
 											// Print each line to the standard output.
 											json new_object = new_object_template.clone();
-											new_object.erase_member("ObjectId");
+											new_object.erase_member(object_id_field);
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
 											datomatic.push_back(new_object);
 											if (datomatic.size() > 1000) {
 												timer tx;
 												json cor = create_system_request(datomatic);
 												json put_result =  put_object(cor);
-												if (put_result["Success"]) {
+												if (put_result[success_field]) {
 													double e = tx.get_elapsed_seconds();
 													total_row_count += datomatic.size();
 													std::string msg = std::format("import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
@@ -2351,7 +2205,7 @@ private:
 													datomatic = jp.create_array();
 												}
 												else {
-													std::string msg = std::format("Error saving object {0}", (std::string)put_result["Message"]);
+													std::string msg = std::format("Error saving object {0}", (std::string)put_result[message_field]);
 													system_monitoring_interface::global_mon->log_warning(msg);
 													system_monitoring_interface::global_mon->log_information("Return result");
 													system_monitoring_interface::global_mon->log_json(put_result);
@@ -2366,7 +2220,7 @@ private:
 											timer tx;
 											json cor = create_system_request(datomatic);
 											json put_result = put_object(cor);
-											if (put_result["Success"]) {
+											if (put_result[success_field]) {
 												double e = tx.get_elapsed_seconds();
 												total_row_count += datomatic.size();
 												std::string msg = std::format("import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
@@ -2374,7 +2228,7 @@ private:
 												datomatic = jp.create_array();
 											}
 											else {
-												std::string msg = std::format("Error saving object {0}", (std::string)put_result["Message"]);
+												std::string msg = std::format("Error saving object {0}", (std::string)put_result[message_field]);
 												system_monitoring_interface::global_mon->log_warning(msg);
 												system_monitoring_interface::global_mon->log_information("Return result");
 												system_monitoring_interface::global_mon->log_json(put_result);
@@ -2407,8 +2261,8 @@ private:
 							}
 						}
 
-						if (run_script and script_definition.has_member("Objects")) {
-							json object_list = script_definition["Objects"];
+						if (run_script and script_definition.has_member("objects")) {
+							json object_list = script_definition["objects"];
 							if (object_list.array()) {
 								for (int j = 0; j < object_list.size(); j++) {
 									json object_definition = object_list.get_element(i);
@@ -2417,23 +2271,23 @@ private:
 									// but a change in identifier.  It's a clean way of just getting the 
 									// "new chumpy" item for ya.  
 									json create_result =  create_object(put_object_request);
-									if (create_result["Success"]) {
-										json created_object = put_object_request["Data"];
+									if (create_result[success_field]) {
+										json created_object = put_object_request[data_field];
 										json save_result =  put_object(put_object_request);
-										if (not save_result["Success"]) {
-											system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
+										if (not save_result[success_field]) {
+											system_monitoring_interface::global_mon->log_warning(save_result[message_field]);
 											system_monitoring_interface::global_mon->log_json<json>(save_result);
 										}
 										else
-											system_monitoring_interface::global_mon->log_information(save_result["Message"]);
-										object_definition.copy_member("Success", create_result);
-										object_definition.copy_member("Message", create_result);
+											system_monitoring_interface::global_mon->log_information(save_result[message_field]);
+										object_definition.copy_member(success_field, create_result);
+										object_definition.copy_member(message_field, create_result);
 									}
 									else 
 									{
-										object_definition.copy_member("Success", create_result);
-										object_definition.copy_member("Message", create_result);
-										system_monitoring_interface::global_mon->log_warning(create_result["Message"], __FILE__, __LINE__);
+										object_definition.copy_member(success_field, create_result);
+										object_definition.copy_member(message_field, create_result);
+										system_monitoring_interface::global_mon->log_warning(create_result[message_field], __FILE__, __LINE__);
 										system_monitoring_interface::global_mon->log_json<json>(create_result);
 									}
 								}
@@ -2443,12 +2297,12 @@ private:
 							script_definition.put_member("Completed", completed_date);
 							json put_script_request = create_system_request(script_definition);
 							json save_script_result =  put_object(put_script_request);
-							if (not save_script_result["Success"]) {
-								system_monitoring_interface::global_mon->log_warning(save_script_result["Message"]);
+							if (not save_script_result[success_field]) {
+								system_monitoring_interface::global_mon->log_warning(save_script_result[message_field]);
 								system_monitoring_interface::global_mon->log_json<json>(save_script_result);
 							}
 							else
-								system_monitoring_interface::global_mon->log_information(save_script_result["Message"]);
+								system_monitoring_interface::global_mon->log_information(save_script_result[message_field]);
 						}
 
 						system_monitoring_interface::global_mon->log_job_section_stop("DataSet", dataset_name + " Finished", txs.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -2457,32 +2311,32 @@ private:
 				}
 			}
 
-			_schema.put_member("ClassName", "SysSchemas");
+			_schema.put_member(class_name_field, "sys_schemas");
 
 			json put_schema_request = create_system_request(_schema);
 			// in corona, creating an object doesn't actually persist anything 
 			// but a change in identifier.  It's a clean way of just getting the 
 			// "new chumpy" item for ya.  
 			json create_schema_result =  create_object(put_schema_request);
-			if (create_schema_result["Success"]) {
-				json created_object = put_schema_request["Data"];
+			if (create_schema_result[success_field]) {
+				json created_object = put_schema_request[data_field];
 				json save_schema_result =  put_object(put_schema_request);
-				if (not save_schema_result["Success"]) {
-					system_monitoring_interface::global_mon->log_warning(save_schema_result["Message"]);
+				if (not save_schema_result[success_field]) {
+					system_monitoring_interface::global_mon->log_warning(save_schema_result[message_field]);
 					system_monitoring_interface::global_mon->log_json<json>(save_schema_result);
 				}
 				else
-					system_monitoring_interface::global_mon->log_information(save_schema_result["Message"]);
+					system_monitoring_interface::global_mon->log_information(save_schema_result[message_field]);
 			}
 			else 
 			{
-				system_monitoring_interface::global_mon->log_warning(create_schema_result["Message"], __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning(create_schema_result[message_field], __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(create_schema_result);
 			}
 
 			system_monitoring_interface::global_mon->log_job_stop("apply_schema", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			json temp = R"({ "Success" : true, "Message" : "Everything Ok, suitation normal."})"_jobject;
+			json temp = R"({ "success" : true, "message" : "Everything Ok, situation normal."})"_jobject;
 
 			return temp;
 		}
@@ -2518,12 +2372,12 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_start("create_user", "start", start_time, __FILE__, __LINE__);
 
-			json data = create_user_request["Data"];
+			json data = create_user_request[data_field];
 
-			std::string user_name = data["UserName"];
-			std::string user_password1 = data["Password1"];
-			std::string user_password2 = data["Password2"];
-			std::string user_class = "SysUser";
+			std::string user_name = data[user_name_field];
+			std::string user_password1 = data["password1"];
+			std::string user_password2 = data["password2"];
+			std::string user_class = "sys_users";
 
 			if (user_password1 != user_password2) 
 			{
@@ -2559,22 +2413,22 @@ private:
 			std::string hashed_pw = crypter.hash(user_password1);
 
 			json create_user_params = jp.create_object();
-			create_user_params.put_member("ClassName", user_class);
-			create_user_params.put_member("UserName", user_name);
-			create_user_params.put_member("Password", hashed_pw);
-			create_user_params.copy_member("FirstName", data);
-			create_user_params.copy_member("LastName", data);
-			create_user_params.copy_member("Email", data);
-			create_user_params.copy_member("Mobile", data);
-			create_user_params.copy_member("Street", data);
-			create_user_params.copy_member("City", data);
-			create_user_params.copy_member("State", data);
-			create_user_params.copy_member("Zip", data);
+			create_user_params.put_member(class_name_field, user_class);
+			create_user_params.put_member(user_name_field, user_name);
+			create_user_params.put_member("password", hashed_pw);
+			create_user_params.copy_member("first_name", data);
+			create_user_params.copy_member("last_name", data);
+			create_user_params.copy_member("email", data);
+			create_user_params.copy_member("mobile", data);
+			create_user_params.copy_member("street", data);
+			create_user_params.copy_member("city", data);
+			create_user_params.copy_member("state", data);
+			create_user_params.copy_member("zip", data);
 
 			json create_object_request = create_request(create_user_request, create_user_params);
 			json user_result =  put_object(create_object_request);
-			if (user_result["Success"]) {
-				json new_user_wrapper = user_result["Data"];
+			if (user_result[success_field]) {
+				json new_user_wrapper = user_result[data_field];
 				response = create_response(user_name, auth_general, true, "User created", data, method_timer.get_elapsed_seconds());
 			}
 			else
@@ -2602,8 +2456,8 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("login_user", "start", start_time, __FILE__, __LINE__);
 
 			json data = _login_request;
-			std::string user_name = data["UserName"];
-			std::string user_password = data["Password"];
+			std::string user_name = data[user_name_field];
+			std::string user_password = data["password"];
 			std::string hashed_user_password;
 
 			std::string hashed_pw = crypter.hash(user_password);
@@ -2611,7 +2465,7 @@ private:
 			json users = get_user(user_name);
 
 			json user = users.get_first_element();
-			std::string pw = user["Password"];
+			std::string pw = user["password"];
 
 			if (pw == hashed_pw)
 			{
@@ -2669,7 +2523,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("edit_object", "start", start_time, __FILE__, __LINE__);
 
 			json token = _edit_object_request["Token"];
-			json object_key = _edit_object_request["ObjectId"];
+			json object_key = _edit_object_request[object_id_field];
 
 			if (not check_message(_edit_object_request, { auth_general }))
 			{
@@ -2678,21 +2532,21 @@ private:
 			}
 
 			json object_options = jp.create_object();
-			object_options.copy_member("ObjectId", object_key);
+			object_options.copy_member(object_id_field, object_key);
 			object_options.put_member_object("Fields");
 			json object_fields = object_options["Fields"];
 			object_options.put_member_object("Edit");
 			json edit_options_root = object_options["Edit"];
 
 			json get_response =  get_object(_edit_object_request);
-			if (get_response["Success"]) {
-				json obj = get_response["Data"];
-				object_options.put_member("Data", obj);
-				json class_key = obj.extract({ "ClassName" });
+			if (get_response[success_field]) {
+				json obj = get_response[data_field];
+				object_options.put_member(data_field, obj);
+				json class_key = obj.extract({ class_name_field });
 				class_key.put_member("Token", token);
 				json class_response =  get_class(class_key);
-				if (class_response["Success"]) {
-					json class_definition = class_response["Data"];
+				if (class_response[success_field]) {
+					json class_definition = class_response[data_field];
 					object_options.put_member_object("ClassDefinition", class_definition);
 					auto fields = class_definition["Fields"].get_members();
 					for (auto field : fields) {
@@ -2733,7 +2587,7 @@ private:
 			result_list =  classes->select([this, get_classes_request](int _index, json& _item) {
 				json_parser jp;
 				json token = get_classes_request["Token"];
-				bool has_permission = has_class_permission(token, _item["ClassName"], "Get");
+				bool has_permission = has_class_permission(token, _item[class_name_field], "Get");
 
 				if (has_permission) 
 				{
@@ -2764,7 +2618,7 @@ private:
 
 
 			std::vector<std::string> missing_elements;
-			if (not get_class_request.has_members(missing_elements, { "Token", "Data" })) {
+			if (not get_class_request.has_members(missing_elements, { "Token", data_field })) {
 				std::string error_message;
 				error_message = "get_class missing elements:";
 				std::string comma = "";
@@ -2786,14 +2640,14 @@ private:
 			}
 
 			json token = get_class_request["Token"];
-			std::string class_name = get_class_request["ClassName"];
+			std::string class_name = get_class_request[class_name_field];
 
 			bool can_get_class =  has_class_permission(
 				token,
 				class_name,
 				"Get");
 
-			json key = jp.create_object("ClassName", class_name);
+			json key = jp.create_object(class_name_field, class_name);
 			key.set_natural_order();
 
 			{
@@ -2813,7 +2667,7 @@ private:
 			date_time start_time = date_time::now();
 			timer tx;
 
-			json delete_filter = delete_request["Data"];
+			json delete_filter = delete_request[data_field];
 
 			system_monitoring_interface::global_mon->log_function_start("delete_objects", "start", start_time, __FILE__, __LINE__);
 
@@ -2844,7 +2698,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("put_class", "start", start_time, __FILE__, __LINE__);
 
 			std::vector<std::string> missing_elements;
-			if (not put_class_request.has_members(missing_elements, { "Token", "Data" })) {
+			if (not put_class_request.has_members(missing_elements, { token_field, data_field })) {
 				std::string error_message;
 				error_message = "create_class missing elements:";
 				std::string comma = "";
@@ -2865,9 +2719,9 @@ private:
 				return result;
 			}
 
-			json token = put_class_request["Token"];
-			json jclass_definition = put_class_request["Data"];
-			std::string class_name = jclass_definition["ClassName"];
+			json token = put_class_request[token_field];
+			json jclass_definition = put_class_request[data_field];
+			std::string class_name = jclass_definition[class_name_field];
 
 			bool can_put_class =  has_class_permission(
 				token,
@@ -2937,7 +2791,7 @@ private:
 
 			class_def.table_location = existing_class.table_location;
 
-			json_table class_data(this, { "ObjectId" });
+			json_table class_data(this, { object_id_field });
 			relative_ptr_type rpt;
 
 			if (class_def.table_location == 0) {
@@ -2956,13 +2810,13 @@ private:
 			for (auto& new_index : class_def.indexes)
 			{
 				auto first = std::find_if(new_index.second->index_keys.begin(), new_index.second->index_keys.begin(), [](std::string& _key) {
-							if (_key == "ObjectId") {
+							if (_key == object_id_field) {
 								return true;
 							}
 							return false;
 						});
 				if (first == new_index.second->index_keys.end()) {
-					new_index.second->index_keys.push_back("ObjectId");
+					new_index.second->index_keys.push_back(object_id_field);
 				}
 			}
 
@@ -3040,7 +2894,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("update", "start", start_time, __FILE__, __LINE__);
 
 			std::vector<std::string> missing_elements;
-			if (not query_class_request.has_members(missing_elements, { "Token", "Data" })) {
+			if (not query_class_request.has_members(missing_elements, { "Token", data_field })) {
 				std::string error_message;
 				error_message = "Missing elements:";
 				std::string comma = "";
@@ -3055,8 +2909,8 @@ private:
 			}
 
 			missing_elements.clear();
-			json manip = query_class_request["Data"];
-			if (not manip.has_members(missing_elements, { "Filter", "ClassName" })) {
+			json manip = query_class_request[data_field];
+			if (not manip.has_members(missing_elements, { "Filter", class_name_field })) {
 				std::string error_message;
 				error_message = "Missing elements:";
 				std::string comma = "";
@@ -3077,8 +2931,8 @@ private:
 				return response;
 			}
 
-			json token = query_class_request["Token"];
-			json base_class_name = manip["ClassName"];
+			json token = query_class_request[token_field];
+			json base_class_name = manip[class_name_field];
 			if (base_class_name.empty()) {
 				response = create_response(query_class_request, false, "Classname not specified", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3103,7 +2957,7 @@ private:
 			{
 				json class_key;
 				class_key = filter.clone();
-				class_key.put_member("ClassName", class_pair.first);
+				class_key.put_member(class_name_field, class_pair.first);
 				json objects = select_object(class_key);
 				if (objects.array()) {
 					for (auto obj : objects) {
@@ -3139,9 +2993,9 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("create_object", "start", start_time, __FILE__, __LINE__);
 
 
-			json token = create_object_request["Token"];
-			json data = create_object_request["Data"];
-			std::string class_name = data["ClassName"];
+			json token = create_object_request[token_field];
+			json data = create_object_request[data_field];
+			std::string class_name = data[class_name_field];
 			json response;
 
 			if (not check_message(create_object_request, { auth_general }))
@@ -3163,11 +3017,11 @@ private:
 			if (not class_def.empty()) {
 
 				json new_object = jp.create_object();
-				new_object.put_member("ClassName", class_name);
+				new_object.put_member(class_name_field, class_name);
 
 				for (auto& member : class_def.fields)
 				{
-					if (member.first == "ClassName")
+					if (member.first == class_name_field)
 						continue;
 
 					auto &field = member.second;
@@ -3240,7 +3094,7 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_start("put_object", "start", start_time, __FILE__, __LINE__);
 
-			object_definition = put_object_request["Data"];
+			object_definition = put_object_request[data_field];
 
 			if (not check_message(put_object_request, { auth_general }))
 			{
@@ -3251,23 +3105,23 @@ private:
 
 			bool permission =  check_object_permission(put_object_request, "Put");
 			if (not permission) {
-				json result = create_response(put_object_request, false, "Cannot create object", put_object_request["Data"], method_timer.get_elapsed_seconds());
+				json result = create_response(put_object_request, false, "Cannot create object", put_object_request[data_field], method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			result =  check_object(put_object_request);
 
-			if (result["Success"])
+			if (result[success_field])
 			{
-				json data = result["Data"];
+				json data = result[data_field];
 
 				json item_array;
 				if (data.array()) {
 					item_array = jp.create_object();
 					for (auto obj : item_array) {
-						if (obj["Success"]) {
-							json t = obj["Data"];
+						if (obj[success_field]) {
+							json t = obj[data_field];
 							item_array.push_back(t);
 						}
 					}
@@ -3275,25 +3129,30 @@ private:
 				else 
 				{
 					item_array = jp.create_array();
-					if (data["Success"]) {
-						item_array.push_back(data["Data"]);
+					if (data[success_field]) {
+						item_array.push_back(data[data_field]);
 					}
 				}
 
 				json grouped_by_class_name = item_array.group([](json& _item) -> std::string {
-					return _item["ClassName"];
+					return _item[class_name_field];
 					});
 
 				auto classes_and_data = grouped_by_class_name.get_members();
+
+				json child_objects = jp.create_array();
 
 				for (auto class_pair : classes_and_data)
 				{
 					class_definition cd = load_class(class_pair.second);
 
+					extract_child_objects(cd, child_objects, class_pair.second);
+
 					// now that we have our class, we can go ahead and open the storage for it
 					relative_ptr_type rpt = cd.table_location;
-					json_table class_data(this, { "ObjectId" });
+					json_table class_data(this, { object_id_field });
 					class_data.open(rpt);
+
 					class_data.put_array(class_pair.second);
 
 					// update the indexes
@@ -3311,13 +3170,21 @@ private:
 				}
 
 				header.write(this);
-				commit();
+
+				if (child_objects.size() == 0) {
+					commit();
+				}
+				else 
+				{
+					put_object_request.put_member(data_field, child_objects);
+					put_object(put_object_request);
+				}
 
 				result = create_response(put_object_request, true, "Object(s) created", data, method_timer.get_elapsed_seconds());
 			}
 			else 
 			{
-				result = create_response(put_object_request, false, result["Message"], result["Warnings"], method_timer.get_elapsed_seconds());
+				result = create_response(put_object_request, false, result[message_field], result["Warnings"], method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -3353,7 +3220,7 @@ private:
 				return result;
 			}
 			
-			json payload = get_object_request["Data"];
+			json payload = get_object_request[data_field];
 			json obj =  acquire_object(payload);
 
 			result = create_response(get_object_request, true, "Ok", obj, method_timer.get_elapsed_seconds());
@@ -3388,19 +3255,19 @@ private:
 				return result;
 			}
 
-			json object_key = delete_object_request["Data"];
+			json object_key = delete_object_request[data_field];
 
 			response = create_response(delete_object_request, false, "Failed", object_key, method_timer.get_elapsed_seconds());
 
 			json class_key = jp.create_object();
-			json class_name = object_key["ClassName"];
-			class_key.put_member("ClassName", class_name);
-			json class_def = classes->get("class_key");
+			json class_name = object_key[class_name_field];
+			class_key.put_member(class_name_field, class_name);
+			json class_def = classes->get(class_key);
 
 			if (class_def.has_member("Table")) {
 				json empty;
 				relative_ptr_type rpt = class_def["Table"];
-				json_table class_data(this, { "ObjectId" });
+				json_table class_data(this, { object_id_field });
 				class_data.open(rpt);
 				class_data.erase(object_key);
 				response = create_response(delete_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
@@ -3449,13 +3316,13 @@ private:
 
 			json new_object = object_copy.clone();
 			db_object_id_type new_object_id =  get_next_object_id();
-			new_object.put_member_i64("ObjectId", new_object_id);
+			new_object.put_member_i64(object_id_field, new_object_id);
 
 			json por = create_request(copy_request, new_object);
 			json result =  put_object(por);
 
-			if (result["Success"]) {
-				response = create_response(copy_request, true, "Ok", result["Data"], method_timer.get_elapsed_seconds());
+			if (result[success_field]) {
+				response = create_response(copy_request, true, "Ok", result[data_field], method_timer.get_elapsed_seconds());
 			}
 			else
 			{
@@ -3479,9 +3346,9 @@ private:
 			token.put_member("Signature", cipher_text);
 
 			payload.put_member("Token", token);
-			payload.put_member("Success", true);
-			payload.put_member("Message", "Ok");
-			payload.put_member("Data", _data);
+			payload.put_member(success_field, true);
+			payload.put_member(message_field, "Ok");
+			payload.put_member(data_field, _data);
 			payload.put_member("Seconds", 0);
 			return payload;
 		}
@@ -3504,9 +3371,9 @@ private:
 			token.put_member("Signature", cipher_text);
 
 			payload.put_member("Token", token);
-			payload.put_member("Success", true);
-			payload.put_member("Message", "Ok");
-			payload.put_member("Data", _data);
+			payload.put_member(success_field, true);
+			payload.put_member(message_field, "Ok");
+			payload.put_member(data_field, _data);
 			payload.put_member("Signature", cipher_text);
 			return payload;
 		}
@@ -3571,10 +3438,10 @@ private:
 		proof_assertion.put_member("dependencies", dependencies);
 		json db_config = jp.create_object();
 		json server_config = jp.create_object();
-		server_config.put_member("DefaultUserName", "todd");
-		server_config.put_member("DefaultUserPassword", "randomite");
-		server_config.put_member("DefaultUserEmailAddress", "todd.bandrowsky@gmail.com");
-		server_config.put_member("DefaultGuestTeam", "GuestTeam");
+		server_config.put_member(sys_user_name_field, "todd");
+		server_config.put_member(sys_user_password_field, "randomite");
+		server_config.put_member(sys_user_email_field, "todd.bandrowsky@gmail.com");
+		server_config.put_member(sys_default_team_field, "GuestTeam");
 		db_config.put_member("Server", server_config);
 
 		db.apply_config(db_config);
@@ -3585,15 +3452,15 @@ private:
 
 		json login_positive_request = R"(
 {
-	"UserName" : "todd",
-	"Password" : "randomite"
+	"user_name" : "todd",
+	"password" : "randomite"
 }
 )"_jobject;
 
 		json login_negative_request = R"(
 {
-	"UserName" : "todd",
-	"Password" : "reachio"
+	"user_name" : "todd",
+	"password" : "reachio"
 }
 )"_jobject;
 
@@ -3601,25 +3468,25 @@ private:
 
 		login_result = db.login_user(login_negative_request);
 
-		if (login_result["Success"]) {
+		if (login_result[success_field]) {
 			login_success = false;
 			system_monitoring_interface::global_mon->log_warning("able to login with bad account", __FILE__, __LINE__);
 		}
 
 		login_result = db.login_user(login_positive_request);
 
-		if (not login_result["Success"]) {
+		if (not login_result[success_field]) {
 			login_success = false;
 			system_monitoring_interface::global_mon->log_warning("can't with good account", __FILE__, __LINE__);
 		}
 
 		json create_class_request = R"(
 {
-	"ClassName" : "Document",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Document Base Class",
+	"class_name" : "Document",
+	"base_class_name" : "sys_object",
+	"class_description" : "Document Base Class",
 	"Fields" : {			
-		"DocumentName": "string",
+		"DocumentName": { "field_type":"string", "
 		"DocumentDescription": "string",
 		"DocumentUrl": "string"
 	}
@@ -3628,9 +3495,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Encounter",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "ContactBase",
+	"class_name" : "Encounter",
+	"base_class_name" : "sys_object",
+	"class_description" : "ContactBase",
 	"Fields" : {			
 		"EncounterName": "string",
 		"EncounterDescription": "string",
@@ -3646,9 +3513,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Contact",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "A Person and how to connect with them, along with documentation for them",
+	"class_name" : "Contact",
+	"base_class_name" : "sys_object",
+	"class_description" : "A Person and how to connect with them, along with documentation for them",
 	"Fields" : {			
 		"ContactName": "string",
 		"ContactDescription": "string",
@@ -3666,9 +3533,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Employee",
-	"BaseClassName" : "Contact",
-	"ClassDescription" : "A Person that works for you",
+	"class_name" : "Employee",
+	"base_class_name" : "Contact",
+	"class_description" : "A Person that works for you",
 	"Fields" : {			
 		"EmployeeTitle": "string",
 		"EmployeeJobDescription": "string",
@@ -3686,9 +3553,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Property",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Base of all property",
+	"class_name" : "Property",
+	"base_class_name" : "sys_object",
+	"class_description" : "Base of all property",
 	"Fields" : {			
 		"PropertyCode",
 		"PropertyName",
@@ -3700,9 +3567,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Furniture",
-	"BaseClassName" : "Property",
-	"ClassDescription" : "Furniture",
+	"class_name" : "Furniture",
+	"base_class_name" : "Property",
+	"class_description" : "Furniture",
 	"Fields" : {			
 		"YearMade",
 		"Manufacturer"
@@ -3712,9 +3579,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Vehicle",
-	"BaseClassName" : "Property",
-	"ClassDescription" : "Cars and Trucks",
+	"class_name" : "Vehicle",
+	"base_class_name" : "Property",
+	"class_description" : "Cars and Trucks",
 	"Fields" : {			
 		"VehicleMake",
 		"VehicleModel",
@@ -3726,9 +3593,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Electronics",
-	"BaseClassName" : "Property",
-	"ClassDescription" : "Computers, Game Consoles, Radios",
+	"class_name" : "Electronics",
+	"base_class_name" : "Property",
+	"class_description" : "Computers, Game Consoles, Radios",
 	"Fields" : {			
 		"ElectronicBrand",
 		"ElectronicYear"
@@ -3739,9 +3606,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Building",
-	"BaseClassName" : "Property",
-	"ClassDescription" : "Base of all property",
+	"class_name" : "Building",
+	"base_class_name" : "Property",
+	"class_description" : "Base of all property",
 	"Fields" : {			
 		"ConstructionCode": "string",
 		"OccupancyCode": "string",
@@ -3764,9 +3631,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Coverage",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Base of all coverages",
+	"class_name" : "Coverage",
+	"base_class_name" : "sys_object",
+	"class_description" : "Base of all coverages",
 	"Fields" : {			
 		"CoverageCode",
 		"DamageName",
@@ -3780,9 +3647,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "CoveredRisk",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Quotes",
+	"class_name" : "CoveredRisk",
+	"base_class_name" : "sys_object",
+	"class_description" : "Quotes",
 	"Fields" : {			
 		"Coverages" : {
 
@@ -3808,9 +3675,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Quote",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Quotes",
+	"class_name" : "Quote",
+	"base_class_name" : "sys_object",
+	"class_description" : "Quotes",
 	"Fields" : {			
 		"Coverages" : {
 
@@ -3821,9 +3688,9 @@ private:
 
 		create_class_request = R"(
 {
-	"ClassName" : "Client",
-	"BaseClassName" : "Contact",
-	"ClassDescription" : "ContactBase",
+	"class_name" : "Client",
+	"base_class_name" : "Contact",
+	"class_description" : "ContactBase",
 	"Fields" : {
 		"People" : {
 			"FieldType":"array",

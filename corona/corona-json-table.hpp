@@ -2277,11 +2277,11 @@ namespace corona
 		proof_assertion.put_member("dependencies", dependencies);
 
 		json test_write = jp.create_object();
-		test_write.put_member_i64("ObjectId", 5);
+		test_write.put_member_i64(object_id_field, 5);
 		test_write.put_member("Name", "Joe");
-		json test_key = test_write.extract({ "ObjectId" });
+		json test_key = test_write.extract({ object_id_field });
 
-		json_table test_table(&fp, {"ObjectId"});
+		json_table test_table(&fp, {object_id_field});
 
 		relative_ptr_type table_loc = test_table.create();
 
@@ -2303,7 +2303,7 @@ namespace corona
 		}
 		else {
 
-			test_read.set_compare_order({ "ObjectId" });
+			test_read.set_compare_order({ object_id_field });
 
 			if (test_read.compare(test_write))
 			{
@@ -2321,9 +2321,9 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("select did not return nodes.", __FILE__, __LINE__);
 		}
 
-		test_write.put_member_i64("ObjectId", 7);
+		test_write.put_member_i64(object_id_field, 7);
 		test_write.put_member("Name", "Jack");
-		test_key = test_write.extract({ "ObjectId" });
+		test_key = test_write.extract({ object_id_field });
 		test_table.put(test_write);
 
 		test_read = test_table.get(test_key);
@@ -2336,7 +2336,7 @@ namespace corona
 		}
 
 		test_read = jp.create_object();
-		test_read.put_member_i64("ObjectId", 5);
+		test_read.put_member_i64(object_id_field, 5);
 		test_read.set_natural_order();
 
 		json joe = test_table.get(test_read);
@@ -2351,9 +2351,9 @@ namespace corona
 
 		int db_size1 = db_contents.size();
 
-		test_write.put_member_i64("ObjectId", 7);
+		test_write.put_member_i64(object_id_field, 7);
 		test_write.put_member("Name", "Jill");
-		test_key = test_write.extract({ "ObjectId" });
+		test_key = test_write.extract({ object_id_field });
 		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
@@ -2373,7 +2373,7 @@ namespace corona
 
 		try
 		{
-			test_key.put_member_i64("ObjectId", 6);
+			test_key.put_member_i64(object_id_field, 6);
 			json t5 =  test_table.get(test_key);
 		}
 		catch (std::exception exc)
@@ -2392,9 +2392,9 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("wrong number of result elements", __FILE__, __LINE__);
 		}
 
-		test_write.put_member_i64("ObjectId", 2);
+		test_write.put_member_i64(object_id_field, 2);
 		test_write.put_member("Name", "Sydney");
-		test_key = test_write.extract({ "ObjectId" });
+		test_key = test_write.extract({ object_id_field });
 		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
@@ -2406,7 +2406,7 @@ namespace corona
 		}
 
 		test_read = jp.create_object();
-		test_read.put_member_i64("ObjectId", 5);
+		test_read.put_member_i64(object_id_field, 5);
 		test_read.set_natural_order();
 
 		joe = test_table.get(test_read);
@@ -2415,9 +2415,9 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("sydney killed joe!", __FILE__, __LINE__);
 		}
 
-		test_write.put_member_i64("ObjectId", 7);
+		test_write.put_member_i64(object_id_field, 7);
 		test_write.put_member("Name", "Orwell");
-		test_key = test_write.extract({ "ObjectId" });
+		test_key = test_write.extract({ object_id_field });
 		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
@@ -2428,9 +2428,9 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 
-		test_write.put_member_i64("ObjectId", 1);
+		test_write.put_member_i64(object_id_field, 1);
 		test_write.put_member("Name", "Canada");
-		test_key = test_write.extract({ "ObjectId" });
+		test_key = test_write.extract({ object_id_field });
 		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
@@ -2441,9 +2441,9 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 
-		test_write.put_member_i64("ObjectId", 7);
+		test_write.put_member_i64(object_id_field, 7);
 		test_write.put_member("Name", "Roger");
-		test_key = test_write.extract({ "ObjectId" });
+		test_key = test_write.extract({ object_id_field });
 		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
@@ -2454,9 +2454,9 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
 		}
 
-		test_write.put_member_i64("ObjectId", 1);
+		test_write.put_member_i64(object_id_field, 1);
 		test_write.put_member("Name", "Maraca");
-		test_key = test_write.extract({ "ObjectId" });
+		test_key = test_write.extract({ object_id_field });
 		test_table.put(test_write);
 
 		test_read =  test_table.get(test_key);
@@ -2493,7 +2493,7 @@ namespace corona
 
 		auto fr = test_table.for_each([tests,pcounts](int _index, json& _item) -> bool {
 			int64_t test_index = tests[_index];
-			std::string member_names = std::format("item{0}", (int64_t)_item["ObjectId"]);
+			std::string member_names = std::format("item{0}", (int64_t)_item[object_id_field]);
 			int64_t counto = 0;
 			if (pcounts->has_member(member_names)) {
 				counto = pcounts->get_member(member_names);
@@ -2511,7 +2511,7 @@ namespace corona
 		std::string count_string = counts.to_json();
 
 		db_contents =  test_table.select([tests](int _index, json& _item) -> json {
-			int64_t temp = _item["ObjectId"];
+			int64_t temp = _item[object_id_field];
 			return (temp > 0i64) ? _item : json();
 		}
 		);
@@ -2522,7 +2522,7 @@ namespace corona
 		}
 
 		bool any_fails = db_contents.any([](json& _item)->bool {
-			int64_t temp = _item["ObjectId"];
+			int64_t temp = _item[object_id_field];
 			return temp <= 0i64;
 			});
 
@@ -2531,7 +2531,7 @@ namespace corona
 		}
 
 		auto summary = db_contents.array_to_object([](json& _item) {
-			return (std::string)_item["ObjectId"];
+			return (std::string)_item[object_id_field];
 			},
 			[](json& _target) {
 				return _target;
@@ -2560,7 +2560,7 @@ namespace corona
 			any_success = false;
 		}
 
-		test_key.put_member_i64("ObjectId", 3);
+		test_key.put_member_i64(object_id_field, 3);
 		bool rdel3 =  test_table.erase(test_key);
 
 		if (rdel3) {
@@ -2568,7 +2568,7 @@ namespace corona
 			erase_success = false;
 		}
 
-		test_key.put_member_i64("ObjectId", 1);
+		test_key.put_member_i64(object_id_field, 1);
 		bool rdel1 =  test_table.erase(test_key);
 
 		if (not rdel1) {
@@ -2577,7 +2577,7 @@ namespace corona
 			std::cout << "delete existing failed" << std::endl;
 		}
 
-		test_key.put_member_i64("ObjectId", 7);
+		test_key.put_member_i64(object_id_field, 7);
 		relative_ptr_type rdel7 =  test_table.erase(test_key);
 
 		if (not rdel7) {
@@ -2586,7 +2586,7 @@ namespace corona
 		}
 
 		json testi =  test_table.select([tests](int _index, json& item) -> json {
-			int64_t object_id = item["ObjectId"];
+			int64_t object_id = item[object_id_field];
 			return object_id == 7 ? item : json();
 			});
 
@@ -2601,7 +2601,7 @@ namespace corona
 		);
 
 		bool any_iteration_fails = db_contents.any([](json& _item)->bool {
-			int64_t object_id = _item["ObjectId"];
+			int64_t object_id = _item[object_id_field];
 			return  object_id != 2 and object_id != 5;
 			});
 
