@@ -131,7 +131,22 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
-			required = (bool)_src["required"]);
+			required = (bool)_src["required"];
+		}
+
+		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			bool is_empty = _object_to_test.empty();
+			if (required and is_empty) {
+				validation_error ve;
+				ve.class_name = _class_name;
+				ve.field_name = _field_name;
+				ve.file_name = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "required field";
+				_validation_errors.push_back(ve);
+				return false;
+			};
 		}
 	};
 
@@ -169,7 +184,63 @@ namespace corona
 			auto members = jallowed.get_members();
 			allowed_classes.clear();
 			for (auto member : members) {
-				allowed_classes.insert_or_assign(member.first, bool);
+				allowed_classes.insert_or_assign(member.first, true);
+			}
+		}
+
+		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+				bool is_legit = true;
+
+				if (_object_to_test.array()) 
+				{
+					for (auto obj : _object_to_test) 
+					{
+						std::string object_class_name;
+						if (obj.object()) {
+							object_class_name = _object_to_test["ClassName"];
+						}
+						else if (obj.is_datetime())
+						{
+							object_class_name = "datetime";
+						}
+						else if (obj.is_double())
+						{
+							object_class_name = "double";
+						}
+						else if (obj.is_int64())
+						{
+							object_class_name = "int";
+						}
+						else if (obj.is_string())
+						{
+							object_class_name = "string";
+						}
+						if (allowed_classes.contains(object_class_name) or allowed_classes.contains("*"))
+						{
+							is_legit = true;
+						}
+						else 
+						{
+							is_legit = false;
+						}
+					}
+				}
+				else 
+				{
+					is_legit = false;
+				}
+				if (not is_legit) {
+					validation_error ve;
+					ve.class_name = _class_name;
+					ve.field_name = _field_name;
+					ve.file_name = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = "Value must be an array of correct types.";
+					_validation_errors.push_back(ve);
+					return false;
+				};
 			}
 		}
 	};
@@ -208,9 +279,46 @@ namespace corona
 			auto members = jallowed.get_members();
 			allowed_classes.clear();
 			for (auto member : members) {
-				allowed_classes.insert_or_assign(member.first, bool);
+				allowed_classes.insert_or_assign(member.first, true);
 			}
 		}
+
+		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+				bool is_legit = true;
+
+				if (_object_to_test.object())
+				{
+					std::string object_class_name;
+					if (_object_to_test.object()) {
+						object_class_name = _object_to_test["ClassName"];
+					}
+					if (allowed_classes.contains(object_class_name) or allowed_classes.contains("*"))
+					{
+						is_legit = true;
+					}
+					else {
+						is_legit = false;
+					}
+				}
+				else
+				{
+					is_legit = false;
+				}
+				if (not is_legit) {
+					validation_error ve;
+					ve.class_name = _class_name;
+					ve.field_name = _field_name;
+					ve.file_name = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = "value must be an object of correct type.";
+					_validation_errors.push_back(ve);
+					return false;
+				};
+			}
+		}
+
 	};
 
 	class string_field_options : public field_options_base
@@ -231,18 +339,60 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			field_options_base::get_json(_dest);
-			_dest.put_member_i64("maximum_length", maximum_length);
-			_dest.put_member_i64("mininum_length", minimum_length);
+			_dest.put_member_i64("max_length", maximum_length);
+			_dest.put_member_i64("min_length", minimum_length);
 			_dest.put_member("match_pattern", match_pattern);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			field_options_base::put_json(_src);
-			minimum_length = _src["mininum_length"];
-			maximum_length = _src["maximum_length"];
+			minimum_length = _src["min_length"];
+			maximum_length = _src["max_length"];
 			match_pattern = _src["match_pattern"];
 		}
+
+		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+				bool is_legit = true;
+				std::string chumpy = (std::string)_object_to_test;
+
+				if (chumpy.size() >= minimum_length and chumpy.size() <= maximum_length)
+				{
+					if (not match_pattern.empty()) {
+						std::regex rgx(match_pattern);
+						if (std::regex_match(chumpy, rgx)) {
+							is_legit = true;
+						}
+						else {
+							is_legit = false;
+						}
+					}
+					else {
+						is_legit = true;
+					}
+				}
+				else
+				{
+					is_legit = false;
+				}
+				if (not is_legit) {
+					validation_error ve;
+					ve.class_name = _class_name;
+					ve.field_name = _field_name;
+					ve.file_name = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = std::format( "Value '{0}' must be between {1} and {2} characters long", chumpy, minimum_length, maximum_length);
+					if (match_pattern.size() > 0) {
+						ve.message += std::format(" and must match '{0}'", match_pattern);
+					}
+					_validation_errors.push_back(ve);
+					return false;
+				};
+			}
+		}
+
 	};
 
 	class int64_field_options : public field_options_base
@@ -272,6 +422,34 @@ namespace corona
 			min_value = (int64_t)_src["min_value"];
 			max_value = (int64_t)_src["max_value"];
 		}
+
+		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+				bool is_legit = true;
+				int64_t chumpy = (int64_t)_object_to_test;
+
+				if (chumpy >= min_value and chumpy <= max_value)
+				{
+					is_legit = true;
+				}
+				else
+				{
+					is_legit = false;
+				}
+				if (not is_legit) {
+					validation_error ve;
+					ve.class_name = _class_name;
+					ve.field_name = _field_name;
+					ve.file_name = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = std::format("Value '{0}' must be between {1} and {2}", chumpy, min_value, max_value);
+					_validation_errors.push_back(ve);
+					return false;
+				};
+			}
+		}
+
 	};
 
 	template <typename scalar_type> class general_field_options : public field_options_base
@@ -300,6 +478,31 @@ namespace corona
 			min_value = (scalar_type)_src["min_value"];
 			max_value = (scalar_type)_src["max_value"];
 		}
+
+		if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+			bool is_legit = true;
+			scalar_type chumpy = (scalar_type)_object_to_test;
+
+			if (chumpy >= min_value and chumpy <= max_value)
+			{
+				is_legit = true;
+			}
+			else
+			{
+				is_legit = false;
+			}
+			if (not is_legit) {
+				validation_error ve;
+				ve.class_name = _class_name;
+				ve.field_name = _field_name;
+				ve.file_name = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = std::format("Value '{0}' must be between {1} and {2}", chumpy, min_value, max_value);
+				_validation_errors.push_back(ve);
+				return false;
+			};
+		}
+
 	};
 
 	class choice_field_options : public field_options_base
@@ -332,6 +535,22 @@ namespace corona
 			id_field_name = _src["id_field_name"];
 			description_field_name = _src["description_field_name"];
 		}
+
+		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			bool is_empty = _object_to_test.empty();
+			if (required and is_empty) {
+				validation_error ve;
+				ve.class_name = _class_name;
+				ve.field_name = _field_name;
+				ve.file_name = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "required field";
+				_validation_errors.push_back(ve);
+				return false;
+			};
+		}
+
 	};
 
 	class field_definition {
@@ -347,6 +566,13 @@ namespace corona
 		field_definition& operator = (field_definition&& _src) = default;
 		virtual ~field_definition() = default;
 
+		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (options) {
+				return options->accepts(_validation_errors, _class_name, _field_name, _object_to_test);
+			}
+			return true;
+		}
 
 		virtual void get_json(json& _dest)
 		{
@@ -1272,9 +1498,9 @@ private:
 				else
 				{
 					object_id =  get_next_object_id();
-
 					object_definition.put_member_i64("ObjectId", object_id);
-					object_definition.put_member("Created", user);
+					object_definition.put_member("Created", current_date);
+					object_definition.put_member("CreatedBy", user);
 				}
 
 				json warnings = jp.create_array();
@@ -1285,6 +1511,9 @@ private:
 
 				if (not class_data.empty())
 				{
+
+					std::vector<validation_error> validation_errors;
+
 					// check the object against the class definition for correctness
 					// first we see which fields are in the class not in the object
 
@@ -1296,33 +1525,40 @@ private:
 							if (member_type != obj_type) {
 								object_definition.change_member_type(kv.first, member_type);
 							}
-						}
-						else
-						{
-							json warning = jp.create_object();
-							warning.put_member("Error", "Required field missing");
-							warning.put_member("FieldName", kv.first);
-							warnings.push_back(warning);
-						}
+						}						
 					}
 
 					// then we see which fields are in the object that are not 
 					// in the class definition.
 					auto object_members = object_definition.get_members();
 					for (auto om : object_members) {
-						if (not class_data.fields.contains(om.first)) {
+						if (class_data.fields.contains(om.first)) {
+							auto& fld = class_data.fields[om.first];
+							fld->accepts(validation_errors, class_name, om.first, om.second);
+						}
+						else 
+						{
 							json warning = jp.create_object();
-							warning.put_member("Error", "Field not found in class definition");
-							warning.put_member("FieldName", om.first);
-							warnings.push_back(warning);
+							validation_error ve;
+							ve.class_name = class_name;
+							ve.field_name = om.first;
+							ve.file_name = __FILE__;
+							ve.line_number = __LINE__;
+							ve.message = "Field not found inn class definition";
+							validation_errors.push_back(ve);
 						}
 					}
 					result = jp.create_object();
-					if (warnings.size() > 0) {
+					if (validation_errors.size() > 0) {
 						std::string msg = std::format("Object '{0}' has problems", class_name);
+						for (auto& ve : validation_errors) {
+							json jve = jp.create_object();
+							ve.get_json(jve);
+							warnings.push_back(jve);
+						}
 						result.put_member("Message", msg);
 						result.put_member("Success", 0);
-						result.put_member("Warnings", warnings);
+						result.put_member("Errors", warnings);
 						result.put_member("Data", object_definition);
 					}
 					else {
