@@ -11,6 +11,8 @@ namespace corona
 
 	public:
 
+		bool froms_preloaded = false;
+
 		virtual void get_json(json& _dest)
 		{
 			_dest.put_member("class_name", "query_context");
@@ -19,6 +21,9 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
+			if (froms_preloaded)
+				return;
+
 			std::vector<std::string> missing;
 
 			if (not _src.has_members(missing, { "class_name", "froms" })) {

@@ -47,6 +47,44 @@ the great module disaster.
 namespace corona
 {
 
+	class class_definition_interface
+	{
+	public:
+		virtual std::string get_class_name() = 0;
+		virtual std::map<std::string, bool>& get_descendants() = 0;
+		virtual std::map<std::string, bool>& get_ancestors() = 0;
+	};
+
+	class corona_database_interface 
+	{
+	public:
+
+		virtual void create_database() = 0;
+		virtual relative_ptr_type open_database(relative_ptr_type _header_location) = 0;
+
+		virtual void apply_config(json _config) = 0;
+		virtual json apply_schema(json _schema) = 0;
+
+		virtual std::string get_random_code() = 0;
+
+		virtual json create_user(json create_user_request) = 0;
+		virtual json login_user(json _login_request) = 0;
+		virtual json get_classes(json get_classes_request) = 0;
+		virtual json get_class(json get_class_request) = 0;
+		virtual json put_class(json put_class_request) = 0;
+		virtual std::shared_ptr<class_definition_interface> get_class_interface(std::string _class_name) = 0;
+
+		virtual json edit_object(json _edit_object_request) = 0;
+		virtual json create_object(json create_object_request) = 0;
+		virtual json put_object(json put_object_request) = 0;
+		virtual json get_object(json get_object_request) = 0;
+		virtual json delete_object(json delete_object_request) = 0;
+
+		virtual json copy_object(json copy_request) = 0;
+
+		virtual json query(json query_request) = 0;
+	};
+
 	class corona_db_header_struct
 	{
 	public:
@@ -134,7 +172,12 @@ namespace corona
 			required = (bool)_src["required"];
 		}
 
-		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool init_validation(corona_database_interface* _db)
+		{
+			;
+		}
+
+		virtual bool accepts(corona_database_interface *_db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
 		{
 			bool is_empty = _object_to_test.empty();
 			if (required and is_empty) {
@@ -154,6 +197,7 @@ namespace corona
 	{
 	public:
 		std::map<std::string, bool> allowed_classes;
+		std::map<std::string, bool> all_allowed_classes;
 
 		array_field_options() = default;
 		array_field_options(const array_field_options& _src) = default;
@@ -188,9 +232,23 @@ namespace corona
 			}
 		}
 
-		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool init_validation(corona_database_interface* _db)
 		{
-			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+			all_allowed_classes.clear();
+			for (auto class_name_pair : allowed_classes) {
+				auto ci = _db->get_class_interface(class_name_pair.first);
+				if (ci) {
+					auto descendants = ci->get_descendants();
+					for (auto descendant : descendants) {
+						all_allowed_classes.insert_or_assign(descendant.first, true);
+					}
+				}
+			}
+		}
+
+		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test)) {
 				bool is_legit = true;
 
 				if (_object_to_test.array()) 
@@ -217,7 +275,8 @@ namespace corona
 						{
 							object_class_name = "string";
 						}
-						if (allowed_classes.contains(object_class_name) or allowed_classes.contains("*"))
+						// TODO: make this include descendants
+						if (all_allowed_classes.contains(object_class_name))
 						{
 							is_legit = true;
 						}
@@ -249,6 +308,7 @@ namespace corona
 	{
 	public:
 		std::map<std::string, bool> allowed_classes;
+		std::map<std::string, bool> all_allowed_classes;
 
 		object_field_options() = default;
 		object_field_options(const object_field_options& _src) = default;
@@ -283,9 +343,23 @@ namespace corona
 			}
 		}
 
-		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool init_validation(corona_database_interface* _db)
 		{
-			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+			all_allowed_classes.clear();
+			for (auto class_name_pair : allowed_classes) {
+				auto ci = _db->get_class_interface(class_name_pair.first);
+				if (ci) {
+					auto descendants = ci->get_descendants();
+					for (auto descendant : descendants) {
+						all_allowed_classes.insert_or_assign(descendant.first, true);
+					}
+				}
+			}
+		}
+
+		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test)) {
 				bool is_legit = true;
 
 				if (_object_to_test.object())
@@ -294,7 +368,7 @@ namespace corona
 					if (_object_to_test.object()) {
 						object_class_name = _object_to_test[class_name_field];
 					}
-					if (allowed_classes.contains(object_class_name) or allowed_classes.contains("*"))
+					if (all_allowed_classes.contains(object_class_name))
 					{
 						is_legit = true;
 					}
@@ -335,7 +409,6 @@ namespace corona
 		string_field_options& operator = (string_field_options&& _src) = default;
 		virtual ~string_field_options() = default;
 
-
 		virtual void get_json(json& _dest)
 		{
 			field_options_base::get_json(_dest);
@@ -352,9 +425,15 @@ namespace corona
 			match_pattern = _src["match_pattern"];
 		}
 
-		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool init_validation(corona_database_interface* _db)
 		{
-			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+			;
+		}
+
+
+		virtual bool accepts(corona_database_interface *_db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test)) {
 				bool is_legit = true;
 				std::string chumpy = (std::string)_object_to_test;
 
@@ -408,7 +487,6 @@ namespace corona
 		int64_field_options& operator = (int64_field_options&& _src) = default;
 		virtual ~int64_field_options() = default;
 
-
 		virtual void get_json(json& _dest)
 		{
 			field_options_base::get_json(_dest);
@@ -423,9 +501,14 @@ namespace corona
 			max_value = (int64_t)_src["max_value"];
 		}
 
-		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool init_validation(corona_database_interface* _db)
 		{
-			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+			;
+		}
+
+		virtual bool accepts(corona_database_interface *_db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test)) {
 				bool is_legit = true;
 				int64_t chumpy = (int64_t)_object_to_test;
 
@@ -479,9 +562,15 @@ namespace corona
 			max_value = (scalar_type)_src["max_value"];
 		}
 
-		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool init_validation(corona_database_interface* _db)
 		{
-			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+			;
+		}
+
+
+		virtual bool accepts(corona_database_interface *_db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test)) {
 				bool is_legit = true;
 				scalar_type chumpy = (scalar_type)_object_to_test;
 
@@ -522,6 +611,10 @@ namespace corona
 		choice_field_options& operator = (choice_field_options&& _src) = default;
 		virtual ~choice_field_options() = default;
 
+		virtual bool init_validation(corona_database_interface* _db)
+		{
+			;
+		}
 
 		virtual void get_json(json& _dest)
 		{
@@ -539,19 +632,23 @@ namespace corona
 			description_field_name = _src["description_field_name"];
 		}
 
-		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
 		{
-			bool is_empty = _object_to_test.empty();
-			if (required and is_empty) {
-				validation_error ve;
-				ve.class_name = _class_name;
-				ve.field_name = _field_name;
-				ve.file_name = __FILE__;
-				ve.line_number = __LINE__;
-				ve.message = "required field";
-				_validation_errors.push_back(ve);
-				return false;
-			};
+			if (field_options_base::accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test)) {
+				bool is_empty = _object_to_test.empty();
+				if (required and is_empty) {
+					validation_error ve;
+					ve.class_name = _class_name;
+					ve.field_name = _field_name;
+					ve.file_name = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = "required field";
+					_validation_errors.push_back(ve);
+					return false;
+				};
+				return true;
+			}
+			return false;
 		}
 
 	};
@@ -569,10 +666,15 @@ namespace corona
 		field_definition& operator = (field_definition&& _src) = default;
 		virtual ~field_definition() = default;
 
-		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool init_validation(corona_database_interface* _db)
+		{
+			if (options) options->init_validation(_db);
+		}
+
+		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
 		{
 			if (options) {
-				return options->accepts(_validation_errors, _class_name, _field_name, _object_to_test);
+				return options->accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test);
 			}
 			return true;
 		}
@@ -690,7 +792,7 @@ namespace corona
 		}
 	};
 
-	class class_definition 
+	class class_definition : public class_definition_interface
 	{
 	public:
 		std::string class_name;
@@ -707,6 +809,21 @@ namespace corona
 		class_definition(class_definition&& _src) = default;
 		class_definition& operator = (const class_definition& _src) = default;
 		class_definition& operator = (class_definition&& _src) = default;
+
+		virtual std::string get_class_name() 
+		{
+			return class_name;
+		}
+
+		virtual std::map<std::string, bool>& get_descendants()
+		{
+			return descendants;
+		}
+
+		virtual std::map<std::string, bool>& get_ancestors()
+		{
+			return ancestors;
+		}
 
 		bool empty()
 		{
@@ -763,12 +880,34 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
+			json jfields, jindexes, jancestors, jdescendants;
+
 			class_name = _src[class_name_field];
 			class_description = _src["class_description"];
 			base_class_name = _src["base_class_name"];
 			table_location = (int64_t)_src["table_location"];
 
-			json jfields, jindexes, jancestors, jdescendants;
+			ancestors.clear();
+			jancestors = _src["ancestors"];
+			if (jancestors.array())
+			{
+				for (auto jancestor : jancestors)
+				{
+					std::string ancestor = jancestor;
+					ancestors.insert_or_assign(ancestor, true);
+				}
+			}
+
+			descendants.clear();
+			jdescendants = _src["descendants"];
+			if (jdescendants.array())
+			{
+				for (auto jancestor : jancestors)
+				{
+					std::string ancestor = jancestor;
+					ancestors.insert_or_assign(ancestor, true);
+				}
+			}
 
 			fields.clear();
 			jfields = _src["fields"];
@@ -803,28 +942,6 @@ namespace corona
 					indexes.insert_or_assign(index->index_name, index);
 				}
 			}
-
-			ancestors.clear();
-			jancestors = _src["ancestors"];
-			if (jancestors.array()) 
-			{
-				for (auto jancestor : jancestors)
-				{
-					std::string ancestor = jancestor;
-					ancestors.insert_or_assign(ancestor, true);
-				}
-			}
-
-			descendants.clear();
-			jdescendants = _src["descendants"];
-			if (jdescendants.array()) 
-			{
-				for (auto jancestor : jancestors)
-				{
-					std::string ancestor = jancestor;
-					ancestors.insert_or_assign(ancestor, true);
-				}
-			}
 		}
 	};
 
@@ -833,7 +950,6 @@ namespace corona
 		corona_db_header header;
 
 		json schema;
-
 
 		std::map<class_method_key, json_function_function> functions;
 
@@ -1251,13 +1367,13 @@ namespace corona
 
 private:
 
-		virtual void extract_child_objects(class_definition& _cdef, json& _child_objects, json& _src_list)
+		virtual void extract_child_objects(std::shared_ptr<class_definition>& _cdef, json& _child_objects, json& _src_list)
 		{
 			json_parser jp;
 			for (auto _src_obj : _src_list)
 			{
 				int64_t parent_object_id = (int64_t)_src_obj[object_id_field];
-				for (auto& fpair : _cdef.fields) {
+				for (auto& fpair : _cdef->fields) {
 					auto& fld = fpair.second;
 					if (fld->field_type == "array")
 					{
@@ -1334,7 +1450,7 @@ private:
 			}
 		}
 
-		virtual void select_child_objects(class_definition& _cdef, json& _src_list)
+		virtual void select_child_objects(std::shared_ptr<class_definition>& _cdef, json& _src_list)
 		{
 			json_parser jp;
 			for (auto _src_obj : _src_list)
@@ -1343,7 +1459,7 @@ private:
 				int64_t object_id = (int64_t)_src_obj[object_id_field];
 				key.put_member(class_name_field, "sys_parent_child");
 				key.put_member_i64("parent_id", object_id);
-				for (auto& fpair : _cdef.fields) {
+				for (auto& fpair : _cdef->fields) {
 					auto& fld = fpair.second;
 					key.put_member("parent_member", fld->field_name);
 					json link_objects = select_object(key);
@@ -1430,15 +1546,7 @@ private:
 				return _item[class_name_field];
 				});
 
-			std::map<std::string, class_definition> classes_ahead;
-
 			auto class_list = classes_group.get_members();
-
-			for (auto class_pair : class_list) {
-
-				auto class_def = load_class(class_pair.first);
-				classes_ahead.insert_or_assign(class_pair.first, class_def);
-			}
 
 			std::vector<validation_error> validation_errors;
 
@@ -1476,9 +1584,9 @@ private:
 
 				std::string class_name = object_definition[class_name_field];
 
-				class_definition& class_data = classes_ahead[class_name];
+				auto class_data = load_class(class_name);
 
-				if (not class_data.empty())
+				if (class_data)
 				{
 					bool permission = has_class_permission(_user_name, class_name, "Put");
 
@@ -1491,7 +1599,7 @@ private:
 					// check the object against the class definition for correctness
 					// first we see which fields are in the class not in the object
 
-					for (auto kv : class_data.fields) {
+					for (auto kv : class_data->fields) {
 						if (object_definition.has_member(kv.first)) {
 							std::string obj_type = object_definition[kv.first]->get_type_name();
 							std::string member_type = kv.second->field_type;
@@ -1505,9 +1613,9 @@ private:
 					// in the class definition.
 					auto object_members = object_definition.get_members();
 					for (auto om : object_members) {
-						if (class_data.fields.contains(om.first)) {
-							auto& fld = class_data.fields[om.first];
-							fld->accepts(validation_errors, class_name, om.first, om.second);
+						if (class_data->fields.contains(om.first)) {
+							auto& fld = class_data->fields[om.first];
+							fld->accepts(this, validation_errors, class_name, om.first, om.second);
 						}
 						else 
 						{
@@ -1702,12 +1810,12 @@ private:
 
 
 			std::string class_name = _object_key[class_name_field];
-			class_definition classd = load_class(class_name);
+			auto classd = load_class(class_name);
 
-			if (not classd.empty()) 
+			if (classd) 
 			{
 				json_table class_data(this, { object_id_field });
-				class_data.open(classd.table_location);
+				class_data.open(classd->table_location);
 				obj = class_data.get(_object_key);
 				return obj;
 			}
@@ -1724,25 +1832,25 @@ private:
 
 			std::string class_name = _key[class_name_field];
 
-			class_definition classd = load_class(class_name);
+			auto classd = load_class(class_name);
 
-			if (not classd.empty())
+			if (classd)
 			{
-				relative_ptr_type rpt = classd.table_location;
+				relative_ptr_type rpt = classd->table_location;
 				json_table class_data(this, { object_id_field });
 				class_data.open(rpt);
 
 				// Now, if there is an index set specified, let's go see if we can find one and use it 
 				// rather than scanning the table
 
-				if (classd.indexes.size() > 0)
+				if (classd->indexes.size() > 0)
 				{
 					std::shared_ptr<index_definition> matched_index;
 					int max_matched_key_count = 0;
 
 					// go through each index
 
-					for (auto index_pair : classd.indexes)
+					for (auto index_pair : classd->indexes)
 					{
 						// and here, let's go see if all the keys except the object_id, hit the filter.
 						// if they do, we can use this index,
@@ -1932,31 +2040,75 @@ private:
 		}
 
 
-		private:
-
-		class_definition load_class(std::string _class_name)
+		virtual std::string get_random_code()
 		{
-			json_parser jp;
-			json key = jp.create_object();
-			key.put_member(class_name_field, _class_name);
-			json class_def = classes->get(key);
-			class_definition cd;
-			cd.put_json(class_def);
+			std::string s_confirmation_code = "";
+			int confirmation_code_digits = 6;
+			char confirmation_code[32] = {};
+
+			int rc = 0;
+			int lc = 0;
+			int i = 0;
+			while (i < confirmation_code_digits and i < sizeof(confirmation_code))
+			{
+				do
+				{
+					rc = rand() % 26 + 'A';
+					confirmation_code[i] = rc;
+				} while (rc == lc);
+				lc = rc;
+				i++;
+			}
+			confirmation_code[i] = 0;
+			s_confirmation_code = confirmation_code;
+			return s_confirmation_code;
+		}
+
+		std::map<std::string, std::shared_ptr<class_definition>> class_cache;
+
+		virtual std::shared_ptr<class_definition> load_class(std::string _class_name)
+		{
+			std::shared_ptr<class_definition> cd;
+			if (class_cache.contains(_class_name))
+			{
+				cd = class_cache[_class_name];
+			}
+			else 
+			{
+				json_parser jp;
+				json key = jp.create_object();
+				key.put_member(class_name_field, _class_name);
+				json class_def = classes->get(key);
+				if (class_def.object()) {
+					cd = std::make_shared<class_definition>();
+					cd->put_json(class_def);
+					class_cache.insert_or_assign(_class_name, cd);
+				}
+			}
 			return cd;
 		}
 
-		json save_class(class_definition& _class_to_save)
+		virtual json save_class(class_definition& _class_to_save)
 		{
+			std::shared_ptr<class_definition> cd;
+
+			if (class_cache.contains(_class_to_save.class_name))
+			{
+				cd = class_cache[_class_to_save.class_name];
+			}
+			else
+			{
+				cd = std::make_shared<class_definition>(_class_to_save);
+				class_cache.insert_or_assign(cd->class_name, cd);
+			}
 			json_parser jp;
 			json class_def = jp.create_object();
-			_class_to_save.get_json(class_def);
+			cd->get_json(class_def);
 			classes->put(class_def);
 			return class_def;
 		}
 
-		public:
-
-		json apply_schema(json _schema)
+		virtual json apply_schema(json _schema)
 		{
 			date_time start_schema = date_time::now();
 			timer tx;
@@ -2316,7 +2468,7 @@ private:
 			return temp;
 		}
 
-		relative_ptr_type open_database(relative_ptr_type _header_location)
+		virtual relative_ptr_type open_database(relative_ptr_type _header_location)
 		{
 			timer method_timer;
 			date_time start_schema = date_time::now();
@@ -2335,7 +2487,7 @@ private:
 			return header_location;
 		}
 
-		json create_user(json create_user_request)
+		virtual json create_user(json create_user_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2419,7 +2571,7 @@ private:
 		}
 
 		// this starts a login attempt
-		json login_user(json _login_request)
+		virtual json login_user(json _login_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2460,31 +2612,7 @@ private:
 			return response;
 		}
 
-		std::string get_random_code()
-		{
-			std::string s_confirmation_code = "";
-			int confirmation_code_digits = 6;
-			char confirmation_code[32] = {};
-
-			int rc = 0;
-			int lc = 0;
-			int i = 0;
-			while (i < confirmation_code_digits and i < sizeof(confirmation_code))
-			{
-				do
-				{
-					rc = rand() % 26 + 'A';
-					confirmation_code[i] = rc;
-				} while (rc == lc);
-				lc = rc;
-				i++;
-			}
-			confirmation_code[i] = 0;
-			s_confirmation_code = confirmation_code;
-			return s_confirmation_code;
-		}
-
-		json edit_object(json _edit_object_request)
+		virtual json edit_object(json _edit_object_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2508,8 +2636,8 @@ private:
 			std::string class_name = _edit_object_request[class_name_field];
 			json key = _edit_object_request.extract({ class_name_field, object_id_field });
 
-			class_definition edit_class = load_class(class_name);
-			if (edit_class.empty()) 
+			auto edit_class = load_class(class_name);
+			if (edit_class) 
 			{
 				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return create_response(_edit_object_request, false, "Invalid class.", jp.create_object(), method_timer.get_elapsed_seconds());
@@ -2523,8 +2651,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_stop("edit_object", "success", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
 
-
-		json get_classes(json get_classes_request)
+		virtual json get_classes(json get_classes_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2568,7 +2695,7 @@ private:
 			return result;
 		}
 
-		json get_class(json get_class_request)
+		virtual json get_class(json get_class_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2620,35 +2747,7 @@ private:
 			return result;
 		}
 
-		json delete_objects(json delete_request)
-		{
-
-			date_time start_time = date_time::now();
-			timer tx;
-
-			json delete_filter = delete_request[data_field];
-
-			system_monitoring_interface::global_mon->log_function_start("delete_objects", "start", start_time, __FILE__, __LINE__);
-
-			timer method_timer;
-			json_parser jp;
-			json result;
-
-			std::string user_name;
-
-			if (not check_message(delete_request, { auth_general }, user_name))
-			{
-				result = create_response(delete_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
-				return result;
-			}
-
-			commit();
-
-			system_monitoring_interface::global_mon->log_function_stop("delete_objects", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-		}
-
-		json put_class(json put_class_request)
+		virtual json put_class(json put_class_request)
 		{
 			timer method_timer;
 			json result;
@@ -2699,7 +2798,7 @@ private:
 				return result;
 			}
 
-			class_definition existing_class = load_class(class_name);
+			auto existing_class = load_class(class_name);
 			class_definition class_def;
 			class_def.put_json(jclass_definition);
 
@@ -2727,20 +2826,20 @@ private:
 			{
 				std::string base_class_name = class_def.base_class_name;
 
-				class_definition base_class = load_class(base_class_name);
+				auto base_class = load_class(base_class_name);
 
-				if (base_class.empty())
+				if (not base_class)
 				{
 					result = create_response(put_class_request, false, "Base class not found", jclass_definition, method_timer.get_elapsed_seconds());
 				}
 
-				class_def.ancestors = base_class.ancestors;
+				class_def.ancestors = base_class->ancestors;
 				class_def.ancestors.insert_or_assign(base_class_name, true);
 
-				base_class.descendants.insert_or_assign(class_name, true);
-				class_def.descendants = base_class.descendants;	
+				base_class->descendants.insert_or_assign(class_name, true);
+				class_def.descendants = base_class->descendants;	
 
-				for (auto temp_field : base_class.fields)
+				for (auto temp_field : base_class->fields)
 				{
 					class_def.fields.insert_or_assign(temp_field.first, temp_field.second);
 				}
@@ -2748,12 +2847,12 @@ private:
 				for (auto descendant : class_def.descendants)
 				{
 					auto desc_class = load_class(descendant.first);
-					desc_class.ancestors.insert_or_assign(class_name, true);
-					save_class(desc_class);
+					desc_class->ancestors.insert_or_assign(class_name, true);
+					save_class(*desc_class);
 				}
 			}
 
-			class_def.table_location = existing_class.table_location;
+			class_def.table_location = existing_class->table_location;
 
 			json_table class_data(this, { object_id_field });
 			relative_ptr_type rpt;
@@ -2786,7 +2885,7 @@ private:
 
 			// loop through existing indexes,
 			// dropping old ones that don't match
-			for (auto old_index : existing_class.indexes)
+			for (auto old_index : existing_class->indexes)
 			{
 				auto index = old_index.second;
 				auto existing = class_def.indexes.find(index->index_name);
@@ -2813,9 +2912,9 @@ private:
 				// don't trust the inbounnd table locations
 				new_index.second->index_location = 0;
 
-				auto existing = existing_class.indexes.find(new_index.first);
+				auto existing = existing_class->indexes.find(new_index.first);
 
-				if (existing != existing_class.indexes.end()) 
+				if (existing != existing_class->indexes.end()) 
 				{
 					new_index.second->index_location = existing->second->index_location;
 				}
@@ -2846,7 +2945,15 @@ private:
 			return result;
 		}
 
-		json query_class_base(json query_class_request, json update_json)
+		virtual std::shared_ptr<class_definition_interface> get_class_interface(std::string _class_name)
+		{
+			auto cd = load_class(_class_name);
+			return cd;
+		}
+
+		private:
+
+		json query_class(std::string _user_name, json query_details, json update_json)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2857,69 +2964,31 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_start("update", "start", start_time, __FILE__, __LINE__);
 
-			std::vector<std::string> missing_elements;
-			if (not query_class_request.has_members(missing_elements, { "Token", data_field })) {
-				std::string error_message;
-				error_message = "Missing elements:";
-				std::string comma = "";
-				for (auto m : missing_elements) {
-					error_message.append(comma);
-					error_message.append(m);
-				}
-				system_monitoring_interface::global_mon->log_warning(error_message, __FILE__, __LINE__);
-				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return response;
-			}
-
-			missing_elements.clear();
-			json manip = query_class_request[data_field];
-			if (not manip.has_members(missing_elements, { "Filter", class_name_field })) {
-				std::string error_message;
-				error_message = "Missing elements:";
-				std::string comma = "";
-				for (auto m : missing_elements) {
-					error_message.append(comma);
-					error_message.append(m);
-				}
-				system_monitoring_interface::global_mon->log_warning(error_message, __FILE__, __LINE__);
-				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return response;
-			}
-
-			std::string user_name;
-
-			if (not check_message(query_class_request, { auth_general }, user_name ))
-			{
-				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return response;
-			}
-
-			json token = query_class_request[token_field];
-			json base_class_name = manip[class_name_field];
+			json base_class_name = query_details[class_name_field];
 			if (base_class_name.empty()) {
-				response = create_response(query_class_request, false, "class_name not specified", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(_user_name, auth_general, false, "class_name not specified", query_details, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
-			bool class_granted =  has_class_permission(user_name, base_class_name, "Get");
+			bool class_granted =  has_class_permission(_user_name, base_class_name, "Get");
 			if (not class_granted)
 			{
-				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(_user_name, auth_general, false, "denied", query_details, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
-			class_definition class_def = load_class(base_class_name);
+			auto class_def = load_class(base_class_name);
 
 			json object_list = jp.create_array();
 
-			json filter = manip["Filter"];
+			json filter = query_details["Filter"];
+			if (filter.empty()) {
+				filter = jp.create_object();
+			}
 
-			for (auto class_pair : class_def.descendants)
+			for (auto class_pair : class_def->descendants)
 			{
 				json class_key;
 				class_key = filter.clone();
@@ -2932,23 +3001,99 @@ private:
 				}
 			}
 
-			response = create_response(query_class_request, true, "Query completed", object_list, method_timer.get_elapsed_seconds());
-			commit();
+			response = create_response(_user_name, auth_general, true, "completed", query_details, method_timer.get_elapsed_seconds());
 
 			system_monitoring_interface::global_mon->log_function_stop("update", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
+		public:
 
-		json query_class(json query_class_request)
+		virtual json query(json query_request)
 		{
+			timer tx;
+
 			json_parser jp;
 			json jx; // not creating an object, leaving it empty.  should work with empty objects
 			// or with an object that has no members.
-			return query_class_base(query_class_request, jx);
+			json response;
+
+			std::string user_name;
+
+			if (not check_message(query_request, { auth_general }, user_name))
+			{
+				response = create_response(query_request, false, "Denied", jp.create_object(), tx.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("query", "denied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return response;
+			}
+
+			query_context context;
+
+			context.froms_preloaded = true;
+
+			json from_classes = query_request["from"];
+			if (from_classes.array())
+			{
+				json stages = query_request["stages"];
+
+				if (not stages.array() or stages.size() == 0)
+				{
+					response = create_response(query_request, false, "query has no stages", jp.create_object(), tx.get_elapsed_seconds());
+					system_monitoring_interface::global_mon->log_function_stop("query", "query has no stages", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					return response;
+				}
+
+				for (auto from_class : from_classes) 
+				{
+					std::string class_name = from_class[class_name_field];
+					std::string from_name = from_class["name"];
+					if (from_name.empty())
+					{
+						response = create_response(query_request, false, "from with no name", jp.create_object(), tx.get_elapsed_seconds());
+						system_monitoring_interface::global_mon->log_function_stop("query", "from with no name", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						return response;
+					}
+					if (class_name.empty())
+					{
+						response = create_response(query_request, false, "from with no class", jp.create_object(), tx.get_elapsed_seconds());
+						system_monitoring_interface::global_mon->log_function_stop("query", "from with no class", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						return response;
+					}
+					auto cd = load_class(class_name);
+					if (not cd) {
+						response = create_response(query_request, false, "from class not found", jp.create_object(), tx.get_elapsed_seconds());
+						system_monitoring_interface::global_mon->log_function_stop("query", "from class not found", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						return response;
+					}
+				}
+
+				// these will all run in parallel once I get this to work
+				for (auto from_class : from_classes)
+				{
+					std::string from_name = from_class["name"];
+					json query_class_response = query_class(user_name, from_class, jx);
+					json objects = query_class_response[data_field];
+					context.set_data_source(from_name, objects);
+				}
+
+				// so now, we've loaded up our context, we can extract the stages
+				context.put_json(query_request);
+
+				// and, we can run the thing.
+				json query_results = context.run();
+
+				response = create_response(query_request, true, "query ran", query_results, tx.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("query", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+			else 
+			{
+				response = create_response(query_request, true, "query has no froms", jp.create_object(), tx.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+			return response;
 		}
 
-		json create_object(json create_object_request)
+		virtual json create_object(json create_object_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2981,12 +3126,12 @@ private:
 
 			auto class_def = load_class(class_name);
 
-			if (not class_def.empty()) {
+			if (not class_def->empty()) {
 
 				json new_object = jp.create_object();
 				new_object.put_member(class_name_field, class_name);
 
-				for (auto& member : class_def.fields)
+				for (auto& member : class_def->fields)
 				{
 					if (member.first == class_name_field)
 						continue;
@@ -3047,7 +3192,7 @@ private:
 			
 		}
 
-		json put_object(json put_object_request)
+		virtual json put_object(json put_object_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -3107,19 +3252,19 @@ private:
 
 				for (auto class_pair : classes_and_data)
 				{
-					class_definition cd = load_class(class_pair.second);
+					auto cd = load_class(class_pair.second);
 
 					extract_child_objects(cd, child_objects, class_pair.second);
 
 					// now that we have our class, we can go ahead and open the storage for it
-					relative_ptr_type rpt = cd.table_location;
+					relative_ptr_type rpt = cd->table_location;
 					json_table class_data(this, { object_id_field });
 					class_data.open(rpt);
 
 					class_data.put_array(class_pair.second);
 
 					// update the indexes
-					for (auto class_index : cd.indexes) {
+					for (auto class_index : cd->indexes) {
 						relative_ptr_type location = class_index.second->index_location;
 						if (location > 0) {
 							json indexed_objects = class_pair.second.map([&class_index](std::string _member, int _index, json& _item) -> json {
@@ -3154,9 +3299,7 @@ private:
 			return result;
 		}
 
-		json get_object(
-			json get_object_request
-		)
+		virtual json get_object(json get_object_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -3201,7 +3344,7 @@ private:
 		}
 
 
-		json delete_object(json delete_object_request)
+		virtual json delete_object(json delete_object_request)
 		{
 			timer method_timer;
 			json response;
@@ -3231,11 +3374,11 @@ private:
 				return response;
 			}
 
-			class_definition cd = load_class(class_name);
+			auto cd = load_class(class_name);
 
-			if (cd.table_location) {
+			if (cd->table_location) {
 				json empty;
-				relative_ptr_type rpt = cd.table_location;
+				relative_ptr_type rpt = cd->table_location;
 				json_table class_data(this, { object_id_field });
 				class_data.open(rpt);
 				class_data.erase(object_key);
@@ -3252,7 +3395,7 @@ private:
 			return response;
 		}
 
-		json copy_object(json copy_request)
+		virtual json copy_object(json copy_request)
 		{
 			timer method_timer;
 			json_parser jp;
