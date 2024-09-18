@@ -479,28 +479,31 @@ namespace corona
 			max_value = (scalar_type)_src["max_value"];
 		}
 
-		if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
-			bool is_legit = true;
-			scalar_type chumpy = (scalar_type)_object_to_test;
+		virtual bool accepts(std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_validation_errors, _class_name, _field_name, _object_to_test)) {
+				bool is_legit = true;
+				scalar_type chumpy = (scalar_type)_object_to_test;
 
-			if (chumpy >= min_value and chumpy <= max_value)
-			{
-				is_legit = true;
+				if (chumpy >= min_value and chumpy <= max_value)
+				{
+					is_legit = true;
+				}
+				else
+				{
+					is_legit = false;
+				}
+				if (not is_legit) {
+					validation_error ve;
+					ve.class_name = _class_name;
+					ve.field_name = _field_name;
+					ve.file_name = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = std::format("Value '{0}' must be between {1} and {2}", chumpy, min_value, max_value);
+					_validation_errors.push_back(ve);
+					return false;
+				};
 			}
-			else
-			{
-				is_legit = false;
-			}
-			if (not is_legit) {
-				validation_error ve;
-				ve.class_name = _class_name;
-				ve.field_name = _field_name;
-				ve.file_name = __FILE__;
-				ve.line_number = __LINE__;
-				ve.message = std::format("Value '{0}' must be between {1} and {2}", chumpy, min_value, max_value);
-				_validation_errors.push_back(ve);
-				return false;
-			};
 		}
 
 	};
@@ -822,10 +825,7 @@ namespace corona
 					ancestors.insert_or_assign(ancestor, true);
 				}
 			}
-
 		}
-
-
 	};
 
 	class corona_database : public file_block
@@ -1401,18 +1401,16 @@ private:
 			return response;
 		}
 
-		json check_object(json check_object_request)
+		json check_object(std::string _user_name, json object_load)
 		{
 			timer method_timer;
-			json result;
 			json_parser jp;
 			date_time current_date = date_time::now();
 
-			json object_load = check_object_request[data_field];
-			bool strict_enabled = (bool)check_object_request["Strict"];
-			std::string user = check_object_request.query("token.user_name")["value"];
+			json response,
+				 result;
 
-			result = create_response(check_object_request, true, "Ok", object_load, method_timer.get_elapsed_seconds());
+			response = jp.create_object();
 
 			json object_definition,
 				object_list,
@@ -1442,19 +1440,19 @@ private:
 				classes_ahead.insert_or_assign(class_pair.first, class_def);
 			}
 
+			std::vector<validation_error> validation_errors;
+
 			bool all_objects_good = true;
 
 			for (auto object_definition : object_list)
 			{
 				if (not object_definition.object())
 				{
-					result = create_response(check_object_request, false, "This is not an object", object_definition, method_timer.get_elapsed_seconds());
 					result_list.push_back(result);
 				}
 
 				if (not object_definition.has_member(class_name_field))
 				{
-					result = create_response(check_object_request, false, "Object must have class name", object_definition, method_timer.get_elapsed_seconds());
 					result_list.push_back(result);
 				}
 
@@ -1464,14 +1462,14 @@ private:
 				{
 					object_id = object_definition[object_id_field].get_int64s();
 					object_definition.put_member("updated", current_date);
-					object_definition.put_member("updated_by", user);
+					object_definition.put_member("updated_by", _user_name);
 				}
 				else
 				{
 					object_id =  get_next_object_id();
 					object_definition.put_member_i64(object_id_field, object_id);
 					object_definition.put_member("created", current_date);
-					object_definition.put_member("created_by", user);
+					object_definition.put_member("created_by", _user_name);
 				}
 
 				json warnings = jp.create_array();
@@ -1482,8 +1480,13 @@ private:
 
 				if (not class_data.empty())
 				{
+					bool permission = has_class_permission(_user_name, class_name, "Put");
 
-					std::vector<validation_error> validation_errors;
+					if (not permission) {
+						response.put_member(success_field, false);
+						response.put_member(message_field, "denied");
+						return result;
+					}
 
 					// check the object against the class definition for correctness
 					// first we see which fields are in the class not in the object
@@ -1514,7 +1517,7 @@ private:
 							ve.field_name = om.first;
 							ve.file_name = __FILE__;
 							ve.line_number = __LINE__;
-							ve.message = "Field not found inn class definition";
+							ve.message = "Field not found in class definition";
 							validation_errors.push_back(ve);
 						}
 					}
@@ -1549,8 +1552,10 @@ private:
 				result_list.push_back(result);
 			}
 
-			result = create_response(check_object_request, all_objects_good, "Objects processed", result_list, method_timer.get_elapsed_seconds());
-			return result;
+			response.put_member(success_field, all_objects_good);
+			response.put_member(message_field, "Objects processed");
+			response.put_member(data_field, result_list);
+			return response;
 		}
 
 		lockable header_lock;
@@ -1676,23 +1681,18 @@ private:
 			return empty;
 		}
 
-		bool check_message(json& _message, std::vector<std::string> _authorizations)
+		bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name)
 		{
 			std::string token = _message[token_field];
 
 			json result = check_token(token, _authorizations);
 			bool is_ok = not result.empty();
 
-			return is_ok;
-		}
-
-		json get_message_user(json _token)
-		{
-			if (_token.has_member(token_field)) {
-				_token = _token[token_field];
+			if (is_ok) {
+				_user_name = result[user_name_field];
 			}
-			json token_name = _token.extract({ user_name_field });
-			return token_name;
+
+			return is_ok;
 		}
 
 		json acquire_object(json _object_key)
@@ -1845,66 +1845,30 @@ private:
 		}
 
 		bool has_class_permission(
-			std::string _token,
+			std::string _user_name,
 			std::string _class_name,
 			std::string _permission)
 		{
 
 			bool granted = false;
 
-			json_parser jp;
-			json user;
-
-			json token = check_token(_token, { auth_general });
-			// check the token to make sure it is valid - this includes signature verification
-			if (token.empty()) {
-				return false;
-			}
-
 			// extract the user key from the token and get the user object
-			json user_key = get_message_user(token);
-			std::string user_name = user_key[user_name_field];
-
-			if (user_name == default_user) 
+			if (_user_name == default_user) 
 			{
 				return true;
 			}
 
-			user =  get_user(user_name);
-			if (user.empty()) {
+			json user =  get_user(_user_name);
+
+			if (user.empty()) 
+			{
 				return false;
 			}
-
+			else 
+			{
+				granted = true;
+			}
 			
-			return granted;
-		}
-
-		bool check_object_permission(
-			json _request,
-			std::string _permission)
-		{
-
-			bool granted = false;
-
-			json_parser jp;
-			json user;
-
-			json object = _request[data_field];
-
-			// check the token to make sure it is valid - this includes signature verification
-			json user_key = get_message_user(_request);
-			user_key.put_member(class_name_field, "sys_users");
-
-			if ((std::string)user_key[user_name_field] == default_user) {
-				return true;
-			}
-
-			// extract the user key from the token and get the user object
-			user =  get_user(user_key[user_name_field]);
-			if (user.empty()) {
-				return false;
-			}
-
 			return granted;
 		}
 
@@ -1960,6 +1924,9 @@ private:
 
 		}
 
+
+		private:
+
 		class_definition load_class(std::string _class_name)
 		{
 			json_parser jp;
@@ -1979,6 +1946,8 @@ private:
 			classes->put(class_def);
 			return class_def;
 		}
+
+		public:
 
 		json apply_schema(json _schema)
 		{
@@ -2519,46 +2488,35 @@ private:
 
 			date_time start_time = date_time::now();
 			timer tx;
+			std::string user_name;
 
-			system_monitoring_interface::global_mon->log_function_start("edit_object", "start", start_time, __FILE__, __LINE__);
-
-			json token = _edit_object_request["Token"];
-			json object_key = _edit_object_request[object_id_field];
-
-			if (not check_message(_edit_object_request, { auth_general }))
+			if (not check_message(_edit_object_request, { auth_general }, user_name))
 			{
 				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			json object_options = jp.create_object();
-			object_options.copy_member(object_id_field, object_key);
-			object_options.put_member_object("Fields");
-			json object_fields = object_options["Fields"];
-			object_options.put_member_object("Edit");
-			json edit_options_root = object_options["Edit"];
+			system_monitoring_interface::global_mon->log_function_start("edit_object", "start", start_time, __FILE__, __LINE__);
 
-			json get_response =  get_object(_edit_object_request);
-			if (get_response[success_field]) {
-				json obj = get_response[data_field];
-				object_options.put_member(data_field, obj);
-				json class_key = obj.extract({ class_name_field });
-				class_key.put_member("Token", token);
-				json class_response =  get_class(class_key);
-				if (class_response[success_field]) {
-					json class_definition = class_response[data_field];
-					object_options.put_member_object("ClassDefinition", class_definition);
-					auto fields = class_definition["Fields"].get_members();
-					for (auto field : fields) {
-						json edit_options = edit_options_root.put_member_array(field.first);
-						object_fields.put_member(field.first, field.second);
-					}
-				}
-				system_monitoring_interface::global_mon->log_function_stop("edit_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return create_response(_edit_object_request, true, "Ok", object_options, method_timer.get_elapsed_seconds());
+			json token = _edit_object_request[token_field];
+			int64_t object_id = (int64_t)_edit_object_request[object_id_field];
+			std::string class_name = _edit_object_request[class_name_field];
+			json key = _edit_object_request.extract({ class_name_field, object_id_field });
+
+			class_definition edit_class = load_class(class_name);
+			if (edit_class.empty()) 
+			{
+				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return create_response(_edit_object_request, false, "Invalid class.", jp.create_object(), method_timer.get_elapsed_seconds());
 			}
-			system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			return create_response(_edit_object_request, false, "Sadly, this object eludes you.", object_options, method_timer.get_elapsed_seconds());
+			else 
+			{
+				result = select_object(key);
+			}
+
+			return create_response(_edit_object_request, true, "Ok", result, method_timer.get_elapsed_seconds());
+			system_monitoring_interface::global_mon->log_function_stop("edit_object", "success", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
 
 
@@ -2577,17 +2535,17 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_start("get_classes", "start", start_time, __FILE__, __LINE__);
 
+			std::string user_name;
 
-			if (not check_message(get_classes_request, { auth_general }))
+			if (not check_message(get_classes_request, { auth_general }, user_name))
 			{
 				result = create_response(get_classes_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				return result;
 			}
 
-			result_list =  classes->select([this, get_classes_request](int _index, json& _item) {
+			result_list =  classes->select([this, user_name](int _index, json& _item) {
+				bool has_permission = has_class_permission(user_name, _item[class_name_field], "Describe");
 				json_parser jp;
-				json token = get_classes_request["Token"];
-				bool has_permission = has_class_permission(token, _item[class_name_field], "Get");
 
 				if (has_permission) 
 				{
@@ -2599,6 +2557,7 @@ private:
 					return empty;
 				}
 			});
+
 			system_monitoring_interface::global_mon->log_function_stop("get_classes", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			result = create_response(get_classes_request, true, "Ok", result_list, method_timer.get_elapsed_seconds());
 
@@ -2616,9 +2575,9 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_start("get_class", "start", start_time, __FILE__, __LINE__);
 
-
 			std::vector<std::string> missing_elements;
-			if (not get_class_request.has_members(missing_elements, { "Token", data_field })) {
+
+			if (not get_class_request.has_members(missing_elements, { "Token" })) {
 				std::string error_message;
 				error_message = "get_class missing elements:";
 				std::string comma = "";
@@ -2631,21 +2590,18 @@ private:
 				return response;
 			}
 
+			std::string user_name;
 
-			if (not check_message(get_class_request, { auth_general }))
+			if (not check_message(get_class_request, { auth_general }, user_name))
 			{
 				result = create_response(get_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			json token = get_class_request["Token"];
 			std::string class_name = get_class_request[class_name_field];
 
-			bool can_get_class =  has_class_permission(
-				token,
-				class_name,
-				"Get");
+			bool can_get_class =  has_class_permission( user_name, class_name, "Describe");
 
 			json key = jp.create_object(class_name_field, class_name);
 			key.set_natural_order();
@@ -2654,7 +2610,6 @@ private:
 				scope_lock lock_one(classes_rw_lock);
 				result =  classes->get(key);
 			}
-
 
 			result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());
 			system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -2674,7 +2629,10 @@ private:
 			timer method_timer;
 			json_parser jp;
 			json result;
-			if (not check_message(delete_request, { auth_general }))
+
+			std::string user_name;
+
+			if (not check_message(delete_request, { auth_general }, user_name))
 			{
 				result = create_response(delete_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				return result;
@@ -2711,7 +2669,9 @@ private:
 				return response;
 			}
 
-			if (not check_message(put_class_request, { auth_general }))
+			std::string user_name;
+
+			if (not check_message(put_class_request, { auth_general }, user_name))
 			{
 				result = create_response(put_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -2724,9 +2684,9 @@ private:
 			std::string class_name = jclass_definition[class_name_field];
 
 			bool can_put_class =  has_class_permission(
-				token,
+				user_name,
 				class_name,
-				"Put");
+				"Alter");
 
 			if (not can_put_class) {
 				result = create_response(put_class_request, false, "Denied", jclass_definition, method_timer.get_elapsed_seconds());
@@ -2924,7 +2884,9 @@ private:
 				return response;
 			}
 
-			if (not check_message(query_class_request, { auth_general }))
+			std::string user_name;
+
+			if (not check_message(query_class_request, { auth_general }, user_name ))
 			{
 				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -2934,12 +2896,12 @@ private:
 			json token = query_class_request[token_field];
 			json base_class_name = manip[class_name_field];
 			if (base_class_name.empty()) {
-				response = create_response(query_class_request, false, "Classname not specified", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(query_class_request, false, "class_name not specified", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
-			bool class_granted =  has_class_permission(token, base_class_name, "Get");
+			bool class_granted =  has_class_permission(user_name, base_class_name, "Get");
 			if (not class_granted)
 			{
 				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
@@ -2992,22 +2954,23 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_start("create_object", "start", start_time, __FILE__, __LINE__);
 
-
 			json token = create_object_request[token_field];
 			json data = create_object_request[data_field];
 			std::string class_name = data[class_name_field];
 			json response;
 
-			if (not check_message(create_object_request, { auth_general }))
+			std::string user_name;
+
+			if (not check_message(create_object_request, { auth_general }, user_name))
 			{
 				response = create_response(create_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
-			bool permission =  has_class_permission(token, class_name, "Get");
+			bool permission =  has_class_permission(token, class_name, "Create");
 			if (not permission) {
-				json result = create_response(create_object_request, false, "Cannot get class", data, method_timer.get_elapsed_seconds());
+				json result = create_response(create_object_request, false, "Denied", data, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -3095,26 +3058,22 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("put_object", "start", start_time, __FILE__, __LINE__);
 
 			object_definition = put_object_request[data_field];
+			std::string user_name;
 
-			if (not check_message(put_object_request, { auth_general }))
+			if (not check_message(put_object_request, { auth_general }, user_name))
 			{
 				result = create_response(put_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			bool permission =  check_object_permission(put_object_request, "Put");
-			if (not permission) {
-				json result = create_response(put_object_request, false, "Cannot create object", put_object_request[data_field], method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
+			json data = put_object_request[data_field];
 
-			result =  check_object(put_object_request);
+			result =  check_object(user_name, data);
 
 			if (result[success_field])
 			{
-				json data = result[data_field];
+				data = result[data_field];
 
 				json item_array;
 				if (data.array()) {
@@ -3188,8 +3147,6 @@ private:
 			}
 			system_monitoring_interface::global_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			commit();
-
 			return result;
 		}
 
@@ -3206,7 +3163,9 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_start("get_object", "start", start_time, __FILE__, __LINE__);
 
-			if (not check_message(get_object_request, { auth_general }))
+			std::string user_name;
+
+			if (not check_message(get_object_request, { auth_general }, user_name))
 			{
 				result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3241,8 +3200,9 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_start("delete_object", "start", start_time, __FILE__, __LINE__);
 
+			std::string user_name;
 
-			if (not check_message(delete_object_request, { auth_general }))
+			if (not check_message(delete_object_request, { auth_general }, user_name))
 			{
 				response = create_response(delete_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3294,7 +3254,9 @@ private:
 			timer tx;
 			system_monitoring_interface::global_mon->log_function_start("copy_object", "start", start_time, __FILE__, __LINE__);
 
-			if (not check_message(copy_request, { auth_general }))
+			std::string user_name;
+
+			if (not check_message(copy_request, { auth_general }, user_name))
 			{
 				response = create_response(copy_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3331,6 +3293,8 @@ private:
 			system_monitoring_interface::global_mon->log_function_stop("copy_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
+
+		private:
 
 		json create_system_request(json _data)
 		{
@@ -3378,6 +3342,8 @@ private:
 			return payload;
 		}
 
+
+	};
 
 	bool test_database_engine(json& _proof, std::shared_ptr<application> _app)
 	{

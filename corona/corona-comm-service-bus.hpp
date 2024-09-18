@@ -51,12 +51,12 @@ namespace corona
 
 			json server_config = local_db_config["Server"];
 
-			database_file_name = server_config["DatabaseFilename"];
-			database_schema_file_name = server_config["SchemaFilename"];
+			database_file_name = server_config["database_filename"];
+			database_schema_file_name = server_config["schema_filename"];
 
 			app = std::make_shared<application>();
-			app->application_name = server_config["ApplicationName"];
-			listen_point = server_config["ListenPoint"];
+			app->application_name = server_config["application_name"];
+			listen_point = server_config["listen_point"];
 
 			log_information("Self test.");
 			prove_system();
@@ -206,17 +206,6 @@ namespace corona
 		{
 
 		}
-
-		virtual json create_user(json user_information) = 0;
-		virtual json login_user(json login_information) = 0;
-		virtual json create_object(std::string class_name) = 0;
-		virtual json put_object(json object_information) = 0;
-		virtual json get_object(json object_information) = 0;
-		virtual json delete_object(json object_information) = 0;
-		virtual json pop_object(json object_information) = 0;
-		virtual json query_objects(json object_information) = 0;
-		virtual void error(json _error) = 0;
-
 
 		json get_banner()
 		{

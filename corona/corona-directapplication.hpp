@@ -57,7 +57,7 @@ namespace corona
 
 	public:
 
-		comm_bus_interface* bus;
+		comm_bus_app_interface* bus;
 
 		directApplicationWin32(comm_bus_app_interface* _bus, std::shared_ptr<directXAdapter>  _factory);
 		virtual ~directApplicationWin32();

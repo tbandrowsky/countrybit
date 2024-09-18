@@ -3,13 +3,13 @@
     "ApiKey": "Your key goes here"
   },
   "Server": {
-    "ListenPoint": "http://localhost:5678/corona",
-    "ApplicationName": "coronademo",
-    "SchemaFilename": "c:\\data\\corona-schema.json",
-    "DatabaseFilename": "c:\\data\\corona.cdb",
-    "DefaultUserName": "system",
-    "DefaultUserPassword": "systempassword",
-    "DefaultUserEmailAddress": "todd.bandrowsky@gmail.com",
-    "DefaultGuestTeam": "Guests"
+    "listen_point": "http://localhost:5678/corona",
+    "application_name": "coronademo",
+    "schema_file_name": "c:\\data\\corona-schema.json",
+    "database_file_name": "c:\\data\\corona.cdb",
+    "sys_user_name": "system",
+    "sys_user_password": "systempassword",
+    "sys_user_email_address": "todd.bandrowsky@gmail.com",
+    "sys_default_team": "Guests"
   }
 }

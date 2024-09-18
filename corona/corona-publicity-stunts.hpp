@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef CORONA_PUBLICITY_STUNTS
+#define CORONA_PUBLICITY_STUNTS
+
 namespace corona
 {
 
@@ -54,3 +57,5 @@ namespace corona
     }
 
 }
+
+#endif
