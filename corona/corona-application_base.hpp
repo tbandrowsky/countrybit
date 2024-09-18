@@ -4,6 +4,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 This is the case class contract for a Corona GUI application.
 Corona GUI can use Windows SDK native controls freely along a Direct X 

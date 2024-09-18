@@ -4,6 +4,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 The adapter here in this case is a logical construct of several d2d windows.
 

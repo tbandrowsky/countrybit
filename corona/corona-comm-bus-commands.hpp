@@ -1,5 +1,25 @@
 #pragma once
 
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+MIT License
+
+About this File
+This is the application commands. commands can be sprinkled throughout the ui
+to provide a declarative way to handle certain ui use cases. generally 
+attached to buttons but can be wired up to just about anything.
+conceptually similar to winui commands, but a tad more flexible.
+thread / ui thread syncing handled for you.  most of the time.
+
+Notes
+
+For Future Consideration
+*/
+
 #ifndef CORONA_COMM_BUS_COMMANDS_H
 #define CORONA_COMM_BUS_COMMANDS_H
 

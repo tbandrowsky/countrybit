@@ -4,11 +4,18 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+MIT License
+
 About this File
-database server for a jdatabase.  
+database server for a jdatabase.  different from corona
 
 Notes
 jcollection has been tested but this has not.
+probably this will not be used but jcollection will become a corona database engine
+object.
+
+jcollection is a binary stored bag in a single blob.  good for super speedo crunchinng.
 
 For Future Consideration
 */

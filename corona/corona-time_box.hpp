@@ -4,7 +4,10 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT LICENSE
+
 About this File
+A datetime, more .NETty in nature than std::chrono.
 
 Notes
 

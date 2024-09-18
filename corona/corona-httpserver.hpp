@@ -4,6 +4,10 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+MIT License
+
+
 About this File
 Multithreaded http server.  Uses Windows I/O completion ports.
 Conceptually, you define the server, load it up with handlers for various 
@@ -16,6 +20,7 @@ For Future Consideration
 
 #ifndef CORONA_HTTP_SERVER
 #define CORONA_HTTP_SERVER
+
 
 namespace corona
 {

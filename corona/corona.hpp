@@ -5,6 +5,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024+ All Rights Reserved
 
+MIT License
+
 About this File
 This is the main header file.
 It was structured to facilitate C++ modules but there 

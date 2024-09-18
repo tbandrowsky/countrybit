@@ -4,6 +4,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 In Corona, a bitmap is loaded into a Corona Device Context, which is a 
 wrapper around a Direct2D context.  When the bitmap is loaded, it 

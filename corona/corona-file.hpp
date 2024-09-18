@@ -4,6 +4,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 This contains a file access object along with its associated awaiters.
 file i/o in corona is based on C++20  with io completion ports.

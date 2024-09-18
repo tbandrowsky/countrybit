@@ -4,8 +4,12 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 This is an http client for a corona database.
+It is out of date at the moment, but we shall get there.
+In any case, access would be through the bus.
 
 Notes
 

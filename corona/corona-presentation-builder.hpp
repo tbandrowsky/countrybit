@@ -4,6 +4,9 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+MIT License
+
 About this File
 This file contains controls that are compositions, and a more
 fluent code style builder for building them.  The fluent code builder

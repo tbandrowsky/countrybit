@@ -4,7 +4,11 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
+Thread pool implementation.  You make job objects and push them on there.
+And away you go.
 
 Notes
 

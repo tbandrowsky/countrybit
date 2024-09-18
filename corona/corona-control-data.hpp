@@ -4,7 +4,11 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
+These are jsonn like structures that standardize data formats 
+for many kinds of windows conntrols.
 
 Notes
 

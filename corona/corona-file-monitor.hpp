@@ -1,4 +1,21 @@
 
+
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+MIT License
+
+About this File
+Polls a file to see if its contents have changed, then 
+parses the json
+
+Notes
+
+For Future Consideration
+*/
 #ifndef CORONA_FILE_MONITOR
 #define CORONA_FILE_MONITOR
 

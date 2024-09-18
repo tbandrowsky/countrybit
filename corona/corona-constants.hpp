@@ -4,6 +4,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 This is the old school jam the numbers into the constants file slop.
 Many of these constants are for the jcollection / jobject binary 

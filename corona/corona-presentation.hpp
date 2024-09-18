@@ -4,6 +4,9 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+MIT License
+
 About this File
 A controller / view for a corona application.
 a presentation can have mulitple pages and it handles 

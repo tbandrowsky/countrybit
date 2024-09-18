@@ -6,6 +6,8 @@ by Todd Bandrowky
 
 About this File
 
+MIT LICENSE
+
 Notes
 
 For Future Consideration

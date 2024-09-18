@@ -4,6 +4,10 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+MIT License
+
+
 About this File
 The idea was to create a grouper for binary jobjects in a jcollection,
 implementing a sort of a linq style groupby.  But this is a rough implementation.
@@ -11,6 +15,7 @@ Basically the idea is to create an iterator that groups the data at ctor time.
 then allows iteration through groups.
 
 Notes
+the json class group is better.
 
 For Future Consideration
 */

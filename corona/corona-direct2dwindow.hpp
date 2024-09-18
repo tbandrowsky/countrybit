@@ -4,6 +4,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 This class manages a direct2d window, which is a window handle with a direct 2d surface.
 The direct2d window is the main window of the application.  However, you can have 

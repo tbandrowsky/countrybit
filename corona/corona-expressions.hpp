@@ -1,4 +1,22 @@
 
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+MIT License
+
+About this File
+An AI wrote this, but I am sure it snatched this from somehwere.
+I hacked it up.  It's going to be a parser to deal with converting
+ann infix string into query stages annd predicates.
+
+Notes
+
+For Future Consideration
+*/
+
 #ifndef CORONA_EXPRESSIONS_HPP
 #define CORONA_EXPRESSIONS_HPP
 

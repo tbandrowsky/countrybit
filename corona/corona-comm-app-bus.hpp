@@ -1,5 +1,23 @@
 #pragma once
 
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+MIT License
+
+About this File
+This is the application bus. This is the root point that ties it together
+for corona desktop applications
+
+Notes
+
+For Future Consideration
+*/
+
+
 #ifndef CORONA_COMM_APP_BUS_H
 #define CORONA_COMM_APP_BUS_H
 

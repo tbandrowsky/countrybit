@@ -1,3 +1,19 @@
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+MIT License
+
+About this File
+This is the service bus, which coordinates http and the database server.
+
+
+Notes
+
+For Future Consideration
+*/
 
 #ifndef CORONA_COMM_SERVICE_BUS
 #define CORONA_COMM_SERVICE_BUS

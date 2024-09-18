@@ -4,8 +4,11 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 This implements various cryptography wrappers around Windows crypto.
+Came from a hacked up MS example.
 
 Notes
 

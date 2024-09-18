@@ -1,5 +1,26 @@
 #pragma once
 
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+MIT License
+
+About this File
+This contains a file block, which implements buffers on top.
+
+Notes
+The big todo is whenn commmit happens, all the i/os should be issued 
+in parallel.  The onnly thing really is that you need to hack up the run
+into a run_async or something like that, all the hard i/o completion 
+port stuff is done, but what's needed is to issue all the writes
+then wait all them together.
+
+For Future Consideration
+*/
+
 #ifndef CORONA_FILE_BLOCK
 #define CORONA_FILE_BLOCK
 

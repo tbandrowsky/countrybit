@@ -5,11 +5,18 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+
+MIT License
+
+
 About this File
 A bag of std::function each of which with their own types.
 Notes
 
 For Future Consideration
+This was never actually needed, once I changed my design per linked in.
+
 */
 
 #ifndef CORONA_FUNCTION_BAG_H

@@ -4,12 +4,16 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+MIT License
+
+
 About this File
 Corona more or less has two primary object representations, json,
 and a binary format. This is a first whack at iterators with the binary side.
 
 Notes
-Is it the best? No, but it works.
+Is it the best? No, but it works.  Plus, I learned about iterators!
 
 For Future Consideration
 */

@@ -4,6 +4,9 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+MIT License
+
 About this File
 Binary object and binary class and collections of them.
 

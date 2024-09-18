@@ -4,18 +4,11 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 This is the core database engine for the corona database server.  
 
-Notes
-The templated types such as file_transaction are all awaiters.
-The threading behavior is designed to be, switch to thread.... 
-allowing for massive scalability.
-However, multiuser / multithread testing is necessary.
-
-For Future Consideration
-Load and multithread engine tests.
-Deploy a database to azure.
 */
 
 
@@ -41,6 +34,9 @@ API close to complete, rounding out for testing.
 A good chunk of this is coded, but I am dealing 
 with getting the headers straightened out from 
 the great module disaster.
+
+9/18/2024 - rewrote most of the above because the design was stupid.
+
 ***********************************************/
 
 

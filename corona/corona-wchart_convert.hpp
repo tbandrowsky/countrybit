@@ -4,6 +4,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT LICENSE
+
 About this File
 Wide character conversions.  
 Useful for, when Windows needs 16 bit unicode characters.

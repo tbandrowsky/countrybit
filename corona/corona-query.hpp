@@ -1,4 +1,23 @@
 
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+
+MIT License
+
+About this File
+this is a query engine, that you can drop sources into for json, and then query 
+used in database enngine annd in ui.
+
+Notes
+
+For Future Consideration
+*/
+
+
 #ifndef CORONA_QUERY_H
 #define CORONA_QUERY_H
 

@@ -4,8 +4,12 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
-The controller here mediates windows messages.
+The controller here mediates windows messages.  It basically handles the dx draw frame
+routes messages to the presentation, which is a container of rectangles that can 
+draw themselves in directx, or, conntainers of windows controls.
 
 Notes
 A corona page is a corona controller.

@@ -4,6 +4,10 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+MIT License
+
+
 About this File
 This implements some of the things of things that can be tossed
 onto a threadpool, including awaitable functions,

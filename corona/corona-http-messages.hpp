@@ -4,6 +4,10 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+
+MIT License
+
+
 About this File
 Various statuses and http messages.
 

@@ -1,7 +1,25 @@
 #pragma once
 
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+MIT LICENSE
+
+About this File
+Color logging!
+
+Notes
+
+For Future Consideration
+*/
+
 #ifndef CORONA_SMI
 #define CORONA_SMI
+
+
 
 namespace corona
 {

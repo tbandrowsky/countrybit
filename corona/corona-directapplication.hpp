@@ -4,6 +4,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 This is the main window file for a gui direct 2d corona application.
 It has the window main, and handles the interaction betweenn presentations

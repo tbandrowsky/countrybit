@@ -1,5 +1,23 @@
 #pragma once
 
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+MIT License
+
+About this File
+interface, in the sense of, junk declared as interfaces to solve foward
+declaration problems.  idea was originally to derive both the app and service
+buses from the same thing.
+
+Notes
+
+For Future Consideration
+*/
+
 #ifndef CORONA_COMM_BUS_INTERFACE_H
 #define CORONA_COMM_BUS_INTERFACE_H
 

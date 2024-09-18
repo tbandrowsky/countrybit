@@ -5,6 +5,8 @@ C++ Low Code Performance Applications for Windows SDK
 by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
+MIT License
+
 About this File
 This is the application root class.  It can be used for both 
 console and desktop applications.  It manages a threadpool
