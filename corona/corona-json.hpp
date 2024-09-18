@@ -3940,6 +3940,7 @@ namespace corona
 			result.put_member("name", item);
 			if (start.object())
 			{
+				result.put_member("target", start);
 				result.put_member("object", start);
 				json new_start = start[item];
 				start = new_start;
@@ -3947,6 +3948,7 @@ namespace corona
 			}
 			else if (start.array())
 			{
+				result.put_member("target", start);
 				result.put_member("array", start);
 				if (is_number(item)) {
 					int idx = std::strtol(item.c_str(), nullptr, 10);

@@ -1062,7 +1062,7 @@ namespace corona
 
 			created_classes.put_member("sys_object", true);
 
-			json response = create_class(R"(
+			response = create_class(R"(
 {
 	"class_name" : "sys_parent_child",
 	"base_class_name" : "sys_object",
@@ -1088,7 +1088,7 @@ namespace corona
 				return result;
 			}
 
-			json test = classes->get(R"({"class_name":"sys_object"})");
+			test = classes->get(R"({"class_name":"sys_object"})");
 			if (test.empty() or test.is_member("class_name", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysObject after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1815,13 +1815,20 @@ private:
 			return obj;
 		}
 
+		json select_single_object(json _key)
+		{
+			json result = select_object(_key);
+			result = result.get_first_element();
+			return result;
+		}
+
 		json get_user(std::string _user_name)
 		{
 			json_parser jp;
 			json obj = jp.create_object();
 			obj.put_member(class_name_field, "sys_users");
 			obj.put_member(user_name_field, _user_name);
-			return select_object(obj);
+			return select_single_object(obj);
 		}
 
 		json get_schema(std::string schema_name, std::string schema_version)
@@ -1831,7 +1838,7 @@ private:
 			obj.put_member(class_name_field, "sys_schemas");
 			obj.put_member("schema_name", schema_name);
 			obj.put_member("schema_version", schema_version);
-			return select_object(obj);
+			return select_single_object(obj);
 		}
 
 		json get_dataset(std::string dataset_name, std::string dataset_version)
@@ -1841,7 +1848,7 @@ private:
 			obj.put_member(class_name_field, "sys_datasets");
 			obj.put_member("dataset_name", dataset_name);
 			obj.put_member("dataset_version", dataset_version);
-			return select_object(obj);
+			return select_single_object(obj);
 		}
 
 		bool has_class_permission(
@@ -2076,8 +2083,7 @@ private:
 						system_monitoring_interface::global_mon->log_job_section_start("DataSet", dataset_name + " Start", start_dataset, __FILE__, __LINE__);
 
 						bool script_run = (bool)script_definition["run_on_change"];
-						json existing_scripts = get_dataset(dataset_name, dataset_version);
-						json existing_script = existing_scripts.get_first_element();
+						json existing_script = get_dataset(dataset_name, dataset_version);
 						bool run_script = false;
 						if (existing_script.empty() or script_run)
 							run_script = true;
@@ -2394,7 +2400,7 @@ private:
 			create_user_params.copy_member("state", data);
 			create_user_params.copy_member("zip", data);
 
-			json create_object_request = create_request(create_user_request, create_user_params);
+			json create_object_request = create_request(user_name, auth_general, create_user_params);
 			json user_result =  put_object(create_object_request);
 			if (user_result[success_field]) {
 				json new_user_wrapper = user_result[data_field];
@@ -2431,9 +2437,7 @@ private:
 
 			std::string hashed_pw = crypter.hash(user_password);
 
-			json users = get_user(user_name);
-
-			json user = users.get_first_element();
+			json user = get_user(user_name);
 			std::string pw = user["password"];
 
 			if (pw == hashed_pw)
@@ -2512,7 +2516,7 @@ private:
 			}
 			else 
 			{
-				result = select_object(key);
+				result = select_single_object(key);
 			}
 
 			return create_response(_edit_object_request, true, "Ok", result, method_timer.get_elapsed_seconds());
@@ -2715,7 +2719,7 @@ private:
 				result = create_response(put_class_request, false, "Class must have a description", jclass_definition, method_timer.get_elapsed_seconds());
 			}
 
-			std::string class_name = class_def.class_name;
+			class_name = class_def.class_name;
 
 			// here we are going to grab the ancestor chain for this class.
 
@@ -3164,6 +3168,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("get_object", "start", start_time, __FILE__, __LINE__);
 
 			std::string user_name;
+			json object_key = get_object_request.extract({ class_name_field, object_id_field });
 
 			if (not check_message(get_object_request, { auth_general }, user_name))
 			{
@@ -3172,17 +3177,24 @@ private:
 				return result;
 			}
 
-			bool permission =  check_object_permission(get_object_request, "Get");
+			std::string class_name = object_key[class_name_field];
+
+			bool permission =  has_class_permission(user_name, class_name_field, "Get");
 			if (not permission) {
 				json result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 			
-			json payload = get_object_request[data_field];
-			json obj =  acquire_object(payload);
-
-			result = create_response(get_object_request, true, "Ok", obj, method_timer.get_elapsed_seconds());
+			json obj =  select_single_object(object_key);
+			if (obj.object()) 
+			{
+				result = create_response(get_object_request, true, "Ok", obj, method_timer.get_elapsed_seconds());
+			}
+			else 
+			{
+				result = create_response(get_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
+			}
 			system_monitoring_interface::global_mon->log_function_stop("get_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return result;
@@ -3201,6 +3213,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("delete_object", "start", start_time, __FILE__, __LINE__);
 
 			std::string user_name;
+			json object_key = delete_object_request.extract({ class_name_field, object_id_field });
 
 			if (not check_message(delete_object_request, { auth_general }, user_name))
 			{
@@ -3209,24 +3222,20 @@ private:
 				return response;
 			}
 
-			if (not check_object_permission(delete_object_request, "Delete")) {
-				json result = create_response(delete_object_request, false, "Cannot delete object", jp.create_object(), method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
+			std::string class_name = object_key[class_name_field];
+
+			bool permission = has_class_permission(user_name, class_name, "Delete");
+			if (not permission) {
+				response = create_response(delete_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return response;
 			}
 
-			json object_key = delete_object_request[data_field];
+			class_definition cd = load_class(class_name);
 
-			response = create_response(delete_object_request, false, "Failed", object_key, method_timer.get_elapsed_seconds());
-
-			json class_key = jp.create_object();
-			json class_name = object_key[class_name_field];
-			class_key.put_member(class_name_field, class_name);
-			json class_def = classes->get(class_key);
-
-			if (class_def.has_member("Table")) {
+			if (cd.table_location) {
 				json empty;
-				relative_ptr_type rpt = class_def["Table"];
+				relative_ptr_type rpt = cd.table_location;
 				json_table class_data(this, { object_id_field });
 				class_data.open(rpt);
 				class_data.erase(object_key);
@@ -3263,33 +3272,119 @@ private:
 				return response;
 			}
 
-			json source_key = copy_request["SourceKey"];
+			json source_spec = copy_request["from"];
+			std::string source_class = source_spec[class_name_field];			
+			std::string source_path = source_spec["path"];
+			json source_key = source_spec.extract({ class_name_field, object_id_field });
 
-			json object_copy =  acquire_object(source_key);
+			json dest_spec = copy_request["to"];
+			std::string dest_class = dest_spec[class_name_field];
+			std::string dest_path = dest_spec["path"];
+			json dest_key = dest_spec.extract({ class_name_field, object_id_field });
 
-			json check_request = create_request(copy_request, object_copy);
+			json transform_spec = copy_request["transform"];
+			std::string transform_class = transform_spec[class_name_field];
 
-			bool permission =  check_object_permission(copy_request, "Get");
+			bool permission = has_class_permission(user_name, source_class, "Get");
 			if (not permission) {
-				json result = create_response(copy_request, false, "Denied", source_key, method_timer.get_elapsed_seconds());
+				response = create_response(copy_request, false, "Denied", source_spec, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
+				return response;
 			}
 
-			json new_object = object_copy.clone();
-			db_object_id_type new_object_id =  get_next_object_id();
-			new_object.put_member_i64(object_id_field, new_object_id);
-
-			json por = create_request(copy_request, new_object);
-			json result =  put_object(por);
-
-			if (result[success_field]) {
-				response = create_response(copy_request, true, "Ok", result[data_field], method_timer.get_elapsed_seconds());
+			permission = has_class_permission(user_name, dest_class, "Put");
+			if (not permission) {
+				response = create_response(copy_request, false, "Denied", dest_spec, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return response;
 			}
-			else
+
+			if (not transform_class.empty()) {
+				permission = has_class_permission(user_name, transform_class, "Put");
+				if (not permission) {
+					response = create_response(copy_request, false, "Denied", transform_spec, method_timer.get_elapsed_seconds());
+					system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					return response;
+				}
+			}
+
+			// load the complete object
+			json object_source = select_object(source_key);
+
+			json object_to_copy_result;
+			json source_object;
+
+			if (not object_source.empty())
 			{
-				response = result;
+				// if the source object is not empty, then, walk the source path to extract the child object we want
+				object_to_copy_result = object_source.query(source_path);
+				source_object = object_to_copy_result["value"];
+
+				// if that worked, then let's go for the copy
+				if (source_object.object()) 
+				{
+					json new_object;
+					// we transform the object into a new class while copying, if there is a 
+					// transform specification
+
+					if (not transform_class.empty()) {
+						// so we create a new object of the class
+						json transform_key = transform_spec.extract({ class_name_field });
+						json cor = create_request(user_name, auth_general, transform_spec);
+						json new_object_result = create_object(cor);
+
+						// then we can copy the fields over
+						if (new_object_result[success_field]) {
+							new_object = new_object_result[data_field];
+							auto new_object_fields = new_object.get_members();
+							for (auto nof : new_object_fields) {
+								if (source_object.has_member(nof.first)) {
+									new_object.copy_member(nof.first, source_object);
+								}
+							}
+						}
+					}
+					else 
+					{
+						new_object = source_object.clone();
+						int64_t new_object_id = get_next_object_id();
+						new_object.put_member_i64(object_id_field, new_object_id);
+					}
+
+					//
+					json object_dest = select_single_object(dest_key);
+
+					// now we are going to put this object in our destination
+					json object_dest_result = object_dest.query(dest_path);
+
+					if (object_dest_result.object()) {
+						json update_obj;
+						json target = object_dest_result["target"];
+						std::string name = object_dest_result["name"];
+						update_obj = object_dest_result["object"];
+						if (target.array())
+						{
+							target.push_back(new_object);
+						}
+						else if (target.object())
+						{
+							target.put_member(name, new_object);
+						}
+						json por = create_request(user_name, auth_general, update_obj);
+						response = put_object(por);
+					}
+					else {
+						response = create_response(copy_request, false, "could not find dest object", object_dest, method_timer.get_elapsed_seconds());;
+					}
+				}
+				else {
+					response = create_response(copy_request, false, "could not find source object", object_source, method_timer.get_elapsed_seconds());;
+				}
 			}
+			else {
+				response = create_response(copy_request, false, "source object not specified", object_source, method_timer.get_elapsed_seconds());;;
+			}
+
 			system_monitoring_interface::global_mon->log_function_stop("copy_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
@@ -3317,31 +3412,30 @@ private:
 			return payload;
 		}
 
-		json create_request(json _request, json _data)
+
+		json create_request(std::string _user_name, std::string _authorization, json _data)
 		{
 			json_parser jp;
 
 			json payload = jp.create_object();
-			json src_token = _request["Token"];
 			json token = jp.create_object();
-
-			token.copy_member("UserName", src_token);
-			token.copy_member("Authorization", src_token);
+			token.put_member(user_name_field, _user_name);
+			token.put_member(authorization_field, _authorization);
 			date_time expiration = date_time::utc_now() + this->token_life;
-			token.put_member("TokenExpires", expiration);
 			std::string hash = crypter.hash(_data);
-			token.put_member("DataHash", hash);
+			token.put_member(data_hash_field, hash);
+			token.put_member(token_expires_field, expiration);
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
-			token.put_member("Signature", cipher_text);
+			token.put_member(signature_field, cipher_text);
 
-			payload.put_member("Token", token);
-			payload.put_member(success_field, true);
-			payload.put_member(message_field, "Ok");
+			std::string token_string = token.to_json();
+			std::string base64_token_string = base64_encode(token_string);
+
+			payload.put_member(token_field, base64_token_string);
 			payload.put_member(data_field, _data);
-			payload.put_member("Signature", cipher_text);
+
 			return payload;
 		}
-
 
 	};
 
