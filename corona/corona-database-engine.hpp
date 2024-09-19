@@ -537,7 +537,8 @@ namespace corona
 
 	};
 
-	template <typename scalar_type> class general_field_options : public field_options_base
+	template <typename scalar_type> 
+	class general_field_options : public field_options_base
 	{
 	public:
 		scalar_type min_value;
@@ -584,7 +585,7 @@ namespace corona
 					ve.field_name = _field_name;
 					ve.file_name = __FILE__;
 					ve.line_number = __LINE__;
-					ve.message = std::format("Value '{0}' must be between {1} and {2}", chumpy, min_value, max_value);
+					ve.message = "value out of range";
 					_validation_errors.push_back(ve);
 					return false;
 				};
@@ -2078,7 +2079,7 @@ private:
 			json obj = jp.create_object();
 			obj.put_member(class_name_field, "sys_users");
 			obj.put_member(user_name_field, _user_name);
-			return select_single_object(obj);
+			return select_single_object(obj, true);
 		}
 
 		json get_schema(std::string schema_name, std::string schema_version)
@@ -2088,7 +2089,7 @@ private:
 			obj.put_member(class_name_field, "sys_schemas");
 			obj.put_member("schema_name", schema_name);
 			obj.put_member("schema_version", schema_version);
-			return select_single_object(obj);
+			return select_single_object(obj, true);
 		}
 
 		json get_dataset(std::string dataset_name, std::string dataset_version)
@@ -2098,7 +2099,7 @@ private:
 			obj.put_member(class_name_field, "sys_datasets");
 			obj.put_member("dataset_name", dataset_name);
 			obj.put_member("dataset_version", dataset_version);
-			return select_single_object(obj);
+			return select_single_object(obj, true);
 		}
 
 		bool has_class_permission(
@@ -3089,6 +3090,7 @@ private:
 				class_data.for_each([idc, this, &table](int _idx, json& _item) -> relative_ptr_type {
 					json index_item = _item.extract(idc->index_keys);
 					table.put(index_item);
+					return 1;
 				});
 			}
 
@@ -3693,7 +3695,7 @@ private:
 					}
 
 					//
-					json object_dest = select_single_object(dest_key);
+					json object_dest = select_single_object(dest_key, true);
 
 					// now we are going to put this object in our destination
 					json object_dest_result = object_dest.query(dest_path);
@@ -3830,11 +3832,9 @@ private:
 		bool team_delete_success;
 
 		date_time start_schema = date_time::now();
-		timer tx;
 		system_monitoring_interface::global_mon->log_job_start("test_database_engine", "start", start_schema, __FILE__, __LINE__);
 
 		corona_database db(dtest);
-		json_parser jp;
 
 		proof_assertion.put_member("dependencies", dependencies);
 		json db_config = jp.create_object();
@@ -3881,229 +3881,6 @@ private:
 			system_monitoring_interface::global_mon->log_warning("can't with good account", __FILE__, __LINE__);
 		}
 
-		json create_class_request = R"(
-{
-	"class_name" : "Document",
-	"base_class_name" : "sys_object",
-	"class_description" : "Document Base Class",
-	"Fields" : {			
-		"DocumentName": { "field_type":"string", "
-		"DocumentDescription": "string",
-		"DocumentUrl": "string"
-	}
-}
-)"_jobject;
-
-		create_class_request = R"(
-{
-	"class_name" : "Encounter",
-	"base_class_name" : "sys_object",
-	"class_description" : "ContactBase",
-	"Fields" : {			
-		"EncounterName": "string",
-		"EncounterDescription": "string",
-		"EncounterComments": "string",
-		"EncounterDate": "datetime",
-		"EncounterDocuments" : {
-				"FieldType" : "array",
-				"ElementClassNames" : [ "Document" ]
-		}
-	}
-}
-)"_jobject;
-
-		create_class_request = R"(
-{
-	"class_name" : "Contact",
-	"base_class_name" : "sys_object",
-	"class_description" : "A Person and how to connect with them, along with documentation for them",
-	"Fields" : {			
-		"ContactName": "string",
-		"ContactDescription": "string",
-		"ContactStreet1": "string",
-		"ContactStreet2": "string",
-		"ContactCity": "string",
-		"ContactState": "string",
-		"ContactZip": "string",
-		"ClientPhone": "string",
-		"Documents": "array",
-		"Encounters": "array",
-	}
-}
-)"_jobject;
-
-		create_class_request = R"(
-{
-	"class_name" : "Employee",
-	"base_class_name" : "Contact",
-	"class_description" : "A Person that works for you",
-	"Fields" : {			
-		"EmployeeTitle": "string",
-		"EmployeeJobDescription": "string",
-		"Documents": {
-				"FieldType" : "array",
-				"ElementClassNames" : [ "Document" ]
-		},
-		"DirectReports": {
-				"FieldType" : "array",
-				"ElementClassNames" : [ "Employee" ]
-		}
-	}
-}
-)"_jobject;
-
-		create_class_request = R"(
-{
-	"class_name" : "Property",
-	"base_class_name" : "sys_object",
-	"class_description" : "Base of all property",
-	"Fields" : {			
-		"PropertyCode",
-		"PropertyName",
-		"PropertyDescription",
-		"PropertyValue"
-	}
-}
-)"_jobject;
-
-		create_class_request = R"(
-{
-	"class_name" : "Furniture",
-	"base_class_name" : "Property",
-	"class_description" : "Furniture",
-	"Fields" : {			
-		"YearMade",
-		"Manufacturer"
-	}
-}
-)"_jobject;
-
-		create_class_request = R"(
-{
-	"class_name" : "Vehicle",
-	"base_class_name" : "Property",
-	"class_description" : "Cars and Trucks",
-	"Fields" : {			
-		"VehicleMake",
-		"VehicleModel",
-		"VehicleYear",
-		"VehicleMiles"
-	}
-}
-)"_jobject;
-
-		create_class_request = R"(
-{
-	"class_name" : "Electronics",
-	"base_class_name" : "Property",
-	"class_description" : "Computers, Game Consoles, Radios",
-	"Fields" : {			
-		"ElectronicBrand",
-		"ElectronicYear"
-	}
-}
-)"_jobject;
-
-
-		create_class_request = R"(
-{
-	"class_name" : "Building",
-	"base_class_name" : "Property",
-	"class_description" : "Base of all property",
-	"Fields" : {			
-		"ConstructionCode": "string",
-		"OccupancyCode": "string",
-		"Street1": "string",
-		"Street2": "string",
-		"City": "string",
-		"State": "string",
-		"Zip": "string",
-		"Geocodes" : "string",
-		"Contents" : {
-			"FieldType"
-
-		}
-	}
-}
-)"_jobject;
-
-		// now, with my login, it's the default, or "sa" login
-		// so, let's see if we can create a class
-
-		create_class_request = R"(
-{
-	"class_name" : "Coverage",
-	"base_class_name" : "sys_object",
-	"class_description" : "Base of all coverages",
-	"Fields" : {			
-		"CoverageCode",
-		"DamageName",
-		"DamageDescription"
-	}
-}
-)"_jobject;
-
-		// now, with my login, it's the default, or "sa" login
-// so, let's see if we can create a class
-
-		create_class_request = R"(
-{
-	"class_name" : "CoveredRisk",
-	"base_class_name" : "sys_object",
-	"class_description" : "Quotes",
-	"Fields" : {			
-		"Coverages" : {
-
-		},
-		"Properties" : {
-
-		},
-		"AttachmentPoint" : {
-
-		},
-		"Limit" : {
-
-		},
-		"Deductible" : {
-
-		}
-	}
-}
-)"_jobject;
-
-		// now, with my login, it's the default, or "sa" login
-// so, let's see if we can create a class
-
-		create_class_request = R"(
-{
-	"class_name" : "Quote",
-	"base_class_name" : "sys_object",
-	"class_description" : "Quotes",
-	"Fields" : {			
-		"Coverages" : {
-
-		}
-	}
-}
-)"_jobject;
-
-		create_class_request = R"(
-{
-	"class_name" : "Client",
-	"base_class_name" : "Contact",
-	"class_description" : "ContactBase",
-	"Fields" : {
-		"People" : {
-			"FieldType":"array",
-			"ElementClassNames" : ["Contact"],
-		},
-		"PolicyQuotes" : {
-			"FieldType" : "array",
-			"ElementClassNames" : ["PolicyQuote"],
-		}
-	}
-}
-)"_jobject;
 
 		system_monitoring_interface::global_mon->log_job_stop("test_database_engine", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 

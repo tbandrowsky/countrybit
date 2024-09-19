@@ -83,7 +83,7 @@ namespace corona
 			if (not app->file_exists(database_file_name))
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::create_always);
-				local_db = std::make_shared<corona_database>(this, db_file);
+				local_db = std::make_shared<corona_database>(db_file);
 
 				json create_database_response = local_db->create_database();
 
@@ -93,7 +93,7 @@ namespace corona
 			else
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::open_existing);
-				local_db = std::make_shared<corona_database>(this, db_file);
+				local_db = std::make_shared<corona_database>(db_file);
 
 				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {
 					local_db->apply_config(local_db_config);
