@@ -60,6 +60,11 @@ int main()
     exit_flag = false;
     if (SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
         corona::comm_bus_service corona_service;
+        while (not exit_flag) 
+        {
+            ::Sleep(1000);
+            corona_service.poll_db();
+        }
     }
     else {
         std::cerr << "ERROR: Could not set control handler" << std::endl;
