@@ -418,12 +418,12 @@ namespace corona
 			json_parser jp;
 			json login_request = jp.create_object();
 			json server_config = local_db_config["Server"];
-			std::string user_name = server_config["DefaultUserName"];
-			std::string password = server_config["DefaultUserPassword"];
-			login_request.put_member("UserName", user_name);
-			login_request.put_member("Password", password);
+			std::string user_name = server_config[sys_user_name_field];
+			std::string password = server_config[sys_user_password_field];
+			login_request.put_member(sys_user_name_field, user_name);
+			login_request.put_member(sys_user_password_field, password);
 			json result = local_db->login_user(login_request);
-			return result["Token"];
+			return result[token_field];
 		}
 
 		virtual json  create_object(std::string class_name)
@@ -437,9 +437,7 @@ namespace corona
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member("Token", token);
-			json data = jp.create_object();
-			data.put_member("ClassName", class_name);
-			request.put_member("Data", data);
+			request.put_member("ClassName", class_name);
 			json response =  local_db->create_object(request);
 			log_command_stop("create_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			if (response.error())
@@ -457,7 +455,7 @@ namespace corona
 			json token = get_local_token();
 
 			json_parser jp;
-			json request = jp.create_object();
+			json request = object_information.clone();
 			request.put_member("Token", token);
 			request.put_member("Data", object_information);
 			json response =  local_db->put_object(request);
@@ -475,10 +473,9 @@ namespace corona
 			log_command_start("get_object", object_information["ClassName"], dt);
 			timer tx;
 			json_parser jp;
-			json request = jp.create_object();
+			json request = object_information.clone();
 			json token = get_local_token();
 			request.put_member("Token", token);
-			request.put_member("Data", object_information);
 			json response =  local_db->get_object(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
@@ -493,11 +490,9 @@ namespace corona
 			dt = date_time::now();
 			log_command_start("delete_object", object_information["ClassName"], dt);
 			timer tx;
-			json_parser jp;
-			json request = jp.create_object();
+			json request = object_information.clone();
 			json token = get_local_token();
 			request.put_member("Token", token);
-			request.put_member("Data", object_information);
 			json response =  local_db->put_object(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
@@ -507,24 +502,6 @@ namespace corona
 			return response;
 		}
 
-		virtual json  pop_object(json pop_info)
-		{
-			date_time dt;
-			dt = date_time::now();
-			log_command_start("pop_object", pop_info["ClassName"], dt);
-			timer tx;
-			json_parser jp;
-			json request = jp.create_object();
-			json token = get_local_token();
-			request.put_member("Token", token);
-			request.put_member("Data", pop_info);
-			json response =  local_db->put_object(request);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			log_command_stop("pop_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			response = response["Data"];
-			return response;
-		}
 
 		virtual json  query_objects(json query_information)
 		{
@@ -535,9 +512,8 @@ namespace corona
 			json_parser jp;
 			json request = jp.create_object();
 			json token = get_local_token();
-			request.put_member("Token", token);
-			request.put_member("Data", query_information);
-			json response =  local_db->query_class(request);
+			query_information.put_member("Token", token);
+			json response =  local_db->query(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			response = response["Data"];
@@ -547,52 +523,6 @@ namespace corona
 			}
 			log_command_stop("query_objects", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
-		}
-
-		virtual table_data  query_objects_as_table(json query_information)
-		{
-			date_time dt;
-			dt = date_time::now();
-			log_command_start("query_objects_table", query_information["ClassName"], dt);
-			timer tx;
-			table_data td;
-			json_parser jp;
-			json request = jp.create_object();
-			json token = get_local_token();
-			request.put_member("Token", token);
-			request.put_member("Data", query_information);
-			json table = query_information["Table"];
-			td.put_json(table);
-			json response =  local_db->query_class(request);
-			log_command_stop("query_objects_table", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			json response_items = response["Data"];
-			td.items = response_items;
-			return td;
-		}
-
-		virtual list_data  query_objects_as_list(json query_information)
-		{
-			date_time dt;
-			dt = date_time::now();
-			log_command_start("query_objects_list", query_information["ClassName"], dt);
-			timer tx;
-			list_data ld;
-			json_parser jp;
-			json request = jp.create_object();
-			json token = get_local_token();
-			request.put_member("Token", token);
-			request.put_member("Data", query_information);
-			json lst = query_information["List"];
-			ld.put_json(lst);
-			json response =  local_db->query_class(request);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			json response_items = response["Data"];
-			log_command_stop("query_objects_list", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			ld.items = response_items;
-			return ld;
 		}
 
 		virtual control_base* find_control(std::string _name)

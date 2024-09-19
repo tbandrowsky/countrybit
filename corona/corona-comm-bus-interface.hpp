@@ -264,8 +264,6 @@ namespace corona
 		virtual json delete_object(json object_information) = 0;
 		virtual json pop_object(json object_information) = 0;
 		virtual json query_objects(json object_information) = 0;
-		virtual table_data query_objects_as_table(json query_information) = 0;
-		virtual list_data query_objects_as_list(json query_information) = 0;
 		virtual void error(json _error) = 0;
 
 		virtual void when(UINT topic, std::function<void()> _runnable) = 0;
