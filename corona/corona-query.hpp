@@ -269,7 +269,14 @@ namespace corona
 			json stage_input = _src->get_data(stage_input_name);
 			if (stage_input.object()) {
 				json result = jp.create_array();
-				if (predicate and predicate->accepts(_src, stage_input)) {
+				if (predicate) {
+					if (predicate->accepts(_src, stage_input)) {
+						result.push_back(stage_input);
+						stage_output = result;
+						return stage_output;
+					}
+				}
+				else {
 					result.push_back(stage_input);
 					stage_output = result;
 					return stage_output;
@@ -277,10 +284,16 @@ namespace corona
 			}
 			else if (stage_input.array()) {
 				json result = jp.create_array();
-				for (auto item : stage_input) {
-					if (predicate and predicate->accepts(_src, item)) {
-						result.push_back(item);
+				if (predicate) {
+					for (auto item : stage_input) {
+						if (predicate->accepts(_src, item)) {
+							result.push_back(item);
+						}
 					}
+				}
+				else 
+				{
+					result = stage_input;
 				}
 				stage_output = result;
 				return result;
@@ -306,7 +319,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (not _src.has_members(missing, { "class_name", "predicate" })) {
+			if (not _src.has_members(missing, { "class_name" })) {
 				system_monitoring_interface::global_mon->log_warning("query_filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -318,7 +331,9 @@ namespace corona
 
 			query_stage::put_json(_src);
 			json jpredicate = _src["predicate"];
-			corona::put_json(predicate, jpredicate);
+			if (not jpredicate.empty()) {
+				corona::put_json(predicate, jpredicate);
+			}
 			stage_input_name = _src["stage_input_name"];
 		}
 

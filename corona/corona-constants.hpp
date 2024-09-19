@@ -576,7 +576,8 @@ namespace corona
 	{ "string", true },
 	{ "bool", true },
 	{ "datetime", true },
-	{ "function", true }
+	{ "function", true },
+	{ "query", true }
 	};
 
 	auto toHex(unsigned char i)

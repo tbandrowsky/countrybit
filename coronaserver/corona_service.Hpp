@@ -1,7 +1,0 @@
-
-
-namespace coro_exp
-{
-	
-}
-

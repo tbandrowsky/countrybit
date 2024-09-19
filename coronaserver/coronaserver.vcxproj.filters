@@ -20,14 +20,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="corona_service.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="corona_tests.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <CopyFileToFolders Include="config.json" />
     <CopyFileToFolders Include="schema.json" />
   </ItemGroup>

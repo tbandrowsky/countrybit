@@ -42,6 +42,7 @@ namespace corona
 		bool ready_for_polling;
 
 		json system_proof;
+		json server_config;
 
 		http_server db_api_server;
 
@@ -65,7 +66,7 @@ namespace corona
 			database_config_mon.file_name = database_config_file_name;
 			database_config_mon.poll_contents(app.get(), local_db_config);
 
-			json server_config = local_db_config["Server"];
+			server_config = local_db_config["Server"];
 
 			database_file_name = server_config["database_filename"];
 			database_schema_file_name = server_config["schema_filename"];
@@ -197,6 +198,98 @@ namespace corona
 			return reason;
 		}
 
+		std::string system_login()
+		{
+			json_parser jp;
+			std::string sa_user = server_config[sys_user_name_field];
+			std::string sa_password = server_config[sys_user_password_field];
+			json login_request = jp.create_object();
+			login_request.put_member(user_name_field, sa_user);
+			login_request.put_member(sys_user_password_field, sa_password);
+			json login_result = local_db->login_user(login_request);
+			bool success = (bool)login_result[success_field];
+			if (not success) {
+				log_warning(login_result[message_field], __FILE__, __LINE__);
+			}
+			return login_result[token_field];
+		}
+
+		json get_classes()
+		{
+			json_parser jp;
+			json result;
+
+			std::string token = system_login();
+
+			if (token.empty()) {
+				return result;
+			}
+
+			json request = jp.create_object();
+			request.put_member(token_field, token);
+
+			result = local_db->get_classes(request);
+
+			return result;
+		}
+
+		json get_class(std::string _class_name)
+		{
+			json_parser jp;
+			json result;
+
+			std::string token = system_login();
+
+			if (token.empty()) {
+				return result;
+			}
+
+			json request = jp.create_object();
+			request.put_member(token_field, token);
+			request.put_member(class_name_field, _class_name);
+			result = local_db->get_class(request);
+
+			return result;
+		}
+
+		json get_data(std::string _class_name)
+		{
+			json_parser jp;
+			json result;
+
+			std::string token = system_login();
+
+			if (token.empty()) {
+				return result;
+			}
+
+			json request = R"(
+{
+	"token":"",
+	"from": [
+		{ 
+			"class_name" : "",
+			"name" : "datax"
+		}
+	],
+	"stages": [
+		{
+			"class_name" : "filter",
+			"stage_input_name" : "datax"			
+		}
+	]
+}
+)"_jobject;
+			
+
+			request.put_member("token", token);
+			json from = request["from"].get_element(0);
+			from.put_member(class_name_field, _class_name);
+			result = local_db->get_classes(request);
+
+			return result;
+		}
+
 		void poll_db()
 		{
 			if (ready_for_polling) {
@@ -264,6 +357,7 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
+			parsed_request.put_member("Token", _request.authorization);
 			auto fn_response = local_db->get_classes(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -275,6 +369,7 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
+			parsed_request.put_member("Token", _request.authorization);
 			json fn_response = local_db->put_class(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -286,6 +381,7 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
+			parsed_request.put_member("Token", _request.authorization);
 			json fn_response = local_db->create_user(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -297,7 +393,20 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
+			parsed_request.put_member("Token", _request.authorization);
 			json fn_response = local_db->get_object(parsed_request);
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_objects_copy = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			parsed_request.put_member("Token", _request.authorization);
+			json fn_response = local_db->copy_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -308,7 +417,8 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			json fn_response = local_db->query_class(parsed_request);
+			parsed_request.put_member("Token", _request.authorization);
+			json fn_response = local_db->query(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -319,6 +429,7 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
+			parsed_request.put_member("Token", _request.authorization);
 			json fn_response = local_db->create_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -330,6 +441,7 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
+			parsed_request.put_member("Token", _request.authorization);
 			json fn_response = local_db->put_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -341,6 +453,7 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
+			parsed_request.put_member("Token", _request.authorization);
 			json fn_response = local_db->delete_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -352,6 +465,7 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
+			parsed_request.put_member("Token", _request.authorization);
 			json fn_response = local_db->edit_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -444,6 +558,9 @@ namespace corona
 
 			path = _root_path + "objects/edit/";
 			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
+
+			path = _root_path + "objects/copy/";
+			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
 
 		}
 

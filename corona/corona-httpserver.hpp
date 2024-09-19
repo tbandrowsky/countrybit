@@ -65,6 +65,9 @@ namespace corona
 
 		http_request request;
 
+		std::string authorization;
+		std::string content_type;
+
 		DWORD send_response(int _status_code,
 			std::string _reason,
 			std::string _content_type,
@@ -545,6 +548,7 @@ namespace corona {
 							http_action_request harhar;
 							harhar.request_id = _request->RequestId;
 							harhar.request = request;
+							harhar.authorization = authorization;
 							harhar.server = this;
 							handler.func(harhar);
 							unhandled = false;
@@ -568,7 +572,7 @@ namespace corona {
 			HTTP_REQUEST_ID _request_id, 
 			int _status_code,
 			std::string _reason, 
-			std::string _content_type, 
+			std::string _content_type,
 			char* _buffer, 
 			DWORD _buffer_length_bytes)
 		{
