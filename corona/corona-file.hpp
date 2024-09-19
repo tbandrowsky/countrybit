@@ -93,7 +93,7 @@ namespace corona
 	public:
 
 		file_commands		command;
-		file_path			file_name;
+		file_path			filename;
 		HANDLE				hfile;
 
 		int64_t				location;
@@ -107,9 +107,9 @@ namespace corona
 		file_command_request& operator = (const file_command_request& fcr) = default;
 		file_command_request& operator = (file_command_request&& fcr) = default;
 
-		file_command_request(file_commands _command, const file_path& _file_name, HANDLE _file, int64_t _location, DWORD _size, void* _buffer) :
+		file_command_request(file_commands _command, const file_path& _filename, HANDLE _file, int64_t _location, DWORD _size, void* _buffer) :
 			command(_command),
-			file_name(_file_name),
+			filename(_filename),
 			hfile(_file),
 			location(_location),
 			size(_size),
@@ -216,7 +216,7 @@ namespace corona
 
 	class file
 	{
-		file_path		file_name;
+		file_path		filename;
 		HANDLE			hfile;
 		lockable		size_locker;
 		HANDLE			resize_event;
@@ -260,7 +260,7 @@ namespace corona
 					return;
 				}
 			}
-			iwstring<600> wfile_name = file_name;
+			iwstring<600> wfile_name = filename;
 
 			CREATEFILE2_EXTENDED_PARAMETERS params = { 0 };
 
@@ -294,7 +294,7 @@ namespace corona
 				{
 					CloseHandle(resize_event);
 					last_result = osr;
-					std::string temp = file_name + ":" + osr.message;
+					std::string temp = filename + ":" + osr.message;
 					throw std::logic_error(temp.c_str());
 				}
 			}
@@ -309,7 +309,7 @@ namespace corona
 					hfile = INVALID_HANDLE_VALUE;
 					resize_event = NULL;
 					last_result = osr;
-					std::string temp = file_name + ":" + osr.message;
+					std::string temp = filename + ":" + osr.message;
 					throw std::logic_error(temp.c_str());
 				}
 			}
@@ -324,7 +324,7 @@ namespace corona
 
 		void copy(const file& _src)
 		{
-			file_name = _src.file_name;
+			filename = _src.filename;
 			if (_src.hfile and _src.hfile != INVALID_HANDLE_VALUE) {
 				HANDLE hprocess = GetCurrentProcess();
 				DuplicateHandle(hprocess, _src.hfile, NULL, &hfile, 0, 0, 0);
@@ -347,7 +347,7 @@ namespace corona
 
 
 		file(job_queue* _queue, KNOWNFOLDERID _folder_id, const file_path& _filename, file_open_types _file_open_type)
-			: queue(_queue), file_name(_filename), hfile(INVALID_HANDLE_VALUE),
+			: queue(_queue), filename(_filename), hfile(INVALID_HANDLE_VALUE),
 			resize_event(NULL)
 		{
 			wchar_t* wide_path = nullptr;
@@ -362,7 +362,7 @@ namespace corona
 		}
 
 		file(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
-			: queue(_queue), file_name(_filename), hfile(INVALID_HANDLE_VALUE),
+			: queue(_queue), filename(_filename), hfile(INVALID_HANDLE_VALUE),
 			resize_event(NULL)
 		{
 			open(_queue, _filename, _file_open_type);
@@ -414,7 +414,7 @@ namespace corona
 
 		file_command_result write(int64_t location, void* _buffer, int _buffer_length)
 		{
-			file_command_request fcr(file_commands::write, file_name, hfile, location, _buffer_length, _buffer);
+			file_command_request fcr(file_commands::write, filename, hfile, location, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
 			file_command_result result = fc.run();
@@ -423,7 +423,7 @@ namespace corona
 
 		file_command_result read(int64_t location, void* _buffer, int _buffer_length)
 		{
-			file_command_request fcr(file_commands::read, file_name, hfile, location, _buffer_length, _buffer);
+			file_command_request fcr(file_commands::read, filename, hfile, location, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
 			file_command_result result = fc.run();
@@ -453,7 +453,7 @@ namespace corona
 		{
 			int64_t file_position = add(_buffer_length);
 
-			file_command_request fcr(file_commands::write, file_name, hfile, file_position, _buffer_length, _buffer);
+			file_command_request fcr(file_commands::write, filename, hfile, file_position, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
 			return fc;

@@ -59,6 +59,16 @@ namespace corona {
 		}
 		return !s.empty();
 	}
+
+	std::string trim(std::string str, size_t width)
+	{
+		if (width < 3)
+			width = 3;
+		if (str.length() > width) {
+			return str.substr(0, width - 3) + "...";
+		}
+		return str;
+	}
 }
 
 #endif

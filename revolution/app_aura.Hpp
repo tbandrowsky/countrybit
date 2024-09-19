@@ -189,11 +189,11 @@ namespace corona
 
 		*/
 
-		file_transaction<relative_ptr_type> read_config(std::string _config_file_name)
+		file_transaction<relative_ptr_type> read_config(std::string _config_filename)
 		{
 			json_parser jp;
 			try {
-				file f = application->open_file(_config_file_name, file_open_types::open_existing);
+				file f = application->open_file(_config_filename, file_open_types::open_existing);
 				if (f.success()) {
 					auto fsize = f.size();
 					buffer b(fsize + 1);

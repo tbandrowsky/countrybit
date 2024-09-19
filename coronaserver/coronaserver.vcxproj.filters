@@ -20,7 +20,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="config.json" />
-    <CopyFileToFolders Include="schema.json" />
+    <CopyFileToFolders Include="candidate_config.json" />
+    <CopyFileToFolders Include="candidate_schema.json" />
+    <CopyFileToFolders Include="..\revolution\ccl.csv" />
+    <CopyFileToFolders Include="..\revolution\cm.csv" />
+    <CopyFileToFolders Include="..\revolution\cn.csv" />
   </ItemGroup>
 </Project>

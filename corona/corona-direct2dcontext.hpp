@@ -142,7 +142,7 @@ namespace corona
 		{
 			std::string filename, name;
 
-			filename = _bitmap->file_name.c_str();
+			filename = _bitmap->filename.c_str();
 			name = _bitmap->name.c_str();
 
 			std::list<sizeCrop> sizes;
@@ -159,7 +159,7 @@ namespace corona
 			{
 				bm = std::make_shared<bitmap>(_bitmap->source, sizes);
 			}
-			else if (_bitmap->file_name.size())
+			else if (_bitmap->filename.size())
 			{
 				bm = std::make_shared<bitmap>(filename, sizes);
 			}

@@ -292,7 +292,7 @@ namespace corona {
 	{
 	public:
 		std::string	name;
-		std::string	file_name;
+		std::string	filename;
 		DWORD		resource_id;
 		bool		cropEnabled;
 		rectangle	crop;
@@ -315,7 +315,7 @@ namespace corona {
 		bitmapRequest(std::shared_ptr<bitmapRequest>& _request)
 		{
 			name = _request->name;
-			file_name = _request->file_name;
+			filename = _request->filename;
 			resource_id = _request->resource_id;
 			cropEnabled = _request->cropEnabled;
 			crop = _request->crop;
@@ -329,7 +329,7 @@ namespace corona {
 		json_parser jp;
 
 		_dest.put_member("name", _src.name);
-		_dest.put_member("file_name", _src.file_name);
+		_dest.put_member("filename", _src.filename);
 		_dest.put_member("resource_id", _src.resource_id);
 		_dest.put_member("crop_enabled", _src.cropEnabled);
 
@@ -350,14 +350,14 @@ namespace corona {
 	{
 		json_parser jp;
 
-		if (not _src.has_members({ "file_name", "crop", "sizes" })) {
+		if (not _src.has_members({ "filename", "crop", "sizes" })) {
 			system_monitoring_interface::global_mon->log_warning("bitmap needs a filename, crop, and sizes");
 			system_monitoring_interface::global_mon->log_information("source json:");
 			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
-		_dest.file_name = _src["file_name"];
+		_dest.filename = _src["filename"];
 		_dest.resource_id = (int)_src["resource_id"];
 		_dest.cropEnabled = (bool)_src["crop_enabled"];
 
@@ -406,13 +406,13 @@ namespace corona {
 
 	void put_json(bitmapBrushRequest& _dest, json& _src)
 	{
-		if (not _src.has_members({ "file_name" })) {
-			system_monitoring_interface::global_mon->log_warning("bitmap_brush must have file_name");
+		if (not _src.has_members({ "filename" })) {
+			system_monitoring_interface::global_mon->log_warning("bitmap_brush must have filename");
 			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
-		_dest.bitmapName = _src["file_name"];
+		_dest.bitmapName = _src["filename"];
 	}
 
 	class linearGradientBrushRequest 

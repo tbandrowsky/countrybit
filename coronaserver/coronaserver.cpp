@@ -55,21 +55,36 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     exit_flag = false;
+    std::string config_filename = "config.json";
+    if (argc <= 1) {
+        corona::system_monitoring_interface::global_mon->log_warning("No configuration file specified, using config.json");
+        corona::system_monitoring_interface::global_mon->log_information("start with 'coronaserver configfilename'");
+    }
+    else 
+    {
+        config_filename = argv[1];
+    }
+
     if (SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
-        corona::comm_bus_service corona_service;
-        while (not exit_flag) 
+        try {
+            corona::comm_bus_service corona_service(config_filename);
+            while (not exit_flag)
+            {
+                ::Sleep(1000);
+                corona_service.poll_db();
+            }
+        }
+        catch (std::exception exc)
         {
-            ::Sleep(1000);
-            corona_service.poll_db();
+            std::cout << exc.what() << std::endl;
         }
     }
-    else {
+    else 
+    {
         std::cerr << "ERROR: Could not set control handler" << std::endl;
         return 1;
     }
-
 }
-

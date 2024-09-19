@@ -26,7 +26,7 @@ namespace corona
 	{
 		std::string last_contents;
 	public:
-		std::string file_name;
+		std::string filename;
 		json		contents;
 
 		json_file_watcher()
@@ -37,9 +37,9 @@ namespace corona
 		relative_ptr_type poll_contents(application* _app, json& item)
 		{
 			relative_ptr_type pt = null_row;
-			if (_app->file_exists(file_name)) {
+			if (_app->file_exists(filename)) {
 				try {
-					std::string file_contents = read_all_string(file_name);
+					std::string file_contents = read_all_string(filename);
 					if (last_contents != file_contents) {
 						last_contents = file_contents;
 						json_parser jp;
@@ -53,7 +53,7 @@ namespace corona
 				}
 				catch (std::exception exc)
 				{
-					std::cerr << "Error:" << __FILE__ << " " << __LINE__ << " polling " << file_name << " failed:" << exc.what() << std::endl;
+					std::cerr << "Error:" << __FILE__ << " " << __LINE__ << " polling " << filename << " failed:" << exc.what() << std::endl;
 				}
 			}
 			return pt;
@@ -63,8 +63,8 @@ namespace corona
 		{
 			json_parser jp;
 			try {
-				if (_app->file_exists(file_name)) {
-					file f = _app->open_file(file_name, file_open_types::open_existing);
+				if (_app->file_exists(filename)) {
+					file f = _app->open_file(filename, file_open_types::open_existing);
 					if (f.success()) {
 						auto fsize = f.size();
 						buffer b(fsize + 1);
@@ -89,7 +89,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cerr << "Error:" << __FILE__ << " " << __LINE__ << " polling " << file_name << " failed:" << exc.what() << std::endl;
+				std::cerr << "Error:" << __FILE__ << " " << __LINE__ << " polling " << filename << " failed:" << exc.what() << std::endl;
 			}
 			return null_row;
 		}

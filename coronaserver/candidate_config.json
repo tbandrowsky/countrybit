@@ -5,8 +5,8 @@
   "Server": {
     "listen_point": "http://localhost:5678/corona",
     "application_name": "coronademo",
-    "schema_file_name": "schema.json",
-    "database_file_name": "corona.cdb",
+    "schema_filename": "candidate_schema.json",
+    "database_filename": "candidate_database.cdb",
     "sys_user_name": "system",
     "sys_user_password": "systempassword",
     "sys_user_email_address": "todd.bandrowsky@countryvideogames.com",

@@ -371,7 +371,7 @@ namespace corona {
 			std::filesystem::path collection_path = map->database_folder.c_str();
 			collection_path /= new_collection.collection_name.c_str();
 			collection_path /= ".corc";
-			new_collection.collection_file_name = collection_path;
+			new_collection.collection_filename = collection_path;
 
 			collections_by_id.insert_or_assign(new_collection.collection_id, new_collection);
 			collections_by_name.insert_or_assign(new_collection.collection_name, new_collection.collection_id);

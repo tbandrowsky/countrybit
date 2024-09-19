@@ -71,16 +71,16 @@ namespace corona
 			struct value_ref
 			{
 				object_path directory_name;
-				object_path file_name;
+				object_path filename;
 
 				value_ref& from(directory_change_instance* _base, FILE_NOTIFY_INFORMATION* change)
 				{
 					directory_name = _base->directory_name;
 					if (change) {
-						file_name.copy(change->FileName, change->FileNameLength);
+						filename.copy(change->FileName, change->FileNameLength);
 					}
 					else {
-						file_name = "";
+						filename = "";
 					}
 				}
 			};

@@ -122,7 +122,7 @@ namespace corona
 		std::string class_name;
 		std::string field_name;
 		std::string message;
-		std::string file_name;
+		std::string filename;
 		int			line_number;
 
 		validation_error() = default;
@@ -136,7 +136,7 @@ namespace corona
 			_dest.put_member(class_name_field, class_name);
 			_dest.put_member("field_name", field_name);
 			_dest.put_member(message_field, message);
-			_dest.put_member("file_name", file_name);
+			_dest.put_member("filename", filename);
 			_dest.put_member("line_number", line_number);
 		}
 
@@ -145,7 +145,7 @@ namespace corona
 			class_name = _src[class_name_field];
 			field_name = _src["field_anme"];
 			message = _src[message_field];
-			file_name = _src["file_name"];
+			filename = _src["filename"];
 			line_number = _src["line_number"];
 		}
 	};
@@ -190,7 +190,7 @@ namespace corona
 				validation_error ve;
 				ve.class_name = _class_name;
 				ve.field_name = _field_name;
-				ve.file_name = __FILE__;
+				ve.filename = __FILE__;
 				ve.line_number = __LINE__;
 				ve.message = "required field";
 				_validation_errors.push_back(ve);
@@ -307,7 +307,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.file_name = __FILE__;
+					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = "Value must be an array of correct types.";
 					_validation_errors.push_back(ve);
@@ -397,7 +397,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.file_name = __FILE__;
+					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = "value must be an object of correct type.";
 					_validation_errors.push_back(ve);
@@ -467,7 +467,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.file_name = __FILE__;
+					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = std::format( "Value '{0}' must be between {1} and {2} characters long", chumpy, minimum_length, maximum_length);
 					if (match_pattern.size() > 0) {
@@ -526,7 +526,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.file_name = __FILE__;
+					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = std::format("Value '{0}' must be between {1} and {2}", chumpy, min_value, max_value);
 					_validation_errors.push_back(ve);
@@ -583,7 +583,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.file_name = __FILE__;
+					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = "value out of range";
 					_validation_errors.push_back(ve);
@@ -644,7 +644,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.file_name = __FILE__;
+					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = "value is empty";
 					_validation_errors.push_back(ve);
@@ -655,7 +655,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.file_name = __FILE__;
+					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = "validation list not loaded";
 					_validation_errors.push_back(ve);
@@ -1764,7 +1764,7 @@ private:
 							validation_error ve;
 							ve.class_name = class_name;
 							ve.field_name = om.first;
-							ve.file_name = __FILE__;
+							ve.filename = __FILE__;
 							ve.line_number = __LINE__;
 							ve.message = "Field not found in class definition";
 							validation_errors.push_back(ve);
@@ -2420,7 +2420,7 @@ private:
 
 							if (import_type == "csv") {
 
-								if (not import_spec.has_members(missing, { "file_name", "delimiter" })) {
+								if (not import_spec.has_members(missing, { "filename", "delimiter" })) {
 									system_monitoring_interface::global_mon->log_warning("Import CSV missing:");
 									std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 										system_monitoring_interface::global_mon->log_warning(s);
@@ -2430,16 +2430,16 @@ private:
 									continue;
 								}
 
-								std::string file_name = import_spec["file_name"];
+								std::string filename = import_spec["filename"];
 								std::string delimiter = import_spec["delimiter"];
-								if (file_name.empty() or delimiter.empty()) {
-									system_monitoring_interface::global_mon->log_warning("file_name and delimiter can't be blank.");
+								if (filename.empty() or delimiter.empty()) {
+									system_monitoring_interface::global_mon->log_warning("filename and delimiter can't be blank.");
 								}
 
 								json column_map = import_spec["column_map"];
 
 								FILE* fp = nullptr;
-								int error_code = fopen_s(&fp, file_name.c_str(), "rS");
+								int error_code = fopen_s(&fp, filename.c_str(), "rS");
 
 								if (fp) {
 									// Buffer to store each line of the file.
@@ -2519,7 +2519,7 @@ private:
 										std::size(error_buffer),
 										error_code
 									);
-									std::string msg = std::format("could not open file {0}:{1}", file_name, error_buffer);
+									std::string msg = std::format("could not open file {0}:{1}", filename, error_buffer);
 									system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
 									char directory_name[MAX_PATH] = {};
 									char *result = _getcwd(directory_name, std::size(directory_name));

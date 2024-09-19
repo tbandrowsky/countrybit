@@ -79,17 +79,17 @@ namespace corona
 
 		int application_icon_id;
 
-		std::string database_schema_file_name;
-		std::string database_config_file_name;
-		std::string styles_config_file_name;
-		std::string pages_config_file_name;
+		std::string database_schema_filename;
+		std::string database_config_filename;
+		std::string styles_config_filename;
+		std::string pages_config_filename;
 
 		json_file_watcher database_schema_mon;
 		json_file_watcher database_config_mon;
 		json_file_watcher pages_config_mon;
 		json_file_watcher styles_config_mon;
 
-		std::string database_file_name;
+		std::string database_filename;
 		std::string user_file_name;
 
 		bool ready_for_polling;
@@ -98,7 +98,7 @@ namespace corona
 
 		comm_app_bus(std::string _application_name,
 			std::string _application_folder_name,
-			std::string _config_file_name_base)
+			std::string _config_filename_base)
 		{
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
@@ -140,20 +140,20 @@ namespace corona
 			log_information("Your first super secret order:");
 			log_information("remember to drink your ovaltine");
 
-			database_schema_file_name = _config_file_name_base + "schema.json";
-			database_config_file_name = "config.json";
-			pages_config_file_name = _config_file_name_base + "pages.json";
-			styles_config_file_name = _config_file_name_base + "styles.json";
-			database_file_name = app->get_data_filename("corona.cdb");
+			database_schema_filename = _config_filename_base + "schema.json";
+			database_config_filename = "config.json";
+			pages_config_filename = _config_filename_base + "pages.json";
+			styles_config_filename = _config_filename_base + "styles.json";
+			database_filename = app->get_data_filename("corona.cdb");
 
-			database_schema_mon.file_name = database_schema_file_name;
-			database_config_mon.file_name = database_config_file_name;
-			pages_config_mon.file_name = pages_config_file_name;
-			styles_config_mon.file_name = styles_config_file_name;
+			database_schema_mon.filename = database_schema_filename;
+			database_config_mon.filename = database_config_filename;
+			pages_config_mon.filename = pages_config_filename;
+			styles_config_mon.filename = styles_config_filename;
 
-			if (not app->file_exists(database_file_name)) 
+			if (not app->file_exists(database_filename)) 
 			{
-				db_file = app->open_file_ptr(database_file_name, file_open_types::create_always);
+				db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(db_file);
 
 				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {
@@ -169,7 +169,7 @@ namespace corona
 			} 
 			else 
 			{
-				db_file = app->open_file_ptr(database_file_name, file_open_types::open_existing);
+				db_file = app->open_file_ptr(database_filename, file_open_types::open_existing);
 				local_db = std::make_shared<corona_database>(db_file);
 
 				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {

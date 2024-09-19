@@ -593,7 +593,7 @@ namespace corona
 
 			json_key_node x = get_header();
 
-			if (table_key.empty()) {
+			if (table_key.empty() or table_key.size() == 0) {
 				return x.foward[0];
 			}
 

@@ -28,7 +28,7 @@ namespace corona {
 	public:
 
 		object_name			collection_name;
-		object_path			collection_file_name;
+		object_path			collection_filename;
 		collection_id_type	collection_id;
 
 		relative_ptr_type	collection_location;
@@ -43,7 +43,7 @@ namespace corona {
 
 		jcollection_ref() :
 			collection_name(""),
-			collection_file_name(""),
+			collection_filename(""),
 			collection_location(null_row),
 			model_name(""),
 			max_objects(0),

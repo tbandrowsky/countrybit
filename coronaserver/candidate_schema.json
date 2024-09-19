@@ -1,0 +1,146 @@
+{
+  "schema_name": "Country Video Games Candidate",
+  "schema_description": "This schema creates a simple searchable database using FEC donations as a source.",
+  "schema_version": "1.0",
+  "schema_authors": [ "TJ Bandrowsky" ],
+  "classes": [
+    {
+      "class_name": "Candidates",
+      "class_description": "Candidates running for office",
+      "base_class_name": "sys_object",
+      "fields": {
+        "candidate_id": "string",
+        "full_name": "string",
+        "political_party": "string",
+        "election_year": "int64",
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string"
+      },
+      "indexes": {
+        "candidate_candidate_id_idx": {
+          "index_keys": [ "candidate_id" ]
+        },
+        "candidate_full_name_idx": {
+          "index_keys": [ "full_name" ]
+        }
+      }
+    },
+    {
+      "class_name": "Committees",
+      "class_description": "Political groups that accept money from the public to support candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_id": "string",
+        "committee_name": "string",
+        "political_party": "string"
+      },
+      "indexes": {
+        "committee_committee_id_idx": {
+          "index_keys": [ "candidate_id" ]
+        }
+      }
+    },
+    {
+      "class_name": "CommitteeCandidates",
+      "class_description": "Mapping of committees and candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_id": "string",
+        "candidate_id": "string",
+        "election_year": "string",
+        "linkage_id": "string"
+      }
+    },
+    {
+      "class_name": "Individuals",
+      "class_description": "Mapping of committees and candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_id": "string",
+        "full_name": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "employer": "string",
+        "occupation": "string",
+        "transaction_date": "datetime",
+        "transaction_amount": "double",
+        "memo": "string"
+      }
+    }
+  ],
+  "users": [],
+  "datasets": [
+    {
+      "dataset_name": "Candidate Master",
+      "dataset_description": "Load Candidates",
+      "dataset_version": "1.0",
+      "author": "Federal Elections Commission",
+      "source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "file_name": "cn.csv",
+        "target_class": "Candidates",
+        "column_map": {
+          "0": "candidate_id",
+          "1": "full_name",
+          "2": "political_party",
+          "3": "election_year",
+          "10": "street1",
+          "11": "street2",
+          "12": "city",
+          "13": "state",
+          "14": "zip"
+        }
+      }
+    },
+    {
+      "dataset_name": "Committee Master",
+      "dataset_description": "Load Candidates",
+      "dataset_version": "1.0",
+      "author": "Federal Elections Commission",
+      "source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "file_name": "cm.csv",
+        "target_class": "Candidates",
+        "column_map": {
+          "0": "CommitteId",
+          "1": "CommitteeName",
+          "10": "PoliticalParty",
+          "13": "CompanyName"
+        }
+      }
+    },
+    {
+      "dataset_name": "Individual Master",
+      "dataset_description": "Load Individuals",
+      "dataset_version": "1.0",
+      "author": "Federal Elections Commission",
+      "source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "file_name": "itcont.csv",
+        "target_class": "Individuals",
+        "column_map": {
+          "0": "CommitteeId",
+          "8": "FullName",
+          "9": "City",
+          "10": "State",
+          "11": "Zip",
+          "12": "Employer",
+          "13": "Occupation",
+          "14": "TransactionDate",
+          "15": "TransactionAmount",
+          "20": "Memo"
+        }
+      }
+    }
+  ]
+}

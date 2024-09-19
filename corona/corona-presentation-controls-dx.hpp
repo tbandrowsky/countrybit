@@ -1614,7 +1614,7 @@ namespace corona
 
 		enum image_modes {
 			no_image,
-			use_file_name,
+			use_filename,
 			use_control_id,
 			use_resource_id
 		};
@@ -1623,7 +1623,7 @@ namespace corona
 
 		image_modes		image_mode;
 
-		std::string		image_file_name;
+		std::string		image_filename;
 		int				image_control_id;
 		DWORD			image_resource_id;
 		std::string		image_name;
@@ -1656,10 +1656,10 @@ namespace corona
 		init();
 	}
 
-	image_control::image_control(container_control_base* _parent, int _id, std::string _file_name) : draw_control(_parent, _id)
+	image_control::image_control(container_control_base* _parent, int _id, std::string _filename) : draw_control(_parent, _id)
 	{
 		init();
-		load_from_file(_file_name);
+		load_from_file(_filename);
 	}
 
 	image_control::image_control(container_control_base* _parent, int _id, int _source_control_id) : draw_control(_parent, _id)
@@ -1670,8 +1670,8 @@ namespace corona
 
 	void image_control::load_from_file(std::string _name)
 	{
-		image_mode = image_modes::use_file_name;
-		image_file_name = _name;
+		image_mode = image_modes::use_filename;
+		image_filename = _name;
 		instance.bitmapName = std::format("bitmap_file_{0}", id);
 	}
 
@@ -1720,12 +1720,12 @@ namespace corona
 						break;
 					}
 					break;
-					case image_modes::use_file_name:
+					case image_modes::use_filename:
 					{
-						if (image_file_name.size() == 0)
+						if (image_filename.size() == 0)
 							throw std::logic_error("Missing file name for image");
 						bitmapRequest request = {};
-						request.file_name = image_file_name;
+						request.filename = image_filename;
 						request.name = instance.bitmapName;
 						request.cropEnabled = false;
 						point pt = { inner_bounds.w, inner_bounds.h };

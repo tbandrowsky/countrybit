@@ -29,15 +29,15 @@ namespace corona
 		std::shared_ptr<application>		app;
 		std::shared_ptr<file>				db_file;
 
-		std::string database_schema_file_name;
-		std::string database_config_file_name;
+		std::string database_schema_filename;
+		std::string database_config_filename;
 
 		json_file_watcher database_schema_mon;
 		json_file_watcher database_config_mon;
 
 		json local_db_config;
 
-		std::string database_file_name;
+		std::string database_filename;
 
 		bool ready_for_polling;
 
@@ -48,7 +48,7 @@ namespace corona
 
 		std::string listen_point;
 
-		comm_bus_service()
+		comm_bus_service(std::string _config_filename)
 		{
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
@@ -61,28 +61,52 @@ namespace corona
 
 			ready_for_polling = false;
 
-			database_config_file_name = "config.json";
+			database_config_filename = _config_filename;
 
-			database_config_mon.file_name = database_config_file_name;
-			database_config_mon.poll_contents(app.get(), local_db_config);
+			database_config_mon.filename = database_config_filename;
+			auto result = database_config_mon.poll_contents(app.get(), local_db_config);
+			if (result == null_row) {
+				system_monitoring_interface::global_mon->log_warning(std::format("config file {0} not found", database_config_filename), __FILE__, __LINE__);
+				throw std::invalid_argument("config file not found");
+			}
+			else {
+				system_monitoring_interface::global_mon->log_information(std::format("using config file {0}", database_config_filename), __FILE__, __LINE__);
+			}
 
 			server_config = local_db_config["Server"];
 
-			database_file_name = server_config["database_filename"];
-			database_schema_file_name = server_config["schema_filename"];
+			database_filename = server_config["database_filename"];
+			database_schema_filename = server_config["schema_filename"];
+
+			if (database_filename.empty() or database_schema_filename.empty())
+			{
+				throw std::logic_error("database file or schema file not specified");
+			}
+
+			database_schema_mon.filename = database_schema_filename;
 
 			app = std::make_shared<application>();
 			app->application_name = server_config["application_name"];
 			listen_point = server_config["listen_point"];
+
+			if (app->application_name.empty())
+			{
+				throw std::logic_error("application_name not specified");
+			}
+
+			if (listen_point.empty())
+			{
+				throw std::logic_error("listen_point not specified");
+			}
 
 			log_information("Self test.");
 			prove_system();
 
 			log_information("Startup user name " + app->get_user_display_name());
 
-			if (not app->file_exists(database_file_name))
+			if (not app->file_exists(database_filename))
 			{
-				db_file = app->open_file_ptr(database_file_name, file_open_types::create_always);
+				db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(db_file);
 
 				json create_database_response = local_db->create_database();
@@ -92,7 +116,7 @@ namespace corona
 			}
 			else
 			{
-				db_file = app->open_file_ptr(database_file_name, file_open_types::open_existing);
+				db_file = app->open_file_ptr(database_filename, file_open_types::open_existing);
 				local_db = std::make_shared<corona_database>(db_file);
 
 				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {
