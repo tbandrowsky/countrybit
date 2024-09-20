@@ -191,21 +191,10 @@ namespace corona
 
 	protected:
 
-		directory(job_queue* _queue, object_path& _directory_name)
+		directory(job_queue* _queue, std::string _directory_name)
 			: instance(_queue, _directory_name, INVALID_HANDLE_VALUE)
 		{
-			DWORD disposition;
-
-			iwstring<512> filename = instance.directory_name;
-
-			CREATEFILE2_EXTENDED_PARAMETERS params = { 0 };
-
-			params.dwSize = sizeof(params);
-			params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED | FILE_FLAG_BACKUP_SEMANTICS;
-			params.dwSecurityQosFlags = SECURITY_IMPERSONATION_LEVEL::SecurityAnonymous << 16;
-			params.hTemplateFile = nullptr;
-			params.lpSecurityAttributes = nullptr;
-			instance.hdirectory = CreateFile2(filename.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
+			instance.hdirectory = CreateFileA(directory_name.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, nullptr, OPEN_EXISTING);
 
 			if (instance.hdirectory == INVALID_HANDLE_VALUE) {
 				os_result osr;

@@ -216,7 +216,7 @@ namespace corona
 
 	class file
 	{
-		file_path		filename;
+		std::string		filename;
 		HANDLE			hfile;
 		lockable		size_locker;
 		HANDLE			resize_event;
@@ -228,9 +228,10 @@ namespace corona
 		// so tempting.
 		os_result		last_result;
 
-		void open(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
+		void open(job_queue* _queue, const std::string& _filename, file_open_types _file_open_type)
 		{
 			resize_event = 0;
+			filename = _filename;
 
 			DWORD disposition;
 
@@ -260,7 +261,6 @@ namespace corona
 					return;
 				}
 			}
-			iwstring<600> wfile_name = filename;
 
 			CREATEFILE2_EXTENDED_PARAMETERS params = { 0 };
 
@@ -275,7 +275,7 @@ namespace corona
 
 			do
 			{
-				hfile = ::CreateFile2(wfile_name.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
+				hfile = ::CreateFileA(filename.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, nullptr, disposition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, nullptr );
 				if (hfile != INVALID_HANDLE_VALUE) {
 					break;
 				}
@@ -357,11 +357,11 @@ namespace corona
 				istring<2048> temp = wide_path;
 				temp += "\\";
 				temp += _filename;
-				open(_queue, temp, _file_open_type);
+				open(_queue, temp.c_str(), _file_open_type);
 			}
 		}
 
-		file(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
+		file(job_queue* _queue, const std::string& _filename, file_open_types _file_open_type)
 			: queue(_queue), filename(_filename), hfile(INVALID_HANDLE_VALUE),
 			resize_event(NULL)
 		{
@@ -439,7 +439,11 @@ namespace corona
 			::ResetEvent(resize_event);
 
 			LARGE_INTEGER position, new_position;
-			::GetFileSizeEx(hfile, &position);
+			BOOL success = ::GetFileSizeEx(hfile, &position);
+			if (not success) {
+				os_result err;
+				system_monitoring_interface::global_mon->log_warning(std::format("GetFileSizeEx failed on {0} with error #{1} - {2}", filename, err.message, err.success), __FILE__, __LINE__);
+			}
 			new_position = position;
 			new_position.QuadPart += _bytes_to_add;
 			::SetFilePointerEx(hfile, new_position, nullptr, FILE_BEGIN);

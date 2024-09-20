@@ -105,7 +105,7 @@ namespace corona
 			return result;
 		}
 
-		file open_file(file_path filename, file_open_types _file_open_type)
+		file open_file(std::string filename, file_open_types _file_open_type)
 		{
 			file f(global_job_queue.get(), filename, _file_open_type);
 			return f;
@@ -121,41 +121,41 @@ namespace corona
 			return true;
 		}
 
-		file open_file(KNOWNFOLDERID folderId, file_path filename, file_open_types _file_open_type)
+		file open_file(KNOWNFOLDERID folderId, std::string filename, file_open_types _file_open_type)
 		{
 			file f(global_job_queue.get(), folderId, filename, _file_open_type);
 			return f;
 		}
 
-		file create_file(KNOWNFOLDERID folderId, file_path filename)
+		file create_file(KNOWNFOLDERID folderId, std::string filename)
 		{
 			return file(global_job_queue.get(), folderId, filename, file_open_types::create_always);
 		}
 
-		file create_file(file_path filename)
+		file create_file(std::string filename)
 		{
 			return file(global_job_queue.get(), filename, file_open_types::create_always);
 		}
 
-		std::shared_ptr<file> open_file_ptr(KNOWNFOLDERID folderId, file_path filename, file_open_types _file_open_type)
+		std::shared_ptr<file> open_file_ptr(KNOWNFOLDERID folderId, std::string filename, file_open_types _file_open_type)
 		{
 			std::shared_ptr<file> f = std::make_shared<file>(global_job_queue.get(), folderId, filename, _file_open_type);
 			return f;
 		}
 
-		std::shared_ptr<file> open_file_ptr(file_path filename, file_open_types _file_open_type)
+		std::shared_ptr<file> open_file_ptr(std::string filename, file_open_types _file_open_type)
 		{
 			std::shared_ptr<file> f = std::make_shared<file>(global_job_queue.get(), filename, _file_open_type);
 			return f;
 		}
 
-		std::shared_ptr<file> create_file_ptr(KNOWNFOLDERID folderId, file_path filename)
+		std::shared_ptr<file> create_file_ptr(KNOWNFOLDERID folderId, std::string filename)
 		{
 			std::shared_ptr<file> f = std::make_shared<file>(global_job_queue.get(), folderId, filename, file_open_types::create_always);
 			return f;
 		}
 
-		std::shared_ptr<file> create_file_ptr(file_path filename)
+		std::shared_ptr<file> create_file_ptr(std::string filename)
 		{
 			std::shared_ptr<file> f = std::make_shared<file>(global_job_queue.get(), filename, file_open_types::create_always);
 			return f;

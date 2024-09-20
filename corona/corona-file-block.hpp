@@ -207,12 +207,6 @@ namespace corona
 			int64_t new_start = _start,
 					new_stop = _stop;
 
-			if (append_buffer and append_buffer->start <= _start and append_buffer->stop >= _start) {
-				if ((append_buffer->start + _length) > append_buffer->stop)
-					throw std::logic_error("Out of bounds i/o on an append buffer");
-				return append_buffer;
-			}
-
 			std::vector<std::shared_ptr<file_buffer>> eaten_buffers;
 			std::vector<std::shared_ptr<file_buffer>> new_buffers;
 
@@ -304,7 +298,18 @@ namespace corona
 			if (_buffer_length < 0)
 				throw std::logic_error("write length < 0");
 
-			auto fb = feast(_location, _buffer_length, feast_types::feast_write);
+			int64_t _location_end = _location + _buffer_length;
+			std::shared_ptr<file_buffer> fb;
+
+			if (append_buffer and 
+				append_buffer->start <= _location and 
+				append_buffer->stop >= _location_end) {
+				fb = append_buffer;
+			}
+			else 
+			{
+				fb = feast(_location, _buffer_length, feast_types::feast_write);
+			}
 
 			fb->is_dirty = true;
 
@@ -328,14 +333,25 @@ namespace corona
 			if (_buffer_length < 0)
 				throw std::logic_error("read length < 0");
 
-			int64_t block_start = _location / block_size * block_size;
-			int64_t block_end = block_start;
-			int64_t tblock_end = _location + _buffer_length;
-			while (block_end < tblock_end)
-				block_end += block_size;
-			int64_t final_length = block_end - block_start;
+			int64_t _location_end = _location + _buffer_length;
+			std::shared_ptr<file_buffer> fb;
 
-			auto fb = feast(block_start, final_length, feast_types::feast_read);
+			if (append_buffer and
+				append_buffer->start <= _location and
+				append_buffer->stop >= _location_end) {
+				fb = append_buffer;
+			}
+			else
+			{
+				int64_t block_start = (_location / block_size) * block_size;
+				int64_t block_end = (_location_end / block_size) * block_size;
+				if (_location_end % block_size)
+					block_end += block_size;
+
+				int64_t final_length = block_end - block_start;
+
+				fb = feast(block_start, final_length, feast_types::feast_read);
+			}
 
 			unsigned char* src = (unsigned char*)fb->buff.get_ptr() + _location - fb->start;
 			unsigned char* dest = (unsigned char*)_buffer;
@@ -350,10 +366,12 @@ namespace corona
 			return result;
 		}
 
-		virtual relative_ptr_type allocate_space(int64_t _size)
+		virtual relative_ptr_type allocate_space(int64_t _size, int64_t* _actual_size)
 		{
 			if (_size < 0)
 				throw std::logic_error("allocate_space < 0");
+
+			*_actual_size = _size;
 
 			return add(_size);
 		}

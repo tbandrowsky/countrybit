@@ -54,14 +54,28 @@ namespace corona
 		{
 			allocation_index ai = { };
 
-			int64_t sz = 1;
-			int idx = 0;
-			while (sz < _size) {
-				sz *= 2;
-				idx++;
+			int small_size = 1024;
+			int top = small_size / 16;
+			
+			if (_size < small_size) {
+				int t = _size / 16;
+				if (_size % 16) {
+					t++;
+				}
+				ai.index = t;
+				ai.size = t * 16;
 			}
-			ai.index = idx;
-			ai.size = sz;
+			else 
+			{
+				int64_t sz = small_size;
+				int idx = top;
+				while (sz < _size) {
+					sz *= 2;
+					idx++;
+				}
+				ai.index = idx;
+				ai.size = sz;
+			}
 			return ai;
 		}
 
@@ -175,21 +189,14 @@ namespace corona
 
 			if (size > header.data_capacity)
 			{
-				int64_t new_capacity = header.data_capacity;
-
-				if (new_capacity < 1) 
-					new_capacity = 1;
-
-				while (new_capacity < size) {
-					new_capacity *= 2;
-				}
-
 				// the header.data_length is the max size of the block.  Since there's stuff past that in the file, then,
 				// there's not going to be a way we can write this, so we must have another block.
 				_file->free_space(header.data_location);
 				header.data_size = size;
-				header.data_capacity = new_capacity;
-				header.data_location = _file->allocate_space(new_capacity);
+				header.data_capacity = 0;
+				int64_t actual_size;
+				header.data_location = _file->allocate_space(size, &actual_size);
+				header.data_capacity = actual_size;
 			}
 			else 
 			{
@@ -215,16 +222,16 @@ namespace corona
 			on_write();
 
 			int size = bytes.get_size();
-			auto size_ai = get_allocation_index(size);
 
 			date_time start_time = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_block_start("block", "append", start_time, __FILE__, __LINE__);
 
-			header.block_location = _file->allocate_space(sizeof(header));
+			int64_t actual_size = 0;
+			header.block_location = _file->allocate_space(sizeof(header), &actual_size);
 			header.data_size = bytes.get_size();
-			header.data_capacity = size_ai.size;
-			header.data_location = _file->allocate_space(size_ai.size);
+			header.data_location = _file->allocate_space(header.data_size, &actual_size);
+			header.data_capacity = actual_size;
 
 			if (header.block_location < 0 or header.data_location < 0)
 				return -1;

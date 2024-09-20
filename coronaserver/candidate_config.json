@@ -9,7 +9,7 @@
     "database_filename": "candidate_database.cdb",
     "sys_user_name": "system",
     "sys_user_password": "systempassword",
-    "sys_user_email_address": "todd.bandrowsky@countryvideogames.com",
-    "sys_default_team": "Guests"
+    "sys_user_email": "todd.bandrowsky@countryvideogames.com",
+    "new_user_default_team": "Guests"
   }
 }

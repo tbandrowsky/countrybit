@@ -564,9 +564,9 @@ namespace corona
 	const std::string seconds_field = "seconds";
 	const std::string token_expires_field = "expires";
 	const std::string sys_user_name_field = "sys_user_name";
-	const std::string sys_user_password_field = "sys_password";
-	const std::string sys_user_email_field = "sys_email";
-	const std::string sys_default_team_field = "sys_default_team";
+	const std::string sys_user_password_field = "sys_user_password";
+	const std::string sys_user_email_field = "sys_user_email";
+	const std::string sys_default_team_field = "new_user_default_team";
 
 	std::map<std::string, bool> allowed_field_types = {
 	{ "object", true },

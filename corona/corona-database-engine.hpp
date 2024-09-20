@@ -91,7 +91,7 @@ namespace corona
 		int64_t								object_id;
 		relative_ptr_type					classes_location;
 		relative_ptr_type					indexes_location;
-		iarray<list_block_header, 62>		free_lists;
+		iarray<list_block_header, 100>		free_lists;
 
 		corona_db_header_struct() 
 		{
@@ -1138,7 +1138,7 @@ namespace corona
 			return ai;
 		}
 
-		virtual relative_ptr_type allocate_space(int64_t _size) override
+		virtual relative_ptr_type allocate_space(int64_t _size, int64_t *_actual_size) override
 		{
 			relative_ptr_type pt = 0;
 
@@ -1828,8 +1828,6 @@ private:
 			token.put_member(user_name_field, _user_name);
 			token.put_member(authorization_field, _authorization);
 			date_time expiration = date_time::utc_now() + this->token_life;
-			std::string hash = crypter.hash(_data);
-			token.put_member(data_hash_field, hash);
 			token.put_member(token_expires_field, expiration);
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 			token.put_member(signature_field, cipher_text);
@@ -1892,6 +1890,10 @@ private:
 			token.erase_member(signature_field);
 
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
+
+			if (cipher_text != signature) {
+				return empty;
+			}
 
 			token.put_member(signature_field, signature);
 
@@ -2765,6 +2767,7 @@ private:
 			timer tx;
 			std::string user_name;
 
+
 			bool include_children = (bool)_edit_object_request["include_children"];
 
 			if (not check_message(_edit_object_request, { auth_general }, user_name))
@@ -2864,7 +2867,7 @@ private:
 
 			std::vector<std::string> missing_elements;
 
-			if (not get_class_request.has_members(missing_elements, { "Token" })) {
+			if (not get_class_request.has_members(missing_elements, { token_field, class_name_field })) {
 				std::string error_message;
 				error_message = "get_class missing elements:";
 				std::string comma = "";
@@ -2915,7 +2918,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("put_class", "start", start_time, __FILE__, __LINE__);
 
 			std::vector<std::string> missing_elements;
-			if (not put_class_request.has_members(missing_elements, { token_field, data_field })) {
+			if (not put_class_request.has_members(missing_elements, { token_field })) {
 				std::string error_message;
 				error_message = "create_class missing elements:";
 				std::string comma = "";
@@ -2955,6 +2958,7 @@ private:
 			}
 
 			auto existing_class = load_class(class_name);
+
 			class_definition class_def;
 			class_def.put_json(jclass_definition);
 
@@ -3003,12 +3007,16 @@ private:
 				for (auto descendant : class_def.descendants)
 				{
 					auto desc_class = load_class(descendant.first);
-					desc_class->ancestors.insert_or_assign(class_name, true);
-					save_class(*desc_class);
+					if (desc_class) {
+						desc_class->ancestors.insert_or_assign(class_name, true);
+						save_class(*desc_class);
+					}
 				}
 			}
 
-			class_def.table_location = existing_class->table_location;
+			if (existing_class) {
+				class_def.table_location = existing_class->table_location;
+			}
 
 			json_table class_data(this, { object_id_field });
 			relative_ptr_type rpt;
@@ -3041,18 +3049,20 @@ private:
 
 			// loop through existing indexes,
 			// dropping old ones that don't match
-			for (auto old_index : existing_class->indexes)
-			{
-				auto index = old_index.second;
-				auto existing = class_def.indexes.find(index->index_name);
-				if (existing == class_def.indexes.end() or 
-					existing->second->index_key_string() != index->index_key_string()) {
-					json_table index_table(this, index->index_keys);
-					if (index->index_location)
-					{
-						index_table.open(index->index_location);
-						index_table.clear();
-						index->index_location = 0;
+			if (existing_class) {
+				for (auto old_index : existing_class->indexes)
+				{
+					auto index = old_index.second;
+					auto existing = class_def.indexes.find(index->index_name);
+					if (existing == class_def.indexes.end() or
+						existing->second->index_key_string() != index->index_key_string()) {
+						json_table index_table(this, index->index_keys);
+						if (index->index_location)
+						{
+							index_table.open(index->index_location);
+							index_table.clear();
+							index->index_location = 0;
+						}
 					}
 				}
 			}
@@ -3068,11 +3078,14 @@ private:
 				// don't trust the inbounnd table locations
 				new_index.second->index_location = 0;
 
-				auto existing = existing_class->indexes.find(new_index.first);
-
-				if (existing != existing_class->indexes.end()) 
+				if (existing_class) 
 				{
-					new_index.second->index_location = existing->second->index_location;
+					auto existing = existing_class->indexes.find(new_index.first);
+
+					if (existing != existing_class->indexes.end())
+					{
+						new_index.second->index_location = existing->second->index_location;
+					}
 				}
 
 				if (new_index.second->index_location == 0) 
@@ -3295,7 +3308,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("create_object", "start", start_time, __FILE__, __LINE__);
 
 			json token = create_object_request[token_field];
-			json data = create_object_request[data_field];
+			json data = create_object_request;
 			std::string class_name = data[class_name_field];
 			json response;
 
@@ -3407,13 +3420,11 @@ private:
 				return result;
 			}
 
-			json data = put_object_request[data_field];
-
-			result =  check_object(user_name, data);
+			result =  check_object(user_name, object_definition);
 
 			if (result[success_field])
 			{
-				data = result[data_field];
+				json data = result[data_field];
 
 				json item_array;
 				if (data.array()) {
@@ -3738,20 +3749,25 @@ private:
 		{
 			json_parser jp;
 
-			json payload = jp.create_object();
-			json token = jp.create_object();
-			token.put_member("UserName", default_user);
-			token.put_member("Authorization", auth_system);
-			date_time expiration = date_time::utc_now() + this->token_life;
-			token.put_member("TokenExpires", expiration);
-			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
-			token.put_member("Signature", cipher_text);
+			json payload;
 
-			payload.put_member("Token", token);
-			payload.put_member(success_field, true);
-			payload.put_member(message_field, "Ok");
+			payload = jp.create_object();
+
+			json token = jp.create_object();
+			token.put_member(user_name_field, default_user);
+			token.put_member(authorization_field, auth_system);
+			date_time expiration = date_time::utc_now() + this->token_life;
+			token.put_member(token_expires_field, expiration);
+			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
+			token.put_member(signature_field, cipher_text);
+
+			std::string token_string = token.to_json_typed();
+			std::string base64_token_string = base64_encode(token_string);
+
+			payload.put_member(token_field, base64_token_string);
+
 			payload.put_member(data_field, _data);
-			payload.put_member("Seconds", 0);
+
 			return payload;
 		}
 
@@ -3760,18 +3776,22 @@ private:
 		{
 			json_parser jp;
 
-			json payload = jp.create_object();
+			json payload;
+
+			if (_data.object())
+			{
+				payload = jp.create_object();
+			}
+
 			json token = jp.create_object();
 			token.put_member(user_name_field, _user_name);
 			token.put_member(authorization_field, _authorization);
 			date_time expiration = date_time::utc_now() + this->token_life;
-			std::string hash = crypter.hash(_data);
-			token.put_member(data_hash_field, hash);
 			token.put_member(token_expires_field, expiration);
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 			token.put_member(signature_field, cipher_text);
 
-			std::string token_string = token.to_json();
+			std::string token_string = token.to_json_typed();
 			std::string base64_token_string = base64_encode(token_string);
 
 			payload.put_member(token_field, base64_token_string);

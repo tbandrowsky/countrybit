@@ -104,10 +104,11 @@ namespace corona
 
 			log_information("Startup user name " + app->get_user_display_name());
 
-			if (not app->file_exists(database_filename))
+			if (true or not app->file_exists(database_filename))
 			{
 				db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(db_file);
+				local_db->apply_config(local_db_config);
 
 				json create_database_response = local_db->create_database();
 
@@ -118,10 +119,7 @@ namespace corona
 			{
 				db_file = app->open_file_ptr(database_filename, file_open_types::open_existing);
 				local_db = std::make_shared<corona_database>(db_file);
-
-				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {
-					local_db->apply_config(local_db_config);
-				}
+				local_db->apply_config(local_db_config);
 
 				local_db->open_database(0);
 
