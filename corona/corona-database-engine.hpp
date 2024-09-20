@@ -2997,9 +2997,11 @@ private:
 
 				class_def.ancestors = base_class->ancestors;
 				class_def.ancestors.insert_or_assign(base_class_name, true);
-
 				base_class->descendants.insert_or_assign(class_name, true);
-				class_def.descendants = base_class->descendants;	
+				save_class(*base_class.get());
+				if (existing_class) {
+					class_def.descendants = existing_class->descendants;
+				}
 
 				for (auto temp_field : base_class->fields)
 				{

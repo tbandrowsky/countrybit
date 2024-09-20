@@ -83,7 +83,7 @@
       "import": {
         "type": "csv",
         "delimiter": "|",
-        "file_name": "cn.csv",
+        "filename": "cn.csv",
         "target_class": "Candidates",
         "column_map": {
           "0": "candidate_id",
@@ -107,7 +107,7 @@
       "import": {
         "type": "csv",
         "delimiter": "|",
-        "file_name": "cm.csv",
+        "filename": "cm.csv",
         "target_class": "Candidates",
         "column_map": {
           "0": "CommitteId",
@@ -126,7 +126,7 @@
       "import": {
         "type": "csv",
         "delimiter": "|",
-        "file_name": "itcont.csv",
+        "filename": "itcont.csv",
         "target_class": "Individuals",
         "column_map": {
           "0": "CommitteeId",
