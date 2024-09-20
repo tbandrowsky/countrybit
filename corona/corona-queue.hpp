@@ -494,7 +494,7 @@ namespace corona {
 	unsigned int job_queue::jobQueueThread(job_queue* jobQueue)
 	{
 
-		LPOVERLAPPED lpov;
+		LPOVERLAPPED lpov = {};
 		job* waiting_job;
 		job_container* container;
 

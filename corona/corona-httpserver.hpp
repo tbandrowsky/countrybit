@@ -52,6 +52,7 @@ namespace corona
 			std::string _content_type,
 			std::string _response_string) = 0;
 
+		virtual void next_request() = 0;
 	};
 
 	class http_action_request
@@ -100,184 +101,86 @@ namespace corona
 		std::vector<http_handler_method> functions;
 	};
 
-	class http_server_task_launcher
+	class http_command_request
 	{
-		class http_server_task_job : public job
-		{
-		public:
-			std::coroutine_handle<> handle;
-			http_server_task_launcher* metask;
-			http_server_base* mebase;
-			buffer					buff;
-
-			http_server_task_job() : job()
-			{
-				handle = {};
-				metask = nullptr;
-				buff = buffer(16384);
-			}
-
-			job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
-			{
-				job_notify jn;
-
-				debug_http_servers&& std::cout << "http_server_task_job: receiving IO results " << GetCurrentThreadId() << std::endl;
-
-				if (metask)
-				{
-					debug_http_servers&& std::cout << "http_server_task_job: bytes transferred: " << _bytesTransferred << std::endl;
-					metask->bytes_transferred = _bytesTransferred;
-					metask->success = _success;
-
-					if (_success)
-					{
-						PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
-						mebase->execute_request(prequest);
-					}
-
-					if (handle) {
-						handle.resume();
-					}
-				}
-				else
-				{
-					if (handle) {
-						handle.resume();
-					}
-				}
-
-				debug_http_servers&& std::cout << "http_server_task_job: end:" << GetCurrentThreadId() << std::endl;
-
-				jn.shouldDelete = true;
-				return jn;
-			}
-
-			void read_http_request(HANDLE requestQueue, HTTP_REQUEST_ID requestId, ULONG flags)
-			{
-				PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
-				DWORD error = HttpReceiveHttpRequest(requestQueue, requestId, flags, prequest, buff.get_size(), nullptr, &container.ovp);
-			}
-		};
-
 	public:
 
-		int bytes_transferred;
-		bool success;
+		http_server_base*	server;
+		HANDLE				requestQueue;
+		HTTP_REQUEST_ID		requestId;
+		ULONG				flags;
+	};
 
-		HANDLE requestQueue;
-		HTTP_REQUEST_ID requestId;
-		ULONG flags;
+	class http_command : public job
+	{
+	public:
+		buffer						buff;
+		http_command_request		request;
+		int							bytes_transferred;
+		bool						success;
 
-		struct promise_type
+		http_command(http_command_request& _request) : job()
 		{
-			std::coroutine_handle<promise_type> promise_coro;
-
-			promise_type()
-			{
-				debug_http_servers&& std::cout << "http_server_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
-			}
-
-			http_server_task_launcher get_return_object()
-			{
-				debug_http_servers&& std::cout << "http_server_task::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
-				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
-				http_server_task_launcher fbr(promise_coro);
-				return fbr;
-			}
-
-			std::suspend_always initial_suspend() noexcept { return {}; }
-			std::suspend_always final_suspend() noexcept { return {}; }
-
-			void return_void()
-			{
-				debug_http_servers&& std::cout << "http_server_task::promise return_void:" << " " << this << GetCurrentThreadId() << std::endl;
-			}
-
-			void unhandled_exception() {
-				debug_http_servers&& std::cout << "http_server_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
-			}
-		};
-
-		std::coroutine_handle<> coro;
-		http_server_base* server;
-
-		http_server_task_launcher()
-		{
-			bytes_transferred = 0;
-			success = false;
-			coro = nullptr;
+			request = _request;
+			buff = buffer(16384);
 		}
-
-		http_server_task_launcher(const http_server_task_launcher& _src)
-		{
-			bytes_transferred = _src.bytes_transferred;
-			success = _src.success;
-			coro = nullptr;
-		}
-
-		http_server_task_launcher(http_server_task_launcher&& _src)
-		{
-			bytes_transferred = _src.bytes_transferred;
-			success = _src.success;
-			coro = std::move(_src.coro);
-		}
-
-		http_server_task_launcher(std::coroutine_handle<promise_type> _coro)
-		{
-			bytes_transferred = 0;
-			success = false;
-			coro = _coro;
-		}
-
-		void read_request(http_server_base* _server, HANDLE _requestQueue,
-			HTTP_REQUEST_ID _requestId,
-			ULONG _flags)
-		{
-			requestQueue = _requestQueue;
-			requestId = _requestId;
-			flags = _flags;
-			server = _server;
-		}
-
-		void initiate()
+		
+		virtual bool queued(job_queue *_calling_queue) override
 		{
 			bytes_transferred = 0;
 			success = false;
 
 			LARGE_INTEGER li;
 			li.QuadPart = 0;
-			http_server_task_job* frj = new http_server_task_job();
-			frj->container.ovp.Offset = li.LowPart;
-			frj->container.ovp.OffsetHigh = li.HighPart;
-			frj->handle = coro;
-			frj->metask = this;
-			frj->mebase = server;
-			frj->read_http_request(requestQueue, requestId, flags);
+			container.ovp.Offset = li.LowPart;
+			container.ovp.OffsetHigh = li.HighPart;
+			PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
+			DWORD error = HttpReceiveHttpRequest(request.requestQueue, request.requestId, request.flags, prequest, buff.get_size(), nullptr, &container.ovp);
+
+			if (error == ERROR_IO_PENDING) {
+				success = true;
+			}
+			return success;
 		}
 
-		virtual ~http_server_task_launcher()
+		job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
-			;
+			job_notify jn;
+			timer tx;
+			date_time thetime = date_time::now();
+
+			bytes_transferred = _bytesTransferred;
+			success = _success;
+			try {
+				if (_success and bytes_transferred > 0)
+				{
+					system_monitoring_interface::global_mon->log_function_start("http request", "start", thetime, __FILE__, __LINE__);
+					PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
+					request.server->execute_request(prequest);
+					system_monitoring_interface::global_mon->log_function_stop("http request", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				}
+			}
+			catch (std::exception exc)
+			{
+				system_monitoring_interface::global_mon->log_warning(exc.what());
+			}
+
+			try
+			{
+				request.server->next_request();
+			}
+			catch (std::exception exc)
+			{
+				system_monitoring_interface::global_mon->log_warning(exc.what());
+			}
+
+			jn.shouldDelete = true;
+			return jn;
 		}
 
-		bool await_ready()
-		{
-			return false;
-		}
 
-		// and this, let's us await for io while we are awaiting our http response
-		void await_suspend(std::coroutine_handle<> handle)
-		{
-			coro = handle;
-			debug_http_servers&& std::cout << "http_server_task::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			initiate();
-		}
-
-		void await_resume()
-		{
-			debug_http_servers&& std::cout << "http_server_task: resume" << " " << ::GetCurrentThreadId() << std::endl;;
-		}
 	};
+
 
 	using handler_key = std::tuple<std::string, HTTP_VERB>;
 }
@@ -293,11 +196,13 @@ namespace corona {
 		std::map<std::string, std::shared_ptr<http_handler_list>> api_handlers;
 
 		HANDLE      request_queue;
+		bool shutdown;
 
 	public:
 
 		http_server()
 		{
+			shutdown = false;
 			//
 			// Create a Request Queue Handle
 			//
@@ -372,6 +277,9 @@ namespace corona {
 
 		virtual ~http_server()
 		{
+			shutdown = true;		
+			global_job_queue->waitForEmptyQueue();
+
 			if (group_id) {
 				HttpCloseUrlGroup(group_id);
 				group_id = 0;
@@ -419,6 +327,7 @@ namespace corona {
 		void start()
 		{
 			global_job_queue->listen(request_queue);
+			next_request();
 		}
 
 		int read_body(buffer_assembler& _buff, PHTTP_REQUEST _request)
@@ -574,7 +483,7 @@ namespace corona {
 			std::string _reason, 
 			std::string _content_type,
 			char* _buffer, 
-			DWORD _buffer_length_bytes)
+			DWORD _buffer_length_bytes) override
 		{
 			HTTP_RESPONSE		response = {};
 			HTTP_DATA_CHUNK		dataChunk = {};
@@ -626,7 +535,7 @@ namespace corona {
 			HTTP_REQUEST_ID _request_id,
 			int _status_code,
 			std::string _reason,
-			json _response_json)
+			json _response_json) override
 		{
 			std::string response_data = _response_json.to_json();
 			DWORD result = send_response(_request_id,
@@ -641,7 +550,7 @@ namespace corona {
 			int _status_code,
 			std::string _reason,
 			std::string _content_type,
-			std::string _response_string)
+			std::string _response_string) override
 		{
 			char* buffer = (char *)_response_string.c_str();
 			DWORD buffer_length_bytes = _response_string.size();
@@ -654,13 +563,17 @@ namespace corona {
 			return response;
 		}
 
-		http_server_task_launcher next_request()
+		virtual void next_request() override
 		{
-			http_server_task_launcher launcher;
+			http_command_request request;
 
-			launcher.read_request(this, request_queue, HTTP_NULL_ID, HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY);
+			request.flags = HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY;
+			request.requestId = HTTP_NULL_ID;
+			request.requestQueue = request_queue;
+			request.server = this;
 
-			return launcher;
+			http_command *command_job = new http_command(request);
+			global_job_queue->listen_job(command_job);
 		}
 	};
 
