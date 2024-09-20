@@ -835,7 +835,7 @@ namespace corona
 
 			key.set_natural_order();
 
-			if (key.is_member("ClassName", "SysParseError")) {
+			if (key.is_member("ClassName", parse_error_class)) {
 				// create an empty object.
 				system_monitoring_interface::global_mon->log_warning("key for object.get could not be parsed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_warning(key);
@@ -928,7 +928,7 @@ namespace corona
 
 			json_parser jp;
 			json jx = jp.parse_object(_json);
-			if (jx.empty() or jx.is_member("ClassName", "SysParseError")) {
+			if (jx.empty() or jx.is_member("ClassName", parse_error_class)) {
 				return null_row;
 			}
 			auto key = get_key(jx);

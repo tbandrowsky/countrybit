@@ -1056,7 +1056,7 @@ namespace corona
 
 		bool error()
 		{
-			return has_member("ClassName") and (std::string)get_member("ClassName") == "SysParseError";
+			return has_member("ClassName") and (std::string)get_member("ClassName") == parse_error_class;
 		}
 
 		int64_t get_int64s()  const
@@ -2567,8 +2567,8 @@ namespace corona
 		{
 			json error_root(std::make_shared<json_object>());
 
-			error_root.put_member("ClassName", "SysParseError");
-			error_root.put_member("Success", false);
+			error_root.put_member(class_name_field, parse_error_class);
+			error_root.put_member(success_field, false);
 
 			json error_array(std::make_shared<json_array>());
 

@@ -1351,7 +1351,7 @@ namespace corona
 	"class_name" : "sys_schemas",
 	"base_class_name" : "sys_object",
 	"class_description" : "Database script changes",
-	"Fields" : [			
+	"fields" : [			
 			"schema_name" : "string",
 			"schema_description" : "string",
 			"schema_version" : "string",
@@ -1420,7 +1420,7 @@ namespace corona
 	"base_class_name" : "sys_object",
 	"class_name" : "sys_users",
 	"class_description" : "A user",
-	"Fields" : {			
+	"fields" : {			
 			"class_name" : "string",
 			"first_name" : "string",
 			"last_name" : "string",
@@ -1432,9 +1432,7 @@ namespace corona
 			"city" : "string",
 			"state" : "string",
 			"zip" : "string",
-			"teams" : {
-				"field_type" : "array"
-			}
+			"password" : "string"
 	}
 }
 )");
@@ -1479,8 +1477,8 @@ namespace corona
 
 			new_user_data = jp.create_object();
 			new_user_data.put_member(class_name_field, "sys_users");
-			new_user_data.put_member(sys_user_name_field, default_user);
-			new_user_data.put_member(sys_user_email_field, default_email_address);
+			new_user_data.put_member(user_name_field, default_user);
+			new_user_data.put_member(user_email_field, default_email_address);
 			new_user_data.put_member("password1", default_password);
 			new_user_data.put_member("password2", default_password);
 
@@ -1832,10 +1830,12 @@ private:
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 			token.put_member(signature_field, cipher_text);
 
-			std::string token_string = token.to_json();
+			std::string token_string = token.to_json_typed();
 			std::string base64_token_string = base64_encode(token_string );
 
-			payload.put_member(token_field, base64_token_string);
+			if (_success) {
+				payload.put_member(token_field, base64_token_string);
+			}
 			payload.put_member(success_field, _success);
 			payload.put_member(message_field, _message);
 			payload.put_member(data_field, _data);
@@ -1858,10 +1858,12 @@ private:
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 			token.put_member(signature_field, cipher_text);
 
-			std::string token_string = token.to_json();
+			std::string token_string = token.to_json_typed();
 			std::string base64_token_string = base64_encode(token_string);
 
-			payload.put_member(token_field, base64_token_string);
+			if (_success) {
+				payload.put_member(token_field, base64_token_string);
+			}
 			payload.put_member(success_field, _success);
 			payload.put_member(message_field, _message);
 			payload.put_member(data_field, _data);
@@ -2687,15 +2689,15 @@ private:
 			json create_user_params = jp.create_object();
 			create_user_params.put_member(class_name_field, user_class);
 			create_user_params.put_member(user_name_field, user_name);
-			create_user_params.put_member("password", hashed_pw);
-			create_user_params.copy_member("first_name", data);
-			create_user_params.copy_member("last_name", data);
-			create_user_params.copy_member("email", data);
-			create_user_params.copy_member("mobile", data);
-			create_user_params.copy_member("street", data);
-			create_user_params.copy_member("city", data);
-			create_user_params.copy_member("state", data);
-			create_user_params.copy_member("zip", data);
+			create_user_params.put_member(user_password_field, hashed_pw);
+			create_user_params.copy_member(user_first_name_field, data);
+			create_user_params.copy_member(user_last_name_field, data);
+			create_user_params.copy_member(user_email_field, data);
+			create_user_params.copy_member(user_mobile_field, data);
+			create_user_params.copy_member(user_street1_field, data);
+			create_user_params.copy_member(user_street2_field, data);
+			create_user_params.copy_member(user_state_field, data);
+			create_user_params.copy_member(user_zip_field, data);
 
 			json create_object_request = create_request(user_name, auth_general, create_user_params);
 			json user_result =  put_object(create_object_request);
@@ -3428,8 +3430,8 @@ private:
 
 				json item_array;
 				if (data.array()) {
-					item_array = jp.create_object();
-					for (auto obj : item_array) {
+					item_array = jp.create_array();
+					for (auto obj : data) {
 						if (obj[success_field]) {
 							json t = obj[data_field];
 							item_array.push_back(t);
@@ -3454,7 +3456,7 @@ private:
 
 				for (auto class_pair : classes_and_data)
 				{
-					auto cd = load_class(class_pair.second);
+					auto cd = load_class(class_pair.first);
 
 					extract_child_objects(cd, child_objects, class_pair.second);
 

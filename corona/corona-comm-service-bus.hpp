@@ -341,6 +341,20 @@ namespace corona
 
 		}
 
+		std::string get_token(http_action_request& _request)
+		{
+			std::string token;
+			std::string bearer = "Bearer ";
+			if (_request.authorization.starts_with(bearer.c_str())) {
+				token = _request.authorization.substr(bearer.size());
+			}
+			else
+			{
+				token = _request.authorization;
+			}
+			return token;
+		}
+
 		json get_banner()
 		{
 			json_parser jp;
@@ -355,7 +369,7 @@ namespace corona
 
 		http_handler_function corona_test = [this](http_action_request _request)-> void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
@@ -366,7 +380,7 @@ namespace corona
 
 		http_handler_function corona_login = [this](http_action_request _request)-> void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
@@ -378,11 +392,12 @@ namespace corona
 
 		http_handler_function corona_classes_get = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);			
+			parsed_request.put_member(token_field, token);
 			auto fn_response = local_db->get_classes(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -390,11 +405,12 @@ namespace corona
 
 		http_handler_function corona_classes_put = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
 			json fn_response = local_db->put_class(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -402,11 +418,12 @@ namespace corona
 
 		http_handler_function corona_users_create = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
 			json fn_response = local_db->create_user(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -414,11 +431,12 @@ namespace corona
 
 		http_handler_function corona_objects_get = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
 			json fn_response = local_db->get_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -426,11 +444,12 @@ namespace corona
 
 		http_handler_function corona_objects_copy = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
 			json fn_response = local_db->copy_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -438,11 +457,12 @@ namespace corona
 
 		http_handler_function corona_objects_query = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
 			json fn_response = local_db->query(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -450,11 +470,12 @@ namespace corona
 
 		http_handler_function corona_objects_create = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
 			json fn_response = local_db->create_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -462,11 +483,12 @@ namespace corona
 
 		http_handler_function corona_objects_put = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
 			json fn_response = local_db->put_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -474,11 +496,12 @@ namespace corona
 
 		http_handler_function corona_objects_delete = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
 			json fn_response = local_db->delete_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -486,11 +509,12 @@ namespace corona
 
 		http_handler_function corona_objects_edit = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			parsed_request.put_member("Token", _request.authorization);
+			std::string token = get_token(_request);
+			parsed_request.put_member("Token", token);
 			json fn_response = local_db->edit_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -503,7 +527,7 @@ namespace corona
 
 			if (_request.body.get_size() > 1)
 			{
-				json request = jph.parse_object(_request.body.get_ptr());
+				request = jph.parse_object(_request.body.get_ptr());
 			}
 			else
 			{
@@ -520,7 +544,7 @@ namespace corona
 			response.content_type = "application/json";
 			response.http_status_code = 200;
 
-			if (_request.is_member("ClassName", "SysParseError")) {
+			if (_request.is_member("ClassName", parse_error_class)) {
 				response.http_status_code = 504;
 				response.response_body = (buffer)_request;
 				response.content_length = response.response_body.get_size();

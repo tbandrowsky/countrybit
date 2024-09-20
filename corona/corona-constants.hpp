@@ -558,7 +558,19 @@ namespace corona
 	const std::string message_field = "message";
 	const std::string token_field = "token";
 	const std::string signature_field = "signature";
+	const std::string user_class_field = "sys_users";
+	const std::string user_first_name_field = "first_name";
+	const std::string user_last_name_field = "last_name";
 	const std::string user_name_field = "user_name";
+	const std::string user_email_field = "email";
+	const std::string user_mobile_field = "mobile";
+	const std::string user_street1_field = "street1";
+	const std::string user_street2_field = "street2";
+	const std::string user_city_field = "city";
+	const std::string user_state_field = "state";
+	const std::string user_zip_field = "zip";
+	const std::string user_password_field = "password";
+
 	const std::string authorization_field = "authorization";
 	const std::string data_hash_field = "data_hash";
 	const std::string seconds_field = "seconds";
@@ -567,6 +579,7 @@ namespace corona
 	const std::string sys_user_password_field = "sys_user_password";
 	const std::string sys_user_email_field = "sys_user_email";
 	const std::string sys_default_team_field = "new_user_default_team";
+	const std::string parse_error_class = "sys_parse_error";
 
 	std::map<std::string, bool> allowed_field_types = {
 	{ "object", true },
