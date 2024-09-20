@@ -365,3 +365,7 @@ FodyWeavers.xsd
 /coronaserver/config.json
 /revolution/donation_data/itcont.csv
 /revolution/itcont.csv
+
+#corona databases
+*.cdb
+/coronaserver/candidate_database.cdb
