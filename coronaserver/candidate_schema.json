@@ -1,12 +1,12 @@
 {
   "schema_name": "Country Video Games Candidate",
-  "schema_description": "This schema creates a simple searchable database using FEC donations as a source.",
+  "schema_description": "Schema creates a simple searchable database using FEC donations as a source.",
   "schema_version": "1.0",
   "schema_authors": [ "TJ Bandrowsky" ],
   "classes": [
     {
       "class_name": "Candidates",
-      "class_description": "Candidates running for office",
+      "class_description": "Candidates running for public office",
       "base_class_name": "sys_object",
       "fields": {
         "candidate_id": "string",

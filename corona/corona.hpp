@@ -56,6 +56,7 @@ For Future Consideration
 #include <numeric>
 #include <thread>
 #include <regex>
+#include <queue>
 
 #include <io.h>
 #include <fcntl.h>

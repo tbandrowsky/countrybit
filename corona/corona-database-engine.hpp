@@ -3002,6 +3002,9 @@ private:
 				if (existing_class) {
 					class_def.descendants = existing_class->descendants;
 				}
+				else {
+					class_def.descendants.insert_or_assign(class_name, true);
+				}
 
 				for (auto temp_field : base_class->fields)
 				{
@@ -3159,7 +3162,7 @@ private:
 
 			json object_list = jp.create_array();
 
-			json filter = query_details["Filter"];
+			json filter = query_details["filter"];
 			if (filter.empty()) {
 				filter = jp.create_object();
 			}
@@ -3177,7 +3180,7 @@ private:
 				}
 			}
 
-			response = create_response(_user_name, auth_general, true, "completed", query_details, method_timer.get_elapsed_seconds());
+			response = create_response(_user_name, auth_general, true, "completed", object_list, method_timer.get_elapsed_seconds());
 
 			system_monitoring_interface::global_mon->log_function_stop("update", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
@@ -3312,7 +3315,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("create_object", "start", start_time, __FILE__, __LINE__);
 
 			json token = create_object_request[token_field];
-			json data = create_object_request;
+			json data = create_object_request[data_field];
 			std::string class_name = data[class_name_field];
 			json response;
 
@@ -3325,7 +3328,7 @@ private:
 				return response;
 			}
 
-			bool permission =  has_class_permission(token, class_name, "Create");
+			bool permission =  has_class_permission(user_name, class_name, "Create");
 			if (not permission) {
 				json result = create_response(create_object_request, false, "Denied", data, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);

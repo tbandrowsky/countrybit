@@ -194,14 +194,131 @@ namespace corona
 
 	};
 
+	class trans_commit_job;
+
+	class buffer_commit_job : public job
+	{
+	public:
+		file_block* fb;
+		std::shared_ptr<file_buffer> write_buffer;
+		HANDLE	job_signal;
+
+		buffer_commit_job(file_block *_fb, std::shared_ptr<file_buffer>&& _write_buffer, HANDLE _job_signal) :
+			fb(_fb), write_buffer(_write_buffer), job_signal(_job_signal)
+		{
+			;
+		}
+
+		buffer_commit_job()
+		{
+			job_signal = {};
+		}
+
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+		{
+			job_notify jn;
+
+			jn.setSignal(job_signal);
+
+			try
+			{
+				fb->write(write_buffer->start, write_buffer->buff.get_ptr(), write_buffer->stop - write_buffer->start);
+			}
+			catch (...)
+			{
+				;
+			}
+
+			jn.shouldDelete = true;
+			return jn;
+		}
+
+	};
+
+	class trans_commit_job : public job
+	{
+		std::vector<HANDLE> buffer_job_signals;
+		std::vector<std::shared_ptr<file_buffer>> buffers;
+
+	public:
+
+		file_block* fb;
+		HANDLE	trans_commit_job_signal;
+
+		trans_commit_job(file_block *_fb, HANDLE _trans_commit_job_signal, std::shared_ptr<file_buffer>& _append, std::vector<std::shared_ptr<file_buffer>>& _buffers)
+		{
+			fb = _fb;
+			trans_commit_job_signal = _trans_commit_job_signal;
+			std::shared_ptr<file_buffer> new_buffer = std::make_shared<file_buffer>(_append);
+			buffers.push_back(new_buffer);
+			for (auto &old_buff : _buffers) {
+				std::shared_ptr<file_buffer> new_buffer = std::make_shared<file_buffer>(old_buff);
+				buffers.push_back(new_buffer);
+			}
+		}
+
+		virtual ~trans_commit_job()
+		{
+			for (auto hsignal : buffer_job_signals) {
+				::CloseHandle(hsignal);
+			}
+		}
+
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+		{
+			job_notify jn;
+
+			jn.setSignal(trans_commit_job_signal); // this tells the notification to set the signal after execute exits
+
+			try
+			{
+				int i = 0;
+				int j = 0;
+
+				while (i < buffers.size())
+				{
+					std::vector<HANDLE> this_set;
+					for (j = 0; (i < buffers.size()) and (j < MAXIMUM_WAIT_OBJECTS); j++, i++)
+					{
+						HANDLE buffer_wait = CreateEvent(NULL, FALSE, FALSE, FALSE);
+						buffer_job_signals.push_back(buffer_wait);
+						this_set.push_back(buffer_wait);
+						auto& trans_buff = buffers[i];
+						buffer_commit_job* fcj = new buffer_commit_job(this, std::move(trans_buff), buffer_wait);
+						_callingQueue->add_job(fcj);
+						
+					}
+					while (::WaitForMultipleObjects(this_set.size(), this_set.data(), TRUE, 5000) == WAIT_TIMEOUT)
+					{
+						system_monitoring_interface::global_mon->log_warning("Wait for I/O timed out, checking again", __FILE__, __LINE__);
+					}
+				}
+				fb->drain_queue();
+			}
+			catch (...)
+			{
+				;
+			}
+
+			jn.shouldDelete = true;
+			return jn;
+		}
+	};
+
+
 	class file_block
 	{
 		std::vector<std::shared_ptr<file_buffer>> buffers;
 		std::shared_ptr<file> fp;
 		std::shared_ptr<file_buffer> append_buffer;
+		std::queue<trans_commit_job*> queued_commits;
+		HANDLE commit_complete;
+		lockable block_lock;
 
 		std::shared_ptr<file_buffer> feast(int64_t _start, int64_t _length, feast_types _feast)
 		{
+			scope_lock feast_lock(block_lock);
+
 			int64_t _stop = _start + _length;
 
 			int64_t new_start = _start,
@@ -286,6 +403,16 @@ namespace corona
 		file_block(std::shared_ptr<file> _fp)
 		{
 			fp = _fp;
+		}
+
+		virtual ~file_block()
+		{
+
+		}
+
+		file* get_fp()
+		{
+			return fp.get();
 		}
 
 		file_block(const file_block& _src) = delete;
@@ -383,6 +510,7 @@ namespace corona
 
 		int64_t add(int _bytes_to_add)
 		{
+			scope_lock feast_lock(block_lock);
 
 			if (_bytes_to_add < 0)
 				throw std::logic_error("add < 0");
@@ -428,18 +556,21 @@ namespace corona
 			return fc;
 		}
 
+		void drain_queue()
+		{
+			scope_lock feast_lock(block_lock);
+			WaitForSingleObject(commit_complete, INFINITE);
+			auto job = queued_commits.front();
+			if (job) {
+				global_job_queue->add_job(job);
+			}
+		}
+
 		void commit()
 		{
-			if (append_buffer) {
-				fp->write(append_buffer->start, append_buffer->buff.get_ptr(), append_buffer->top - append_buffer->start);
-				append_buffer = nullptr;
-			}
-			for (auto& buff : buffers) {
-				if (buff->is_dirty) {
-					buff->is_dirty = false;
-					fp->write(buff->start, buff->buff.get_ptr(), buff->stop - buff->start);
-				}
-			}
+			transaction_commit_job* tcj = new transaction_commit_job(this, commit_complete, append_buffer, buffers);
+			queued_commits.push(tcj);
+			drain_queue();
 		}
 
 		int buffer_count()

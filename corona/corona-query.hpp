@@ -176,7 +176,7 @@ namespace corona
 			std::vector<std::string> missing;
 			stages.clear();
 
-			if (not _src.has_members(missing, { "class_name", "stages" })) {
+			if (not _src.has_members(missing, { "stages" })) {
 				system_monitoring_interface::global_mon->log_warning("query_context missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);

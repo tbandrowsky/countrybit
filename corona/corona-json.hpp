@@ -2647,7 +2647,7 @@ namespace corona
 				j.put_member("source_name", path_components[0]);
 			}
 			else {
-				j.put_member("query_path", path_components[0]);
+				j.put_member("source_name", path_components[0]);
 			}
 
 			return j;
