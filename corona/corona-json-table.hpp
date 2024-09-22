@@ -1336,7 +1336,7 @@ namespace corona
 		fb.wait();
 
 		char check_buffer[size];
-		fp->read(0, check_buffer, size);
+		fb.read(0, check_buffer, size);
 		std::string temp;
 
 		bool file_contents_check = true;

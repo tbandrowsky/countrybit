@@ -247,7 +247,10 @@ namespace corona
 
 			try
 			{
-				fb->get_fp()->write(write_buffer->start, write_buffer->buff.get_ptr(), write_buffer->stop - write_buffer->start);
+				auto result = fb->get_fp()->write(write_buffer->start, write_buffer->buff.get_ptr(), write_buffer->stop - write_buffer->start);
+				if (not result.success) {
+					system_monitoring_interface::global_mon->log_warning("write failed", __FILE__, __LINE__);
+				}
 			}
 			catch (...)
 			{
@@ -296,8 +299,6 @@ namespace corona
 		{
 			job_notify jn;
 
-			jn.setSignal(trans_commit_job_signal); // this tells the notification to set the signal after execute exits
-
 			try
 			{
 				int i = 0;
@@ -321,6 +322,7 @@ namespace corona
 						system_monitoring_interface::global_mon->log_warning("Wait for I/O timed out, checking again", __FILE__, __LINE__);
 					}
 				}
+				::SetEvent(trans_commit_job_signal);
 				fb->drain_queue();
 			}
 			catch (...)
@@ -432,8 +434,8 @@ namespace corona
 		file_block(std::shared_ptr<file> _fp)
 		{
 			fp = _fp;
-			commit_complete = CreateEvent(NULL, FALSE, TRUE, NULL);
-			empty_queue = CreateEvent(NULL, FALSE, TRUE, NULL);
+			commit_complete = CreateEvent(NULL, TRUE, TRUE, NULL);
+			empty_queue = CreateEvent(NULL, TRUE, TRUE, NULL);
 		}
 
 		file_block(const file_block& _src) = delete;
@@ -441,6 +443,7 @@ namespace corona
 
 		virtual ~file_block()
 		{
+			scope_lock feast_lock(block_lock);
 			CloseHandle(commit_complete);
 
 		}
@@ -452,6 +455,8 @@ namespace corona
 
 		virtual file_command_result write(int64_t _location, void* _buffer, int _buffer_length) override
 		{
+			scope_lock feast_lock(block_lock);
+
 			file_command_result result;
 
 			if (_buffer_length < 0)
@@ -487,6 +492,8 @@ namespace corona
 
 		virtual file_command_result read(int64_t _location, void* _buffer, int _buffer_length) override
 		{
+			scope_lock feast_lock(block_lock);
+
 			file_command_result result;
 
 			if (_buffer_length < 0)
@@ -527,6 +534,9 @@ namespace corona
 
 		virtual relative_ptr_type allocate_space(int64_t _size, int64_t* _actual_size) override
 		{
+
+			scope_lock feast_lock(block_lock);
+
 			if (_size < 0)
 				throw std::logic_error("allocate_space < 0");
 
@@ -581,6 +591,8 @@ namespace corona
 
 		virtual file_command_result append(void* _buffer, int _buffer_length) override
 		{
+			scope_lock feast_lock(block_lock);
+
 			int64_t file_position = add(_buffer_length);
 
 			auto fc = write(file_position, _buffer, _buffer_length);
@@ -593,17 +605,26 @@ namespace corona
 			scope_lock feast_lock(block_lock);
 
 			WaitForSingleObject(commit_complete, INFINITE);
-			auto job = queued_commits.front();
-			if (job) {
-				global_job_queue->add_job(job);
+
+			if (not queued_commits.empty())
+			{
+				auto job = queued_commits.front();
+				queued_commits.pop();
+				if (job) {
+					ResetEvent(commit_complete);
+					global_job_queue->add_job(job);
+				}
 			}
-			if (queued_commits.empty()) {
+			else {
 				::SetEvent(empty_queue);
 			}
 		}
 
 		virtual void commit() override
 		{
+			scope_lock feast_lock(block_lock);
+
+			ResetEvent(empty_queue);
 			trans_commit_job* tcj = new trans_commit_job(this, commit_complete, append_buffer, buffers);
 			queued_commits.push(tcj);
 			drain_queue();
