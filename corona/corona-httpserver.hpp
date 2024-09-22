@@ -278,7 +278,6 @@ namespace corona {
 		virtual ~http_server()
 		{
 			shutdown = true;		
-			global_job_queue->waitForEmptyQueue();
 
 			if (group_id) {
 				HttpCloseUrlGroup(group_id);

@@ -1276,7 +1276,7 @@ namespace corona
 			created_classes = jp.create_object();
 
 			header.write(this);
-			commit();
+			commit_check();
 	
 			json response =  create_class(R"(
 {	
@@ -1488,13 +1488,22 @@ namespace corona
 			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
 			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
 
-			commit();
+			commit_check();
 
 			system_monitoring_interface::global_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
 private:
+
+		virtual void commit_check()
+		{
+			time_t current;
+			time(&current);
+			if ((current - last_commit) > 1) {
+				commit();
+			}
+		}
 
 		virtual void extract_child_objects(std::shared_ptr<class_definition>& _cdef, json& _child_objects, json& _src_list)
 		{
@@ -2140,6 +2149,7 @@ private:
 			return header.data.object_id;
 		}
 
+		time_t last_commit;
 
 	public:
 
@@ -2154,11 +2164,18 @@ private:
 		corona_database(std::shared_ptr<file> _database_file) :
 			file_block(_database_file)
 		{
+			time(&last_commit);
 			std::vector<std::string> class_key_fields({ class_name_field });
 			std::vector<std::string> indexes_key_fields({ class_name_field });
 			classes = std::make_shared<json_table>(this, class_key_fields);
 			indexes = std::make_shared<json_table>(this, indexes_key_fields);
 			token_life = time_span(1, time_models::hours);	
+		}
+
+		virtual ~corona_database()
+		{
+			commit();
+			wait();
 		}
 
 		void apply_config(json _config)
@@ -2710,7 +2727,7 @@ private:
 				response = create_response(create_user_request, false, "User not created", data, method_timer.get_elapsed_seconds());
 			}
 
-			commit();
+			commit_check();
 
 			system_monitoring_interface::global_mon->log_function_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -2754,7 +2771,7 @@ private:
 			}
 			system_monitoring_interface::global_mon->log_function_stop("login_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			commit();
+			commit_check();
 
 			return response;
 		}
@@ -3117,7 +3134,7 @@ private:
 			json saved_class = save_class(class_def);	
 			result = create_response(put_class_request, true, "Ok", saved_class, method_timer.get_elapsed_seconds());
 
-			commit();
+			commit_check();
 			system_monitoring_interface::global_mon->log_function_stop("put_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return result;
 		}
@@ -3397,7 +3414,7 @@ private:
 				response = create_response(create_object_request, false, "Couldn't find class", create_object_request, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-			commit();
+			commit_check();
 
 			return response;
 			
@@ -3489,7 +3506,7 @@ private:
 				header.write(this);
 
 				if (child_objects.size() == 0) {
-					commit();
+					commit_check();
 				}
 				else 
 				{
@@ -3608,7 +3625,7 @@ private:
 			}
 			system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			commit();
+			commit_check();
 
 			return response;
 		}
