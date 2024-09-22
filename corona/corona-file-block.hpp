@@ -269,12 +269,14 @@ namespace corona
 	public:
 
 		file_block_interface* fb;
-		HANDLE	trans_commit_job_signal;
+		HANDLE		event_wait_for,
+					event_set;
 
-		trans_commit_job(file_block_interface*_fb, HANDLE _trans_commit_job_signal, std::shared_ptr<file_buffer>& _append, std::vector<std::shared_ptr<file_buffer>>& _buffers)
+		trans_commit_job(file_block_interface*_fb, HANDLE _event_wait_for, HANDLE _event_set, std::shared_ptr<file_buffer>& _append, std::vector<std::shared_ptr<file_buffer>>& _buffers)
 		{
 			fb = _fb;
-			trans_commit_job_signal = _trans_commit_job_signal;
+			event_wait_for = _event_wait_for;
+			event_set = _event_set;
 			std::shared_ptr<file_buffer> new_buffer;
 			if (_append) {
 				new_buffer = std::make_shared<file_buffer>(*_append.get());
@@ -299,7 +301,8 @@ namespace corona
 
 			try
 			{
-				jn.setSignal(trans_commit_job_signal);
+				WaitForSingleObject(event_wait_for, INFINITE);
+				jn.setSignal(event_set);
 				int i = 0;
 				int j = 0;
 
@@ -386,6 +389,9 @@ namespace corona
 			if (_feast == feast_types::feast_read)
 			{
 				// read and fill the gaps!
+				// but we can't do this, until everything in flight is written to the disk.
+				// clear would be an otherwise disaster.
+				wait();
 				for (auto fb : eaten_buffers)
 				{
 					if (fb->start > track_start) {
@@ -438,8 +444,7 @@ namespace corona
 		virtual ~file_block()
 		{
 			scope_lock feast_lock(block_lock);
-			WaitForSingleObject(commit_complete, INFINITE);
-			CloseHandle(commit_complete);
+			wait();
 		}
 
 		virtual file* get_fp() override
@@ -597,7 +602,7 @@ namespace corona
 		virtual void commit() override
 		{
 			scope_lock feast_lock(block_lock);
-			WaitForSingleObject(commit_complete, INFINITE);
+			HANDLE new_commit = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 			std::shared_ptr<file_buffer> dirty_append;
 			std::vector<std::shared_ptr<file_buffer>> dirty_buffers;
@@ -614,8 +619,8 @@ namespace corona
 			}
 
 			if (dirty_buffers.size() > 0 or dirty_append) {
-				ResetEvent(commit_complete);
-				trans_commit_job* tcj = new trans_commit_job(this, commit_complete, dirty_append, dirty_buffers);
+				trans_commit_job* tcj = new trans_commit_job(this, commit_complete, new_commit, dirty_append, dirty_buffers);
+				commit_complete = new_commit;
 				global_job_queue->add_job(tcj);
 			}
 			else 
@@ -627,6 +632,8 @@ namespace corona
 		virtual void wait() override
 		{
 			WaitForSingleObject(commit_complete, INFINITE);
+			CloseHandle(commit_complete);
+			commit_complete = nullptr;
 		}
 
 		virtual int buffer_count() override
@@ -636,8 +643,8 @@ namespace corona
 
 		virtual void clear() override
 		{
-			WaitForSingleObject(commit_complete, INFINITE);
 			scope_lock feast_lock(block_lock);
+			wait();
 			append_buffer = nullptr;
 			buffers.clear();
 		}
