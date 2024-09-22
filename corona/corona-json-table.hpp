@@ -1333,6 +1333,7 @@ namespace corona
 		}
 
 		fb.commit();
+		fb.wait();
 
 		char check_buffer[size];
 		fp->read(0, check_buffer, size);
