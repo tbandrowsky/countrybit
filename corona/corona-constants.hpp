@@ -465,12 +465,19 @@ namespace corona
 	};
 	*/
 
-	struct data_block_struct
+	class data_block_struct
 	{
+	public:
 		int64_t		block_location;
 		int64_t		data_location;
 		int32_t		data_capacity;
 		int32_t		data_size;
+
+		data_block_struct() = default;
+		data_block_struct(const data_block_struct& _src) = default;
+		data_block_struct(data_block_struct&& _src) = default;
+		data_block_struct& operator =(const data_block_struct& _src) = default;
+		data_block_struct& operator =(data_block_struct&& _src) = default;
 	};
 
 	struct allocation_block_struct

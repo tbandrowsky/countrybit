@@ -152,7 +152,7 @@ namespace corona {
 			length = 0;
 		}
 
-		void push_back(const item_type& t)
+		inline void push_back(const item_type& t)
 		{
 			if (length < max_items) {
 				data[length] = t;

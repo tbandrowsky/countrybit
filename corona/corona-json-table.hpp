@@ -52,34 +52,9 @@ namespace corona
 			header = {};
 		}
 
-		static allocation_index get_allocation_index(int64_t _size)
-		{
-			allocation_index ai = { };
+		data_block(const data_block& _src) = default;
+		data_block& operator = (const data_block& _src) = default;
 
-			int small_size = 1024;
-			int top = small_size / 16;
-			
-			if (_size < small_size) {
-				int t = _size / 16;
-				if (_size % 16) {
-					t++;
-				}
-				ai.index = t;
-				ai.size = t * 16;
-			}
-			else 
-			{
-				int64_t sz = small_size;
-				int idx = top;
-				while (sz < _size) {
-					sz *= 2;
-					idx++;
-				}
-				ai.index = idx;
-				ai.size = sz;
-			}
-			return ai;
-		}
 
 		data_block &operator = (json& _src)
 		{
@@ -328,9 +303,21 @@ if (ENABLE_JSON_LOGGING) {
 	{
 	public:
 
-		std::vector<int64_t> foward;
-		int64_t				 json_location;
-		uint64_t			 hash_code;
+		iarray<int64_t, JsonTableMaxNumberOfLevels> foward;
+		int64_t										json_location;
+		uint64_t									hash_code;
+
+		json_key_node() = default;
+		json_key_node(const json_key_node& _src) = default;
+		json_key_node(json_key_node&& _src) = default;
+
+		virtual ~json_key_node()
+		{
+			;
+		}
+
+		json_key_node& operator = (const json_key_node& _src) = default;
+		json_key_node& operator = (json_key_node&& _src) = default;
 
 		void clear()
 		{
@@ -515,17 +502,6 @@ if (ENABLE_JSON_LOGGING) {
 			return node;
 		}
 
-		json_data_node get_data_node(relative_ptr_type _key_node_location)
-		{
-			json_key_node node;
-			node.read(fb, _key_node_location);
-
-			json_data_node json_data;
-			json_data.read(fb, node.json_location);
-
-			return json_data;
-		}
-
 		void free_node(relative_ptr_type _key_node_location)
 		{
 			json_key_node node;
@@ -542,7 +518,7 @@ if (ENABLE_JSON_LOGGING) {
 		// return 1 if the node > key
 		// return 0 if the node == key
 
-		relative_ptr_type compare_node(json_key_node _nd, KEY _id_key, uint64_t _key_hash)
+		relative_ptr_type compare_node(json_key_node& _nd, KEY _id_key, uint64_t _key_hash)
 		{
 
 			if (_nd.header.block_location == table_header.data.data_root_location)
@@ -565,13 +541,12 @@ if (ENABLE_JSON_LOGGING) {
 				return 0;
 		}
 
-		relative_ptr_type find_advance(json_key_node& _node, int _level, KEY _key, uint64_t _key_hash, int64_t *_found)
+		relative_ptr_type find_advance(json_key_node& _node, json_key_node& _peek, int _level, KEY _key, uint64_t _key_hash, int64_t *_found)
 		{
-			json_key_node peek;
 			auto t = _node.foward[_level];
 			if (t != null_row) {
-				peek.read(fb, t);
-				int comp = compare_node(peek, _key, _key_hash);
+				_peek.read(fb, t);
+				int comp = compare_node(_peek, _key, _key_hash);
 				if (comp < 0)
 					return t;
 				else if (comp == 0) {
@@ -581,7 +556,7 @@ if (ENABLE_JSON_LOGGING) {
 			return -1;
 		}
 
-		relative_ptr_type find_node(relative_ptr_type* update, KEY _key)
+		relative_ptr_type find_node(relative_ptr_type* update, KEY _key, json_key_node& _found_node)
 		{
 			relative_ptr_type found = null_row;
 
@@ -592,11 +567,11 @@ if (ENABLE_JSON_LOGGING) {
 			for (int k = table_header.data.level; k >= 0; k--)
 			{
 				int comp = -1;
-				relative_ptr_type nl = find_advance(x, k, _key, key_hash, &found); // TODO Found node could be here.
+				relative_ptr_type nl = find_advance(x, _found_node, k, _key, key_hash, &found); // TODO Found node could be here.
 				while (nl != null_row)
 				{
-					x.read(fb, nl);
-					nl = find_advance(x, k, _key, key_hash, &found);
+					x = _found_node;
+					nl = find_advance(x, _found_node, k, _key, key_hash, &found);
 				}
 				update[k] = x.header.block_location;
 			}
@@ -604,7 +579,7 @@ if (ENABLE_JSON_LOGGING) {
 			return found;
 		}
 
-		relative_ptr_type find_first_gte(KEY _key)
+		relative_ptr_type find_first_gte(KEY _key, json_key_node& _found_node)
 		{
 			relative_ptr_type found = null_row, last_link;
 			json_parser jp;
@@ -631,11 +606,11 @@ if (ENABLE_JSON_LOGGING) {
 			for (int k = table_header.data.level; k >= 0; k--)
 			{
 				int comp = -1;
-				relative_ptr_type nl = find_advance(x, k, table_key, key_hash, &found);
+				relative_ptr_type nl = find_advance(x, _found_node, k, table_key, key_hash, &found);
 				while (nl != null_row)
 				{
-					x.read(fb, nl);
-					nl = find_advance(x, k, table_key, key_hash, &found);
+					x = _found_node;
+					nl = find_advance(x, _found_node, k, table_key, key_hash, &found);
 				}
 			}
 
@@ -654,12 +629,12 @@ if (ENABLE_JSON_LOGGING) {
 
 			relative_ptr_type location = header.foward[0];
 
-			relative_ptr_type q = find_node(update, _key);
+			json_key_node jkn;
+
+			relative_ptr_type q = find_node(update, _key, jkn);
 
 			if (q != null_row)
 			{
-				json_key_node jkn;
-				jkn.read(fb, q);
 				json_data_node qnd;
 				qnd = jkn.get_node(fb);
 				predicate(qnd.data);
@@ -757,10 +732,10 @@ if (ENABLE_JSON_LOGGING) {
 			return found;
 		}
 
-		relative_ptr_type find_node(const KEY& key)
+		relative_ptr_type find_node(const KEY& key, json_key_node& _found_node)
 		{
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
-			relative_ptr_type value = find_node(update, key);
+			relative_ptr_type value = find_node(update, key, _found_node);
 			return value;
 		}
 
@@ -850,7 +825,9 @@ if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "contains", start_time, __FILE__, __LINE__);
 			}
 
-			relative_ptr_type result =  find_node(key);
+			json_key_node found_node;
+
+			relative_ptr_type result =  find_node(key, found_node);
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "contains complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
@@ -879,9 +856,11 @@ if (ENABLE_JSON_LOGGING) {
 			}
 
 			json result;
-			relative_ptr_type n =  find_node(key);
+			json_key_node found_node;
+
+			relative_ptr_type n =  find_node(key, found_node);
 			if (n != null_row) {
-				json_data_node dn = get_data_node(n);
+				json_data_node dn = found_node.get_node(fb);
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
@@ -900,9 +879,10 @@ if (ENABLE_JSON_LOGGING) {
 			}
 
 			json result;
-			relative_ptr_type n =  find_node(key);
+			json_key_node found_node;
+			relative_ptr_type n = find_node(key, found_node);
 			if (n != null_row) {
-				json_data_node dn = get_data_node(n);
+				json_data_node dn = found_node.get_node(fb);
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
@@ -921,9 +901,10 @@ if (ENABLE_JSON_LOGGING) {
 			}
 
 			json result;
-			relative_ptr_type n =  find_node(key);
+			json_key_node found_node;
+			relative_ptr_type n = find_node(key, found_node);
 			if (n != null_row) {
-				json_data_node dn = get_data_node(n);
+				json_data_node dn = found_node.get_node(fb);
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
@@ -1005,10 +986,10 @@ if (ENABLE_JSON_LOGGING) {
 
 			auto key = get_key(value);
 
-			auto node_location = find_node(key);
-
-			if (node_location > -1) {
-				json_data_node dn = get_data_node(node_location);
+			json_key_node found_node;
+			relative_ptr_type n = find_node(key, found_node);
+			if (n != null_row) {
+				json_data_node dn = found_node.get_node(fb);
 				dn.data.assign_replace(value);
 				dn.write(fb);
 			}
@@ -1017,7 +998,7 @@ if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "replace", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
-			return node_location;
+			return n;
 		}
 
 		relative_ptr_type replace(std::string _json)
@@ -1039,13 +1020,14 @@ if (ENABLE_JSON_LOGGING) {
 			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
 			json_key_node qnd, pnd;
 
-			relative_ptr_type q = find_node(update, key);
+			json_key_node found_node;
+			relative_ptr_type q = find_node(update, key, found_node);
 
 			if (q != null_row)
 			{
 				k = 0;
 				p = update[k];
-				qnd = get_key_node(q);
+				qnd = found_node;
 				pnd = get_key_node(p);
 				int m = table_header.data.level;
 				while (k <= m && pnd.foward[k] == q)
@@ -1106,12 +1088,13 @@ if (ENABLE_JSON_LOGGING) {
 
 			result.is_all = true;
 
-			relative_ptr_type location = find_first_gte(_key_fragment);
+			json_key_node jkn;
+			relative_ptr_type location = find_first_gte(_key_fragment, jkn);
 			int64_t index = 0;
 
 			while (location != null_row)
 			{
-				json_key_node jkn = get_key_node(location);
+				jkn = get_key_node(location);
 				json_data_node node = jkn.get_node(fb);
 				int comparison;
 
@@ -1169,12 +1152,12 @@ if (ENABLE_JSON_LOGGING) {
 
 			int64_t index = 0;
 			json result_data;
+			json_key_node node;
 
-			relative_ptr_type location = find_first_gte(_key_fragment);
+			relative_ptr_type location = find_first_gte(_key_fragment, node);
 
 			while (location != null_row)
 			{
-				json_key_node node;
 				node = get_key_node(location);
 				json_data_node data = node.get_node(fb);
 				int comparison = _key_fragment.compare(data.data);

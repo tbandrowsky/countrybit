@@ -1129,7 +1129,31 @@ namespace corona
 
 		allocation_index get_allocation_index(int64_t _size)
 		{
-			allocation_index ai = data_block::get_allocation_index(_size);
+			allocation_index ai = { };
+
+			int small_size = 1024;
+			int top = small_size / 16;
+
+			if (_size < small_size) {
+				int t = _size / 16;
+				if (_size % 16) {
+					t++;
+				}
+				ai.index = t;
+				ai.size = t * 16;
+			}
+			else
+			{
+				int64_t sz = small_size;
+				int idx = top;
+				while (sz < _size) {
+					sz *= 2;
+					idx++;
+				}
+				ai.index = idx;
+				ai.size = sz;
+			}
+
 			if (ai.index >= header.data.free_lists.capacity()) {
 				std::string msg = std::format("{0} bytes is too big to allocate as a block.", _size);
 				system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
