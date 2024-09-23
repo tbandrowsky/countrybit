@@ -873,8 +873,12 @@ namespace corona
 			_dest.put_member("index_name", index_name);
 
 			json jindex_keys = jp.create_array();
-			for (auto ikey : index_keys) {
-				jindex_keys.push_back(ikey);
+			for (auto ikey : index_keys) 
+			{
+				if (ikey != object_id_field) 
+				{
+					jindex_keys.push_back(ikey);
+				}
 			}
 			_dest.put_member("index_keys", jindex_keys);
 			_dest.put_member_i64("index_location", index_location);
@@ -890,8 +894,12 @@ namespace corona
 				index_keys.clear();
 				for (auto key : jindex_keys) {
 					std::string key_name = key;
-					index_keys.push_back(key);
+					if (key_name != object_id_field)
+					{
+						index_keys.push_back(key);
+					}
 				}
+				index_keys.push_back(object_id_field);
 			}
 			index_location = (int64_t)_src["index_location"];
 		}
