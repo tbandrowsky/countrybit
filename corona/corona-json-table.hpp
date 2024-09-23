@@ -347,7 +347,10 @@ if (ENABLE_JSON_LOGGING) {
 
 		virtual char *before_write(int32_t *_size) override
 		{
-			bytes = data.to_json_typed();
+			std::stringstream buff;
+			
+			data.serialize(buff);
+			bytes = buff.str();
 			*_size = bytes.size();
 			return (char *)bytes.c_str();
 		}
@@ -367,7 +370,11 @@ if (ENABLE_JSON_LOGGING) {
 		int64_t										json_location;
 		iarray<int64_t, JsonTableMaxNumberOfLevels> foward;
 
-		json_key_node() = default;
+		json_key_node()
+		{
+			clear();
+		}
+
 		json_key_node(const json_key_node& _src) = default;
 		json_key_node(json_key_node&& _src) = default;
 

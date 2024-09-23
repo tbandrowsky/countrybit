@@ -588,18 +588,6 @@ namespace corona
 	const std::string sys_default_team_field = "new_user_default_team";
 	const std::string parse_error_class = "sys_parse_error";
 
-	std::map<std::string, bool> allowed_field_types = {
-	{ "object", true },
-	{ "array", true },
-	{ "double", true },
-	{ "int64", true },
-	{ "string", true },
-	{ "bool", true },
-	{ "datetime", true },
-	{ "function", true },
-	{ "query", true }
-	};
-
 	enum class field_types {
 		ft_none = 0,
 		ft_object = 1,
@@ -612,6 +600,31 @@ namespace corona
 		ft_function = 8,
 		ft_query = 9,
 		ft_blob = 10
+	};
+
+	std::map<std::string, field_types> allowed_field_types = {
+{ "object", field_types::ft_object },
+{ "array", field_types::ft_array },
+{ "double", field_types::ft_double },
+{ "number", field_types::ft_double },
+{ "int64", field_types::ft_int64 },
+{ "string", field_types::ft_string },
+{ "bool", field_types::ft_bool },
+{ "datetime", field_types::ft_datetime },
+{ "function", field_types::ft_function },
+{ "query", field_types::ft_query }
+	};
+
+	std::map<field_types, std::string> field_type_names = {
+{ field_types::ft_object, "object"  },
+{ field_types::ft_array , "array" },
+{ field_types::ft_double, "double"  },
+{ field_types::ft_int64, "int64"  },
+{ field_types::ft_string, "string"  },
+{ field_types::ft_bool, "bool"  },
+{ field_types::ft_datetime, "datetime"  },
+{ field_types::ft_function, "function"  },
+{ field_types::ft_query, "query"  }
 	};
 
 	auto toHex(unsigned char i)

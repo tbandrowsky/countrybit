@@ -142,7 +142,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			class_name = _src[class_name_field];
-			field_name = _src["field_anme"];
+			field_name = _src["field_name"];
 			message = _src[message_field];
 			filename = _src["filename"];
 			line_number = _src["line_number"];
@@ -747,7 +747,7 @@ namespace corona
 	class field_definition {
 	public:
 		std::string field_name;
-		std::string field_type;
+		field_types field_type;
 		std::shared_ptr<field_options_base> options;
 
 		field_definition() = default;
@@ -777,7 +777,7 @@ namespace corona
 			json joptions = jp.create_object();
 
 			_dest.put_member("field_name", field_name);
-			_dest.put_member("field_type", field_type);
+			_dest.put_member("field_type", field_type_names[field_type]);
 
 			if (options) {
 				options->get_json(_dest);
@@ -786,50 +786,54 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
-			field_type = _src["field_type"];
+			auto s = _src["field_type"];
+			auto aft = allowed_field_types.find(s);
+			if (aft != std::end(allowed_field_types)) {
+				field_type = aft->second;
+			}
 			field_name = _src["field_name"];
 
-			if (field_type == "object") 
+			if (field_type == field_types::ft_object) 
 			{
 				options = std::make_shared<object_field_options>();
 				options->put_json(_src);
 			}
-			else if (field_type == "array")
+			else if (field_type == field_types::ft_array)
 			{
 				options = std::make_shared<array_field_options>();
 				options->put_json(_src);
 			}
-			else if (field_type == "number" || field_type == "double")
+			else if (field_type == field_types::ft_double)
 			{
 				options = std::make_shared<general_field_options<double>>();
 				options->put_json(_src);
 			}
-			else if (field_type == "int64")
+			else if (field_type == field_types::ft_int64)
 			{
 				options = std::make_shared<int64_field_options>();
 				options->put_json(_src);
 			}
-			else if (field_type == "string")
+			else if (field_type == field_types::ft_string)
 			{
 				options = std::make_shared<string_field_options>();
 				options->put_json(_src);
 			}
-			else if (field_type == "bool")
+			else if (field_type == field_types::ft_bool)
 			{
 				options = std::make_shared<field_options_base>();
 				options->put_json(_src);
 			}
-			else if (field_type == "datetime")
+			else if (field_type == field_types::ft_datetime)
 			{
 				options = std::make_shared<general_field_options<date_time>>();
 				options->put_json(_src);
 			}
-			else if (field_type == "query")
+			else if (field_type == field_types::ft_query)
 			{
 				options = std::make_shared<query_field_options>();
 				options->put_json(_src);
 			}
-			else if (field_type == "function")
+			else if (field_type == field_types::ft_function)
 			{
 				;
 			}
@@ -1025,15 +1029,19 @@ namespace corona
 				for (auto jfield : jfield_members) {
 					std::shared_ptr<field_definition> field = std::make_shared<field_definition>();
 					field->field_name = jfield.first;
+					field->field_type = field_types::ft_none;
 					if (jfield.second.object()) 
 					{
 						field->put_json(jfield.second);
 					}
 					else if (jfield.second.is_string()) 
 					{
-						field->field_type = jfield.second;
+						auto fi = allowed_field_types.find(jfield.second);
+						if (fi != std::end(allowed_field_types)) {
+							field->field_type = fi->second;
+						}
 					}
-					if (allowed_field_types.contains(field->field_type)) {
+					if (field->field_type != field_types::ft_none) {
 						fields.insert_or_assign(field->field_name, field);
 					}
 				}
@@ -1057,7 +1065,7 @@ namespace corona
 			json_parser jp;
 			for (auto fldpair : fields) {
 				auto query_field = fldpair.second;
-				if (query_field->field_type == "query") {
+				if (query_field->field_type == field_types::ft_query) {
 					json empty_array = jp.create_array();
 					_target.put_member(query_field->field_name, empty_array);
 				}
@@ -1068,7 +1076,7 @@ namespace corona
 		{
 			for (auto fldpair : fields) {
 				auto query_field = fldpair.second;
-				if (query_field->field_type == "query") {
+				if (query_field->field_type == field_types::ft_query) {
 					json objects = query_field->run_queries(_db, _token, _target);
 					_target.put_member(query_field->field_name, objects);
 				}
@@ -1536,7 +1544,7 @@ private:
 				int64_t parent_object_id = (int64_t)_src_obj[object_id_field];
 				for (auto& fpair : _cdef->fields) {
 					auto& fld = fpair.second;
-					if (fld->field_type == "array")
+					if (fld->field_type == field_types::ft_array)
 					{
 						json fld_array = _src_obj[fld->field_name];
 						if (fld_array.array()) {
@@ -1576,7 +1584,7 @@ private:
 							_src_obj.put_member(fld->field_name, new_array);
 						}
 					}
-					else if (fld->field_type == "object")
+					else if (fld->field_type == field_types::ft_object)
 					{
 						json item = _src_obj[fld->field_name];
 						if (item.object() and item.has_member(class_name_field)) {
@@ -1625,7 +1633,7 @@ private:
 					key.put_member("parent_member", fld->field_name);
 					json link_objects = select_object(key, true);
 
-					if (fld->field_type == "array")
+					if (fld->field_type == field_types::ft_array)
 					{
 						json existing = _src_obj[fld->field_name];
 						if (not existing.array()) {
@@ -1646,7 +1654,7 @@ private:
 							}
 						}
 					}
-					else if (fld->field_type == "object")
+					else if (fld->field_type == field_types::ft_object)
 					{
 						for (auto link_object : link_objects)
 						{
@@ -1772,8 +1780,8 @@ private:
 
 					for (auto kv : class_data->fields) {
 						if (object_definition.has_member(kv.first)) {
-							std::string obj_type = object_definition[kv.first]->get_type_name();
-							std::string member_type = kv.second->field_type;
+							auto obj_type = object_definition[kv.first]->get_field_type();
+							auto member_type = kv.second->field_type;
 							if (member_type != obj_type) {
 								object_definition.change_member_type(kv.first, member_type);
 							}
@@ -3388,34 +3396,33 @@ private:
 						continue;
 
 					auto &field = member.second;
-					std::string &field_type = field->field_type;
 
-					if (field_type == "object") 
+					if (field->field_type == field_types::ft_object) 
 					{
 						new_object.put_member_object(member.first);
 					}
-					else if (field_type == "array" or field_type == "query")
+					else if (field->field_type == field_types::ft_array or field->field_type == field_types::ft_query)
 					{
 						new_object.put_member_array(member.first);
 					}
-					else if (field_type == "number") 
+					else if (field->field_type == field_types::ft_double) 
 					{
 						new_object.put_member(member.first, 0.0);
 					}
-					else if (field_type == "string") 
+					else if (field->field_type == field_types::ft_string)
 					{
 						new_object.put_member(member.first, "");
 					}
-					else if (field_type == "int64") 
+					else if (field->field_type == field_types::ft_int64)
 					{
 						new_object.put_member_i64(member.first, 0);
 					}
-					else if (field_type == "datetime")
+					else if (field->field_type == field_types::ft_datetime)
 					{
 						date_time dt;
 						new_object.put_member(member.first, dt);
 					}
-					else if (field_type == "function")
+					else if (field->field_type == field_types::ft_function)
 					{
 						auto key = std::make_tuple(class_name, member.first);
 						if (functions.contains(key)) {

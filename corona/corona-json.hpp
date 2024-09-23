@@ -85,6 +85,11 @@ namespace corona
 			return field_types::ft_none;
 		}
 
+		virtual std::stringstream& serialize(std::stringstream& _src)
+		{
+			return _src;
+		}
+
 		virtual std::shared_ptr<json_value> clone()
 		{
 			auto jv = std::make_shared<json_value>(*this);
@@ -172,6 +177,13 @@ namespace corona
 		{
 			return std::format("{}", value);
 		}
+		virtual std::stringstream& serialize(std::stringstream& _src)
+		{
+			_src << to_json_typed();
+			return _src;
+
+		}
+
 		virtual void from_string(std::string _src)
 		{
 			value = std::stod(_src);
@@ -334,6 +346,12 @@ namespace corona
 		{
 			return value;
 		}
+		virtual std::stringstream& serialize(std::stringstream& _src)
+		{
+			_src << to_json_typed();
+			return _src;
+
+		}
 		virtual void from_string(std::string _src)
 		{
 			value = _src;
@@ -382,6 +400,11 @@ namespace corona
 				st += c.str;
 			}
 			return st;
+		}
+		virtual std::stringstream& serialize(std::stringstream& _src)
+		{
+			_src << to_json_typed();
+			return _src;
 		}
 
 		virtual void from_string(std::string st)
@@ -432,6 +455,13 @@ namespace corona
 		{
 			return get_type_prefix() + " " + to_json();
 		}
+		virtual std::stringstream& serialize(std::stringstream& _src)
+		{
+			_src << to_json_typed();
+			return _src;
+
+		}
+
 
 		virtual std::string format(std::string _format)
 		{
@@ -496,6 +526,13 @@ namespace corona
 		{
 			return get_type_prefix() + " " + to_json();
 		}
+		virtual std::stringstream& serialize(std::stringstream& _src)
+		{
+			_src << to_json_typed();
+			return _src;
+
+		}
+
 		virtual std::string to_string()
 		{
 			return value;
@@ -555,6 +592,19 @@ namespace corona
 			}
 			ret += " ]";
 			return ret;
+		}
+
+		virtual std::stringstream& serialize(std::stringstream& _src)
+		{
+			_src << "[ ";
+			std::string comma = "";
+			for (auto el : elements) {
+				_src << comma;
+				comma = ", ";
+				el->serialize(_src);
+			}
+			_src <<  " ]";
+			return _src;
 		}
 
 		virtual std::string to_json_typed()
@@ -644,6 +694,22 @@ namespace corona
 			}
 			ret += " }";
 			return ret;
+		}
+
+		virtual std::stringstream& serialize(std::stringstream& _src)
+		{
+			_src << "{ ";
+			std::string comma = "";
+			for (auto el : members) {
+				_src << comma;
+				comma = ", ";
+				_src << "\"" << el.first << "\"" << ":";
+				if (el.second) {
+					el.second->serialize(_src);
+				}
+			}
+			_src << " }";
+			return _src;
 		}
 
 		virtual field_types get_field_type()
@@ -776,6 +842,14 @@ namespace corona
 		std::string to_json_typed()
 		{
 			return value_base->to_json_typed();
+		}
+
+		std::stringstream& serialize(std::stringstream& _dest)
+		{
+			if (value_base) {
+				value_base->serialize(_dest);
+			}
+			return _dest;
 		}
 
 		bool has_members(std::vector<std::string> _src)
@@ -1513,7 +1587,7 @@ namespace corona
 			}
 		}
 
-		void change_member_type(std::string _key, std::string _new_type)
+		void change_member_type(std::string _key, field_types _new_type)
 		{
 			if (not object_impl) 
 			{
@@ -1525,29 +1599,29 @@ namespace corona
 				throw std::logic_error("Changing type on a non-existent member");
 			}
 
-			if (_new_type == "object") {
+			if (_new_type == field_types::ft_object) {
 				put_member_object(_key);
 			}
-			else if (_new_type == "array") {
+			else if (_new_type == field_types::ft_array) {
 				put_member_array(_key);
 			}
-			else if (_new_type == "string") {
+			else if (_new_type == field_types::ft_string) {
 				std::string s = get_member(_key);
 				put_member(_key, s);
 			}
-			else if (_new_type == "int64") {
+			else if (_new_type == field_types::ft_int64) {
 				int64_t i64 = get_member(_key).get_int64s();
 				put_member_i64(_key, i64);
 			}
-			else if (_new_type == "double" or _new_type == "number") {
+			else if (_new_type == field_types::ft_double) {
 				double d = get_member(_key);
 				put_member(_key, d);
 			}
-			else if (_new_type == "datetime") {
+			else if (_new_type == field_types::ft_datetime) {
 				date_time dt = get_member(_key);
 				put_member(_key, dt);
 			}
-			else if (_new_type == "bool") {
+			else if (_new_type == field_types::ft_bool) {
 				bool b = (bool)get_member(_key);
 				put_member(_key, b);
 			}
