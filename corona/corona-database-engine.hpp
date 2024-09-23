@@ -1686,14 +1686,125 @@ private:
 			return response;
 		}
 
+		json check_single_object(date_time &current_date, std::string& _user_name, std::shared_ptr<class_definition>& class_data, json object_definition)
+		{
+			json_parser jp;
+
+			std::vector<validation_error> validation_errors;
+
+			json result = jp.create_object();
+
+			if (not object_definition.object())
+			{
+				json warning = jp.create_object();
+				validation_error ve;
+
+				ve.class_name = class_data->class_name;
+				ve.field_name = trim(object_definition.to_json_typed(), 50);
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "Not an object";
+				validation_errors.push_back(ve);
+			}
+			else {
+
+				if (not object_definition.has_member(class_name_field))
+				{
+					json warning = jp.create_object();
+					validation_error ve;
+
+					ve.class_name = trim(object_definition.to_json_typed(), 50);
+					ve.field_name = class_name_field;
+					ve.filename = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = "Missing class";
+					validation_errors.push_back(ve);
+				}
+
+				db_object_id_type object_id = -1;
+
+				if (object_definition.has_member(object_id_field))
+				{
+					object_id = object_definition[object_id_field].get_int64s();
+					object_definition.put_member("updated", current_date);
+					object_definition.put_member("updated_by", _user_name);
+				}
+				else
+				{
+					object_id = get_next_object_id();
+					object_definition.put_member_i64(object_id_field, object_id);
+					object_definition.put_member("created", current_date);
+					object_definition.put_member("created_by", _user_name);
+				}
+
+				// if the user was a stooser and saved the query results with the object,
+				// blank that out here because we will run that on load
+				class_data->clear_queries(object_definition);
+
+				// check the object against the class definition for correctness
+				// first we see which fields are in the class not in the object
+
+				for (auto kv : class_data->fields) {
+					if (object_definition.has_member(kv.first)) {
+						auto obj_type = object_definition[kv.first]->get_field_type();
+						auto member_type = kv.second->field_type;
+						if (member_type != obj_type) {
+							object_definition.change_member_type(kv.first, member_type);
+						}
+					}
+				}
+
+				// then we see which fields are in the object that are not 
+				// in the class definition.
+				auto object_members = object_definition.get_members();
+				for (auto om : object_members) {
+					if (class_data->fields.contains(om.first)) {
+						auto& fld = class_data->fields[om.first];
+						fld->accepts(this, validation_errors, class_data->class_name, om.first, om.second);
+					}
+					else
+					{
+						json warning = jp.create_object();
+						validation_error ve;
+						ve.class_name = class_data->class_name;
+						ve.field_name = om.first;
+						ve.filename = __FILE__;
+						ve.line_number = __LINE__;
+						ve.message = "Field not found in class definition";
+						validation_errors.push_back(ve);
+					}
+				}
+			}
+
+			if (validation_errors.size() > 0) {
+				json warnings = jp.create_array();
+				std::string msg = std::format("Object '{0}' has problems", class_data->class_name);
+				for (auto& ve : validation_errors) {
+					json jve = jp.create_object();
+					ve.get_json(jve);
+					warnings.push_back(jve);
+				}
+				result.put_member(message_field, msg);
+				result.put_member(success_field, 0);
+				result.put_member("errors", warnings);
+				result.put_member(data_field, object_definition);
+			}
+			else {
+				result.put_member(message_field, "Ok");
+				result.put_member(success_field, 1);
+				result.put_member(data_field, object_definition);
+			}
+
+			return result;
+		}
+
 		json check_object(std::string _user_name, json object_load)
 		{
 			timer method_timer;
 			json_parser jp;
 			date_time current_date = date_time::now();
 
-			json response,
-				 result;
+			json response; 
 
 			response = jp.create_object();
 
@@ -1709,8 +1820,6 @@ private:
 				object_list.push_back(object_load);
 			}
 
-			result_list = jp.create_array();
-
 			json classes_group = object_list.group([](json _item) -> std::string {
 				return _item[class_name_field];
 				});
@@ -1724,124 +1833,54 @@ private:
 			for (auto class_pair : class_list)
 			{
 				auto cd = load_class(class_pair.first);
-				cd->init_validation(this);
-			}
-
-			for (auto object_definition : object_list)
-			{
-				if (not object_definition.object())
-				{
-					result_list.push_back(result);
-				}
-
-				if (not object_definition.has_member(class_name_field))
-				{
-					result_list.push_back(result);
-				}
-
-				db_object_id_type object_id = -1;
-
-				if (object_definition.has_member(object_id_field))
-				{
-					object_id = object_definition[object_id_field].get_int64s();
-					object_definition.put_member("updated", current_date);
-					object_definition.put_member("updated_by", _user_name);
-				}
-				else
-				{
-					object_id =  get_next_object_id();
-					object_definition.put_member_i64(object_id_field, object_id);
-					object_definition.put_member("created", current_date);
-					object_definition.put_member("created_by", _user_name);
-				}
-
-				json warnings = jp.create_array();
-
-				std::string class_name = object_definition[class_name_field];
-
-				auto class_data = load_class(class_name);
-
-				if (class_data)
-				{
-					bool permission = has_class_permission(_user_name, class_name, "Put");
+				if (cd) {
+					cd->init_validation(this);
+					bool permission = has_class_permission(_user_name, class_pair.first, "Put");
 
 					if (not permission) {
 						response.put_member(success_field, false);
 						response.put_member(message_field, "denied");
-						return result;
+						return response;
 					}
+				}
+				else 
+				{
+					response.put_member(success_field, false);
+					response.put_member(message_field, class_pair.first + " invalid class name");
+					return response;
+				}
+			}
 
-					// if the user was a stooser and saved the query results with the object,
-					// blank that out here because we will run that on load
-					class_data->clear_queries(object_definition);
+			for (auto class_pair : class_list)
+			{
+				std::string class_name = class_pair.first;
 
-					// check the object against the class definition for correctness
-					// first we see which fields are in the class not in the object
+				json class_object_list = classes_group[class_name];
+				auto class_data = load_class(class_name);
 
-					for (auto kv : class_data->fields) {
-						if (object_definition.has_member(kv.first)) {
-							auto obj_type = object_definition[kv.first]->get_field_type();
-							auto member_type = kv.second->field_type;
-							if (member_type != obj_type) {
-								object_definition.change_member_type(kv.first, member_type);
-							}
-						}						
-					}
+				if (not class_data) {
+					continue;
+				}
 
-					// then we see which fields are in the object that are not 
-					// in the class definition.
-					auto object_members = object_definition.get_members();
-					for (auto om : object_members) {
-						if (class_data->fields.contains(om.first)) {
-							auto& fld = class_data->fields[om.first];
-							fld->accepts(this, validation_errors, class_name, om.first, om.second);
-						}
-						else 
-						{
-							json warning = jp.create_object();
-							validation_error ve;
-							ve.class_name = class_name;
-							ve.field_name = om.first;
-							ve.filename = __FILE__;
-							ve.line_number = __LINE__;
-							ve.message = "Field not found in class definition";
-							validation_errors.push_back(ve);
-						}
-					}
-					result = jp.create_object();
-					if (validation_errors.size() > 0) {
-						std::string msg = std::format("Object '{0}' has problems", class_name);
-						for (auto& ve : validation_errors) {
-							json jve = jp.create_object();
-							ve.get_json(jve);
-							warnings.push_back(jve);
-						}
-						result.put_member(message_field, msg);
-						result.put_member(success_field, 0);
-						result.put_member("Errors", warnings);
-						result.put_member(data_field, object_definition);
+				result_list = jp.create_array();
+
+				for (auto object_definition : class_object_list)
+				{
+					json result = check_single_object(current_date, _user_name, class_data, object_definition);
+					result_list.push_back(result);
+
+					if (not result[success_field]) 
+					{
 						all_objects_good = false;
 					}
-					else {
-						result.put_member(message_field, "Ok");
-						result.put_member(success_field, 1);
-						result.put_member(data_field, object_definition);
-					}
 				}
-				else
-				{
-					std::string msg = std::format("'{0}' is not valid class_name", class_name);
-					result.put_member(message_field, msg);
-					result.put_member(success_field, 0);
-					result.put_member(data_field, object_definition);
-					all_objects_good = false;
-				}
-				result_list.push_back(result);
+
+				classes_group.put_member(class_name, result_list);
 			}
 
 			response.put_member(success_field, all_objects_good);
 			response.put_member(message_field, "Objects processed");
-			response.put_member(data_field, result_list);
+			response.put_member(data_field, classes_group);
 			return response;
 		}
 
@@ -3478,29 +3517,7 @@ private:
 
 			if (result[success_field])
 			{
-				json data = result[data_field];
-
-				json item_array;
-				if (data.array()) {
-					item_array = jp.create_array();
-					for (auto obj : data) {
-						if (obj[success_field]) {
-							json t = obj[data_field];
-							item_array.push_back(t);
-						}
-					}
-				}
-				else 
-				{
-					item_array = jp.create_array();
-					if (data[success_field]) {
-						item_array.push_back(data[data_field]);
-					}
-				}
-
-				json grouped_by_class_name = item_array.group([](json& _item) -> std::string {
-					return _item[class_name_field];
-					});
+				json grouped_by_class_name = result[data_field];
 
 				auto classes_and_data = grouped_by_class_name.get_members();
 
@@ -3517,13 +3534,17 @@ private:
 					json_object_table class_data(this);
 					class_data.open(rpt);
 
-					class_data.put_array(class_pair.second);
+					json data_list = class_pair.second.map([](std::string _member, int _index, json& _item) -> json {
+						return _item[data_field];
+						});
+
+					class_data.put_array(data_list);
 
 					// update the indexes
 					for (auto class_index : cd->indexes) {
 						relative_ptr_type location = class_index.second->index_location;
 						if (location > 0) {
-							json indexed_objects = class_pair.second.map([&class_index](std::string _member, int _index, json& _item) -> json {
+							json indexed_objects = data_list.map([&class_index](std::string _member, int _index, json& _item) -> json {
 								return _item.extract(class_index.second->index_keys);
 								});
 							json_table index_to_update(this, class_index.second->index_keys);
@@ -3544,7 +3565,7 @@ private:
 					put_object(put_object_request);
 				}
 
-				result = create_response(put_object_request, true, "Object(s) created", data, method_timer.get_elapsed_seconds());
+				result = create_response(put_object_request, true, "Object(s) created", grouped_by_class_name, method_timer.get_elapsed_seconds());
 			}
 			else 
 			{
