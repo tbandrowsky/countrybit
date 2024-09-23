@@ -118,80 +118,12 @@ namespace corona
 
 			std::copy(s, s + buff.get_size(), p);
 
-			buff = new_buff; // TODO, use move here
+			buff = std::move(new_buff); // TODO, use move here
 
 			start = new_start;
 			stop = new_stop;
 		}
 
-		bool use(std::shared_ptr<file> _fp, int64_t _location, int64_t _size)
-		{
-			bool can_use = false;
-
-			int64_t start_point, end_point;
-
-			start_point = _location;
-			end_point = _location + _size;
-
-			if (end_point < start_point)
-				return false;
-
-			if (start_point >= start and end_point <= stop) 
-			{
-				can_use = true;
-			}
-			else if (start_point >= start and end_point > stop)
-			{
-				buffer new_buff;
-
-				int64_t new_start = start;
-				int64_t new_stop = end_point;
-
-				new_buff.init(new_stop - new_start);
-
-				unsigned char* s = buff.get_uptr();
-				unsigned char* p = new_buff.get_uptr();
-
-				std::copy(s, s + buff.get_size(), p);
-				if (_fp) {
-					_fp->read(stop, p, new_stop - stop);
-				}
-				buff = new_buff; // TODO, use move here
-
-				start = new_start;
-				stop = new_stop;
-			}
-			else if (start_point < start and end_point <= stop)
-			{
-				can_use = true;
-				buffer new_buff;
-
-				int64_t new_start = start_point;
-				int64_t new_stop = stop;
-
-				new_buff.init(new_stop - new_start);
-
-				int64_t delta = start - new_start;
-
-				unsigned char* s = buff.get_uptr();
-				unsigned char* p = new_buff.get_uptr() + delta;
-
-				std::copy(s, s + buff.get_size(), p);
-				if (_fp) {
-					_fp->read(new_start, p, delta);
-				}
-				buff = new_buff; // TODO, use move here
-
-				start = new_start;
-				stop = new_stop;
-			}
-			else if (start_point < start and end_point < start_point)
-			{
-				can_use = false;
-			}
-
-			return can_use;
-		}
 
 	};
 
@@ -335,7 +267,6 @@ namespace corona
 		}
 	};
 
-
 	class file_block : public file_block_interface
 	{
 		std::vector<std::shared_ptr<file_buffer>> buffers;
@@ -343,6 +274,8 @@ namespace corona
 		std::shared_ptr<file_buffer> append_buffer;
 		HANDLE	commit_complete;
 		lockable block_lock;
+		int64_t block_size = 65536;
+		int64_t append_size = 65536 * 16;
 
 		std::shared_ptr<file_buffer> feast(int64_t _start, int64_t _length, feast_types _feast)
 		{
@@ -429,8 +362,6 @@ namespace corona
 		}
 
 	public:
-
-		const int block_size = 65536;
 
 		file_block(std::shared_ptr<file> _fp)
 		{
@@ -559,11 +490,12 @@ namespace corona
 			file_command_result result;
 			int64_t location = -1;
 
-			if (!append_buffer) {
-				int64_t buffer_size = 1;
+			int64_t buffer_size = append_size;
 
-				while (buffer_size < 65536 or buffer_size < _bytes_to_add)
-					buffer_size *= 2;
+			while (buffer_size < _bytes_to_add)
+				buffer_size *= 2;
+
+			if (!append_buffer) {
 
 				location = fp->add(buffer_size);
 				append_buffer = std::make_shared<file_buffer>(location, location + buffer_size, true);
@@ -573,10 +505,6 @@ namespace corona
 
 			if (location < 0)
 			{
-				int64_t buffer_size = _bytes_to_add;
-				if (buffer_size < 65536)
-					buffer_size = 65536;
-
 				location = fp->add(buffer_size);
 				if (location != append_buffer->stop) {
 					throw std::logic_error("Someone else grew the file so I have no clue what to do now.");

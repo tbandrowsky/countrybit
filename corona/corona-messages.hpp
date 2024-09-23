@@ -92,14 +92,20 @@ namespace corona
 			message = buffer;
 		}
 		else {
-			message = "Ok";
 			success = true;
 		}
 	}
 
 	std::ostream& operator <<(std::ostream& output, const os_result& src)
 	{
-		output << src.error_code << " " << src.message << " " << src.success;
+
+		if (not src.message.empty()) {
+			output << src.error_code << " - " << src.message << " - " << src.success;
+		}
+		else {
+			output << src.error_code << " - " << src.success;
+		}
+
 		return output;
 	}
 
