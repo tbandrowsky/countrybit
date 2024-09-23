@@ -191,6 +191,9 @@ namespace corona {
 // a json table here is a physical table in a file beginning at some point within it.
 #include "corona-json-table.hpp"
 
+// a json object table here has a simpler key
+#include "corona-json-object-table.hpp"
+
 // the corona client is an http client for the corona server
 #include "corona-coronaclient.hpp"
 
