@@ -110,7 +110,6 @@ namespace corona
 		{
 			auto offset = offsetof(corona_db_header_struct, free_lists) + _index * sizeof(list_block_header);
 			auto size = sizeof(list_block_header);
-			memcpy(bytes.get_ptr() + offset, (const char*)&data + offset, size);
 			auto r = write_piece(_file, offset, size);
 			return r;
 		}

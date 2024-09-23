@@ -51,42 +51,36 @@ namespace corona
 			object_id = 0;
 		}
 
-		virtual int32_t on_write() override
+		virtual char* before_read(int32_t size) override
 		{
-			int32_t size_bytes =
-				sizeof(object_id) +
-				sizeof(json_location) +
-				foward.get_io_write_size();
-			return size_bytes;
-		}
-
-		virtual char* get_bytes(int64_t size) override
-		{
-			char *io_bytes = (char*)&object_id;
+			char* io_bytes = (char*)&object_id;
 			return io_bytes;
 		}
 
-		virtual void finished_bytes(char* _bytes)  override
+		virtual void after_read(char* _bytes) override
 		{
-
 		}
 
 
-
-		virtual void on_read()
+		virtual char* before_write(int32_t* _size) override
 		{
-			clear();
-		}
-
-		virtual int32_t on_write()
-		{
-			int32_t size_bytes =
+			*_size =
 				sizeof(object_id) +
 				sizeof(json_location) +
 				foward.get_io_write_size();
-			return size_bytes;
+			char* io_bytes = (char*)&object_id;
+			return io_bytes;
 		}
 
+		virtual void after_write(char* _bytes) override
+		{
+			;
+		}
+
+		virtual void finished_io(char* _bytes)  override
+		{
+
+		}
 		json_data_node get_node(file_block* _file)
 		{
 			json_data_node node_to_read;

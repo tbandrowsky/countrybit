@@ -54,16 +54,22 @@ namespace corona
 		data_block(const data_block& _src) = default;
 		data_block& operator = (const data_block& _src) = default;
 
-		virtual int32_t on_write() = 0;
-		virtual int32_t on_write(int _offset, int _size)
+		virtual char* before_write(int32_t* _size) = 0;
+		virtual char* before_write(int _offset, int _size)
+		{
+			return nullptr;
+		}
+
+		virtual void after_write(char* _buff)
 		{
 			;
 		}
 
-		virtual void on_read( ) = 0;
 
-		virtual char *get_bytes(int64_t size) = 0;
-		virtual void finished_bytes(char *_bytes) = 0;
+		virtual char* before_read(int32_t _size) = 0;
+		virtual void after_read(char *_bytes) = 0;
+
+		virtual void finished_io(char *_bytes) = 0;
 
 		relative_ptr_type read(file_block* _file, relative_ptr_type location)
 		{
@@ -78,13 +84,13 @@ if (ENABLE_JSON_LOGGING) {
 
 			if (header_result.success) 
 			{
-				char *bytes = get_bytes(header.data_size);
+				char *bytes = before_read(header.data_size);
 				file_command_result data_result = _file->read(header.data_location, bytes, header.data_size);
 
 				if (data_result.success) 
 				{
-					on_read();
-					finished_bytes(bytes);
+					after_read(bytes);
+					finished_io(bytes);
 if (ENABLE_JSON_LOGGING) {
 					system_monitoring_interface::global_mon->log_block_stop("block", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 }
@@ -92,7 +98,7 @@ if (ENABLE_JSON_LOGGING) {
 				}
 				else 
 				{
-					finished_bytes(bytes);
+					finished_io(bytes);
 					if (ENABLE_JSON_LOGGING) {
 						system_monitoring_interface::global_mon->log_function_stop("block", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
@@ -118,22 +124,21 @@ if (ENABLE_JSON_LOGGING) {
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_block_start("block", "write piece", start_time, __FILE__, __LINE__);
 			}
+			char *bytes = before_write(_offset, _size);
 
-			int32_t data_size = on_write(_offset, _size);
-			char* bytes = get_bytes(data_size);
-
-			file_command_result data_result = _file->write(header.data_location + _offset, bytes + _offset, _size);
+			file_command_result data_result = _file->write(header.data_location + _offset, bytes, _size);
 
 			if (data_result.success)
 			{
-				finished_bytes(bytes);
+				after_write(bytes);
+				finished_io(bytes);
 				if (ENABLE_JSON_LOGGING) {
 					system_monitoring_interface::global_mon->log_block_stop("block", "write complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				return data_result.location;
 			}
 			else {
-				finished_bytes(bytes);
+				finished_io(bytes);
 				if (ENABLE_JSON_LOGGING) {
 					system_monitoring_interface::global_mon->log_block_stop("block", "write failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
@@ -156,7 +161,8 @@ if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_block_start("block", "write block", start_time, __FILE__, __LINE__);
 			}
 
-			int32_t size = on_write();
+			int32_t size;
+			char *bytes = before_write(&size);
 
 			if (size > header.data_capacity)
 			{
@@ -174,14 +180,13 @@ if (ENABLE_JSON_LOGGING) {
 				header.data_size = size;
 			}
 
-			char* bytes = get_bytes(size);
-
 			file_command_result data_result = _file->write(header.data_location, bytes, size);
 
 			if (data_result.success)
 			{
 				file_command_result header_result = _file->write(header.block_location, &header, sizeof(header));
-				finished_bytes(bytes);
+				after_write(bytes);
+				finished_io(bytes);
 				if (ENABLE_JSON_LOGGING) {
 					system_monitoring_interface::global_mon->log_block_stop("block", "write complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}				
@@ -189,7 +194,7 @@ if (ENABLE_JSON_LOGGING) {
 			}
 			else 
 			{
-				finished_bytes(bytes);
+				finished_io(bytes);
 				if (ENABLE_JSON_LOGGING) {
 					system_monitoring_interface::global_mon->log_block_stop("block", "write failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
@@ -200,13 +205,17 @@ if (ENABLE_JSON_LOGGING) {
 		relative_ptr_type append(file_block* _file)
 		{
 
-			int size = on_write();
+			int32_t size;
+			char* bytes;
+			bytes = before_write(&size);
 
 			date_time start_time = date_time::now();
 			timer tx;
-if (ENABLE_JSON_LOGGING) {
-			system_monitoring_interface::global_mon->log_block_start("block", "append", start_time, __FILE__, __LINE__);
-}
+
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_block_start("block", "append", start_time, __FILE__, __LINE__);
+			}
+
 			int64_t actual_size = 0;
 			header.block_location = _file->allocate_space(sizeof(header), &actual_size);
 			header.data_size = size;
@@ -216,15 +225,15 @@ if (ENABLE_JSON_LOGGING) {
 			if (header.block_location < 0 or header.data_location < 0)
 				return -1;
 
-			char* bytes = get_bytes(size);
 			auto hdr_status = _file->write(header.block_location, &header, sizeof(header));
 			auto data_status = _file->write(header.data_location, bytes, size);
 
-if (ENABLE_JSON_LOGGING) {
-			system_monitoring_interface::global_mon->log_block_stop("block", "append", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-}
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_block_stop("block", "append", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
 
-			finished_bytes(bytes);
+			after_write(bytes);
+			finished_io(bytes);
 
 			if (not (hdr_status.success and data_status.success)) {
 				return -1;
@@ -240,13 +249,61 @@ if (ENABLE_JSON_LOGGING) {
 		}
 	};
 
+	class string_block : public data_block
+	{
+	public:
+
+		std::string data;
+
+		string_block()
+		{
+		}
+
+		bool is_empty()
+		{
+			return data.empty();
+		}
+
+		void clear()
+		{
+			data.clear();
+		}
+
+		virtual char* before_read(int32_t size) override
+		{
+			data.resize(size, 0);
+			return (char*)data.c_str();
+		}
+
+		virtual void after_read(char *_bytes) override
+		{
+			;
+		}
+
+		virtual char *before_write(int32_t *_size) override
+		{
+			*_size = strlen(data.c_str());
+			return (char *)data.c_str();
+		}
+
+		virtual void after_write(char* _bytes) override
+		{
+			;
+		}
+
+		virtual void finished_io(char* _bytes) override
+		{
+			;
+		}
+
+	};
 
 	class json_data_node : public data_block
 	{
 	public:
 
 		json							data;
-		std::string bytes;
+		std::string						bytes;
 
 		json_data_node()
 		{
@@ -262,22 +319,16 @@ if (ENABLE_JSON_LOGGING) {
 			json_parser jp;
 			data = jp.create_object();
 		}
-
-		virtual char* get_bytes(int64_t size) override
+		
+		virtual char* before_read(int32_t _size)  override
 		{
-			bytes.resize(size+1, 0);
-			return (char *)bytes.c_str();
+			bytes.resize(_size);
+			return (char*)bytes.c_str();
 		}
 
-		virtual void finished_bytes(char* _bytes) override
+		virtual void after_read(char* _bytes) override
 		{
-			bytes.clear();
-		}
-
-		virtual void on_read() override
-		{
-			clear();
-			const char *contents = bytes.c_str();
+			const char* contents = _bytes;
 			if (contents) {
 				json_parser jp;
 				if (*contents == '[') {
@@ -289,18 +340,27 @@ if (ENABLE_JSON_LOGGING) {
 			}
 		}
 
-		virtual int32_t on_write() override
+		virtual void finished_io(char* _bytes) override
+		{
+			;
+		}
+
+		virtual char *before_write(int32_t *_size) override
 		{
 			bytes = data.to_json_typed();
-			return bytes.size() + 1;
+			*_size = bytes.size();
+			return (char *)bytes.c_str();
+		}
+
+		virtual void after_write(char *_t) override
+		{
+			
 		}
 
 	};
 
 	class json_key_node : public data_block
 	{
-		char* io_bytes;
-
 	public:
 
 		uint64_t									hash_code;
@@ -326,28 +386,35 @@ if (ENABLE_JSON_LOGGING) {
 			hash_code = 0;
 		}
 
-		virtual int32_t on_write() override
+		virtual char* before_read(int32_t size) override
 		{
-			int32_t size_bytes =
-				sizeof(json_location) +
-				sizeof(hash_code) +
-				foward.get_io_write_size();
-			return size_bytes;
-		}
-
-		virtual char* get_bytes(int64_t size) override
-		{
-			io_bytes = (char *) &hash_code;
+			char *io_bytes = (char *) &hash_code;
 			return io_bytes;
 		}
 
-		virtual void finished_bytes(char* _bytes)  override
+		virtual void after_read(char* _bytes) override
 		{
-
 		}
 
-		virtual void on_read() override
+
+		virtual char* before_write(int32_t *_size) override
 		{
+			*_size =
+				sizeof(json_location) +
+				sizeof(hash_code) +
+				foward.get_io_write_size();
+			char *io_bytes = (char*)&hash_code;
+			return io_bytes;
+		}
+
+		virtual void after_write(char* _bytes) override
+		{
+			;
+		}
+
+		virtual void finished_io(char* _bytes)  override
+		{
+
 		}
 
 		json_data_node get_node(file_block* _file)
@@ -375,26 +442,38 @@ if (ENABLE_JSON_LOGGING) {
 
 		poco_type				data;
 
-		virtual void on_read() override
+		virtual char* before_read(int32_t size) override
 		{
-		}
-
-		virtual int32_t on_write() override
-		{
-			return sizeof(data);
-		}
-
-		virtual char* get_bytes(int64_t size) override
-		{
-			io_bytes = (char*)&data;
+			char* io_bytes = (char*)&data;
 			return io_bytes;
 		}
 
-		virtual void finished_bytes(char* _bytes)  override
+		virtual void after_read(char* _bytes) override
+		{
+		}
+
+
+		virtual char* before_write(int32_t* _size) override
+		{
+			*_size = sizeof(data);
+			char* io_bytes = (char*)&data;
+			return io_bytes;
+		}
+
+		virtual char* before_write(int _offset, int _size)
+		{
+			return (char *)(&data) + _offset;
+		}
+
+		virtual void after_write(char* _bytes) override
+		{
+			;
+		}
+
+		virtual void finished_io(char* _bytes)  override
 		{
 
 		}
-
 
 		poco_node& operator = (const poco_type& _src)
 		{
@@ -407,6 +486,11 @@ if (ENABLE_JSON_LOGGING) {
 	class json_table_header : public poco_node<table_header_struct>
 	{
 	public:
+
+		virtual char* before_write(int _offset, int _size)
+		{
+			return (char *)&data;
+		}
 
 		int64_t write_count(file_block * _file)
 		{
@@ -2033,11 +2117,11 @@ if (ENABLE_JSON_LOGGING) {
 
 		json jx = jp.parse_object(R"({ "name":"bill", "age":42 })");
 
-		data_block dfirst, dfirstread, dbounds;
+		string_block dfirst, dfirstread, dbounds;
 
-		dfirst = jx;
+		dfirst.data = jx.to_json_typed();
 
-		std::string dfs = dfirst.get_string();
+		std::string dfs = dfirst.data;
 		std::string jxs = jx.to_json_typed();
 		if (dfs != jxs)
 		{
@@ -2051,8 +2135,8 @@ if (ENABLE_JSON_LOGGING) {
 
 		int64_t dfirstlocation = dfirst.append(&fb);
 
-		dbounds.bytes = "test border string";
-		std::string borders = dbounds.get_string();
+		dbounds.data = "test border string";
+		std::string borders = dbounds.data;
 
 		int64_t dboundslocation = dbounds.append(&fb);
 
@@ -2061,8 +2145,8 @@ if (ENABLE_JSON_LOGGING) {
 		int64_t dboundslocationread = dbounds.read(&fb, dboundslocation);
 
 		std::string sc, sb;
-		sc = dfirstread.get_string();
-		sb = dfirst.get_string();
+		sc = dfirstread.data;
+		sb = dfirst.data;
 		if (sc != sb)
 		{
 			proof_assertion.put_member("append", false);
@@ -2076,7 +2160,7 @@ if (ENABLE_JSON_LOGGING) {
 		}
 
 		std::string borders_after;
-		borders_after = dbounds.get_string();
+		borders_after = dbounds.data;
 		if (borders != borders_after)
 		{
 			proof_assertion.put_member("write", false);
@@ -2097,13 +2181,13 @@ if (ENABLE_JSON_LOGGING) {
 			 })");
 		sc = jx2.to_json_typed();
 			
-		dfirst = jx2;
-		std::string sbefore = dfirst.get_string();
+		dfirst.data = sc;
+		std::string sbefore = dfirst.data;
 		dfirst.write(&fb);
 		
 		json growth = jp.create_object();
 
-		sb = dfirst.get_string();
+		sb = dfirst.data;
 		if (sc != sb)
 		{
 			growth.put_member("self", false);
@@ -2116,7 +2200,7 @@ if (ENABLE_JSON_LOGGING) {
 
 		dbounds.read(&fb, dboundslocation);
 
-		borders_after = dbounds.get_string();
+		borders_after = dbounds.data;
 		if (borders_after != borders)
 		{
 			growth.put_member("neighbor", false);
@@ -2137,7 +2221,7 @@ if (ENABLE_JSON_LOGGING) {
 
 		dbounds.read(&fb, dboundslocation);
 
-		borders_after = dbounds.get_string();
+		borders_after = dbounds.data;
 		if (borders_after != borders)
 		{
 			growth.put_member("peristent", false);

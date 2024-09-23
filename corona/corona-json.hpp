@@ -2051,8 +2051,6 @@ namespace corona
 
 		int compare(json& _item)
 		{
-			int comparison = 0;
-
 			if (object() and !_item.object())
 			{
 				return 1;
@@ -2109,10 +2107,10 @@ namespace corona
 						auto vsource = std::dynamic_pointer_cast<json_double>( source_value );
 						auto vdest = std::dynamic_pointer_cast<json_double>(dest_value);
 						if (vsource->value < vdest->value) {
-							comparison = -1;
+							comparison_result = -1;
 						} 
 						else if (vsource->value > vdest->value) {
-							comparison = 1;
+							comparison_result = 1;
 						}
 					}
 					break;
@@ -2122,10 +2120,10 @@ namespace corona
 						auto vsource = std::dynamic_pointer_cast<json_int64>(source_value);
 						auto vdest = std::dynamic_pointer_cast<json_int64>(dest_value);
 						if (vsource->value < vdest->value) {
-							comparison = -1;
+							comparison_result = -1;
 						}
 						else if (vsource->value > vdest->value) {
-							comparison = 1;
+							comparison_result = 1;
 						}
 
 					}
@@ -2136,10 +2134,10 @@ namespace corona
 						auto vsource = std::dynamic_pointer_cast<json_string>(source_value);
 						auto vdest = std::dynamic_pointer_cast<json_string>(dest_value);
 						if (vsource->value < vdest->value) {
-							comparison = -1;
+							comparison_result = -1;
 						}
 						else if (vsource->value > vdest->value) {
-							comparison = 1;
+							comparison_result = 1;
 						}
 					}
 					break;
@@ -2152,10 +2150,10 @@ namespace corona
 						auto vsource = std::dynamic_pointer_cast<json_datetime>(source_value);
 						auto vdest = std::dynamic_pointer_cast<json_datetime>(dest_value);
 						if (vsource->value < vdest->value) {
-							comparison = -1;
+							comparison_result = -1;
 						}
 						else if (vsource->value > vdest->value) {
-							comparison = 1;
+							comparison_result = 1;
 						}
 					}
 					break;
