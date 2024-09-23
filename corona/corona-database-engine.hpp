@@ -1992,7 +1992,7 @@ private:
 
 			if (classd) 
 			{
-				json_table class_data(this, { object_id_field });
+				json_object_table class_data(this);
 				class_data.open(classd->table_location);
 				obj = class_data.get(_object_key);
 				return obj;
@@ -2015,7 +2015,7 @@ private:
 			if (classd)
 			{
 				relative_ptr_type rpt = classd->table_location;
-				json_table class_data(this, { object_id_field });
+				json_object_table class_data(this);
 				class_data.open(rpt);
 
 				// Now, if there is an index set specified, let's go see if we can find one and use it 
@@ -3066,7 +3066,7 @@ private:
 				class_def.table_location = existing_class->table_location;
 			}
 
-			json_table class_data(this, { object_id_field });
+			json_object_table class_data(this);
 			relative_ptr_type rpt;
 
 			if (class_def.table_location == 0) {
@@ -3508,7 +3508,7 @@ private:
 
 					// now that we have our class, we can go ahead and open the storage for it
 					relative_ptr_type rpt = cd->table_location;
-					json_table class_data(this, { object_id_field });
+					json_object_table class_data(this);
 					class_data.open(rpt);
 
 					class_data.put_array(class_pair.second);
@@ -3638,7 +3638,7 @@ private:
 			if (cd->table_location) {
 				json empty;
 				relative_ptr_type rpt = cd->table_location;
-				json_table class_data(this, { object_id_field });
+				json_object_table class_data(this);
 				class_data.open(rpt);
 				class_data.erase(object_key);
 				response = create_response(delete_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
