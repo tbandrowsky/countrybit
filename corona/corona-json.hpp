@@ -79,6 +79,12 @@ namespace corona
 		{
 			return typeid(*this).name();
 		}
+
+		virtual field_types get_field_type()
+		{
+			return field_types::ft_none;
+		}
+
 		virtual std::shared_ptr<json_value> clone()
 		{
 			auto jv = std::make_shared<json_value>(*this);
@@ -288,6 +294,10 @@ namespace corona
 
 			return formatted_number;
 		}
+		virtual field_types get_field_type()
+		{
+			return field_types::ft_double;
+		}
 
 		virtual std::string get_type_prefix()
 		{
@@ -331,6 +341,10 @@ namespace corona
 		virtual std::string format(std::string _format)
 		{
 			return value.format(_format);
+		}
+		virtual field_types get_field_type()
+		{
+			return field_types::ft_datetime;
 		}
 		virtual std::string get_type_prefix()
 		{
@@ -380,6 +394,11 @@ namespace corona
 			}
 		}
 
+		virtual field_types get_field_type()
+		{
+			return field_types::ft_blob;
+		}
+
 		virtual std::string get_type_prefix()
 		{
 			return "$blob";
@@ -427,6 +446,11 @@ namespace corona
 		virtual void from_string(std::string _src)
 		{
 			value = std::stoll(_src);
+		}
+
+		virtual field_types get_field_type()
+		{
+			return field_types::ft_int64;
 		}
 
 		virtual std::string get_type_prefix()
@@ -480,6 +504,12 @@ namespace corona
 		{
 			value = _src;
 		}
+
+		virtual field_types get_field_type()
+		{
+			return field_types::ft_string;
+		}
+
 		virtual std::string get_type_prefix()
 		{
 			return "$string";
@@ -531,6 +561,12 @@ namespace corona
 		{
 			return to_json();
 		}
+
+		virtual field_types get_field_type()
+		{
+			return field_types::ft_array;
+		}
+
 
 		virtual std::string format(std::string _format)
 		{
@@ -608,6 +644,11 @@ namespace corona
 			}
 			ret += " }";
 			return ret;
+		}
+
+		virtual field_types get_field_type()
+		{
+			return field_types::ft_object;
 		}
 
 		virtual std::string to_string()
@@ -1270,6 +1311,17 @@ namespace corona
 		std::shared_ptr<json_value> operator ->()
 		{
 			return value_base;
+		}
+
+		std::shared_ptr<json_value> get_member_value(const std::string& _key)
+		{
+			if (object_impl) {
+				auto vlist = object_impl->members.find(_key);
+				if (vlist != std::end(object_impl->members)) {
+					return vlist->second;
+				}
+			}
+			return nullptr;
 		}
 
 		json operator[](const std::string& _key) const
@@ -2016,80 +2068,120 @@ namespace corona
 				throw std::logic_error("At least one of the being compared must be json_object (not array or value, yet)");
 			}
 
+			int comparison_result = 0;
+
 			for (auto m : comparison_fields)
 			{
 				std::string key = std::get<1>(m);
-				auto member_value = object_impl->members[key];
+				auto source_value = get_member_value(key);
+				auto dest_value = _item.get_member_value(key);
 
-				if (not _item.has_member(key)) 
+				if (not dest_value or dest_value->get_field_type() != source_value->get_field_type()) 
 				{
-					return 1;
-				}				
-
-				auto member_src = json(member_value);
-				auto member_dest = _item[key];
-
-				if (member_src.is_string()) 
+					comparison_result = 1;
+				}
+				else if (not source_value)
 				{
-					std::string tst_src, tst_dst;
-					tst_src = member_src;
-					tst_dst = member_dest;
-
-					comparison = _stricmp(tst_src.c_str(), tst_dst.c_str());
+					comparison_result = -1;
 				}
-				else if (member_src.is_int64())
+				else switch (source_value->get_field_type())
 				{
-					int64_t itst_src, itst_dst;
-					itst_src = (int64_t)member_src;
-					itst_dst = (int64_t)member_dest;
+					case field_types::ft_none:
+					{
+						comparison_result = 0;
+					}
+					break;
 
-					if (itst_src < itst_dst) {
-						comparison = -1;
+					case field_types::ft_object:
+					{
+						comparison_result = 0;
 					}
-					else if (itst_src > itst_dst) {
-						comparison = 1;
-					}
-					else if (itst_src == itst_dst) {
-						comparison = 0;
-					}
-				}
-				else if (member_src.is_double())
-				{
-					double dtst_src, dtst_dst;
-					dtst_src = (double)member_src;
-					dtst_dst = (double)member_dest;
+					break;
 
-					if (dtst_src < dtst_dst) {
-						comparison = -1;
+					case field_types::ft_array:
+					{
+						comparison_result = 0;
 					}
-					else if (dtst_src > dtst_dst) {
-						comparison = 1;
-					}
-					else if (dtst_src == dtst_dst) {
-						comparison = 0;
-					}
-				}
-				else if (member_src.is_datetime())
-				{
-					date_time dtst_src = (date_time)member_src;
-					date_time dtst_dst = (date_time)member_dest;
+					break;
 
-					comparison = dtst_src.compare(dtst_dst);
-				}
-				else if (member_src.object() or member_src.array() or member_src.function())
-				{
-					json dtst_src, dtst_dst;
-					dtst_src = member_src;
-					dtst_dst = member_dest;
-					comparison = dtst_src.compare(dtst_dst);
+					case field_types::ft_double:
+					{
+						auto vsource = std::dynamic_pointer_cast<json_double>( source_value );
+						auto vdest = std::dynamic_pointer_cast<json_double>(dest_value);
+						if (vsource->value < vdest->value) {
+							comparison = -1;
+						} 
+						else if (vsource->value > vdest->value) {
+							comparison = 1;
+						}
+					}
+					break;
+
+					case field_types::ft_int64:
+					{
+						auto vsource = std::dynamic_pointer_cast<json_int64>(source_value);
+						auto vdest = std::dynamic_pointer_cast<json_int64>(dest_value);
+						if (vsource->value < vdest->value) {
+							comparison = -1;
+						}
+						else if (vsource->value > vdest->value) {
+							comparison = 1;
+						}
+
+					}
+					break;
+
+					case field_types::ft_string:
+					{
+						auto vsource = std::dynamic_pointer_cast<json_string>(source_value);
+						auto vdest = std::dynamic_pointer_cast<json_string>(dest_value);
+						if (vsource->value < vdest->value) {
+							comparison = -1;
+						}
+						else if (vsource->value > vdest->value) {
+							comparison = 1;
+						}
+					}
+					break;
+
+					case field_types::ft_bool:
+					break;
+
+					case field_types::ft_datetime:
+					{
+						auto vsource = std::dynamic_pointer_cast<json_datetime>(source_value);
+						auto vdest = std::dynamic_pointer_cast<json_datetime>(dest_value);
+						if (vsource->value < vdest->value) {
+							comparison = -1;
+						}
+						else if (vsource->value > vdest->value) {
+							comparison = 1;
+						}
+					}
+					break;
+
+					case field_types::ft_query:
+					{
+
+						return 0;
+
+					}
+					break;
+
+					case field_types::ft_blob:
+					{
+						return 0;
+
+					}
+					break;
 				}
 
-				if (comparison) {
-					return comparison;
-				}
+				if (comparison_result)
+					return comparison_result;
+
 			}
 
-			return 0;
+			return comparison_result;
 		}
 
 		json for_each_member(std::function<void(const std::string& _key_name)> _transform)

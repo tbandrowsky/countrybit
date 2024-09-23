@@ -600,6 +600,20 @@ namespace corona
 	{ "query", true }
 	};
 
+	enum class field_types {
+		ft_none = 0,
+		ft_object = 1,
+		ft_array = 2,
+		ft_double = 3,
+		ft_int64 = 4,
+		ft_string = 5,
+		ft_bool = 6,
+		ft_datetime = 7,
+		ft_function = 8,
+		ft_query = 9,
+		ft_blob = 10
+	};
+
 	auto toHex(unsigned char i)
 	{
 		struct char_pair
