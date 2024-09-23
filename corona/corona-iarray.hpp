@@ -29,8 +29,8 @@ namespace corona {
 	template <typename item_type, int max_items>
 	class iarray
 	{
-		item_type data[max_items];
 		corona_size_t length;
+		item_type data[max_items];
 
 		using collection_type = iarray<item_type, max_items>;
 		using iterator_item_type = value_reference<item_type>;
@@ -90,6 +90,16 @@ namespace corona {
 				push_back(src[i]);
 			}
 			return *this;
+		}
+
+		char* get_io_pointer()
+		{
+			return &length;
+		}
+
+		int32_t get_io_write_size()
+		{
+			return ((char *)&data[length] - (char*)&data[0]) + sizeof(length);
 		}
 
 		const item_type* value() const

@@ -29,8 +29,8 @@ namespace corona
 	public:
 
 		int64_t										object_id;
-		iarray<int64_t, JsonTableMaxNumberOfLevels> foward;
 		int64_t										json_location;
+		iarray<int64_t, JsonTableMaxNumberOfLevels> foward;
 
 		json_object_key_node() = default;
 		json_object_key_node(const json_object_key_node& _src) = default;
@@ -51,43 +51,40 @@ namespace corona
 			object_id = 0;
 		}
 
+		virtual int32_t on_write() override
+		{
+			int32_t size_bytes =
+				sizeof(object_id) +
+				sizeof(json_location) +
+				foward.get_io_write_size();
+			return size_bytes;
+		}
+
+		virtual char* get_bytes(int64_t size) override
+		{
+			char *io_bytes = (char*)&object_id;
+			return io_bytes;
+		}
+
+		virtual void finished_bytes(char* _bytes)  override
+		{
+
+		}
+
+
+
 		virtual void on_read()
 		{
 			clear();
-			char* base = bytes.get_ptr();
-			int16_t* foward_count = (int16_t*)base;
-			base += sizeof(int16_t);
-			int64_t* ptr = (int64_t*)base;
-			for (int i = 0; i < *foward_count; i++) {
-				foward.push_back(*ptr);
-				ptr++;
-			}
-			json_location = *ptr;
-			ptr++;
-			object_id = *ptr;
 		}
 
-		virtual void on_write()
+		virtual int32_t on_write()
 		{
 			int32_t size_bytes =
-				sizeof(int16_t) +
-				sizeof(int64_t) * foward.size() +
+				sizeof(object_id) +
 				sizeof(json_location) +
-				sizeof(object_id);
-
-			bytes.init(size_bytes);
-			char* base = bytes.get_ptr();
-			int16_t* foward_count = (int16_t*)base;
-			*foward_count = foward.size();
-			base += sizeof(int16_t);
-			int64_t* ptr = (int64_t*)base;
-			for (int i = 0; i < foward.size(); i++) {
-				*ptr = foward[i];
-				ptr++;
-			}
-			*ptr = json_location;
-			ptr++;
-			*ptr = object_id;
+				foward.get_io_write_size();
+			return size_bytes;
 		}
 
 		json_data_node get_node(file_block* _file)
