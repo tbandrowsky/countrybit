@@ -65,9 +65,9 @@ namespace corona
 	struct table_header_struct
 	{
 	public:
-		int64_t		count;
-		int64_t		data_root_location;
-		int			level;
+		int64_t			count;
+		int64_t			data_root_location;
+		int32_t			level;
 	};
 
 	template <typename data> class poco_node;

@@ -19,350 +19,12 @@ For Future Consideration
 #ifndef CORONA_JSON_TABLE_H
 #define CORONA_JSON_TABLE_H
 
-const int ENABLE_JSON_LOGGING = 0;
-
 namespace corona 
 {
 
 	const int debug_json_table = 0;
 
-	// data blocks
-	class data_block;
-
-	// poco nodes
-	template <typename T> class poco_node;
-
-	struct allocation_index
-	{
-		int		index;
-		int64_t size;
-	};
-
-	// root data block.  Everything is a block.  It's almost like minecraft, except, it makes money
-	// and thus far, I do not.
-	class data_block
-	{
-	public:
-
-		data_block_struct				header;
-
-		data_block()
-		{
-			header = {};
-		}
-
-		data_block(const data_block& _src) = default;
-		data_block& operator = (const data_block& _src) = default;
-
-		virtual char* before_write(int32_t* _size) = 0;
-		virtual char* before_write(int _offset, int _size)
-		{
-			return nullptr;
-		}
-
-		virtual void after_write(char* _buff)
-		{
-			;
-		}
-
-
-		virtual char* before_read(int32_t _size) = 0;
-		virtual void after_read(char *_bytes) = 0;
-
-		virtual void finished_io(char *_bytes) = 0;
-
-		relative_ptr_type read(file_block* _file, relative_ptr_type location)
-		{
-			date_time start_time = date_time::now();
-			timer tx;
-
-if (ENABLE_JSON_LOGGING) {
-			system_monitoring_interface::global_mon->log_block_start("block", "read block", start_time, __FILE__, __LINE__);
-}
-
-			file_command_result header_result = _file->read(location, &header, sizeof(header));
-
-			if (header_result.success) 
-			{
-				char *bytes = before_read(header.data_size);
-				file_command_result data_result = _file->read(header.data_location, bytes, header.data_size);
-
-				if (data_result.success) 
-				{
-					after_read(bytes);
-					finished_io(bytes);
-if (ENABLE_JSON_LOGGING) {
-					system_monitoring_interface::global_mon->log_block_stop("block", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-}
-					return header_result.location; // want to make this 0 or -1 if error
-				}
-				else 
-				{
-					finished_io(bytes);
-					if (ENABLE_JSON_LOGGING) {
-						system_monitoring_interface::global_mon->log_function_stop("block", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					}
-				}
-			}
-
-if (ENABLE_JSON_LOGGING) {
-			system_monitoring_interface::global_mon->log_block_stop("block", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-}
-			return -1i64;
-		}
-		
-		relative_ptr_type write_piece(file_block* _file, int _offset, int _size)
-		{
-			if (header.block_location < 0)
-			{
-				throw std::invalid_argument("cannot append a partial write of a block");
-			}
-
-			date_time start_time = date_time::now();
-			timer tx;
-
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_block_start("block", "write piece", start_time, __FILE__, __LINE__);
-			}
-			char *bytes = before_write(_offset, _size);
-
-			file_command_result data_result = _file->write(header.data_location + _offset, bytes, _size);
-
-			if (data_result.success)
-			{
-				after_write(bytes);
-				finished_io(bytes);
-				if (ENABLE_JSON_LOGGING) {
-					system_monitoring_interface::global_mon->log_block_stop("block", "write complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				}
-				return data_result.location;
-			}
-			else {
-				finished_io(bytes);
-				if (ENABLE_JSON_LOGGING) {
-					system_monitoring_interface::global_mon->log_block_stop("block", "write failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				}
-			}
-			return -1i64;
-		}
-
-		relative_ptr_type write(file_block* _file)
-		{
-
-			if (header.block_location < 0) 
-			{
-				throw std::invalid_argument("use append for new blocks");
-			}
-
-			date_time start_time = date_time::now();
-			timer tx;
-
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_block_start("block", "write block", start_time, __FILE__, __LINE__);
-			}
-
-			int32_t size;
-			char *bytes = before_write(&size);
-
-			if (size > header.data_capacity)
-			{
-				// the header.data_length is the max size of the block.  Since there's stuff past that in the file, then,
-				// there's not going to be a way we can write this, so we must have another block.
-				_file->free_space(header.data_location);
-				header.data_size = size;
-				header.data_capacity = 0;
-				int64_t actual_size;
-				header.data_location = _file->allocate_space(size, &actual_size);
-				header.data_capacity = actual_size;
-			}
-			else 
-			{
-				header.data_size = size;
-			}
-
-			file_command_result data_result = _file->write(header.data_location, bytes, size);
-
-			if (data_result.success)
-			{
-				file_command_result header_result = _file->write(header.block_location, &header, sizeof(header));
-				after_write(bytes);
-				finished_io(bytes);
-				if (ENABLE_JSON_LOGGING) {
-					system_monitoring_interface::global_mon->log_block_stop("block", "write complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				}				
-				return header_result.location;
-			}
-			else 
-			{
-				finished_io(bytes);
-				if (ENABLE_JSON_LOGGING) {
-					system_monitoring_interface::global_mon->log_block_stop("block", "write failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				}
-			}
-			return -1i64;
-		}
-
-		relative_ptr_type append(file_block* _file)
-		{
-
-			int32_t size;
-			char* bytes;
-			bytes = before_write(&size);
-
-			date_time start_time = date_time::now();
-			timer tx;
-
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_block_start("block", "append", start_time, __FILE__, __LINE__);
-			}
-
-			int64_t actual_size = 0;
-			header.block_location = _file->allocate_space(sizeof(header), &actual_size);
-			header.data_size = size;
-			header.data_location = _file->allocate_space(header.data_size, &actual_size);
-			header.data_capacity = actual_size;
-
-			if (header.block_location < 0 or header.data_location < 0)
-				return -1;
-
-			auto hdr_status = _file->write(header.block_location, &header, sizeof(header));
-			auto data_status = _file->write(header.data_location, bytes, size);
-
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_block_stop("block", "append", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			}
-
-			after_write(bytes);
-			finished_io(bytes);
-
-			if (not (hdr_status.success and data_status.success)) {
-				return -1;
-			}
-
-			return header.block_location;
-		}
-
-		void erase(file_block *_fb)
-		{
-			_fb->free_space(header.data_location);
-			_fb->free_space(header.block_location);
-		}
-	};
-
-	class string_block : public data_block
-	{
-	public:
-
-		std::string data;
-
-		string_block()
-		{
-		}
-
-		bool is_empty()
-		{
-			return data.empty();
-		}
-
-		void clear()
-		{
-			data.clear();
-		}
-
-		virtual char* before_read(int32_t size) override
-		{
-			data.resize(size, 0);
-			return (char*)data.c_str();
-		}
-
-		virtual void after_read(char *_bytes) override
-		{
-			;
-		}
-
-		virtual char *before_write(int32_t *_size) override
-		{
-			*_size = strlen(data.c_str());
-			return (char *)data.c_str();
-		}
-
-		virtual void after_write(char* _bytes) override
-		{
-			;
-		}
-
-		virtual void finished_io(char* _bytes) override
-		{
-			;
-		}
-
-	};
-
-	class json_data_node : public data_block
-	{
-	public:
-
-		json							data;
-		std::string						bytes;
-
-		json_data_node()
-		{
-		}
-
-		bool is_empty()
-		{
-			return data.empty();
-		}
-
-		void clear()
-		{
-			json_parser jp;
-			data = jp.create_object();
-		}
-		
-		virtual char* before_read(int32_t _size)  override
-		{
-			bytes.resize(_size);
-			return (char*)bytes.c_str();
-		}
-
-		virtual void after_read(char* _bytes) override
-		{
-			const char* contents = _bytes;
-			if (contents) {
-				json_parser jp;
-				if (*contents == '[') {
-					data = jp.parse_array(contents);
-				}
-				else {
-					data = jp.parse_object(contents);
-				}
-			}
-		}
-
-		virtual void finished_io(char* _bytes) override
-		{
-			;
-		}
-
-		virtual char *before_write(int32_t *_size) override
-		{
-			std::stringstream buff;
-			
-			data.serialize(buff);
-			bytes = buff.str();
-			*_size = bytes.size();
-			return (char *)bytes.c_str();
-		}
-
-		virtual void after_write(char *_t) override
-		{
-			
-		}
-
-	};
-
-	class json_key_node : public data_block
+	class json_key_block : public data_block
 	{
 	public:
 
@@ -370,21 +32,21 @@ if (ENABLE_JSON_LOGGING) {
 		int64_t										json_location;
 		iarray<int64_t, JsonTableMaxNumberOfLevels> foward;
 
-		json_key_node()
+		json_key_block()
 		{
 			clear();
 		}
 
-		json_key_node(const json_key_node& _src) = default;
-		json_key_node(json_key_node&& _src) = default;
+		json_key_block(const json_key_block& _src) = default;
+		json_key_block(json_key_block&& _src) = default;
 
-		virtual ~json_key_node()
+		virtual ~json_key_block()
 		{
 			;
 		}
 
-		json_key_node& operator = (const json_key_node& _src) = default;
-		json_key_node& operator = (json_key_node&& _src) = default;
+		json_key_block& operator = (const json_key_block& _src) = default;
+		json_key_block& operator = (json_key_block&& _src) = default;
 
 		void clear()
 		{
@@ -395,63 +57,7 @@ if (ENABLE_JSON_LOGGING) {
 
 		virtual char* before_read(int32_t size) override
 		{
-			char *io_bytes = (char *) &hash_code;
-			return io_bytes;
-		}
-
-		virtual void after_read(char* _bytes) override
-		{
-		}
-
-
-		virtual char* before_write(int32_t *_size) override
-		{
-			*_size =
-				sizeof(json_location) +
-				sizeof(hash_code) +
-				foward.get_io_write_size();
-			char *io_bytes = (char*)&hash_code;
-			return io_bytes;
-		}
-
-		virtual void after_write(char* _bytes) override
-		{
-			;
-		}
-
-		virtual void finished_io(char* _bytes)  override
-		{
-
-		}
-
-		json_data_node get_node(file_block* _file)
-		{
-			json_data_node node_to_read;
-			node_to_read.read(_file, json_location);
-			return node_to_read;
-		}
-
-	};
-
-	template <typename poco_type> class poco_node : public data_block
-	{
-	public:
-
-		poco_node()
-		{
-			clear();
-		}
-
-		void clear()
-		{
-			data = {};
-		}
-
-		poco_type				data;
-
-		virtual char* before_read(int32_t size) override
-		{
-			char* io_bytes = (char*)&data;
+			char* io_bytes = (char*)&hash_code;
 			return io_bytes;
 		}
 
@@ -462,14 +68,12 @@ if (ENABLE_JSON_LOGGING) {
 
 		virtual char* before_write(int32_t* _size) override
 		{
-			*_size = sizeof(data);
-			char* io_bytes = (char*)&data;
+			*_size =
+				sizeof(json_location) +
+				sizeof(hash_code) +
+				foward.get_io_write_size();
+			char* io_bytes = (char*)&hash_code;
 			return io_bytes;
-		}
-
-		virtual char* before_write(int _offset, int _size)
-		{
-			return (char *)(&data) + _offset;
 		}
 
 		virtual void after_write(char* _bytes) override
@@ -482,39 +86,115 @@ if (ENABLE_JSON_LOGGING) {
 
 		}
 
-		poco_node& operator = (const poco_type& _src)
+		json_data_block get_node(file_block* _file)
 		{
-			data = _src;
-			return *this;
+			json_data_block node_to_read;
+			node_to_read.read(_file, json_location);
+			return node_to_read;
 		}
 
 	};
 
-	class json_table_header : public poco_node<table_header_struct>
+
+	class json_table_header : protected poco_node<table_header_struct>
 	{
+		lockable header_lock;
+
 	public:
 
-		virtual char* before_write(int _offset, int _size)
+		json_table_header()
 		{
-			return (char *)&data;
+			data.count = 0;
+			data.level = JsonTableMaxLevel;
 		}
 
-		int64_t write_count(file_block * _file)
+		int get_level()
 		{
-			auto offset = offsetof(table_header_struct, count);
-			auto size = sizeof(data.count);
-			auto r = write_piece(_file, offset, size);
-			return r;
+			return data.level;
 		}
 
+		int32_t add_level( )
+		{
+			scope_lock locko(header_lock);
+			data.level++;
+			return data.level;
+		}
+
+		int32_t sub_level()
+		{
+			scope_lock locko(header_lock);
+			data.level--;
+			return data.level;
+		}
+
+		int32_t set_level(int32_t _new_level)
+		{
+			scope_lock locko(header_lock);
+			data.level = _new_level;
+		}
+
+		int64_t add_count()
+		{
+			scope_lock locko(header_lock);
+			data.count++;
+			return data.count;
+		}
+
+		int64_t sub_count()
+		{
+			scope_lock locko(header_lock);
+			data.count--;
+			return data.count;
+		}
+
+		int64_t get_count()
+		{
+			scope_lock locko(header_lock);
+			return data.count;
+		}
+
+		int64_t get_data_root_location()
+		{
+			scope_lock me(header_lock);
+			return data.data_root_location;
+		}
+
+		int64_t set_data_root_location(int64_t _root)
+		{
+			scope_lock me(header_lock);
+			data.data_root_location = _root;
+		}
+
+		int64_t get_location()
+		{
+			scope_lock me(header_lock);
+			return header.block_location;
+		}
+
+		void open(file_block* fb, int64_t _location)
+		{
+			scope_lock me(header_lock);
+			data_block::read(fb, _location);
+		}
+
+		void create(file_block *fb)
+		{
+			scope_lock me(header_lock);
+			data_block::append(fb);
+		}
+
+		void save(file_block* fb)
+		{
+			scope_lock me(header_lock);
+			data_block::write(fb);
+		}
 	};
 
 	class json_table 
 	{
 	private:
 
-		lockable						space_lock;
-		json_table_header				table_header;
+		std::shared_ptr<json_table_header>	table_header;
 
 		using KEY = json;
 		using VALUE = json_node;
@@ -524,33 +204,31 @@ if (ENABLE_JSON_LOGGING) {
 		file_block* fb;
 		
 		std::vector<std::string> key_fields;
-		json header_key;
 
-		relative_ptr_type create_header()
+		std::shared_ptr<json_table_header> create_header()
 		{
 			json_parser jp;
-			table_header.append(fb);
 
-			json_key_node header = create_node(JsonTableMaxLevel);
-			table_header.data.data_root_location = header.header.block_location;
-			table_header.data.count = 0;
-			table_header.data.level = JsonTableMaxLevel;
-			table_header.write(fb);
+			json_key_block header = create_node(JsonTableMaxLevel);
 			header.hash_code = 0;
 			header.write(fb);
-			return table_header.header.block_location;
+
+			table_header->set_data_root_location(header.header.block_location);
+			table_header->save(fb);
+
+			return table_header;
 		}
 
-		json_key_node get_header()
+		json_key_block get_header()
 		{
-			json_key_node in;
-			
-			auto p = table_header.data.data_root_location;
+			json_key_block in;
+
+			auto p = table_header->get_data_root_location();
 			if (p <= 0) {
 				throw std::exception("table header node location not set");
 			}
 
-			int64_t result = in.read(fb, table_header.data.data_root_location);
+			int64_t result = in.read(fb, p);
 
 			if (result < 0)
 			{
@@ -560,9 +238,9 @@ if (ENABLE_JSON_LOGGING) {
 			return in;
 		}
 
-		json_key_node create_node(int _max_level)
+		json_key_block create_node(int _max_level)
 		{
-			json_key_node new_node;
+			json_key_block new_node;
 
 			int level_bounds = _max_level + 1;
 
@@ -577,9 +255,9 @@ if (ENABLE_JSON_LOGGING) {
 			return new_node;
 		}
 
-		json_key_node get_key_node(relative_ptr_type _key_node_location)
+		json_key_block get_key_node(relative_ptr_type _key_node_location)
 		{
-			json_key_node node;
+			json_key_block node;
 
 			node.read(fb, _key_node_location);
 			return node;
@@ -587,11 +265,11 @@ if (ENABLE_JSON_LOGGING) {
 
 		void free_node(relative_ptr_type _key_node_location)
 		{
-			json_key_node node;
+			json_key_block node;
 			node.read(fb, _key_node_location);
 			node.erase(fb);
 
-			json_data_node json_data;
+			json_data_block json_data;
 			json_data.read(fb, node.json_location);
 			json_data.erase(fb);
 		}
@@ -601,10 +279,9 @@ if (ENABLE_JSON_LOGGING) {
 		// return 1 if the node > key
 		// return 0 if the node == key
 
-		relative_ptr_type compare_node(json_key_node& _nd, KEY _id_key, uint64_t _key_hash)
+		relative_ptr_type compare_node(json_key_block& _nd, KEY _id_key, uint64_t _key_hash)
 		{
-
-			if (_nd.header.block_location == table_header.data.data_root_location)
+			if (_nd.header.block_location == table_header->get_data_root_location())
 				return -1;
 
 			if (_nd.hash_code < _key_hash)
@@ -624,11 +301,12 @@ if (ENABLE_JSON_LOGGING) {
 				return 0;
 		}
 
-		relative_ptr_type find_advance(json_key_node& _node, json_key_node& _peek, int _level, KEY _key, uint64_t _key_hash, int64_t *_found)
+		relative_ptr_type find_advance(lock_owner& _locks, json_key_block& _node, json_key_block& _peek, int _level, KEY _key, uint64_t _key_hash, int64_t *_found)
 		{
 			auto t = _node.foward[_level];
 			if (t != null_row) {
 				_peek.read(fb, t);
+				lock_chumpy->add_lock(_locks, { object_lock_types::lock_object, table_class_id, (int64_t)_peek.hash_code });
 				int comp = compare_node(_peek, _key, _key_hash);
 				if (comp < 0)
 					return t;
@@ -639,22 +317,24 @@ if (ENABLE_JSON_LOGGING) {
 			return -1;
 		}
 
-		relative_ptr_type find_node(relative_ptr_type* update, KEY _key, json_key_node& _found_node)
+		relative_ptr_type find_node(lock_owner &_transaction_lock, relative_ptr_type* update, KEY _key, json_key_block& _found_node)
 		{
 			relative_ptr_type found = null_row;
 
-			uint64_t key_hash = _key.get_weak_ordered_hash(key_fields);
+			uint64_t key_hash = _key.get_weak_ordered_hash(key_fields);	
+			
+			lock_chumpy->add_lock(_transaction_lock, { object_lock_types::lock_object, table_class_id, (int64_t)key_hash });
 
-			json_key_node x = get_header();
+			json_key_block x = get_header();
 
-			for (int k = table_header.data.level; k >= 0; k--)
+			for (int k = table_header->get_level(); k >= 0; k--)
 			{
 				int comp = -1;
-				relative_ptr_type nl = find_advance(x, _found_node, k, _key, key_hash, &found); // TODO Found node could be here.
+				relative_ptr_type nl = find_advance(_transaction_lock, x, _found_node, k, _key, key_hash, &found); // TODO Found node could be here.
 				while (nl != null_row)
 				{
 					x = _found_node;
-					nl = find_advance(x, _found_node, k, _key, key_hash, &found);
+					nl = find_advance(_transaction_lock, x, _found_node, k, _key, key_hash, &found);
 				}
 				update[k] = x.header.block_location;
 			}
@@ -662,7 +342,7 @@ if (ENABLE_JSON_LOGGING) {
 			return found;
 		}
 
-		relative_ptr_type find_first_gte(KEY _key, json_key_node& _found_node)
+		relative_ptr_type find_first_gte(lock_owner& _transaction_lock, KEY _key, json_key_block& _found_node)
 		{
 			relative_ptr_type found = null_row, last_link;
 			json_parser jp;
@@ -680,20 +360,22 @@ if (ENABLE_JSON_LOGGING) {
 
 			uint64_t key_hash = table_key.get_weak_ordered_hash(key_fields);
 
-			json_key_node x = get_header();
+			lock_chumpy->add_lock( _transaction_lock, { object_lock_types::lock_object, table_class_id, (int64_t)key_hash });
+
+			json_key_block x = get_header();
 
 			if (table_key.empty() or table_key.size() == 0) {
 				return x.foward[0];
 			}
 
-			for (int k = table_header.data.level; k >= 0; k--)
+			for (int k = table_header->get_level(); k >= 0; k--)
 			{
 				int comp = -1;
-				relative_ptr_type nl = find_advance(x, _found_node, k, table_key, key_hash, &found);
+				relative_ptr_type nl = find_advance(_transaction_lock, x, _found_node, k, table_key, key_hash, &found);
 				while (nl != null_row)
 				{
 					x = _found_node;
-					nl = find_advance(x, _found_node, k, table_key, key_hash, &found);
+					nl = find_advance(_transaction_lock, x, _found_node, k, table_key, key_hash, &found);
 				}
 			}
 
@@ -706,32 +388,33 @@ if (ENABLE_JSON_LOGGING) {
 
 			uint64_t key_hash = _key.get_weak_ordered_hash(key_fields);
 
+			auto transaction_lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, (int64_t)key_hash });
+
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
 
-			json_key_node header = get_header();
+			json_key_block header = get_header();
 
 			relative_ptr_type location = header.foward[0];
 
-			json_key_node jkn;
+			json_key_block jkn;
 
-			relative_ptr_type q = find_node(update, _key, jkn);
+			relative_ptr_type q = find_node(transaction_lock, update, _key, jkn);
 
 			if (q != null_row)
 			{
-				json_data_node qnd;
+				json_data_block qnd;
 				qnd = jkn.get_node(fb);
 				predicate(qnd.data);
 				qnd.write(fb);
 				return q;
 			}
 
-			json_key_node qnd;
+			json_key_block qnd;
 
 			k = randomLevel();
-			if (k > table_header.data.level)
+			if (k > table_header->get_level())
 			{
-				table_header.data.level++;
-				k = table_header.data.level;
+				k = table_header->add_level();
 				update[k] = header.header.block_location;
 			}
 
@@ -745,18 +428,17 @@ if (ENABLE_JSON_LOGGING) {
 				return -1;
 			}
 
-			json_key_node key_node = create_node(k);
+			json_key_block key_node = create_node(k);
 
-			json_data_node value_node;
+			json_data_block value_node;
 			value_node.data = initial_value;
 			key_node.json_location = value_node.append(fb);
 			key_node.hash_code = key_hash;
 
-			table_header.data.count++;
-
 			do
 			{
-				json_key_node pnd = get_key_node(update[k]);
+				json_key_block pnd = get_key_node(update[k]);
+				lock_chumpy->add_lock(transaction_lock, { object_lock_types::lock_object, table_class_id, (int64_t)pnd.hash_code });
 				key_node.foward[k] = pnd.foward[k];
 				pnd.foward[k] = key_node.header.block_location;
 				pnd.write(fb);
@@ -764,67 +446,21 @@ if (ENABLE_JSON_LOGGING) {
 			} while (--k >= 0);
 
 			key_node.write(fb);
-			table_header.write(fb);
 
 			return key_node.header.block_location;
 		}
 
-		relative_ptr_type find_first_gte(relative_ptr_type* update, KEY _key)
+		relative_ptr_type find_node(const KEY& key, json_key_block& _found_node)
 		{
-			relative_ptr_type found = null_row, p, q, last_link;
-
-			json_key_node header = get_header();
-
-			if (!_key.keys_compatible(key_fields)) {
-				return header.foward[0];
-			}
-
-			uint64_t hash_code = _key.get_weak_ordered_hash(key_fields);
-
-			for (int k = table_header.data.level; k >= 0; k--)
-			{
-				p = header.foward[k];
-				json_key_node jn = get_key_node(p);
-				q = jn.foward[k];
-				last_link = q;
-				json_key_node qnd;
-				int comp = 1;
-				if (q != null_row) {
-					qnd.read(fb, q);
-					comp = compare_node(qnd, _key, hash_code);
-				}
-				while (comp < 0)
-				{
-					p = q;
-					last_link = q;
-					json_key_node jn = qnd;
-					q = jn.foward[k];
-					comp = 1;
-					if (q != null_row) {
-						qnd.read(fb, q);
-						comp = compare_node(qnd, _key, hash_code);
-					}
-				}
-				if (comp == 0)
-					found = q;
-				else if (comp < 0)
-					found = last_link;
-				update[k] = p;
-			}
-
-			return found;
-		}
-
-		relative_ptr_type find_node(const KEY& key, json_key_node& _found_node)
-		{
+			auto transaction_lock = lock_chumpy->lock();
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
-			relative_ptr_type value = find_node(update, key, _found_node);
+			relative_ptr_type value = find_node(transaction_lock, update, key, _found_node);
 			return value;
 		}
 
-		json_key_node first_node()
+		json_key_block first_node()
 		{
-			json_key_node jn;
+			json_key_block jn;
 			auto header = get_header();
 			if (header.foward[0] != null_row) {
 				jn.read(fb, header.foward[0]);
@@ -832,26 +468,35 @@ if (ENABLE_JSON_LOGGING) {
 			return jn;
 		}
 
-		json_key_node next_node(json_key_node _node)
+		json_key_block next_node(json_key_block _node)
 		{
-			json_key_node jn;
+			json_key_block jn;
 
 			if (_node.foward.size() == 0)
 				return jn;
 
-			json_key_node nd = get_key_node(_node.foward[0]);
+			json_key_block nd = get_key_node(_node.foward[0]);
 			return nd;
 		}
 
+		object_locker*	lock_chumpy;
+		int64_t			table_class_id;
+
 	public:
 
-		json_table(file_block *_fb, std::vector<std::string> _key_fields) 
-			: fb(_fb), 
+		json_table(std::shared_ptr<json_table_header> _header, int64_t _table_class_id, object_locker* _lock_chumpy, file_block* _fb, std::vector<std::string> _key_fields)
+			:	table_header(_header),
+				table_class_id(_table_class_id),
+				lock_chumpy(_lock_chumpy),
+				fb(_fb),
 				key_fields(_key_fields)
 		{
-			json_parser jp;
-			header_key = jp.create_object();
-			table_header = {};
+			;
+		}
+
+		std::shared_ptr<json_table_header> get_table_header()
+		{
+			return table_header;
 		}
 
 		json get_key(json& _object) 
@@ -866,33 +511,34 @@ if (ENABLE_JSON_LOGGING) {
 			return r;
 		}
 
-		relative_ptr_type create()
+		std::shared_ptr<json_table_header> create()
 		{
 			date_time start_time = date_time::now();
 			timer tx;
+
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
 			}
 
-			relative_ptr_type location =  create_header();
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "create complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-			return location;
+			return table_header;
 		}
 
-		relative_ptr_type open(relative_ptr_type location)
+		void open()
 		{
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_table, table_class_id, 0 });
+
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
 			}
-			table_header.read(fb, location);
+
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-			return location;
 		}
 
 		void clear()
@@ -908,7 +554,7 @@ if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "contains", start_time, __FILE__, __LINE__);
 			}
 
-			json_key_node found_node;
+			json_key_block found_node;
 
 			relative_ptr_type result =  find_node(key, found_node);
 			if (ENABLE_JSON_LOGGING) {
@@ -939,11 +585,14 @@ if (ENABLE_JSON_LOGGING) {
 			}
 
 			json result;
-			json_key_node found_node;
+			json_key_block found_node;
+
+			auto hash = key.get_weak_ordered_hash(key_fields);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, (int64_t)hash });
 
 			relative_ptr_type n =  find_node(key, found_node);
 			if (n != null_row) {
-				json_data_node dn = found_node.get_node(fb);
+				json_data_block dn = found_node.get_node(fb);
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
@@ -953,7 +602,7 @@ if (ENABLE_JSON_LOGGING) {
 			return result;
 		}
 
-		json get(const KEY key)
+		json get(KEY key)
 		{
 			date_time start_time = date_time::now();
 			timer tx;
@@ -961,11 +610,14 @@ if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
 
+			auto hash = key.get_weak_ordered_hash(key_fields);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, (int64_t)hash });
+
 			json result;
-			json_key_node found_node;
+			json_key_block found_node;
 			relative_ptr_type n = find_node(key, found_node);
 			if (n != null_row) {
-				json_data_node dn = found_node.get_node(fb);
+				json_data_block dn = found_node.get_node(fb);
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
@@ -975,7 +627,7 @@ if (ENABLE_JSON_LOGGING) {
 			return result;
 		}
 
-		json get(const KEY key, std::initializer_list<std::string> include_fields)
+		json get( KEY key, std::initializer_list<std::string> include_fields)
 		{
 			date_time start_time = date_time::now();
 			timer tx;
@@ -983,11 +635,15 @@ if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
 
+			auto hash = key.get_weak_ordered_hash(key_fields);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, (int64_t)hash });
+
 			json result;
-			json_key_node found_node;
+			json_key_block found_node;
 			relative_ptr_type n = find_node(key, found_node);
+
 			if (n != null_row) {
-				json_data_node dn = found_node.get_node(fb);
+				json_data_block dn = found_node.get_node(fb);
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
@@ -1024,6 +680,9 @@ if (ENABLE_JSON_LOGGING) {
 			}
 
 			auto key = get_key(value);
+			auto hash = key.get_weak_ordered_hash(key_fields);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, (int64_t)hash });
+
 			relative_ptr_type modified_node = this->update_node(key,
 				[value](UPDATE_VALUE& dest) {
 					dest.assign_update(value);
@@ -1051,6 +710,9 @@ if (ENABLE_JSON_LOGGING) {
 				return null_row;
 			}
 			auto key = get_key(jx);
+			auto hash = key.get_weak_ordered_hash(key_fields);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, (int64_t)hash });
+
 			relative_ptr_type modified_node = this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_update(jx); });
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -1068,11 +730,13 @@ if (ENABLE_JSON_LOGGING) {
 			}
 
 			auto key = get_key(value);
+			auto hash = key.get_weak_ordered_hash(key_fields);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, (int64_t)hash });
 
-			json_key_node found_node;
+			json_key_block found_node;
 			relative_ptr_type n = find_node(key, found_node);
 			if (n != null_row) {
-				json_data_node dn = found_node.get_node(fb);
+				json_data_block dn = found_node.get_node(fb);
 				dn.data.assign_replace(value);
 				dn.write(fb);
 			}
@@ -1091,7 +755,7 @@ if (ENABLE_JSON_LOGGING) {
 			return replace(jx);
 		}
 
-		bool erase(const KEY& key)
+		bool erase(KEY& key)
 		{
 			date_time start_time = date_time::now();
 			timer tx;
@@ -1099,12 +763,15 @@ if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "erase", start_time, __FILE__, __LINE__);
 			}
 
+			auto hash = key.get_weak_ordered_hash(key_fields);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, (int64_t)hash });
+
 			int k;
 			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
-			json_key_node qnd, pnd;
+			json_key_block qnd, pnd;
 
-			json_key_node found_node;
-			relative_ptr_type q = find_node(update, key, found_node);
+			json_key_block found_node;
+			relative_ptr_type q = find_node(lock, update, key, found_node);
 
 			if (q != null_row)
 			{
@@ -1112,7 +779,8 @@ if (ENABLE_JSON_LOGGING) {
 				p = update[k];
 				qnd = found_node;
 				pnd = get_key_node(p);
-				int m = table_header.data.level;
+				int m = table_header->get_level();
+
 				while (k <= m && pnd.foward[k] == q)
 				{
 					pnd.foward[k] = qnd.foward[k];
@@ -1124,19 +792,14 @@ if (ENABLE_JSON_LOGGING) {
 					}
 				}
 
-				table_header.data.count--;
-
-				json_key_node header = get_header();
-
+				json_key_block header = get_header();
 				while (header.foward[m] == null_row && m > 0) {
 					m--;
 				}
-
+				header.write(fb);
 				free_node(q);
 
-				table_header.data.level = m;
-				header.write(fb);
-				table_header.write(fb);
+				table_header->set_level(m);
 				if (ENABLE_JSON_LOGGING) {
 					system_monitoring_interface::global_mon->log_table_stop("table", "erase complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
@@ -1158,7 +821,7 @@ if (ENABLE_JSON_LOGGING) {
 			int64_t count;
 		};
 
-		for_each_result for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json_data_node& _item)> _process_clause)
+		for_each_result for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json_data_block& _item)> _process_clause)
 		{
 
 			for_each_result result = {};
@@ -1169,16 +832,18 @@ if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
 			}
 
+			auto lock = lock_chumpy->lock();
+
 			result.is_all = true;
 
-			json_key_node jkn;
-			relative_ptr_type location = find_first_gte(_key_fragment, jkn);
+			json_key_block jkn;
+			relative_ptr_type location = find_first_gte(lock, _key_fragment, jkn);
 			int64_t index = 0;
 
 			while (location != null_row)
 			{
 				jkn = get_key_node(location);
-				json_data_node node = jkn.get_node(fb);
+				json_data_block node = jkn.get_node(fb);
 				int comparison;
 
 				if (_key_fragment.empty())
@@ -1208,7 +873,7 @@ if (ENABLE_JSON_LOGGING) {
 			return result;
 		}
 
-		for_each_result for_each(std::function<relative_ptr_type(int _index, json_data_node& _item)> _process_clause)
+		for_each_result for_each(std::function<relative_ptr_type(int _index, json_data_block& _item)> _process_clause)
 		{
 			json empty_key;
 			return for_each( empty_key, _process_clause);
@@ -1217,7 +882,7 @@ if (ENABLE_JSON_LOGGING) {
 		for_each_result for_each(std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
 			json empty_key;
-			return for_each(empty_key, [_process_clause](int _index, json_data_node& _jn) {
+			return for_each(empty_key, [_process_clause](int _index, json_data_block& _jn) {
 				return _process_clause(_index, _jn.data);
 				});
 		}
@@ -1235,14 +900,16 @@ if (ENABLE_JSON_LOGGING) {
 
 			int64_t index = 0;
 			json result_data;
-			json_key_node node;
+			json_key_block node;
 
-			relative_ptr_type location = find_first_gte(_key_fragment, node);
+			auto lock = lock_chumpy->lock();
+
+			relative_ptr_type location = find_first_gte(lock, _key_fragment, node);
 
 			while (location != null_row)
 			{
 				node = get_key_node(location);
-				json_data_node data = node.get_node(fb);
+				json_data_block data = node.get_node(fb);
 				int comparison = _key_fragment.compare(data.data);
 				if (comparison == 0 && _fn(data.data))
 				{
@@ -1308,7 +975,7 @@ if (ENABLE_JSON_LOGGING) {
 
 			json empty_key = jp.create_object();
 
-			auto result = for_each(_key_fragment, [pja, _project](int _index, json_data_node& _data) ->relative_ptr_type
+			auto result = for_each(_key_fragment, [pja, _project](int _index, json_data_block& _data) ->relative_ptr_type
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data.data);
@@ -1342,7 +1009,7 @@ if (ENABLE_JSON_LOGGING) {
 			json ja = jp.create_array();
 			json* pja = &ja;
 
-			auto result =  for_each(_key_fragment, [this, pja, _project, &_update](int _index, json_data_node& _data) -> relative_ptr_type 
+			auto result =  for_each(_key_fragment, [this, pja, _project, &_update](int _index, json_data_block& _data) -> relative_ptr_type 
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data.data);
@@ -1379,7 +1046,7 @@ if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "select_object", start_time, __FILE__, __LINE__);
 			}
 
-			for_each_result fra =  for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json_data_node& _jdata) -> int64_t
+			for_each_result fra =  for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json_data_block& _jdata) -> int64_t
 				{
 					json _data = _jdata.data;
 					json new_item = _project(_index, _data);
@@ -1417,7 +1084,7 @@ if (ENABLE_JSON_LOGGING) {
 		}
 
 
-		inline int size() { return table_header.data.count; }
+		inline int size() { return table_header->get_count(); }
 
 
 	private:
@@ -2266,7 +1933,7 @@ if (ENABLE_JSON_LOGGING) {
 )");
 		proof_assertion.put_member("dependencies", dependencies);
 
-		json_data_node jnfirst, jnsecond;
+		json_data_block jnfirst, jnsecond;
 
 		jnfirst.data = jp.create_array();
 		for (double i = 0; i < 42; i++)
@@ -2363,7 +2030,7 @@ if (ENABLE_JSON_LOGGING) {
 		fb.commit();
 		fb.clear();
 
-		json_key_node jkn;
+		json_key_block jkn;
 
 		jkn.hash_code = 42;
 		for (int i = 0; i < 16; i++)
@@ -2373,7 +2040,7 @@ if (ENABLE_JSON_LOGGING) {
 
 		int64_t key_location = jkn.append(&fb);
 
-		json_key_node read_back;
+		json_key_block read_back;
 		read_back.read(&fb, key_location);
 
 		bool key_success = true;

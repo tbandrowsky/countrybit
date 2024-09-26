@@ -24,7 +24,7 @@ namespace corona
 {
 	const int debug_json_object_table = 0;
 
-	class json_object_key_node : public data_block
+	class json_object_key_block : public data_block
 	{
 	public:
 
@@ -32,17 +32,17 @@ namespace corona
 		int64_t										json_location;
 		iarray<int64_t, JsonTableMaxNumberOfLevels> foward;
 
-		json_object_key_node() = default;
-		json_object_key_node(const json_object_key_node& _src) = default;
-		json_object_key_node(json_object_key_node&& _src) = default;
+		json_object_key_block() = default;
+		json_object_key_block(const json_object_key_block& _src) = default;
+		json_object_key_block(json_object_key_block&& _src) = default;
 
-		virtual ~json_object_key_node()
+		virtual ~json_object_key_block()
 		{
 			;
 		}
 
-		json_object_key_node& operator = (const json_object_key_node& _src) = default;
-		json_object_key_node& operator = (json_object_key_node&& _src) = default;
+		json_object_key_block& operator = (const json_object_key_block& _src) = default;
+		json_object_key_block& operator = (json_object_key_block&& _src) = default;
 
 		void clear()
 		{
@@ -81,21 +81,28 @@ namespace corona
 		{
 
 		}
-		json_data_node get_node(file_block* _file)
+		json_data_block get_node(file_block* _file)
 		{
-			json_data_node node_to_read;
+			json_data_block node_to_read;
 			node_to_read.read(_file, json_location);
 			return node_to_read;
 		}
 
 	};
 
+	/* 
+	
+	the json object table is created by the database for each class,
+	and it is keyed off an object id alone, as compared to the more general
+	case of the json_table, which can take any key.
+	
+	*/
+
 	class json_object_table
 	{
 	private:
 
-		lockable						space_lock;
-		json_table_header				table_header;
+		std::shared_ptr<json_table_header>	table_header;
 
 		using KEY = int64_t;
 		using VALUE = json_node;
@@ -104,31 +111,30 @@ namespace corona
 
 		file_block* fb;
 
-		relative_ptr_type create_header()
+		std::shared_ptr<json_table_header> create_header()
 		{
 			json_parser jp;
-			table_header.append(fb);
 
-			json_object_key_node header = create_node(JsonTableMaxLevel);
-			table_header.data.data_root_location = header.header.block_location;
-			table_header.data.count = 0;
-			table_header.data.level = JsonTableMaxLevel;
-			table_header.write(fb);
+			json_object_key_block header = create_node(JsonTableMaxLevel);
 			header.object_id = 0;
 			header.write(fb);
-			return table_header.header.block_location;
+
+			table_header->set_data_root_location(header.header.block_location);
+			table_header->save(fb);
+
+			return table_header;
 		}
 
-		json_object_key_node get_header()
+		json_object_key_block get_header()
 		{
-			json_object_key_node in;
+			json_object_key_block in;
 
-			auto p = table_header.data.data_root_location;
+			auto p = table_header->get_data_root_location();
 			if (p <= 0) {
 				throw std::exception("table header node location not set");
 			}
 
-			int64_t result = in.read(fb, table_header.data.data_root_location);
+			int64_t result = in.read(fb, p);
 
 			if (result < 0)
 			{
@@ -137,10 +143,9 @@ namespace corona
 
 			return in;
 		}
-
-		json_object_key_node create_node(int _max_level)
+		json_object_key_block create_node(int _max_level)
 		{
-			json_object_key_node new_node;
+			json_object_key_block new_node;
 
 			int level_bounds = _max_level + 1;
 
@@ -155,9 +160,9 @@ namespace corona
 			return new_node;
 		}
 
-		json_object_key_node get_key_node(relative_ptr_type _key_node_location)
+		json_object_key_block get_key_node(relative_ptr_type _key_node_location)
 		{
-			json_object_key_node node;
+			json_object_key_block node;
 
 			node.read(fb, _key_node_location);
 			return node;
@@ -165,11 +170,11 @@ namespace corona
 
 		void free_node(relative_ptr_type _key_node_location)
 		{
-			json_object_key_node node;
+			json_object_key_block node;
 			node.read(fb, _key_node_location);
 			node.erase(fb);
 
-			json_data_node json_data;
+			json_data_block json_data;
 			json_data.read(fb, node.json_location);
 			json_data.erase(fb);
 		}
@@ -179,10 +184,10 @@ namespace corona
 		// return 1 if the node > key
 		// return 0 if the node == key
 
-		relative_ptr_type compare_node(json_object_key_node& _nd, KEY _id_key)
+		relative_ptr_type compare_node(json_object_key_block& _nd, KEY _id_key)
 		{
 
-			if (_nd.header.block_location == table_header.data.data_root_location)
+			if (_nd.header.block_location == table_header->get_data_root_location())
 				return -1;
 
 			if (_nd.object_id < _id_key)
@@ -193,11 +198,12 @@ namespace corona
 				return 0;
 		}
 
-		relative_ptr_type find_advance(json_object_key_node& _node, json_object_key_node& _peek, int _level, KEY _key, int64_t* _found)
+		relative_ptr_type find_advance(lock_owner& _transaction_lock, json_object_key_block& _node, json_object_key_block& _peek, int _level, KEY _key, int64_t* _found)
 		{
 			auto t = _node.foward[_level];
 			if (t != null_row) {
 				_peek.read(fb, t);
+				lock_chumpy->add_lock(_transaction_lock, { object_lock_types::lock_object, table_class_id, _peek.object_id });
 				int comp = compare_node(_peek, _key);
 				if (comp < 0)
 					return t;
@@ -208,20 +214,20 @@ namespace corona
 			return -1;
 		}
 
-		relative_ptr_type find_node(relative_ptr_type* update, KEY _key, json_object_key_node& _found_node)
+		relative_ptr_type find_node(lock_owner& _transaction_lock, relative_ptr_type* update, KEY _key, json_object_key_block& _found_node)
 		{
 			relative_ptr_type found = null_row;
 
-			json_object_key_node x = get_header();
+			json_object_key_block x = get_header();
 
-			for (int k = table_header.data.level; k >= 0; k--)
+			for (int k = table_header->get_level(); k >= 0; k--)
 			{
 				int comp = -1;
-				relative_ptr_type nl = find_advance(x, _found_node, k, _key, &found); // TODO Found node could be here.
+				relative_ptr_type nl = find_advance(_transaction_lock, x, _found_node, k, _key, &found); // TODO Found node could be here.
 				while (nl != null_row)
 				{
 					x = _found_node;
-					nl = find_advance(x, _found_node, k, _key, &found);
+					nl = find_advance(_transaction_lock, x, _found_node, k, _key, &found);
 				}
 				update[k] = x.header.block_location;
 			}
@@ -229,21 +235,21 @@ namespace corona
 			return found;
 		}
 
-		relative_ptr_type find_first_gte(KEY _key, json_object_key_node& _found_node)
+		relative_ptr_type find_first_gte(lock_owner& _transaction_lock, KEY _key, json_object_key_block& _found_node)
 		{
 			relative_ptr_type found = null_row, last_link;
 			json_parser jp;
 
-			json_object_key_node x = get_header();
+			json_object_key_block x = get_header();
 
-			for (int k = table_header.data.level; k >= 0; k--)
+			for (int k = table_header->get_level(); k >= 0; k--)
 			{
 				int comp = -1;
-				relative_ptr_type nl = find_advance(x, _found_node, k, _key, &found);
+				relative_ptr_type nl = find_advance(_transaction_lock, x, _found_node, k, _key, &found);
 				while (nl != null_row)
 				{
 					x = _found_node;
-					nl = find_advance(x, _found_node, k, _key, &found);
+					nl = find_advance(_transaction_lock, x, _found_node, k, _key, &found);
 				}
 			}
 
@@ -256,33 +262,35 @@ namespace corona
 
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
 
-			json_object_key_node header = get_header();
+			json_object_key_block jkn;
 
-			relative_ptr_type location = header.foward[0];
+			auto transaction_lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, _key });
 
-			json_object_key_node jkn;
-
-			relative_ptr_type q = find_node(update, _key, jkn);
+			relative_ptr_type q = find_node(transaction_lock, update, _key, jkn);
 
 			if (q != null_row)
 			{
-				json_data_node qnd;
+				json_data_block qnd;
 				qnd = jkn.get_node(fb);
 				predicate(qnd.data);
 				qnd.write(fb);
 				return q;
 			}
 
-			json_object_key_node qnd;
+			json_object_key_block qnd;
 
 			k = randomLevel();
-			if (k > table_header.data.level)
+
+			json_object_key_block header = get_header();
+			relative_ptr_type location = header.foward[0];
+
+			if (k > table_header->get_level())
 			{
-				table_header.data.level++;
-				k = table_header.data.level;
-				update[k] = header.header.block_location;
+				auto transaction_lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, _key });
+				k = table_header->add_level();
 			}
 
+			update[k] = header.header.block_location;
 			UPDATE_VALUE initial_value;
 			try {
 				predicate(initial_value);
@@ -293,80 +301,40 @@ namespace corona
 				return -1;
 			}
 
-			json_object_key_node key_node = create_node(k);
+			json_object_key_block key_node = create_node(k);
 
-			json_data_node value_node;
+			json_data_block value_node;
 			value_node.data = initial_value;
 			key_node.json_location = value_node.append(fb);
 			key_node.object_id = _key;
 
-			table_header.data.count++;
-
 			do
 			{
-				json_object_key_node pnd = get_key_node(update[k]);
+				json_object_key_block pnd = get_key_node(update[k]);
+				lock_chumpy->add_lock(transaction_lock, { object_lock_types::lock_object, table_class_id, pnd.object_id });
 				key_node.foward[k] = pnd.foward[k];
 				pnd.foward[k] = key_node.header.block_location;
 				pnd.write(fb);
 
 			} while (--k >= 0);
 
+			table_header->add_count();
 			key_node.write(fb);
-			table_header.write(fb);
 
 			return key_node.header.block_location;
 		}
 
-		relative_ptr_type find_first_gte(relative_ptr_type* update, KEY _key)
+		relative_ptr_type find_node(const KEY& key, json_object_key_block& _found_node)
 		{
-			relative_ptr_type found = null_row, p, q, last_link;
-
-			json_object_key_node header = get_header();
-
-			for (int k = table_header.data.level; k >= 0; k--)
-			{
-				p = header.foward[k];
-				json_object_key_node jn = get_key_node(p);
-				q = jn.foward[k];
-				last_link = q;
-				json_object_key_node qnd;
-				int comp = 1;
-				if (q != null_row) {
-					qnd.read(fb, q);
-					comp = compare_node(qnd, _key);
-				}
-				while (comp < 0)
-				{
-					p = q;
-					last_link = q;
-					json_object_key_node jn = qnd;
-					q = jn.foward[k];
-					comp = 1;
-					if (q != null_row) {
-						qnd.read(fb, q);
-						comp = compare_node(qnd, _key);
-					}
-				}
-				if (comp == 0)
-					found = q;
-				else if (comp < 0)
-					found = last_link;
-				update[k] = p;
-			}
-
-			return found;
-		}
-
-		relative_ptr_type find_node(const KEY& key, json_object_key_node& _found_node)
-		{
+			auto locks = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
-			relative_ptr_type value = find_node(update, key, _found_node);
+			relative_ptr_type value = find_node(locks, update, key, _found_node);
 			return value;
 		}
 
-		json_object_key_node first_node()
+		json_object_key_block first_node()
 		{
-			json_object_key_node jn;
+			json_object_key_block jn;
 			auto header = get_header();
 			if (header.foward[0] != null_row) {
 				jn.read(fb, header.foward[0]);
@@ -374,23 +342,35 @@ namespace corona
 			return jn;
 		}
 
-		json_object_key_node next_node(json_object_key_node _node)
+		json_object_key_block next_node(json_object_key_block _node)
 		{
-			json_object_key_node jn;
+			json_object_key_block jn;
 
 			if (_node.foward.size() == 0)
 				return jn;
 
-			json_object_key_node nd = get_key_node(_node.foward[0]);
+			json_object_key_block nd = get_key_node(_node.foward[0]);
 			return nd;
 		}
 
+		object_locker*  lock_chumpy;
+		int64_t			table_class_id;
+
 	public:
 
-		json_object_table(file_block* _fb): fb(_fb)
+		json_object_table(std::shared_ptr<json_table_header> _header, int64_t _table_class_id, object_locker* _lock_chumpy, file_block* _fb)
+			:	table_header(_header),
+				table_class_id(_table_class_id),
+				lock_chumpy(_lock_chumpy),
+				fb(_fb)
 		{
 			json_parser jp;
 			table_header = {};
+		}
+
+		std::shared_ptr<json_table_header> get_table_header()
+		{
+			return table_header;
 		}
 
 		KEY get_key(json& _object)
@@ -399,33 +379,36 @@ namespace corona
 			return key;
 		}
 
-		relative_ptr_type create()
+		std::shared_ptr<json_table_header> create()
 		{
 			date_time start_time = date_time::now();
 			timer tx;
+
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
 			}
 
-			relative_ptr_type location = create_header();
+			create_header();
+
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "create complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-			return location;
+			return table_header;
 		}
 
-		relative_ptr_type open(relative_ptr_type location)
+		void open()
 		{
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_table, table_class_id, 0 });
+
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
 			}
-			table_header.read(fb, location);
+
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-			return location;
 		}
 
 		void clear()
@@ -435,13 +418,14 @@ namespace corona
 
 		bool contains(const KEY key)
 		{
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "contains", start_time, __FILE__, __LINE__);
 			}
 
-			json_object_key_node found_node;
+			json_object_key_block found_node;
 
 			relative_ptr_type result = find_node(key, found_node);
 			if (ENABLE_JSON_LOGGING) {
@@ -458,11 +442,12 @@ namespace corona
 				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
 
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
 			json result;
-			json_object_key_node found_node;
+			json_object_key_block found_node;
 			relative_ptr_type n = find_node(key, found_node);
 			if (n != null_row) {
-				json_data_node dn = found_node.get_node(fb);
+				json_data_block dn = found_node.get_node(fb);
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
@@ -480,11 +465,13 @@ namespace corona
 				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
 
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
+
 			json result;
-			json_object_key_node found_node;
+			json_object_key_block found_node;
 			relative_ptr_type n = find_node(key, found_node);
 			if (n != null_row) {
-				json_data_node dn = found_node.get_node(fb);
+				json_data_block dn = found_node.get_node(fb);
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
@@ -521,6 +508,7 @@ namespace corona
 			}
 
 			auto key = get_key(value);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
 			relative_ptr_type modified_node = this->update_node(key,
 				[value](UPDATE_VALUE& dest) {
 					dest.assign_update(value);
@@ -548,6 +536,8 @@ namespace corona
 				return null_row;
 			}
 			auto key = get_key(jx);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
+
 			relative_ptr_type modified_node = this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_update(jx); });
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -565,11 +555,12 @@ namespace corona
 			}
 
 			auto key = get_key(value);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
 
-			json_object_key_node found_node;
+			json_object_key_block found_node;
 			relative_ptr_type n = find_node(key, found_node);
 			if (n != null_row) {
-				json_data_node dn = found_node.get_node(fb);
+				json_data_block dn = found_node.get_node(fb);
 				dn.data.assign_replace(value);
 				dn.write(fb);
 			}
@@ -595,21 +586,23 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "erase", start_time, __FILE__, __LINE__);
 			}
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
 
 			int k;
 			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
-			json_object_key_node qnd, pnd;
+			json_object_key_block qnd, pnd;
 
-			json_object_key_node found_node;
-			relative_ptr_type q = find_node(update, key, found_node);
+			json_object_key_block found_node;
+			relative_ptr_type q = find_node(lock, update, key, found_node);
 
 			if (q != null_row)
 			{
-				k = 0;
+				k = 0;				
 				p = update[k];
 				qnd = found_node;
 				pnd = get_key_node(p);
-				int m = table_header.data.level;
+				lock_chumpy->add_lock(lock, { object_lock_types::lock_object, table_class_id, pnd.object_id });
+				int m = table_header->get_level();
 				while (k <= m && pnd.foward[k] == q)
 				{
 					pnd.foward[k] = qnd.foward[k];
@@ -621,19 +614,18 @@ namespace corona
 					}
 				}
 
-				table_header.data.count--;
+				lock_chumpy->add_lock(lock, { object_lock_types::lock_object, table_class_id, 0 });
+				json_object_key_block header = get_header();
 
-				json_object_key_node header = get_header();
+				free_node(q);
 
 				while (header.foward[m] == null_row && m > 0) {
 					m--;
 				}
 
-				free_node(q);
-
-				table_header.data.level = m;
+				table_header->set_level(m);
+				table_header->sub_count();
 				header.write(fb);
-				table_header.write(fb);
 				if (ENABLE_JSON_LOGGING) {
 					system_monitoring_interface::global_mon->log_table_stop("table", "erase complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
@@ -655,7 +647,7 @@ namespace corona
 			int64_t count;
 		};
 
-		for_each_result for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json_data_node& _item)> _process_clause)
+		for_each_result for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json_data_block& _item)> _process_clause)
 		{
 
 			for_each_result result = {};
@@ -670,14 +662,16 @@ namespace corona
 
 			KEY key = get_key(_key_fragment);
 
-			json_object_key_node jkn;
-			relative_ptr_type location = find_first_gte(key, jkn);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
+
+			json_object_key_block jkn;
+			relative_ptr_type location = find_first_gte(lock, key, jkn);
 			int64_t index = 0;
 
 			while (location != null_row)
 			{
 				jkn = get_key_node(location);
-				json_data_node node = jkn.get_node(fb);
+				json_data_block node = jkn.get_node(fb);
 				int comparison;
 
 				if (_key_fragment.empty())
@@ -707,7 +701,7 @@ namespace corona
 			return result;
 		}
 
-		for_each_result for_each(std::function<relative_ptr_type(int _index, json_data_node& _item)> _process_clause)
+		for_each_result for_each(std::function<relative_ptr_type(int _index, json_data_block& _item)> _process_clause)
 		{
 			json empty_key;
 			return for_each(empty_key, _process_clause);
@@ -716,7 +710,7 @@ namespace corona
 		for_each_result for_each(std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
 			json empty_key;
-			return for_each(empty_key, [_process_clause](int _index, json_data_node& _jn) {
+			return for_each(empty_key, [_process_clause](int _index, json_data_block& _jn) {
 				return _process_clause(_index, _jn.data);
 				});
 		}
@@ -734,15 +728,18 @@ namespace corona
 
 			int64_t index = 0;
 			json result_data;
-			json_object_key_node node;
+			json_object_key_block node;
 			KEY key = get_key(_key_fragment);
 
-			relative_ptr_type location = find_first_gte(key, node);
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_object, table_class_id, key });
+
+
+			relative_ptr_type location = find_first_gte(lock, key, node);
 
 			while (location != null_row)
 			{
 				node = get_key_node(location);
-				json_data_node data = node.get_node(fb);
+				json_data_block data = node.get_node(fb);
 				int comparison = _key_fragment.compare(data.data);
 				if (comparison == 0 && _fn(data.data))
 				{
@@ -808,7 +805,7 @@ namespace corona
 
 			json empty_key = jp.create_object();
 
-			auto result = for_each(_key_fragment, [pja, _project](int _index, json_data_node& _data) ->relative_ptr_type
+			auto result = for_each(_key_fragment, [pja, _project](int _index, json_data_block& _data) ->relative_ptr_type
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data.data);
@@ -842,7 +839,7 @@ namespace corona
 			json ja = jp.create_array();
 			json* pja = &ja;
 
-			auto result = for_each(_key_fragment, [this, pja, _project, &_update](int _index, json_data_node& _data) -> relative_ptr_type
+			auto result = for_each(_key_fragment, [this, pja, _project, &_update](int _index, json_data_block& _data) -> relative_ptr_type
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data.data);
@@ -879,7 +876,7 @@ namespace corona
 				system_monitoring_interface::global_mon->log_table_start("table", "select_object", start_time, __FILE__, __LINE__);
 			}
 
-			for_each_result fra = for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json_data_node& _jdata) -> int64_t
+			for_each_result fra = for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json_data_block& _jdata) -> int64_t
 				{
 					json _data = _jdata.data;
 					json new_item = _project(_index, _data);
@@ -917,7 +914,7 @@ namespace corona
 		}
 
 
-		inline int size() { return table_header.data.count; }
+		inline int size() { return table_header->get_count(); }
 
 
 	private:

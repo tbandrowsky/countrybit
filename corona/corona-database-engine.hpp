@@ -36,6 +36,7 @@ with getting the headers straightened out from
 the great module disaster.
 
 9/18/2024 - rewrote most of the above because the design was stupid.
+9/25/2024 - factored classes and indexes out to help with concurrency.
 
 ***********************************************/
 
@@ -43,78 +44,9 @@ the great module disaster.
 namespace corona
 {
 
-	class class_definition_interface
-	{
-	public:
-		virtual std::string get_class_name() = 0;
-		virtual std::map<std::string, bool>& get_descendants() = 0;
-		virtual std::map<std::string, bool>& get_ancestors() = 0;
-	};
+	class corona_database_interface;
 
-	class corona_database_interface 
-	{
-	public:
-
-		virtual json create_database() = 0;
-		virtual relative_ptr_type open_database(relative_ptr_type _header_location) = 0;
-
-		virtual void apply_config(json _config) = 0;
-		virtual json apply_schema(json _schema) = 0;
-
-		virtual std::string get_random_code() = 0;
-
-		virtual json create_user(json create_user_request) = 0;
-		virtual json login_user(json _login_request) = 0;
-		virtual json get_classes(json get_classes_request) = 0;
-		virtual json get_class(json get_class_request) = 0;
-		virtual json put_class(json put_class_request) = 0;
-		virtual std::shared_ptr<class_definition_interface> get_class_interface(std::string _class_name) = 0;
-
-		virtual json edit_object(json _edit_object_request) = 0;
-		virtual json create_object(json create_object_request) = 0;
-		virtual json put_object(json put_object_request) = 0;
-		virtual json get_object(json get_object_request) = 0;
-		virtual json delete_object(json delete_object_request) = 0;
-
-		virtual json copy_object(json copy_request) = 0;
-		virtual json query(json query_request) = 0;
-
-		// these two are for internal use only
-		virtual json select_object(json _key, bool _include_children) = 0;
-		virtual json select_single_object(json _key, bool _include_children) = 0;
-
-	};
-
-	class corona_db_header_struct
-	{
-	public:
-		int64_t								object_id;
-		relative_ptr_type					classes_location;
-		relative_ptr_type					indexes_location;
-		iarray<list_block_header, 100>		free_lists;
-
-		corona_db_header_struct() 
-		{
-			object_id = -1;
-			classes_location = -1;
-		}
-	};
-
-	using class_method_key = std::tuple<std::string, std::string>;
-
-	class corona_db_header : public poco_node<corona_db_header_struct>
-	{
-	public:
-
-		int64_t write_free_list(file_block* _file, int _index)
-		{
-			auto offset = offsetof(corona_db_header_struct, free_lists) + _index * sizeof(list_block_header);
-			auto size = sizeof(list_block_header);
-			auto r = write_piece(_file, offset, size);
-			return r;
-		}
-	};
-
+	
 	class validation_error
 	{
 	public:
@@ -149,7 +81,163 @@ namespace corona
 		}
 	};
 
-	class field_options_base
+	class field_options_interface
+	{
+	public:
+
+		virtual void get_json(json& _dest) = 0;
+		virtual void put_json(json& _src) = 0;
+		virtual void init_validation(corona_database_interface* _db) = 0;
+		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object) = 0;
+		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
+	};
+
+	class field_interface {
+	protected:
+		std::string field_name;
+		field_types field_type;
+		std::shared_ptr<field_options_interface> options;
+
+	public:
+
+		virtual void init_validation(corona_database_interface* _db) = 0;
+		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
+		virtual void get_json(json& _dest) = 0;
+		virtual void put_json(json& _src) = 0;
+
+		virtual std::string get_field_name()
+		{
+			return field_name;
+		}
+
+		virtual field_types get_field_type() 
+		{
+			return field_type;
+		}
+
+		virtual std::shared_ptr<field_options_interface> get_options() {
+			return options;
+		}
+
+		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object) = 0;
+	};
+
+
+	class index_interface
+	{
+	protected:
+		lockable class_locker;
+		std::shared_ptr<json_table_header> table_header;
+		std::shared_ptr<json_table>		   table;
+	public:
+		virtual void get_json(json& _dest) = 0;
+		virtual void put_json(json& _src) = 0;
+
+		virtual int64_t									get_index_id() = 0;
+		virtual std::string								get_index_name() = 0;
+		virtual std::vector<std::string>				&get_index_keys() = 0;
+		virtual std::shared_ptr<json_table>&			get_table(object_locker* _locker, file_block* _fb) = 0;
+		virtual void									apply_object_id_field() = 0;
+		virtual std::string								get_index_key_string() = 0;
+
+	};
+
+	class class_interface
+	{
+	protected:
+		lockable class_locker;
+		std::shared_ptr<json_table_header> table_header;
+		std::shared_ptr<json_object_table> table;
+	public:
+		virtual void get_json(json& _dest) = 0;
+		virtual void put_json(json& _src) = 0;
+
+		virtual int64_t									get_class_id() = 0;
+		virtual std::string								get_class_name() = 0;
+		virtual std::string								get_class_description() = 0;
+		virtual std::string								get_base_class_name() = 0;
+		virtual std::map<std::string, bool>&			get_descendants() = 0;
+		virtual std::map<std::string, bool>&			get_ancestors() = 0;
+		virtual std::shared_ptr<json_object_table>		get_table(object_locker* _locker, file_block* _fb) = 0;
+		virtual std::shared_ptr<json_table>				find_index(object_locker* _locker, file_block* _fb, json& _keys) = 0;
+		virtual	void									apply_changes(std::shared_ptr<corona_database_interface>& _database) = 0;
+
+		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name) = 0;
+		virtual std::vector<std::shared_ptr<field_interface>> get_fields() = 0;
+
+		virtual std::shared_ptr<index_interface>		get_index(const std::string& _name) = 0;
+		virtual std::vector<std::shared_ptr<index_interface>> get_indexes() = 0;
+
+		virtual int64_t									get_location() = 0;
+	};
+
+	class corona_database_interface : public file_block, public object_locker
+	{
+	public:
+
+		virtual json create_database() = 0;
+		virtual relative_ptr_type open_database(relative_ptr_type _header_location) = 0;
+
+		virtual void apply_config(json _config) = 0;
+		virtual json apply_schema(json _schema) = 0;
+
+		virtual std::string get_random_code() = 0;
+
+		virtual json create_user(json create_user_request) = 0;
+		virtual json login_user(json _login_request) = 0;
+		virtual json get_classes(json get_classes_request) = 0;
+		virtual json get_class(json get_class_request) = 0;
+		virtual json put_class(json put_class_request) = 0;
+		virtual std::shared_ptr<class_interface> get_class_interface(std::string _class_name) = 0;
+
+		virtual json edit_object(json _edit_object_request) = 0;
+		virtual json create_object(json create_object_request) = 0;
+		virtual json put_object(json put_object_request) = 0;
+		virtual json get_object(json get_object_request) = 0;
+		virtual json delete_object(json delete_object_request) = 0;
+
+		virtual json copy_object(json copy_request) = 0;
+		virtual json query(json query_request) = 0;
+
+		// these two are for internal use only
+		virtual json select_object(json _key, bool _include_children) = 0;
+		virtual json select_single_object(json _key, bool _include_children) = 0;
+		virtual std::shared_ptr<class_interface> load_class(const std::string& _class_name) = 0;
+		virtual json save_class(class_interface *_class) = 0;
+
+	};
+
+	class corona_db_header_struct
+	{
+	public:
+		int64_t								object_id;
+		relative_ptr_type					classes_location;
+		iarray<list_block_header, 100>		free_lists;
+
+		corona_db_header_struct() 
+		{
+			object_id = -1;
+			classes_location = -1;
+		}
+	};
+
+	using class_method_key = std::tuple<std::string, std::string>;
+
+	class corona_db_header : public poco_node<corona_db_header_struct>
+	{
+	public:
+
+		int64_t write_free_list(file_block* _file, int _index)
+		{
+			auto offset = offsetof(corona_db_header_struct, free_lists) + _index * sizeof(list_block_header);
+			auto size = sizeof(list_block_header);
+			auto r = write_piece(_file, offset, size);
+			return r;
+		}
+	};
+
+
+	class field_options_base : public field_options_interface
 	{
 	public:
 		bool required;
@@ -744,18 +832,40 @@ namespace corona
 
 	};
 
-	class field_definition {
+	class field_implementation : public field_interface {
 	public:
-		std::string field_name;
-		field_types field_type;
-		std::shared_ptr<field_options_base> options;
 
-		field_definition() = default;
-		field_definition(const field_definition& _src) = default;
-		field_definition(field_definition&& _src) = default;
-		field_definition& operator = (const field_definition& _src) = default;
-		field_definition& operator = (field_definition&& _src) = default;
-		virtual ~field_definition() = default;
+		field_implementation() = default;
+		field_implementation(const field_implementation& _src) = default;
+		field_implementation(field_implementation&& _src) = default;
+		field_implementation& operator = (const field_implementation& _src) = default;
+		field_implementation& operator = (field_implementation&& _src) = default;
+		virtual ~field_implementation() = default;
+
+		virtual field_types get_field_type()
+		{
+			return field_type;
+		}
+		virtual field_implementation& set_field_type(field_types _field_type)
+		{
+			field_type = _field_type;
+			return *this;
+		}
+
+		virtual std::string get_field_name()
+		{
+			return field_name;
+		}
+		field_implementation& set_field_name(const std::string &_field_name)
+		{
+			field_name = _field_name;
+			return *this;
+		}
+
+		virtual std::shared_ptr<field_options_interface> get_options() {
+			return options;
+		}
+
 
 		virtual void init_validation(corona_database_interface* _db)
 		{
@@ -849,43 +959,113 @@ namespace corona
 		}
 	};
 
-	class index_definition 
+	class index_implementation : public index_interface
 	{
-	public:
+		int64_t index_id;
 		std::string index_name;
 		std::vector<std::string> index_keys;
-		int64_t index_location;
+		int64_t table_location;
 
-		index_definition() = default;
-		index_definition(const index_definition& _src) = default;
-		index_definition(index_definition&& _src) = default;
-		index_definition& operator = (const index_definition& _src) = default;
-		index_definition& operator = (index_definition&& _src) = default;
+		lockable index_locker;
+		std::shared_ptr<json_table_header> table_header;
+		std::shared_ptr<json_table> table;
 
-		std::string index_key_string()
+	public:
+
+		index_implementation()
 		{
+			index_id = 0;
+			table_location = 0;
+		}
+
+		index_implementation(index_interface* _ii_index, object_locker* _locker, file_block* _fb)
+		{
+			index_id = _ii_index->get_index_id();
+			index_name = _ii_index->get_index_name();
+			index_keys = _ii_index->get_index_keys();
+
+
+			table_location = 0;
+
+			table = _ii_index->get_table(_locker, _fb);
+
+			if (table) {
+				table_header = table->get_table_header();
+				table_location = table_header->get_location();
+			}
+		}
+
+		index_implementation(const index_implementation& _src)
+		{
+			index_id = _src.index_id;
+			index_name = _src.index_name;
+			index_keys = _src.index_keys;
+			table_location = _src.table_location;
+			table_header = _src.table_header;
+			table = _src.table;
+		}
+
+		index_implementation(index_implementation&& _src)
+		{
+			std::swap(index_id,_src.index_id);
+			std::swap(index_name, _src.index_name);
+			std::swap(index_keys, _src.index_keys);
+			std::swap(table_location, _src.table_location);
+			std::swap(table_header, _src.table_header);
+			std::swap(table, _src.table);
+		}
+
+		index_implementation& operator = (const index_implementation& _src)
+		{
+			scope_lock my_lock(index_locker);
+			index_id = _src.index_id;
+			index_name = _src.index_name;
+			index_keys = _src.index_keys;
+			table_location = _src.table_location;
+			table_header = _src.table_header;
+			table = _src.table;
+			return *this;
+		}
+
+		index_implementation& operator = (index_implementation&& _src)
+		{
+			scope_lock other_lock(_src.index_locker);
+			scope_lock my_lock(index_locker);
+
+			std::swap(index_id, _src.index_id);
+			std::swap(index_name, _src.index_name);
+			std::swap(index_keys, _src.index_keys);
+			std::swap(table_location, _src.table_location);
+			std::swap(table_header, _src.table_header);
+			std::swap(table, _src.table);
+			return *this;
+
+		}
+
+		virtual std::string get_index_key_string() override
+		{
+			scope_lock my_lock(index_locker);
 			return join(index_keys, ".");
 		}
 
 		virtual void get_json(json& _dest)
 		{
+			scope_lock my_lock(index_locker);
 			json_parser jp;
 			_dest.put_member("index_name", index_name);
 
 			json jindex_keys = jp.create_array();
 			for (auto ikey : index_keys) 
 			{
-				if (ikey != object_id_field) 
-				{
-					jindex_keys.push_back(ikey);
-				}
+				jindex_keys.push_back(ikey);
 			}
 			_dest.put_member("index_keys", jindex_keys);
-			_dest.put_member_i64("index_location", index_location);
+			_dest.put_member_i64("table_location", table_location);
 		}
 
 		virtual void put_json(json& _src)
 		{			
+			scope_lock my_lock(index_locker);
 			index_name = _src["index_name"];
 
 			json jindex_keys = _src["index_keys"];
@@ -894,46 +1074,164 @@ namespace corona
 				index_keys.clear();
 				for (auto key : jindex_keys) {
 					std::string key_name = key;
-					if (key_name != object_id_field)
-					{
-						index_keys.push_back(key);
-					}
+					index_keys.push_back(key);
 				}
+			}
+			apply_object_id_field();
+			table_location = (int64_t)_src["table_location"];
+		}
+
+		int64_t get_index_id() 
+		{ 
+			scope_lock my_lock(index_locker);
+			return index_id;
+		}
+		index_implementation& set_index_id(int64_t _index_id)
+		{
+			scope_lock my_lock(index_locker);
+			index_id = _index_id;
+			return *this;
+		}
+		std::string get_index_name()
+		{
+			scope_lock my_lock(index_locker);
+			return index_name;
+		}
+		index_implementation& set_index_name(const std::string& _name)
+		{
+			scope_lock my_lock(index_locker);
+
+			index_name = _name;
+			return *this;
+		}
+
+		virtual std::shared_ptr<json_table> get_index(object_locker* _locker, file_block* _fb)
+		{
+			scope_lock my_lock(index_locker);
+
+			if (table)
+			{
+				return table;
+			}
+			else if (table_location)
+			{
+				table_header = std::make_shared<json_table_header>();
+				table_header->open(_fb, table_location);
+				table = std::make_shared<json_table>(index_id, _locker, _fb);
+				table->open();
+			}
+			else {
+				table_header = std::make_shared<json_table_header>();
+				table_header->create(_fb);
+				table_location = table_header->get_location();
+				table = std::make_shared<json_table>(index_id, _locker, _fb);
+				table->create();
+			}
+		}
+
+		virtual void apply_object_id_field() override
+		{
+			if (std::find(index_keys.begin(), index_keys.end(), object_id_field) != std::end(index_keys)) {
 				index_keys.push_back(object_id_field);
 			}
-			index_location = (int64_t)_src["index_location"];
 		}
 	};
 
-	class class_definition : public class_definition_interface
+	class class_implementation : public class_interface
 	{
-	public:
+
+	private:
+		int64_t		class_id;
 		std::string class_name;
 		std::string class_description;
 		std::string base_class_name;
 		int64_t		table_location;
-		std::map<std::string, std::shared_ptr<field_definition>> fields;
-		std::map<std::string, std::shared_ptr<index_definition>> indexes;
+		std::map<std::string, std::shared_ptr<field_implementation>> fields;
+		std::map<std::string, std::shared_ptr<index_implementation>> indexes;
 		std::map<std::string, bool> ancestors;
 		std::map<std::string, bool> descendants;
 
-		class_definition() = default;
-		class_definition(const class_definition& _src) = default;
-		class_definition(class_definition&& _src) = default;
-		class_definition& operator = (const class_definition& _src) = default;
-		class_definition& operator = (class_definition&& _src) = default;
+	public:
 
-		virtual std::string get_class_name() 
+		class_implementation() = default;
+		class_implementation(const class_implementation& _src) = default;
+		class_implementation(class_implementation&& _src) = default;
+		class_implementation& operator = (const class_implementation& _src) = default;
+		class_implementation& operator = (class_implementation&& _src) = default;
+
+		virtual int64_t	get_class_id() override
+		{
+			return class_id;
+		}
+
+		class_implementation& set_class_id(int64_t _class_id)
+		{
+			class_id = _class_id;
+			return *this;
+		}
+
+		virtual std::string get_class_name() override
 		{
 			return class_name;
 		}
+		class_implementation& set_class_name(const std::string& _class_name)
+		{
+			class_name = _class_name;
+			return *this;
+		}
 
-		virtual std::map<std::string, bool>& get_descendants()
+		virtual std::string get_class_description() override
+		{
+			return class_description;
+		}
+
+		class_implementation& set_class_description(const std::string& _class_description)
+		{
+			class_description = class_description;
+			return *this;
+		}
+
+		virtual std::string get_base_class_name() override
+		{
+			return base_class_name;
+		}
+		class_implementation& set_base_class_name(const std::string& _base_class_name)
+		{
+			base_class_name = _base_class_name;
+			return *this;
+		}
+
+		virtual std::shared_ptr<json_object_table> get_table(object_locker *_locker, file_block *_fb) override
+		{
+			scope_lock my_lock(class_locker);
+
+			if (table) 
+			{
+				return table;
+			}
+			else if (table_location)
+			{
+				table_header = std::make_shared<json_table_header>();
+				table_header->open(_fb, table_location);
+				table = std::make_shared<json_object_table>(class_id, _locker, _fb);
+				table->open();
+			}
+			else
+			{
+				table_header = std::make_shared<json_table_header>();
+				table_header->create(_fb);
+				table_location = table_header->get_location();
+				table = std::make_shared<json_object_table>(class_id, _locker, _fb);
+				table->create();
+			}
+		}
+
+		virtual std::map<std::string, bool>& get_descendants() override
 		{
 			return descendants;
 		}
 
-		virtual std::map<std::string, bool>& get_ancestors()
+		virtual std::map<std::string, bool>& get_ancestors() override
 		{
 			return ancestors;
 		}
@@ -1035,9 +1333,9 @@ namespace corona
 			if (jfields.object()) {
 				auto jfield_members = jfields.get_members();
 				for (auto jfield : jfield_members) {
-					std::shared_ptr<field_definition> field = std::make_shared<field_definition>();
-					field->field_name = jfield.first;
-					field->field_type = field_types::ft_none;
+					std::shared_ptr<field_implementation> field = std::make_shared<field_implementation>();
+					field->set_field_name(jfield.first);
+					field->set_field_type(field_types::ft_none);
 					if (jfield.second.object()) 
 					{
 						field->put_json(jfield.second);
@@ -1046,11 +1344,11 @@ namespace corona
 					{
 						auto fi = allowed_field_types.find(jfield.second);
 						if (fi != std::end(allowed_field_types)) {
-							field->field_type = fi->second;
+							field->set_field_type( fi->second);
 						}
 					}
-					if (field->field_type != field_types::ft_none) {
-						fields.insert_or_assign(field->field_name, field);
+					if (field->get_field_type() != field_types::ft_none) {
+						fields.insert_or_assign(field->get_field_name(), field);
 					}
 				}
 			}
@@ -1060,10 +1358,10 @@ namespace corona
 			if (jindexes.object()) {
 				auto jindex_members = jindexes.get_members();
 				for (auto jindex : jindex_members) {
-					std::shared_ptr<index_definition> index = std::make_shared<index_definition>();
+					std::shared_ptr<index_implementation> index = std::make_shared<index_implementation>();
 					index->put_json(jindex.second);
-					index->index_name = jindex.first;
-					indexes.insert_or_assign(index->index_name, index);
+					index->set_index_name(jindex.first);
+					indexes.insert_or_assign(jindex.first, index);
 				}
 			}
 		}
@@ -1073,9 +1371,9 @@ namespace corona
 			json_parser jp;
 			for (auto fldpair : fields) {
 				auto query_field = fldpair.second;
-				if (query_field->field_type == field_types::ft_query) {
+				if (query_field->get_field_type() == field_types::ft_query) {
 					json empty_array = jp.create_array();
-					_target.put_member(query_field->field_name, empty_array);
+					_target.put_member(query_field->get_field_name(), empty_array);
 				}
 			}
 		}
@@ -1084,15 +1382,198 @@ namespace corona
 		{
 			for (auto fldpair : fields) {
 				auto query_field = fldpair.second;
-				if (query_field->field_type == field_types::ft_query) {
+				if (query_field->get_field_type() == field_types::ft_query) {
 					json objects = query_field->run_queries(_db, _token, _target);
-					_target.put_member(query_field->field_name, objects);
+					_target.put_member(query_field->get_field_name(), objects);
 				}
 			}
 		}
+
+		virtual std::shared_ptr<json_table> find_index(object_locker* _locker, file_block* _fb, json& _object)
+		{
+			std::shared_ptr<index_implementation> matched_index;
+			int max_matched_key_count = 0;
+
+			for (auto idx : indexes) 
+			{
+				auto& keys = idx.second->get_index_keys();
+
+				int matched_key_count = 0;
+
+				for (auto ikey : keys)
+				{
+					if (not _object.has_member(ikey))
+					{
+						matched_key_count = 0;
+						break;
+					}
+					else
+					{
+						matched_key_count++;
+					}
+				}
+
+				if (matched_key_count > max_matched_key_count)
+				{
+					matched_index = idx.second;
+					max_matched_key_count = matched_key_count;
+				}
+			}
+
+			return matched_index->get_table(_locker, _fb);
+		}
+
+		virtual int64_t get_location() override
+		{
+			return table_location;
+		}
+
+		virtual void apply_changes(std::shared_ptr<corona_database_interface>& _database) override
+		{
+			auto existing_class = _database->load_class(class_name);
+
+			if (existing_class) {
+				table_location = existing_class->get_location();
+				if (existing_class) {
+					descendants = existing_class->get_descendants();
+				}
+			}
+
+			if (not base_class_name.empty()) {
+				auto base_class = _database->load_class(base_class_name);
+
+				base_class->get_ancestors().insert_or_assign(base_class_name, true);
+				base_class->get_descendants().insert_or_assign(class_name, true);
+
+				descendants.insert_or_assign(class_name, true);
+
+				for (auto temp_field : base_class->get_fields())
+				{
+					fields.insert_or_assign(temp_field->get_field_name(), temp_field);
+				}
+
+				_database->save_class(base_class.get());
+			}
+
+			for (auto descendant : descendants)
+			{
+				auto desc_class = _database->load_class(descendant.first);
+				if (desc_class) {
+					desc_class->get_ancestors().insert_or_assign(class_name, true);
+					_database->save_class(desc_class.get());
+				}
+			}
+
+			// The object id always part of the index key
+			// and I check it here, before looping through the existing indexes.
+			for (auto& new_index : indexes)
+			{
+				new_index.second->apply_object_id_field();
+			}
+
+			// loop through existing indexes,
+			// dropping old ones that don't match
+			if (existing_class) 
+			{
+				auto existing_indexes = existing_class->get_indexes();
+				for (auto old_index : existing_indexes)
+				{
+					auto index = old_index;
+					auto existing = indexes.find(index->get_index_name());
+					// if the index is going away, then get rid of it.
+					if (existing == indexes.end() or
+						existing->second->get_index_key_string() != index->get_index_key_string()) {
+						auto index_table = index->get_table(_database.get(), _database.get());
+						if (index_table)
+						{
+							index_table->clear();
+						}
+					}
+				}
+			}
+
+			// reindex tables list
+			std::map<std::string, std::shared_ptr<index_implementation>> correct_indexes;
+
+			// and once again through the indexes
+			// we make a copy of the existing index, so as to keep its table,
+			// while at the same time not trusting this index, which was passed in.
+			for (auto& new_index : indexes)
+			{
+				std::shared_ptr<index_interface> index_to_create;
+
+				// we want to use the existing class to pick up if we have a table
+				if (existing_class)
+				{
+					index_to_create  = existing_class->get_index(new_index.first);
+					if (index_to_create) {
+						index_to_create = std::make_shared<index_implementation>(index_to_create);
+					}
+				}
+
+				if (not index_to_create)
+				{
+					index_to_create = std::make_shared<index_implementation>(new_index);
+				}
+
+				correct_indexes.insert_or_assign(new_index.first, index_to_create);
+			}
+
+			indexes = correct_indexes;
+
+			_database->save_class(this);
+
+			auto class_data = get_table(_database.get(), _database.get());
+			// and populate the new indexes with any data that might exist
+			for (auto idc : indexes) {
+				auto my_index = idc.second;
+				auto table = my_index->get_table(_database.get(), _database.get());
+				auto keys = my_index->get_index_keys();
+				class_data->for_each([&keys, &my_index, this, table](int _idx, json& _item) -> relative_ptr_type {
+					json index_item = _item.extract(keys);
+					table->put(index_item);
+					return 1;
+				});
+			}
+		}
+
+		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name) override
+		{
+			auto found = fields.find(_name);
+			if (found != std::end(fields)) {
+				return found->second;
+			} 
+			return nullptr;
+		}
+		virtual std::vector<std::shared_ptr<field_interface>> get_fields() override
+		{
+			std::vector<std::shared_ptr<field_interface>> fields_list;
+			for (auto fld : fields) {
+				fields_list.push_back(fld.second);
+			}
+			return fields_list;
+		}
+
+		virtual std::shared_ptr<index_interface> get_index(const std::string& _name) override
+		{
+			auto found = indexes.find(_name);
+			if (found != std::end(indexes)) {
+				return found->second;
+			}
+			return nullptr;
+		}
+		virtual std::vector<std::shared_ptr<index_interface>> get_indexes() override
+		{
+			std::vector<std::shared_ptr<index_interface>> indexes_list;
+			for (auto fld : indexes) {
+				indexes_list.push_back(fld.second);
+			}
+			return indexes_list;
+		}
+
 	};
 
-	class corona_database : public file_block, public corona_database_interface
+	class corona_database : public corona_database_interface
 	{
 		corona_db_header header;
 
@@ -1131,12 +1612,8 @@ namespace corona
 		delete_object
 		*/
 
-		lockable classes_rw_lock;
-		lockable objects_rw_lock;
-		lockable header_rw_lock;
-
 		std::shared_ptr<json_table> classes;
-		std::shared_ptr<json_table> indexes;
+		std::shared_ptr<json_table_header> classes_header;
 
 	public:
 
@@ -1302,15 +1779,15 @@ namespace corona
 
 			system_monitoring_interface::global_mon->log_job_start("create_database", "start", start_time, __FILE__, __LINE__);
 			
-			scope_lock lock_one(classes_rw_lock);
-			scope_lock lock_two(objects_rw_lock);
-
 			header.data.object_id = 1;
 			header_location = header.append(this);
 
 			header.data.object_id = 1;
-			header.data.classes_location =  classes->create();
-			header.data.indexes_location = indexes->create();
+			classes_header = std::make_shared<json_table_header>();
+			classes_header->create(this);
+			header.data.classes_location = classes_header->get_location();
+			classes = std::make_shared<json_table>(classes_header, 0, this, this, { class_name_field });
+			classes->create();
 
 			created_classes = jp.create_object();
 
@@ -1544,7 +2021,7 @@ private:
 			}
 		}
 
-		virtual void extract_child_objects(std::shared_ptr<class_definition>& _cdef, json& _child_objects, json& _src_list)
+		virtual void extract_child_objects(std::shared_ptr<class_implementation>& _cdef, json& _child_objects, json& _src_list)
 		{
 			json_parser jp;
 			for (auto _src_obj : _src_list)
@@ -1627,7 +2104,7 @@ private:
 			}
 		}
 
-		virtual void select_child_objects(std::shared_ptr<class_definition>& _cdef, json& _src_list)
+		virtual void select_child_objects(std::shared_ptr<class_implementation>& _cdef, json& _src_list)
 		{
 			json_parser jp;
 			for (auto _src_obj : _src_list)
@@ -1694,7 +2171,7 @@ private:
 			return response;
 		}
 
-		json check_single_object(date_time &current_date, std::string& _user_name, std::shared_ptr<class_definition>& class_data, json object_definition)
+		json check_single_object(date_time &current_date, std::string& _user_name, std::shared_ptr<class_implementation>& class_data, json object_definition)
 		{
 			json_parser jp;
 
@@ -1892,8 +2369,6 @@ private:
 			return response;
 		}
 
-		lockable header_lock;
-
 		std::string get_pass_phrase()
 		{
 			return "This is a test pass phrase";
@@ -2046,9 +2521,8 @@ private:
 
 			if (classd) 
 			{
-				json_object_table class_data(this);
-				class_data.open(classd->table_location);
-				obj = class_data.get(_object_key);
+				auto table = classd->get_table(this, this);
+				obj = table->get(_object_key);
 				return obj;
 			}
 
@@ -2068,78 +2542,27 @@ private:
 
 			if (classd)
 			{
-				relative_ptr_type rpt = classd->table_location;
-				json_object_table class_data(this);
-				class_data.open(rpt);
+				auto class_data = classd->get_table(this, this);
 
 				// Now, if there is an index set specified, let's go see if we can find one and use it 
 				// rather than scanning the table
 
-				if (classd->indexes.size() > 0)
+				auto index_table = classd->find_index(this, this, _key);
+
+				if (index_table)
 				{
-					std::shared_ptr<index_definition> matched_index;
-					int max_matched_key_count = 0;
-
-					// go through each index
-
-					for (auto index_pair : classd->indexes)
-					{
-						// and here, let's go see if all the keys except the object_id, hit the filter.
-						// if they do, we can use this index,
-						// but, we want to use the index that matches the most keys
-						//
-						int matched_key_count = 0;
-
-						for (auto ikey : index_pair.second->index_keys)
-						{
-							if (not _key.has_member(ikey))
-							{
-								matched_key_count = 0;
-								break;
-							}
-							else
-							{
-								matched_key_count++;
-							}
-						}
-
-						if (matched_key_count > max_matched_key_count)
-						{
-							matched_index = index_pair.second;
-							max_matched_key_count = matched_key_count;
-						}
-					}
-
-					// so now, if we have an index, we can use it.
-					if (matched_index)
-					{
-						json_table index_table(this, matched_index->index_keys);
-						index_table.open(matched_index->index_location);
-
 						json object_key = jp.create_object();
 						object_key.put_member(class_name_field, class_name);
 
-						obj = index_table.select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
+						obj = index_table->select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
 							object_key.copy_member(object_id_field, _item);
-							json objfound = class_data.get(object_key);
+							json objfound = class_data->get(object_key);
 							return objfound;
 						});
-					}
-					else 
-					{
-						obj = class_data.select([&_key](int _index, json& _j)
-							{
-								json result;
-								if (_key.compare(_j) == 0)
-									result = _j;
-								return result;
-
-							});
-					}
 				}
 				else 
 				{
-					obj = class_data.select([&_key](int _index, json& _j)
+					obj = class_data->select([&_key](int _index, json& _j)
 						{
 							json result;
 							if (_key.compare(_j) == 0)
@@ -2244,9 +2667,7 @@ private:
 		{
 			time(&last_commit);
 			std::vector<std::string> class_key_fields({ class_name_field });
-			std::vector<std::string> indexes_key_fields({ class_name_field });
 			classes = std::make_shared<json_table>(this, class_key_fields);
-			indexes = std::make_shared<json_table>(this, indexes_key_fields);
 			token_life = time_span(1, time_models::hours);	
 		}
 
@@ -2306,11 +2727,11 @@ private:
 			return s_confirmation_code;
 		}
 
-		std::map<std::string, std::shared_ptr<class_definition>> class_cache;
+		std::map<std::string, std::shared_ptr<class_implementation>> class_cache;
 
-		virtual std::shared_ptr<class_definition> load_class(std::string _class_name)
+		virtual std::shared_ptr<class_interface> load_class(const std::string& _class_name) override
 		{
-			std::shared_ptr<class_definition> cd;
+			std::shared_ptr<class_implementation> cd;
 			if (class_cache.contains(_class_name))
 			{
 				cd = class_cache[_class_name];
@@ -2322,7 +2743,7 @@ private:
 				key.put_member(class_name_field, _class_name);
 				json class_def = classes->get(key);
 				if (class_def.object()) {
-					cd = std::make_shared<class_definition>();
+					cd = std::make_shared<class_implementation>();
 					cd->put_json(class_def);
 					class_cache.insert_or_assign(_class_name, cd);
 				}
@@ -2330,18 +2751,18 @@ private:
 			return cd;
 		}
 
-		virtual json save_class(class_definition& _class_to_save)
+		virtual json save_class(class_interface *_class_to_save) override
 		{
-			std::shared_ptr<class_definition> cd;
+			std::shared_ptr<class_implementation> cd;
 
-			if (class_cache.contains(_class_to_save.class_name))
+			if (class_cache.contains(_class_to_save->get_class_name()))
 			{
-				cd = class_cache[_class_to_save.class_name];
+				cd = class_cache[_class_to_save->get_class_name()];
 			}
 			else
 			{
-				cd = std::make_shared<class_definition>(_class_to_save);
-				class_cache.insert_or_assign(cd->class_name, cd);
+				cd = std::make_shared<class_implementation>(*_class_to_save);
+				class_cache.insert_or_assign(cd->get_class_name(), cd);
 			}
 			json_parser jp;
 			json class_def = jp.create_object();
@@ -2717,12 +3138,12 @@ private:
 			timer tx;
 			system_monitoring_interface::global_mon->log_job_start("open_database", "Open database", start_schema, __FILE__, __LINE__);
 
-			scope_lock lock_one(header_rw_lock);
-
 			relative_ptr_type header_location =  header.read(this, _header_location);
 
-			relative_ptr_type result = classes->open(header.data.classes_location);
-			result = indexes->open(header.data.indexes_location);
+			classes_header = std::make_shared<json_table_header>();
+			classes_header->open(this, header.data.classes_location);
+			classes = std::make_shared<json_table>(classes_header, 0, this, this, { class_name_field });
+			classes->open();
 
 			system_monitoring_interface::global_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -2760,8 +3181,6 @@ private:
 
 			do 
 			{
-				scope_lock lock_one(objects_rw_lock);
-
 				json existing_user_link = get_user(user_name);
 
 				if (existing_user_link.object()) 
@@ -2915,8 +3334,6 @@ private:
 			json result;
 			json result_list;
 			
-			scope_lock lock_one(classes_rw_lock);
-
 			date_time start_time = date_time::now();
 			timer tx;
 
@@ -2993,10 +3410,7 @@ private:
 			json key = jp.create_object(class_name_field, class_name);
 			key.set_natural_order();
 
-			{
-				scope_lock lock_one(classes_rw_lock);
-				result =  classes->get(key);
-			}
+			result =  classes->get(key);
 
 			result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());
 			system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3054,9 +3468,7 @@ private:
 				return result;
 			}
 
-			auto existing_class = load_class(class_name);
-
-			class_definition class_def;
+			class_implementation class_def;
 			class_def.put_json(jclass_definition);
 
 			if (trace_check_class) {
@@ -3065,151 +3477,31 @@ private:
 
 			result = create_response(put_class_request, true, "Ok", jclass_definition, method_timer.get_elapsed_seconds());
 
-			if (class_def.class_name.empty())
+			if (class_def.get_class_name().empty())
 			{
 				result = create_response(put_class_request, false, "Class must have a name", jclass_definition, method_timer.get_elapsed_seconds());
 			}
 
-			if (class_def.class_description.empty())
+			if (class_def.get_class_description().empty())
 			{
 				result = create_response(put_class_request, false, "Class must have a description", jclass_definition, method_timer.get_elapsed_seconds());
 			}
 
-			class_name = class_def.class_name;
+			class_name = class_def.get_class_name();
 
 			// here we are going to grab the ancestor chain for this class.
-
-			if (not class_def.base_class_name.empty())
+			std::string base_class_name = class_def.get_base_class_name();
+			if (not base_class_name.empty())
 			{
-				std::string base_class_name = class_def.base_class_name;
-
 				auto base_class = load_class(base_class_name);
 
 				if (not base_class)
 				{
 					result = create_response(put_class_request, false, "Base class not found", jclass_definition, method_timer.get_elapsed_seconds());
-				}
-
-				class_def.ancestors = base_class->ancestors;
-				class_def.ancestors.insert_or_assign(base_class_name, true);
-				base_class->descendants.insert_or_assign(class_name, true);
-				save_class(*base_class.get());
-				if (existing_class) {
-					class_def.descendants = existing_class->descendants;
-				}
-				else {
-					class_def.descendants.insert_or_assign(class_name, true);
-				}
-
-				for (auto temp_field : base_class->fields)
-				{
-					class_def.fields.insert_or_assign(temp_field.first, temp_field.second);
-				}
-
-				for (auto descendant : class_def.descendants)
-				{
-					auto desc_class = load_class(descendant.first);
-					if (desc_class) {
-						desc_class->ancestors.insert_or_assign(class_name, true);
-						save_class(*desc_class);
-					}
+					return result;
 				}
 			}
 
-			if (existing_class) {
-				class_def.table_location = existing_class->table_location;
-			}
-
-			json_object_table class_data(this);
-			relative_ptr_type rpt;
-
-			if (class_def.table_location == 0) {
-				rpt = class_data.create();
-				class_def.table_location = rpt;
-			}
-			else
-			{
-				rpt = class_def.table_location;
-				class_data.open(rpt);
-			}
-
-			// The object id always part of the index key
-			// and I check it here, before looping through the existing indexes.
-
-			for (auto& new_index : class_def.indexes)
-			{
-				auto first = std::find_if(new_index.second->index_keys.begin(), new_index.second->index_keys.begin(), [](std::string& _key) {
-							if (_key == object_id_field) {
-								return true;
-							}
-							return false;
-						});
-				if (first == new_index.second->index_keys.end()) {
-					new_index.second->index_keys.push_back(object_id_field);
-				}
-			}
-
-			// loop through existing indexes,
-			// dropping old ones that don't match
-			if (existing_class) {
-				for (auto old_index : existing_class->indexes)
-				{
-					auto index = old_index.second;
-					auto existing = class_def.indexes.find(index->index_name);
-					if (existing == class_def.indexes.end() or
-						existing->second->index_key_string() != index->index_key_string()) {
-						json_table index_table(this, index->index_keys);
-						if (index->index_location)
-						{
-							index_table.open(index->index_location);
-							index_table.clear();
-							index->index_location = 0;
-						}
-					}
-				}
-			}
-
-			// reindex tables list
-
-			std::vector<std::shared_ptr<index_definition>> indexes_to_create;
-
-			// and once again through the indexes
-
-			for (auto& new_index : class_def.indexes)
-			{
-				// don't trust the inbounnd table locations
-				new_index.second->index_location = 0;
-
-				if (existing_class) 
-				{
-					auto existing = existing_class->indexes.find(new_index.first);
-
-					if (existing != existing_class->indexes.end())
-					{
-						new_index.second->index_location = existing->second->index_location;
-					}
-				}
-
-				if (new_index.second->index_location == 0) 
-				{
-					json_table table(this, new_index.second->index_keys);
-					new_index.second->index_location = table.create();
-					indexes_to_create.push_back(new_index.second);
-				}
-			}
-
-			// and populate the new indexes with any data that might exist
-			for (auto idc : indexes_to_create) {
-				json_table table(this, idc->index_keys);
-				table.open(idc->index_location);
-				class_data.for_each([idc, this, &table](int _idx, json& _item) -> relative_ptr_type {
-					json index_item = _item.extract(idc->index_keys);
-					table.put(index_item);
-					return 1;
-				});
-			}
-
-			json saved_class = save_class(class_def);	
 			result = create_response(put_class_request, true, "Ok", saved_class, method_timer.get_elapsed_seconds());
 
 			commit_check();
@@ -3217,7 +3509,7 @@ private:
 			return result;
 		}
 
-		virtual std::shared_ptr<class_definition_interface> get_class_interface(std::string _class_name)
+		virtual std::shared_ptr<class_interface> get_class_interface(std::string _class_name)
 		{
 			auto cd = load_class(_class_name);
 			return cd;

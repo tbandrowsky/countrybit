@@ -88,7 +88,6 @@ namespace corona {
 #include "corona-iarray.hpp"
 #include "corona-assert_if.hpp"
 #include "corona-collection_id_box.hpp"
-#include "corona-concept_lock.hpp"
 #include "corona-string_box.hpp"
 #include "corona-float_box.hpp"
 #include "corona-int_box.hpp"
@@ -115,6 +114,7 @@ namespace corona {
 
 #include "corona-json.hpp"
 #include "corona-json-serialization.hpp"
+#include "corona-locks.hpp"
 #include "corona-queue.hpp"
 #include "corona-function.hpp"
 #include "corona-file.hpp"
@@ -187,6 +187,9 @@ namespace corona {
 
 // query implements a linq like predicate object graph for everywhere
 #include "corona-expressions.hpp"
+
+// the data block allows for serialization and deserialization of resizable objects to and from a file.
+#include "corona-data-block.hpp"
 
 // a json table here is a physical table in a file beginning at some point within it.
 #include "corona-json-table.hpp"

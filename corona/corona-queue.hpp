@@ -126,39 +126,6 @@ namespace corona {
 		}
 	};
 
-	// simple wrapper for interlocked increment
-
-	class lockable
-	{
-		CRITICAL_SECTION section;
-		int lock_count;
-		void initialize();
-
-	public:
-
-		lockable();
-
-		lockable(const lockable& _src) = delete;
-		lockable(lockable&& _src) = delete;
-		lockable& operator = (const lockable& _src) = delete;
-		lockable& operator = (lockable&& _src) = delete;
-
-		virtual ~lockable();
-
-		void lock();
-		void unlock();
-		bool locked();
-	};
-
-	class scope_lock
-	{
-		lockable* locked;
-
-	public:
-
-		scope_lock(lockable& _lockable);
-		virtual ~scope_lock();
-	};
 
 	const int maxWorkerThreads = 63;
 
@@ -347,57 +314,6 @@ namespace corona {
 		return jobNotify;
 	}
 
-	// -------------------------------------------------------------------------------
-	// simple wrapper for interlocked increment
-
-	lockable::lockable()
-	{
-		::InitializeCriticalSection(&section);
-		lock_count = 0;
-	}
-
-	void lockable::initialize()
-	{
-		::InitializeCriticalSection(&section);
-		lock_count = 0;
-	}
-
-	lockable::~lockable()
-	{
-		::DeleteCriticalSection(&section);
-	}
-
-	void lockable::lock()
-	{
-		::EnterCriticalSection(&section);
-		lock_count++;
-	}
-
-	void lockable::unlock()
-	{
-		lock_count--;
-		::LeaveCriticalSection(&section);
-	}
-
-	bool lockable::locked()
-	{
-		return lock_count > 0;
-	}
-
-	// ---
-
-	scope_lock::scope_lock(lockable& _lockable)
-	{
-		locked = &_lockable;
-		locked->lock();
-	}
-
-	scope_lock::~scope_lock()
-	{
-		locked->unlock();
-	}
-
-	// ---
 
 	job_queue::job_queue()
 	{
