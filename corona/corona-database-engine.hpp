@@ -81,7 +81,7 @@ namespace corona
 		}
 	};
 
-	class child_constructor_interface
+	class child_bridge_interface
 	{
 	public:
 		virtual std::string get_class_name();
@@ -89,6 +89,7 @@ namespace corona
 		virtual void put_json(json& _src) = 0;
 		virtual void copy(json& _dest, json& _src) = 0;
 		virtual void construct(json& _dest) = 0;
+		virtual json get_key(json& src) = 0;
 	};
 
 	class field_options_interface
@@ -300,7 +301,7 @@ namespace corona
 		}
 	};
 
-	class child_constructor_implementation : public child_constructor_interface
+	class child_bridge_implementation : public child_bridge_interface
 	{
 		std::string							construct_class_name;
 		json								copy_values;
@@ -353,24 +354,45 @@ namespace corona
 				_dest.put_member(_dest_key, member.second);
 			}
 		}
+
+		virtual json get_key(json& _src) override
+		{
+			json_parser jp;
+			json key;
+			key = jp.create_object();
+			auto members = copy_values.get_members();
+
+			for (auto member : members)
+			{
+				std::string _src_key = member.first;
+				std::string _dest_key = member.second;
+				if (not (_src_key.empty() or _dest_key.empty()))
+				{
+					json value = _src[_src_key];
+					key.put_member(_dest_key, value);
+				}
+			}
+		}
+
 	};
 
-	class child_constructible_interface
+	class child_bridges_interface
 	{
 	public:
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(json& _src) = 0;
 
-		virtual std::shared_ptr<child_constructor_interface> get_constructor(std::string _class_name) = 0;
+		virtual std::shared_ptr<child_bridge_interface> get_bridge(std::string _class_name) = 0;
+		virtual std::vector<std::string> get_bridge_list() = 0;
+
 		virtual void init_validation(corona_database_interface* _db) = 0;
-		virtual std::vector<std::string> get_constructor_list() = 0;
 	};
 
-	class child_constructible: public child_constructible_interface
+	class child_bridges: public child_bridges_interface
 	{
 	public:
-		std::map<std::string, std::shared_ptr<child_constructor_interface>> base_constructors;
-		std::map<std::string, std::shared_ptr<child_constructor_interface>> all_constructors;
+		std::map<std::string, std::shared_ptr<child_bridge_interface>> base_constructors;
+		std::map<std::string, std::shared_ptr<child_bridge_interface>> all_constructors;
 
 		virtual void get_json(json& _dest) override
 		{
@@ -392,16 +414,16 @@ namespace corona
 			}
 		}
 
-		virtual std::shared_ptr<child_constructor_interface> get_constructor(std::string _class_name) override
+		virtual std::shared_ptr<child_bridge_interface> get_bridge(std::string _class_name) override
 		{
-			std::shared_ptr<child_constructor_interface> result;
+			std::shared_ptr<child_bridge_interface> result;
 			auto iter = all_constructors.find(_class_name);
 			if (iter != std::end(all_constructors))
 				result = iter->second;
 			return result;
 		}
 
-  		virtual std::vector<std::string> get_constructor_list() override
+  		virtual std::vector<std::string> get_bridge_list() override
 		{
 			std::vector<std::string> results;
 			for (auto item : all_constructors) {
@@ -429,7 +451,7 @@ namespace corona
 	{
 	public:
 
-		std::shared_ptr<child_constructible> child_constructors;
+		std::shared_ptr<child_bridges> bridges;
 
 		array_field_options() = default;
 		array_field_options(const array_field_options& _src) = default;
@@ -444,9 +466,9 @@ namespace corona
 
 			json_parser jp;
 
-			if (child_constructors) {
+			if (bridges) {
 				json jctors = jp.create_object();
-				child_constructors->get_json(jctors);
+				bridges->get_json(jctors);
 				_dest.put_member("constructors", jctors);
 			}
 		}
@@ -456,16 +478,16 @@ namespace corona
 			field_options_base::put_json(_src);
 
 			json jctors = _src["constructors"];
-			child_constructors = std::make_shared<child_constructible>();
+			bridges = std::make_shared<child_bridges>();
 			if (jctors.object()) {
-				child_constructors->put_json(jctors);
+				bridges->put_json(jctors);
 			}
 		}
 
 		virtual void init_validation(corona_database_interface* _db)
 		{
-			if (child_constructors)
-				child_constructors->init_validation(_db);
+			if (bridges)
+				bridges->init_validation(_db);
 		}
 
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
@@ -480,9 +502,9 @@ namespace corona
 						std::string object_class_name;
 						if (obj.object()) {
 							object_class_name = _object_to_test[class_name_field];
-							if (child_constructors)
+							if (bridges)
 							{
-								auto ctor = child_constructors->get_constructor(object_class_name);
+								auto ctor = bridges->get_bridge(object_class_name);
 								if (not ctor) {
 									is_legit = false;
 								}
@@ -517,7 +539,7 @@ namespace corona
 	class object_field_options : public field_options_base
 	{
 	public:
-		std::shared_ptr<child_constructible> child_constructors;
+		std::shared_ptr<child_bridges> bridges;
 
 		object_field_options() = default;
 		object_field_options(const object_field_options& _src) = default;
@@ -532,9 +554,9 @@ namespace corona
 
 			json_parser jp;
 
-			if (child_constructors) {
+			if (bridges) {
 				json jctors = jp.create_object();
-				child_constructors->get_json(jctors);
+				bridges->get_json(jctors);
 				_dest.put_member("constructors", jctors);
 			}
 		}
@@ -544,16 +566,16 @@ namespace corona
 			field_options_base::put_json(_src);
 
 			json jctors = _src["constructors"];
-			child_constructors = std::make_shared<child_constructible>();
+			bridges = std::make_shared<child_bridges>();
 			if (jctors.object()) {
-				child_constructors->put_json(jctors);
+				bridges->put_json(jctors);
 			}
 		}
 
 		virtual void init_validation(corona_database_interface* _db)
 		{
-			if (child_constructors)
-				child_constructors->init_validation(_db);
+			if (bridges)
+				bridges->init_validation(_db);
 		}
 
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
@@ -567,9 +589,9 @@ namespace corona
 					if (_object_to_test.object()) {
 						object_class_name = _object_to_test[class_name_field];
 
-						if (child_constructors)
+						if (bridges)
 						{
-							auto ctor = child_constructors->get_constructor(object_class_name);
+							auto ctor = bridges->get_bridge(object_class_name);
 							if (not ctor) {
 								is_legit = false;
 							}
