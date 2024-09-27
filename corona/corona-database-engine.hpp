@@ -92,6 +92,19 @@ namespace corona
 		virtual json get_key(json& src) = 0;
 	};
 
+	class child_bridges_interface
+	{
+	public:
+		virtual void get_json(json& _dest) = 0;
+		virtual void put_json(json& _src) = 0;
+
+		virtual std::shared_ptr<child_bridge_interface> get_bridge(std::string _class_name) = 0;
+		virtual std::vector<std::string> get_bridge_list() = 0;
+
+		virtual void init_validation(corona_database_interface* _db) = 0;
+		virtual json get_children(corona_database_interface* _db, json _parent_object) = 0;
+	};
+
 	class field_options_interface
 	{
 	public:
@@ -101,6 +114,7 @@ namespace corona
 		virtual void init_validation(corona_database_interface* _db) = 0;
 		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object) = 0;
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
+		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
 	};
 
 	class field_interface {
@@ -131,6 +145,7 @@ namespace corona
 		}
 
 		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object) = 0;
+		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
 	};
 
 
@@ -171,7 +186,7 @@ namespace corona
 		virtual std::map<std::string, bool>&			get_ancestors() = 0;
 		virtual std::shared_ptr<json_object_table>		get_table(object_locker* _locker, file_block* _fb) = 0;
 		virtual std::shared_ptr<json_table>				find_index(object_locker* _locker, file_block* _fb, json& _keys) = 0;
-		virtual	void									apply_changes(std::shared_ptr<corona_database_interface>& _database) = 0;
+		virtual	void									apply_changes(corona_database_interface* _db) = 0;
 
 		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name) = 0;
 		virtual std::vector<std::shared_ptr<field_interface>> get_fields() = 0;
@@ -181,6 +196,12 @@ namespace corona
 
 		virtual int64_t									get_location() = 0;
 		virtual void									init_validation(corona_database_interface* _db) = 0;
+
+		virtual void									put_objects(corona_database_interface* _db, json& _children, json& _src_objects) = 0;
+		virtual json									get_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
+		virtual json									delete_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
+
+		virtual void									run_queries(corona_database_interface* _db, std::string& _token, json& _target) = 0;
 	};
 
 	class corona_database_interface : public file_block, public object_locker
@@ -274,18 +295,18 @@ namespace corona
 			required = (bool)_src["required"];
 		}
 
-		virtual void init_validation(corona_database_interface* _db)
+		virtual void init_validation(corona_database_interface* _db)  override
 		{
 			;
 		}
 
-		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object)
+		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object)  override
 		{
 			json empty;
 			return empty;
 		}
 
-		virtual bool accepts(corona_database_interface *_db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool accepts(corona_database_interface *_db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)  override
 		{
 			bool is_empty = _object_to_test.empty();
 			if (required and is_empty) {
@@ -298,6 +319,11 @@ namespace corona
 				_validation_errors.push_back(ve);
 				return false;
 			};
+		}
+
+		virtual std::shared_ptr<child_bridges_interface> get_bridges() override
+		{
+			return nullptr;
 		}
 	};
 
@@ -376,17 +402,6 @@ namespace corona
 
 	};
 
-	class child_bridges_interface
-	{
-	public:
-		virtual void get_json(json& _dest) = 0;
-		virtual void put_json(json& _src) = 0;
-
-		virtual std::shared_ptr<child_bridge_interface> get_bridge(std::string _class_name) = 0;
-		virtual std::vector<std::string> get_bridge_list() = 0;
-
-		virtual void init_validation(corona_database_interface* _db) = 0;
-	};
 
 	class child_bridges: public child_bridges_interface
 	{
@@ -445,6 +460,29 @@ namespace corona
 				}
 			}
 		}
+
+		virtual json get_children(corona_database_interface* _db, json _parent_object) override
+		{
+			json_parser jp;
+			json result_array = jp.create_array();
+
+			for (auto class_name_pair : all_constructors) 
+			{
+				json key = class_name_pair.second->get_key(_parent_object);
+				auto classy = _db->load_class(class_name_pair.first);
+				if (classy) {
+					json temp_array = classy->get_objects(_db, key, true);
+					if (temp_array.array()) {
+						for (auto obj : temp_array) {
+							result_array.push_back(obj);
+						}
+					}
+				}
+			}
+
+			return result_array;
+		}
+
 	};
 
 	class array_field_options : public field_options_base
@@ -534,6 +572,11 @@ namespace corona
 				};
 			}
 		}
+
+		virtual std::shared_ptr<child_bridges_interface> get_bridges() override
+		{
+			return bridges;
+		}
 	};
 
 	class object_field_options : public field_options_base
@@ -617,6 +660,11 @@ namespace corona
 					return false;
 				};
 			}
+		}
+
+		virtual std::shared_ptr<child_bridges_interface> get_bridges() override
+		{
+			return bridges;
 		}
 
 	};
@@ -993,12 +1041,12 @@ namespace corona
 		}
 
 
-		virtual void init_validation(corona_database_interface* _db)
+		virtual void init_validation(corona_database_interface* _db) override
 		{
 			if (options) options->init_validation(_db);
 		}
 
-		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) override
 		{
 			if (options) {
 				return options->accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test);
@@ -1075,13 +1123,21 @@ namespace corona
 			}
 		}
 
-		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object)
+		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object) override
 		{
 			json results;
 			if (options) {
 				results = options->run_queries(_db, _token, _object);
 			}
 			return results;
+		}
+
+		virtual std::shared_ptr<child_bridges_interface> get_bridges() override
+		{
+			if (options) {
+				return options->get_bridges();
+			}
+			return nullptr;
 		}
 	};
 
@@ -1212,17 +1268,20 @@ namespace corona
 			scope_lock my_lock(index_locker);
 			return index_id;
 		}
+
 		index_implementation& set_index_id(int64_t _index_id)
 		{
 			scope_lock my_lock(index_locker);
 			index_id = _index_id;
 			return *this;
 		}
+
 		std::string get_index_name()
 		{
 			scope_lock my_lock(index_locker);
 			return index_name;
 		}
+
 		index_implementation& set_index_name(const std::string& _name)
 		{
 			scope_lock my_lock(index_locker);
@@ -1554,9 +1613,9 @@ namespace corona
 			return table_location;
 		}
 
-		virtual void apply_changes(std::shared_ptr<corona_database_interface>& _database) override
+		virtual void apply_changes(corona_database_interface* _db) override
 		{
-			auto existing_class = _database->load_class(class_name);
+			auto existing_class = _db->load_class(class_name);
 
 			if (existing_class) {
 				table_location = existing_class->get_location();
@@ -1566,7 +1625,7 @@ namespace corona
 			}
 
 			if (not base_class_name.empty()) {
-				auto base_class = _database->load_class(base_class_name);
+				auto base_class = _db->load_class(base_class_name);
 
 				base_class->get_ancestors().insert_or_assign(base_class_name, true);
 				base_class->get_descendants().insert_or_assign(class_name, true);
@@ -1578,15 +1637,15 @@ namespace corona
 					fields.insert_or_assign(temp_field->get_field_name(), temp_field);
 				}
 
-				_database->save_class(base_class.get());
+				_db->save_class(base_class.get());
 			}
 
 			for (auto descendant : descendants)
 			{
-				auto desc_class = _database->load_class(descendant.first);
+				auto desc_class = _db->load_class(descendant.first);
 				if (desc_class) {
 					desc_class->get_ancestors().insert_or_assign(class_name, true);
-					_database->save_class(desc_class.get());
+					_db->save_class(desc_class.get());
 				}
 			}
 
@@ -1609,7 +1668,7 @@ namespace corona
 					// if the index is going away, then get rid of it.
 					if (existing == indexes.end() or
 						existing->second->get_index_key_string() != index->get_index_key_string()) {
-						auto index_table = index->get_table(_database.get(), _database.get());
+						auto index_table = index->get_table(_db, _db);
 						if (index_table)
 						{
 							index_table->clear();
@@ -1647,13 +1706,13 @@ namespace corona
 
 			indexes = correct_indexes;
 
-			_database->save_class(this);
+			_db->save_class(this);
 
-			auto class_data = get_table(_database.get(), _database.get());
+			auto class_data = get_table(_db, _db);
 			// and populate the new indexes with any data that might exist
 			for (auto idc : indexes) {
 				auto my_index = idc.second;
-				auto table = my_index->get_table(_database.get(), _database.get());
+				auto table = my_index->get_table(_db, _db);
 				auto keys = my_index->get_index_keys();
 				class_data->for_each([&keys, &my_index, this, table](int _idx, json& _item) -> relative_ptr_type {
 					json index_item = _item.extract(keys);
@@ -1671,6 +1730,7 @@ namespace corona
 			} 
 			return nullptr;
 		}
+
 		virtual std::vector<std::shared_ptr<field_interface>> get_fields() override
 		{
 			std::vector<std::shared_ptr<field_interface>> fields_list;
@@ -1688,6 +1748,7 @@ namespace corona
 			}
 			return nullptr;
 		}
+
 		virtual std::vector<std::shared_ptr<index_interface>> get_indexes() override
 		{
 			std::vector<std::shared_ptr<index_interface>> indexes_list;
@@ -1696,7 +1757,8 @@ namespace corona
 			}
 			return indexes_list;
 		}
-		virtual void scatter_children(std::shared_ptr<corona_database_interface>& _database, json& _child_objects, json& _src_list)
+
+		virtual void put_objects(corona_database_interface* _db, json& _child_objects, json& _src_list)
 		{
 			json_parser jp;
 			for (auto _src_obj : _src_list)
@@ -1706,130 +1768,140 @@ namespace corona
 					auto& fld = fpair.second;
 					if (fld->get_field_type() == field_types::ft_array)
 					{
-						json fld_array = _src_obj[fld->get_field_name()];
-						if (fld_array.array()) {
-							json new_array = jp.create_array();
-							for (auto item : fld_array) {
-								if (item.object() and item.has_member(class_name_field)) {
-
-									int64_t child_object_id;
-									std::string child_class_name = item[class_name_field];
-
-									if (not item.has_member(object_id_field)) {
-										child_object_id = _database->get_next_object_id();
-										item.put_member_i64(object_id_field, child_object_id);
-									}
-									else {
-										child_object_id = item[object_id_field];
-									}
-									_child_objects.push_back(item);
-
-									json parent_child = jp.create_object();
-									parent_child.put_member(class_name_field, "sys_parent_child");
-									parent_child.put_member_i64("parent_id", parent_object_id);
-									parent_child.put_member("parent_member", fld->get_field_name());
-									parent_child.put_member("child_class", child_class_name);
-									parent_child.put_member("child_id", child_object_id);
-									json existing_child = _database->select_object(parent_child, false);
-									if (existing_child.array() and existing_child.size() == 0)
-									{
-										_child_objects.push_back(parent_child);
+						json array_field = _src_obj[fpair.first];
+						if (array_field.array()) {
+							for (auto obj : array_field) {
+								std::string class_name = obj[class_name_field];
+								auto bridges = fld->get_bridges();
+								if (bridges) {
+									auto bridge = bridges->get_bridge(class_name);
+									if (bridge) {
+										bridge->copy(obj, _src_obj);
 									}
 								}
-								else
-								{
-									new_array.push_back(item);
-								}
+								_child_objects.push_back(obj);
 							}
-							_src_obj.put_member(fld->get_field_name(), new_array);
+							json empty_array = jp.create_array();
+							_src_obj.put_member(fpair.first, empty_array);
 						}
 					}
 					else if (fld->get_field_type() == field_types::ft_object)
 					{
-						json item = _src_obj[fld->get_field_name()];
-						if (item.object() and item.has_member(class_name_field)) {
-							int64_t child_object_id;
-							std::string child_class_name = item[class_name_field];
-
-							if (not item.has_member(object_id_field)) {
-								child_object_id = _database->get_next_object_id();
-								item.put_member_i64(object_id_field, child_object_id);
+						json obj = _src_obj[fpair.first];
+						if (obj.object()) {
+							std::string class_name = obj[class_name_field];
+							auto bridges = fld->get_bridges();
+							if (bridges) {
+								auto bridge = bridges->get_bridge(class_name);
+								if (bridge) {
+									bridge->copy(obj, _src_obj);
+								}
 							}
-							else {
-								child_object_id = item[object_id_field];
-							}
-							_child_objects.push_back(item);
-
-							json parent_child = jp.create_object();
-							parent_child.put_member(class_name_field, "sys_parent_child");
-							parent_child.put_member_i64("parent_id", parent_object_id);
-							parent_child.put_member("parent_member", fld->get_field_name());
-							parent_child.put_member("child_class", child_class_name);
-							parent_child.put_member("child_id", child_object_id);
-							json existing_child = _database->select_object(parent_child, false);
-							if (existing_child.array() and existing_child.size() == 0)
-							{
-								_child_objects.push_back(parent_child);
-							}
-							json empty = jp.create_object();
-							_src_obj.put_member(fld->get_field_name(), empty);
+							json empty;
+							_src_obj.put_member(fpair.first, empty);
+							_child_objects.push_back(obj);
 						}
 					}
 				}
 			}
+
+			table->put_array(_src_list);
 		}
 
-		virtual void gather_children(std::shared_ptr<corona_database_interface>& _database, json& _src_list)
+		virtual json get_objects(corona_database_interface* _db, json _key, bool _include_children)
 		{
-			json_parser jp;
-			for (auto _src_obj : _src_list)
-			{
-				json key = jp.create_object();
-				int64_t object_id = (int64_t)_src_obj[object_id_field];
-				key.put_member(class_name_field, "sys_parent_child");
-				key.put_member_i64("parent_id", object_id);
-				for (auto& fpair : fields) {
-					auto& fld = fpair.second;
-					key.put_member("parent_member", fld->get_field_name());
-					json link_objects = _database->select_object(key, true);
+			// Now, if there is an index set specified, let's go see if we can find one and use it 
+			// rather than scanning the table
 
-					if (fld->get_field_type() == field_types::ft_array)
-					{
-						json existing = _src_obj[fld->get_field_name()];
-						if (not existing.array()) {
-							json new_array = jp.create_array();
-							_src_obj.put_member(fld->get_field_name(), new_array);
-							existing = _src_obj[fld->get_field_name()];
-						}
-						for (auto link_object : link_objects)
+			json_parser jp;
+			json obj;
+
+			auto class_data = get_table(_db, _db);
+
+			auto index_table = find_index(_db, _db, _key);
+
+			if (_key.has_member(object_id_field)) {
+				int64_t object_id = (int64_t)_key[object_id_field];
+				json temp = class_data->get(object_id);
+				obj = jp.create_array();
+				obj.push_back(temp);
+			}
+			else 
+			{
+				auto index_table = find_index(_db, _db, _key);
+				if (index_table)
+				{
+					json object_key = jp.create_object();
+					object_key.put_member(class_name_field, class_name);
+
+					obj = index_table->select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
+						object_key.copy_member(object_id_field, _item);
+						json objfound = class_data->get(object_key);
+						return objfound;
+					});
+				}
+				else
+				{
+					obj = class_data->select([&_key](int _index, json& _j)
 						{
-							json child_select = jp.create_object();
-							std::string child_class = link_object["child_class"];
-							int64_t child_object_id = (int64_t)link_object["child_id"];
-							child_select.put_member(class_name_field, child_class);
-							child_select.put_member_i64(object_id_field, child_object_id);
-							auto child_objects = _database->select_object(child_select, true);
-							for (auto child : child_objects) {
-								existing.push_back(child);
-							}
-						}
-					}
-					else if (fld->get_field_type() == field_types::ft_object)
-					{
-						for (auto link_object : link_objects)
+							json result;
+							if (_key.compare(_j) == 0)
+								result = _j;
+							return result;
+
+						});
+				}
+			}
+
+			if (_include_children) {
+				for (auto _src_obj : obj)
+				{
+					for (auto& fpair : fields) {
+						auto& fld = fpair.second;
+						if (fld->get_field_type() == field_types::ft_array)
 						{
-							json child_select = jp.create_object();
-							std::string child_class = link_object["child_class"];
-							int64_t child_object_id = (int64_t)link_object["child_id"];
-							child_select.put_member(class_name_field, child_class);
-							child_select.put_member_i64(object_id_field, child_object_id);
-							auto child_objects = _database->select_object(child_select, true);
-							for (auto child : child_objects) {
-								_src_obj.put_member(fld->get_field_name(), child);
-							}
+							auto bridges = fld->get_bridges();
+							json results = bridges->get_children(_db, _src_obj);
+							_src_obj.put_member(fld->get_field_name(), results);
+						}
+						else if (fld->get_field_type() == field_types::ft_object)
+						{
+							auto bridges = fld->get_bridges();
+							json results = bridges->get_children(_db, _src_obj);
+							json first = results.get_first_element();
+							_src_obj.put_member(fld->get_field_name(), first);
 						}
 					}
 				}
+			}
+
+		}
+
+		virtual json delete_objects(corona_database_interface* _db, json _key, bool _include_children)
+		{
+			json_parser jp;
+			json child_objects = jp.create_array();
+			json matching_objects = get_objects(_db, _key, _include_children);
+			auto tb = get_table(_db, _db);
+
+			for (auto _src_obj : matching_objects) {
+
+				for (auto& fpair : fields) {
+					auto& fld = fpair.second;
+					if (fld->get_field_type() == field_types::ft_array)
+					{
+						auto bridges = fld->get_bridges();
+						json results = bridges->get_children(_db, _src_obj);
+					}
+					else if (fld->get_field_type() == field_types::ft_object)
+					{
+						auto bridges = fld->get_bridges();
+						json results = bridges->get_children(_db, _src_obj);
+					}
+				}
+
+				int64_t object_id = _src_obj[ object_id_field ];
+				tb->erase(object_id);
 			}
 		}
 	};
@@ -2249,143 +2321,6 @@ private:
 			}
 		}
 
-		virtual void extract_child_objects(std::shared_ptr<class_implementation>& _cdef, json& _child_objects, json& _src_list)
-		{
-			json_parser jp;
-			for (auto _src_obj : _src_list)
-			{
-				int64_t parent_object_id = (int64_t)_src_obj[object_id_field];
-				for (auto& fpair : _cdef->fields) {
-					auto& fld = fpair.second;
-					if (fld->field_type == field_types::ft_array)
-					{
-						json fld_array = _src_obj[fld->field_name];
-						if (fld_array.array()) {
-							json new_array = jp.create_array();
-							for (auto item : fld_array) {
-								if (item.object() and item.has_member(class_name_field)) {
-
-									int64_t child_object_id;
-									std::string child_class_name = item[class_name_field];
-
-									if (not item.has_member(object_id_field)) {
-										child_object_id = get_next_object_id();
-										item.put_member_i64(object_id_field, child_object_id);
-									}
-									else {
-										child_object_id = item[object_id_field];
-									}
-									_child_objects.push_back(item);
-
-									json parent_child = jp.create_object();
-									parent_child.put_member(class_name_field, "sys_parent_child");
-									parent_child.put_member_i64("parent_id", parent_object_id);
-									parent_child.put_member("parent_member", fld->field_name);
-									parent_child.put_member("child_class", child_class_name);
-									parent_child.put_member("child_id", child_object_id);
-									json existing_child = select_object(parent_child, false);
-									if (existing_child.array() and existing_child.size() == 0)
-									{
-										_child_objects.push_back(parent_child);
-									}
-								}
-								else
-								{
-									new_array.push_back(item);
-								}
-							}
-							_src_obj.put_member(fld->field_name, new_array);
-						}
-					}
-					else if (fld->field_type == field_types::ft_object)
-					{
-						json item = _src_obj[fld->field_name];
-						if (item.object() and item.has_member(class_name_field)) {
-							int64_t child_object_id;
-							std::string child_class_name = item[class_name_field];
-
-							if (not item.has_member(object_id_field)) {
-								child_object_id = get_next_object_id();
-								item.put_member_i64(object_id_field, child_object_id);
-							}
-							else {
-								child_object_id = item[object_id_field];
-							}
-							_child_objects.push_back(item);
-
-							json parent_child = jp.create_object();
-							parent_child.put_member(class_name_field, "sys_parent_child");
-							parent_child.put_member_i64("parent_id", parent_object_id);
-							parent_child.put_member("parent_member", fld->field_name);
-							parent_child.put_member("child_class", child_class_name);
-							parent_child.put_member("child_id", child_object_id);
-							json existing_child = select_object(parent_child, false);
-							if (existing_child.array() and existing_child.size() == 0)
-							{
-								_child_objects.push_back(parent_child);
-							}
-							json empty = jp.create_object();
-							_src_obj.put_member(fld->field_name, empty);
-						}
-					}
-				}
-			}
-		}
-
-		virtual void select_child_objects(std::shared_ptr<class_implementation>& _cdef, json& _src_list)
-		{
-			json_parser jp;
-			for (auto _src_obj : _src_list)
-			{
-				json key = jp.create_object();
-				int64_t object_id = (int64_t)_src_obj[object_id_field];
-				key.put_member(class_name_field, "sys_parent_child");
-				key.put_member_i64("parent_id", object_id);
-				for (auto& fpair : _cdef->fields) {
-					auto& fld = fpair.second;
-					key.put_member("parent_member", fld->field_name);
-					json link_objects = select_object(key, true);
-
-					if (fld->field_type == field_types::ft_array)
-					{
-						json existing = _src_obj[fld->field_name];
-						if (not existing.array()) {
-							json new_array = jp.create_array();
-							_src_obj.put_member(fld->field_name, new_array);
-							existing = _src_obj[fld->field_name];
-						}
-						for (auto link_object : link_objects)
-						{
-							json child_select = jp.create_object();
-							std::string child_class = link_object["child_class"];
-							int64_t child_object_id = (int64_t)link_object["child_id"];
-							child_select.put_member(class_name_field, child_class);
-							child_select.put_member_i64(object_id_field, child_object_id);
-							auto child_objects = select_object(child_select, true);
-							for (auto child : child_objects) {
-								existing.push_back(child);
-							}
-						}
-					}
-					else if (fld->field_type == field_types::ft_object)
-					{
-						for (auto link_object : link_objects)
-						{
-							json child_select = jp.create_object();
-							std::string child_class = link_object["child_class"];
-							int64_t child_object_id = (int64_t)link_object["child_id"];
-							child_select.put_member(class_name_field, child_class);
-							child_select.put_member_i64(object_id_field, child_object_id);
-							auto child_objects = select_object(child_select, true);
-							for (auto child : child_objects) {
-								_src_obj.put_member(fld->field_name, child);
-							}
-						}
-					}
-				}
-			}
-		}
-
 		json create_class(std::string _text)
 		{
 			json_parser jp;
@@ -2412,7 +2347,7 @@ private:
 				json warning = jp.create_object();
 				validation_error ve;
 
-				ve.class_name = class_data->class_name;
+				ve.class_name = class_data->get_class_name();
 				ve.field_name = trim(object_definition.to_json_typed(), 50);
 				ve.filename = __FILE__;
 				ve.line_number = __LINE__;
@@ -2457,12 +2392,12 @@ private:
 				// check the object against the class definition for correctness
 				// first we see which fields are in the class not in the object
 
-				for (auto kv : class_data->fields) {
-					if (object_definition.has_member(kv.first)) {
-						auto obj_type = object_definition[kv.first]->get_field_type();
-						auto member_type = kv.second->field_type;
+				for (auto fld : class_data->get_fields()) {
+					if (object_definition.has_member(fld->get_field_name())) {
+						auto obj_type = object_definition[fld->get_field_name()]->get_field_type();
+						auto member_type = fld->get_field_type();
 						if (member_type != obj_type) {
-							object_definition.change_member_type(kv.first, member_type);
+							object_definition.change_member_type(fld->get_field_name(), member_type);
 						}
 					}
 				}
@@ -2471,15 +2406,15 @@ private:
 				// in the class definition.
 				auto object_members = object_definition.get_members();
 				for (auto om : object_members) {
-					if (class_data->fields.contains(om.first)) {
-						auto& fld = class_data->fields[om.first];
-						fld->accepts(this, validation_errors, class_data->class_name, om.first, om.second);
+					auto fld = class_data->get_field(om.first);
+					if (fld) {
+						fld->accepts(this, validation_errors, class_data->get_class_name(), om.first, om.second);
 					}
 					else
 					{
 						json warning = jp.create_object();
 						validation_error ve;
-						ve.class_name = class_data->class_name;
+						ve.class_name = class_data->get_class_name();
 						ve.field_name = om.first;
 						ve.filename = __FILE__;
 						ve.line_number = __LINE__;
@@ -2768,42 +2703,7 @@ private:
 
 			auto classd = load_class(class_name);
 
-			if (classd)
-			{
-				auto class_data = classd->get_table(this, this);
-
-				// Now, if there is an index set specified, let's go see if we can find one and use it 
-				// rather than scanning the table
-
-				auto index_table = classd->find_index(this, this, _key);
-
-				if (index_table)
-				{
-						json object_key = jp.create_object();
-						object_key.put_member(class_name_field, class_name);
-
-						obj = index_table->select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
-							object_key.copy_member(object_id_field, _item);
-							json objfound = class_data->get(object_key);
-							return objfound;
-						});
-				}
-				else 
-				{
-					obj = class_data->select([&_key](int _index, json& _j)
-						{
-							json result;
-							if (_key.compare(_j) == 0)
-								result = _j;
-							return result;
-
-						});
-				}
-
-				if (_children) {
-					select_child_objects(classd, obj);
-				}
-			}
+			classd->get_objects(this, _key, _children);
 
 			return obj;
 		}
@@ -3719,18 +3619,10 @@ private:
 
 			// here we are going to grab the ancestor chain for this class.
 			std::string base_class_name = class_def.get_base_class_name();
-			if (not base_class_name.empty())
-			{
-				auto base_class = load_class(base_class_name);
 
-				if (not base_class)
-				{
-					result = create_response(put_class_request, false, "Base class not found", jclass_definition, method_timer.get_elapsed_seconds());
-					return result;
-				}
-			}
+			class_def.apply_changes(this);
 
-			result = create_response(put_class_request, true, "Ok", saved_class, method_timer.get_elapsed_seconds());
+			result = create_response(put_class_request, true, "Ok", jclass_definition, method_timer.get_elapsed_seconds());
 
 			commit_check();
 			system_monitoring_interface::global_mon->log_function_stop("put_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3952,53 +3844,55 @@ private:
 
 			auto class_def = load_class(class_name);
 
-			if (not class_def->empty()) {
+			if (class_def) {
 
 				json new_object = jp.create_object();
 				new_object.put_member(class_name_field, class_name);
 
-				for (auto& member : class_def->fields)
+				auto fields = class_def->get_fields();
+
+				for (auto& field : fields)
 				{
-					if (member.first == class_name_field)
-						continue;
+					std::string field_name = field->get_field_name();
 
-					auto &field = member.second;
-
-					if (field->field_type == field_types::ft_object) 
-					{
-						new_object.put_member_object(member.first);
+					if (field_name == class_name_field) {
+						new_object.put_member(field_name, class_name);
 					}
-					else if (field->field_type == field_types::ft_array or field->field_type == field_types::ft_query)
+					else if (field->get_field_type() == field_types::ft_object)
 					{
-						new_object.put_member_array(member.first);
+						new_object.put_member_object(field_name);
 					}
-					else if (field->field_type == field_types::ft_double) 
+					else if (field->get_field_type() == field_types::ft_array or field->get_field_type() == field_types::ft_query)
 					{
-						new_object.put_member(member.first, 0.0);
+						new_object.put_member_array(field_name);
 					}
-					else if (field->field_type == field_types::ft_string)
+					else if (field->get_field_type() == field_types::ft_double)
 					{
-						new_object.put_member(member.first, "");
+						new_object.put_member(field_name, 0.0);
 					}
-					else if (field->field_type == field_types::ft_int64)
+					else if (field->get_field_type() == field_types::ft_string)
 					{
-						new_object.put_member_i64(member.first, 0);
+						new_object.put_member(field_name, "");
 					}
-					else if (field->field_type == field_types::ft_datetime)
+					else if (field->get_field_type() == field_types::ft_int64)
+					{
+						new_object.put_member_i64(field_name, 0);
+					}
+					else if (field->get_field_type() == field_types::ft_datetime)
 					{
 						date_time dt;
-						new_object.put_member(member.first, dt);
+						new_object.put_member(field_name, dt);
 					}
-					else if (field->field_type == field_types::ft_function)
+					else if (field->get_field_type() == field_types::ft_function)
 					{
-						auto key = std::make_tuple(class_name, member.first);
+						auto key = std::make_tuple(class_name, field_name);
 						if (functions.contains(key)) {
-							new_object.put_member_function(member.first, functions[key]);
+							new_object.put_member_function(field_name, functions[key]);
 						}
 						else 
 						{
-							std::string err_message = std::format("function {0} {1} not defined", class_name, member.first);
-							new_object.put_member(member.first, err_message);
+							std::string err_message = std::format("function {0} {1} not defined", class_name, field_name);
+							new_object.put_member(field_name, err_message);
 						}
 					}
 				}
@@ -4055,31 +3949,14 @@ private:
 				{
 					auto cd = load_class(class_pair.first);
 
-					extract_child_objects(cd, child_objects, class_pair.second);
-
 					// now that we have our class, we can go ahead and open the storage for it
-					relative_ptr_type rpt = cd->table_location;
-					json_object_table class_data(this);
-					class_data.open(rpt);
 
 					json data_list = class_pair.second.map([](std::string _member, int _index, json& _item) -> json {
 						return _item[data_field];
 						});
 
-					class_data.put_array(data_list);
 
-					// update the indexes
-					for (auto class_index : cd->indexes) {
-						relative_ptr_type location = class_index.second->index_location;
-						if (location > 0) {
-							json indexed_objects = data_list.map([&class_index](std::string _member, int _index, json& _item) -> json {
-								return _item.extract(class_index.second->index_keys);
-								});
-							json_table index_to_update(this, class_index.second->index_keys);
-							index_to_update.open(location);
-							index_to_update.put_array(indexed_objects);
-						}
-					}
+					cd->put_objects(this, child_objects, data_list);
 				}
 
 				header.write(this);
