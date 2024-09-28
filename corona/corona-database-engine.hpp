@@ -194,19 +194,25 @@ namespace corona
 		virtual std::shared_ptr<index_interface>		get_index(const std::string& _name) = 0;
 		virtual std::vector<std::shared_ptr<index_interface>> get_indexes() = 0;
 
-		virtual int64_t									get_location() = 0;
-		virtual void									init_validation(corona_database_interface* _db) = 0;
+		virtual int64_t	get_location() = 0;
+		virtual void	init_validation(corona_database_interface* _db) = 0;
 
-		virtual void									put_objects(corona_database_interface* _db, json& _children, json& _src_objects) = 0;
-		virtual json									get_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
-		virtual json									delete_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
+		virtual void	put_objects(corona_database_interface* _db, json& _children, json& _src_objects) = 0;
+		virtual json	get_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
+		virtual json	delete_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
 
-		virtual void									run_queries(corona_database_interface* _db, std::string& _token, json& _target) = 0;
+		virtual void	run_queries(corona_database_interface* _db, std::string& _token, json& _target) = 0;
+		virtual void	clear_queries(json& _target) = 0;
 	};
 
 	class corona_database_interface : public file_block, public object_locker
 	{
 	public:
+
+		corona_database_interface(std::shared_ptr<file> _fb) : file_block(_fb)
+		{
+			;
+		}
 
 		virtual json create_database() = 0;
 		virtual relative_ptr_type open_database(relative_ptr_type _header_location) = 0;
@@ -1551,7 +1557,7 @@ namespace corona
 			}
 		}
 
-		virtual void clear_queries(json& _target)
+		virtual void clear_queries(json& _target) override
 		{
 			json_parser jp;
 			for (auto fldpair : fields) {
@@ -1563,7 +1569,7 @@ namespace corona
 			}
 		}
 
-		virtual void run_queries(corona_database_interface* _db, std::string& _token, json& _target)
+		virtual void run_queries(corona_database_interface* _db, std::string& _token, json& _target) override
 		{
 			for (auto fldpair : fields) {
 				auto query_field = fldpair.second;
@@ -1705,6 +1711,8 @@ namespace corona
 			}
 
 			indexes = correct_indexes;
+
+			class_id = _db->get_next_object_id();
 
 			_db->save_class(this);
 
@@ -2334,7 +2342,7 @@ private:
 			return response;
 		}
 
-		json check_single_object(date_time &current_date, std::string& _user_name, std::shared_ptr<class_implementation>& class_data, json object_definition)
+		json check_single_object(date_time &current_date, std::string& _user_name, std::shared_ptr<class_interface>& class_data, json object_definition)
 		{
 			json_parser jp;
 
@@ -2426,7 +2434,7 @@ private:
 
 			if (validation_errors.size() > 0) {
 				json warnings = jp.create_array();
-				std::string msg = std::format("Object '{0}' has problems", class_data->class_name);
+				std::string msg = std::format("Object '{0}' has problems", class_data->get_class_name());
 				for (auto& ve : validation_errors) {
 					json jve = jp.create_object();
 					ve.get_json(jve);
@@ -2791,7 +2799,7 @@ private:
 		// constructing and opening a database
 
 		corona_database(std::shared_ptr<file> _database_file) :
-			file_block(_database_file)
+			corona_database_interface(_database_file)
 		{
 			time(&last_commit);
 			std::vector<std::string> class_key_fields({ class_name_field });
@@ -3270,7 +3278,8 @@ private:
 
 			classes_header = std::make_shared<json_table_header>();
 			classes_header->open(this, header.data.classes_location);
-			classes = std::make_shared<json_table>(classes_header, 0, this, this, { class_name_field });
+			std::vector<std::string> class_keys = { class_name_field };
+			classes = std::make_shared<json_table>(classes_header, 0, this, this, class_keys);
 			classes->open();
 
 			system_monitoring_interface::global_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3674,7 +3683,7 @@ private:
 				filter = jp.create_object();
 			}
 
-			for (auto class_pair : class_def->descendants)
+			for (auto class_pair : class_def->get_descendants())
 			{
 				json class_key;
 				class_key = filter.clone();
@@ -4067,18 +4076,8 @@ private:
 
 			auto cd = load_class(class_name);
 
-			if (cd->table_location) {
-				json empty;
-				relative_ptr_type rpt = cd->table_location;
-				json_object_table class_data(this);
-				class_data.open(rpt);
-				class_data.erase(object_key);
-				response = create_response(delete_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
-			}
-			else 
-			{
-				response = create_response(delete_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
-			}
+			cd->delete_objects(this, object_key, true);
+
 			system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			commit_check();

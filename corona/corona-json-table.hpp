@@ -2111,16 +2111,21 @@ namespace corona
 
 		proof_assertion.put_member("dependencies", dependencies);
 
+		object_locker lock_chumpy;
+
+		std::shared_ptr<json_table_header> header = std::make_shared<json_table_header>();
+		header->create(&fp);
+
 		json test_write = jp.create_object();
 		test_write.put_member_i64(object_id_field, 5);
 		test_write.put_member("Name", "Joe");
 		json test_key = test_write.extract({ object_id_field });
 
-		json_table test_table(&fp, {object_id_field});
+		json_table test_table(header, 0, &lock_chumpy, &fp, {object_id_field});
 
-		relative_ptr_type table_loc = test_table.create();
+		auto read_header = test_table.create();
 
-		if (table_loc < 0) {
+		if (not read_header) {
 			system_monitoring_interface::global_mon->log_warning("create table failed.", __FILE__, __LINE__);
 			create_success = false;
 		}

@@ -173,6 +173,7 @@ namespace corona
 				else
 				{
 					signal = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+					locks.insert_or_assign(key, signal);
 				}
 				_signals.push_back(signal);
 			}
@@ -222,7 +223,7 @@ namespace corona
 			// now, if my calculations are correct we return a lock_owner with the array of signals
 			// the lock owner will wait and lock the signals, so the thread waiting for the locks 
 			// will wait, but consumers of this lock manager itself will not.
-			return lock_owner(signals);
+			return lock_owner(std::move(signals));
 		}
 
 		lock_owner lock(const key_type& _key)
@@ -239,7 +240,7 @@ namespace corona
 			// now, if my calculations are correct we return a lock_owner with the array of signals
 			// the lock owner will wait and lock the signals, so the thread waiting for the locks 
 			// will wait, but consumers of this lock manager itself will not.
-			return lock_owner(signals);
+			return lock_owner(std::move(signals));
 		}
 
 		lock_owner lock(const std::vector<key_type>& _keys)
@@ -264,7 +265,7 @@ namespace corona
 			std::vector<key_type> keys;
 			keys.push_back(_key);
 			load_signals(signals, keys);
-			_owner->add_lock(signals[0]);
+			_owner.add_signal(signals[0]);
 		}
 	};
 
