@@ -161,8 +161,8 @@ namespace corona
 
 		virtual int64_t									get_index_id() = 0;
 		virtual std::string								get_index_name() = 0;
-		virtual std::vector<std::string>				&get_index_keys() = 0;
-		virtual std::shared_ptr<json_table>&			get_table(object_locker* _locker, file_block* _fb) = 0;
+		virtual std::vector<std::string>				get_index_keys() = 0;
+		virtual std::shared_ptr<json_table>				get_table(object_locker* _locker, file_block* _fb) = 0;
 		virtual void									apply_object_id_field() = 0;
 		virtual std::string								get_index_key_string() = 0;
 
@@ -432,6 +432,10 @@ namespace corona
 			auto members = _src.get_members();
 			for (auto member : members) {
 				json obj = member.second;
+				std::shared_ptr<child_bridge_implementation> new_bridge = std::make_shared<child_bridge_implementation>();
+				new_bridge->put_json(obj);
+				std::string class_name = new_bridge->get_class_name();
+				base_constructors.insert_or_assign(class_name, new_bridge);
 			}
 		}
 
@@ -461,7 +465,7 @@ namespace corona
 				if (ci) {
 					auto descendants = ci->get_descendants();
 					for (auto descendant : descendants) {
-						all_constructors.insert_or_assign(descendant.first, true);
+						all_constructors.insert_or_assign(descendant.first, class_name_pair.second);
 					}
 				}
 			}
@@ -1235,8 +1239,13 @@ namespace corona
 			scope_lock my_lock(index_locker);
 			return join(index_keys, ".");
 		}
+		
+		virtual std::vector<std::string> get_index_keys() override
+		{
+			return index_keys;
+		}
 
-		virtual void get_json(json& _dest)
+		virtual void get_json(json& _dest) override
 		{
 			scope_lock my_lock(index_locker);
 			json_parser jp;
@@ -1251,7 +1260,7 @@ namespace corona
 			_dest.put_member_i64("table_location", table_location);
 		}
 
-		virtual void put_json(json& _src)
+		virtual void put_json(json& _src) override
 		{			
 			scope_lock my_lock(index_locker);
 			index_name = _src["index_name"];
@@ -1269,7 +1278,7 @@ namespace corona
 			table_location = (int64_t)_src["table_location"];
 		}
 
-		int64_t get_index_id() 
+		int64_t get_index_id()  override
 		{ 
 			scope_lock my_lock(index_locker);
 			return index_id;
@@ -1282,7 +1291,7 @@ namespace corona
 			return *this;
 		}
 
-		std::string get_index_name()
+		std::string get_index_name() override
 		{
 			scope_lock my_lock(index_locker);
 			return index_name;
@@ -1296,7 +1305,7 @@ namespace corona
 			return *this;
 		}
 
-		virtual std::shared_ptr<json_table> get_index(object_locker* _locker, file_block* _fb)
+		virtual std::shared_ptr<json_table> get_table(object_locker* _locker, file_block* _fb) override
 		{
 			scope_lock my_lock(index_locker);
 
@@ -1587,7 +1596,7 @@ namespace corona
 
 			for (auto idx : indexes) 
 			{
-				auto& keys = idx.second->get_index_keys();
+				auto keys = idx.second->get_index_keys();
 
 				int matched_key_count = 0;
 
@@ -2111,7 +2120,6 @@ namespace corona
 			timer method_timer;
 
 			json created_classes;
-			relative_ptr_type class_location;
 			relative_ptr_type header_location;
 			json_parser jp;
 
@@ -2914,8 +2922,6 @@ private:
 			system_monitoring_interface::global_mon->log_job_start("apply_schema", "Applying schema file", start_schema, __FILE__, __LINE__);
 
 			bool new_database = true;
-
-			std::map<std::string, bool> changed_classes;
 
 			if (not _schema.has_member("schema_name"))
 			{

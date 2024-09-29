@@ -277,39 +277,39 @@ namespace corona
 		lock_block = 3
 	};
 
-	class object_key
+	class cob_key
 	{
 	public:
 		object_lock_types	lock_type;
 		int64_t				class_id;
 		int64_t				object_id;
 
-		object_key() : class_id(0), object_id(0)
+		cob_key() : class_id(0), object_id(0)
 		{
 			;
 		}
 
-		object_key(object_lock_types _lock_type, int64_t _class_id, int64_t _object_id) : 
+		cob_key(object_lock_types _lock_type, int64_t _class_id, int64_t _object_id) :
 			lock_type(_lock_type), class_id(_class_id), object_id(_object_id)
 		{
 			;
 		}
 
-		object_key(const object_key& _src)
+		cob_key(const cob_key& _src)
 		{
 			lock_type = _src.lock_type;
 			class_id = _src.class_id;
 			object_id = _src.object_id;
 		}
 
-		object_key(object_key&& _src)
+		cob_key(cob_key&& _src)
 		{
 			std::swap(lock_type, _src.lock_type);
 			std::swap(class_id, _src.class_id);
 			std::swap(object_id, _src.object_id);
 		}
 
-		object_key& operator = (const object_key& _src)
+		cob_key& operator = (const cob_key& _src)
 		{
 			lock_type = _src.lock_type;
 			class_id = _src.class_id;
@@ -317,7 +317,7 @@ namespace corona
 			return *this;
 		}
 
-		object_key& operator = (object_key&& _src)
+		cob_key& operator = (cob_key&& _src)
 		{
 			std::swap(lock_type, _src.lock_type);
 			std::swap(class_id, _src.class_id);
@@ -325,14 +325,14 @@ namespace corona
 			return *this;
 		}
 
-		bool operator<(const object_key& _src)
+		bool operator<(const cob_key& _src) const
 		{
 			return std::tie(lock_type, class_id, object_id) < std::tie(lock_type, _src.class_id, _src.object_id);
 		}
 
 	};
 
-	using object_locker = concept_locker<object_key>;
+	using object_locker = concept_locker<cob_key>;
 
 }
 
