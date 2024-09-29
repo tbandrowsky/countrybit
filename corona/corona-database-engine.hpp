@@ -1346,8 +1346,8 @@ namespace corona
 		std::string class_description;
 		std::string base_class_name;
 		int64_t		table_location;
-		std::map<std::string, std::shared_ptr<field_implementation>> fields;
-		std::map<std::string, std::shared_ptr<index_implementation>> indexes;
+		std::map<std::string, std::shared_ptr<field_interface>> fields;
+		std::map<std::string, std::shared_ptr<index_interface>> indexes;
 		std::map<std::string, bool> ancestors;
 		std::map<std::string, bool> descendants;
 
@@ -1591,7 +1591,7 @@ namespace corona
 
 		virtual std::shared_ptr<json_table> find_index(object_locker* _locker, file_block* _fb, json& _object)
 		{
-			std::shared_ptr<index_implementation> matched_index;
+			std::shared_ptr<index_interface> matched_index;
 			int max_matched_key_count = 0;
 
 			for (auto idx : indexes) 
@@ -1693,7 +1693,7 @@ namespace corona
 			}
 
 			// reindex tables list
-			std::map<std::string, std::shared_ptr<index_implementation>> correct_indexes;
+			std::map<std::string, std::shared_ptr<index_interface>> correct_indexes;
 
 			// and once again through the indexes
 			// we make a copy of the existing index, so as to keep its table,
