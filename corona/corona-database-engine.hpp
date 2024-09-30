@@ -404,6 +404,8 @@ namespace corona
 					key.put_member(_dest_key, value);
 				}
 			}
+
+			return key;
 		}
 
 	};
@@ -1317,14 +1319,12 @@ namespace corona
 				table_header = std::make_shared<json_table_header>();
 				table_header->open(_fb, table_location);
 				table = std::make_shared<json_table>(table_header, index_id, _locker, _fb, index_keys);
-				table->open();
 			}
 			else {
 				table_header = std::make_shared<json_table_header>();
 				table_header->create(_fb);
 				table_location = table_header->get_location();
 				table = std::make_shared<json_table>(table_header, index_id, _locker, _fb, index_keys);
-				table->create();
 			}
 		}
 
@@ -1608,6 +1608,7 @@ namespace corona
 
 		virtual std::shared_ptr<json_table> find_index(object_locker* _locker, file_block* _fb, json& _object)
 		{
+			std::shared_ptr<json_table> index_table;
 			std::shared_ptr<index_interface> matched_index;
 			int max_matched_key_count = 0;
 
@@ -1637,7 +1638,11 @@ namespace corona
 				}
 			}
 
-			return matched_index->get_table(_locker, _fb);
+			if (matched_index) {
+				index_table = matched_index->get_table(_locker, _fb);
+			}
+
+			return index_table;
 		}
 
 		virtual int64_t get_location() override
@@ -2030,6 +2035,8 @@ namespace corona
 
 			allocation_index ai = get_allocation_index(_size);
 
+			*_actual_size = ai.size;
+
 			auto& list_start = header.data.free_lists[ai.index];
 
 			allocation_block_struct free_block = {};
@@ -2157,7 +2164,6 @@ namespace corona
 			header.data.classes_location = classes_header->get_location();
 			std::vector<std::string> class_keys = { class_name_field };
 			classes = std::make_shared<json_table>(classes_header, 0, this, this, class_keys);
-			classes->create();
 
 			created_classes = jp.create_object();
 
@@ -3304,7 +3310,6 @@ private:
 			classes_header->open(this, header.data.classes_location);
 			std::vector<std::string> class_keys = { class_name_field };
 			classes = std::make_shared<json_table>(classes_header, 0, this, this, class_keys);
-			classes->open();
 
 			system_monitoring_interface::global_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 

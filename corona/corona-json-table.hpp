@@ -106,6 +106,7 @@ namespace corona
 		{
 			data.count = 0;
 			data.level = JsonTableMaxLevel;
+			data.data_root_location = -1;
 		}
 
 		int get_level()
@@ -226,7 +227,7 @@ namespace corona
 			json_key_block in;
 
 			auto p = table_header->get_data_root_location();
-			if (p <= 0) {
+			if (p < 0) {
 				throw std::exception("table header node location not set");
 			}
 
@@ -303,7 +304,7 @@ namespace corona
 				return 0;
 		}
 
-		relative_ptr_type find_advance(lock_owner& _locks, json_key_block& _node, json_key_block& _peek, int _level, KEY _key, uint64_t _key_hash, int64_t *_found)
+		relative_ptr_type find_advance(scope_multilock& _locks, json_key_block& _node, json_key_block& _peek, int _level, KEY _key, uint64_t _key_hash, int64_t *_found)
 		{
 			auto t = _node.foward[_level];
 			if (t != null_row) {
@@ -319,7 +320,7 @@ namespace corona
 			return -1;
 		}
 
-		relative_ptr_type find_node(lock_owner &_transaction_lock, relative_ptr_type* update, KEY _key, json_key_block& _found_node)
+		relative_ptr_type find_node(scope_multilock &_transaction_lock, relative_ptr_type* update, KEY _key, json_key_block& _found_node)
 		{
 			relative_ptr_type found = null_row;
 
@@ -344,7 +345,7 @@ namespace corona
 			return found;
 		}
 
-		relative_ptr_type find_first_gte(lock_owner& _transaction_lock, KEY _key, json_key_block& _found_node)
+		relative_ptr_type find_first_gte(scope_multilock& _transaction_lock, KEY _key, json_key_block& _found_node)
 		{
 			relative_ptr_type found = null_row, last_link;
 			json_parser jp;
@@ -449,6 +450,8 @@ namespace corona
 
 			key_node.write(fb);
 
+			table_header->add_count();
+
 			return key_node.header.block_location;
 		}
 
@@ -481,42 +484,12 @@ namespace corona
 			return nd;
 		}
 
-		object_locker*	lock_chumpy;
-		int64_t			table_class_id;
-
-	public:
-
-		json_table(std::shared_ptr<json_table_header> _header, int64_t _table_class_id, object_locker* _lock_chumpy, file_block* _fb, std::vector<std::string> _key_fields)
-			:	table_header(_header),
-				table_class_id(_table_class_id),
-				lock_chumpy(_lock_chumpy),
-				fb(_fb),
-				key_fields(_key_fields)
-		{
-			;
-		}
-
-		std::shared_ptr<json_table_header> get_table_header()
-		{
-			return table_header;
-		}
-
-		json get_key(json& _object) 
-		{		
-			json key = _object.extract(key_fields);
-			return key;
-		}
-
-		bool key_covered(json& _key)
-		{
-			bool r = _key.keys_compatible(key_fields);
-			return r;
-		}
-
 		std::shared_ptr<json_table_header> create()
 		{
 			date_time start_time = date_time::now();
 			timer tx;
+
+			create_header();
 
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
@@ -541,6 +514,45 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
+		}
+
+		object_locker*	lock_chumpy;
+		int64_t			table_class_id;
+
+	public:
+
+		json_table(std::shared_ptr<json_table_header> _header, int64_t _table_class_id, object_locker* _lock_chumpy, file_block* _fb, std::vector<std::string> _key_fields)
+			:	table_header(_header),
+				table_class_id(_table_class_id),
+				lock_chumpy(_lock_chumpy),
+				fb(_fb),
+				key_fields(_key_fields)
+		{
+			if (_header->get_data_root_location() < 0) 
+			{
+				create();
+			}
+			else 
+			{
+				open();
+			}
+		}
+
+		std::shared_ptr<json_table_header> get_table_header()
+		{
+			return table_header;
+		}
+
+		json get_key(json& _object) 
+		{		
+			json key = _object.extract(key_fields);
+			return key;
+		}
+
+		bool key_covered(json& _key)
+		{
+			bool r = _key.keys_compatible(key_fields);
+			return r;
 		}
 
 		void clear()
@@ -802,6 +814,8 @@ namespace corona
 				free_node(q);
 
 				table_header->set_level(m);
+				table_header->sub_count();
+				table_header->save(fb);
 				if (ENABLE_JSON_LOGGING) {
 					system_monitoring_interface::global_mon->log_table_stop("table", "erase complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
@@ -2125,7 +2139,7 @@ namespace corona
 
 		json_table test_table(header, 0, &lock_chumpy, &fp, {object_id_field});
 
-		auto read_header = test_table.create();
+		auto read_header = test_table.get_table_header();
 
 		if (not read_header) {
 			system_monitoring_interface::global_mon->log_warning("create table failed.", __FILE__, __LINE__);
@@ -2317,14 +2331,14 @@ namespace corona
 		{
 			select_array_success = false;
 
-			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_warning("table count is incorrect", __FILE__, __LINE__);
 		}
 
 		if (db_contents.size() != 4)
 		{
 			select_array_success = false;
 
-			system_monitoring_interface::global_mon->log_warning("wrong inserted value", __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_warning("wrong items in select result", __FILE__, __LINE__);
 		}
 		
 		int64_t tests[4] = { 1, 2, 5, 7 };

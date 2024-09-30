@@ -90,13 +90,13 @@ namespace corona
 
 	};
 
-	class lock_owner 
+	class scope_multilock 
 	{
 		std::vector<HANDLE> signals;
 
 	public:
 
-		lock_owner(std::vector<HANDLE> &&_signals)
+		scope_multilock(std::vector<HANDLE> &&_signals)
 		{
 			signals = std::move(_signals);
 			for (auto signal : signals) 
@@ -111,33 +111,33 @@ namespace corona
 			::WaitForSingleObject(_signal, INFINITE);
 		}
 
-		lock_owner(lock_owner& _src)
+		scope_multilock(scope_multilock& _src)
 		{
 			signals = _src.signals;
 		}
 
-		lock_owner(lock_owner&& _src)
+		scope_multilock(scope_multilock&& _src)
 		{
 			std::swap(signals, _src.signals);
 		}
 
-		lock_owner& operator =(lock_owner& _src)
+		scope_multilock& operator =(scope_multilock& _src)
 		{
 			signals = _src.signals;
 			return *this;
 		}
 
-		lock_owner &operator =(lock_owner&& _src)
+		scope_multilock&operator =(scope_multilock&& _src)
 		{
 			std::swap(signals, _src.signals);
 			return *this;
 		}
 
-		virtual ~lock_owner()
+		virtual ~scope_multilock()
 		{
 			for (auto signal : signals)
 			{
-				::SetEvent(signal);
+				::ReleaseMutex(signal);
 			}
 		}
 	};
@@ -158,7 +158,7 @@ namespace corona
 		std::map<key_type, HANDLE>	locks;
 		lockable					lock_guard;
 
-		void load_signals(std::vector<HANDLE>& _signals, std::vector<key_type>& _keys)
+		void load_signals(std::vector<HANDLE>& _signals, const std::vector<key_type>& _keys)
 		{
 			scope_lock lockme(lock_guard);
 
@@ -172,7 +172,7 @@ namespace corona
 				}
 				else
 				{
-					signal = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+					signal = ::CreateMutex(NULL, FALSE, NULL);
 					locks.insert_or_assign(key, signal);
 				}
 				_signals.push_back(signal);
@@ -217,16 +217,16 @@ namespace corona
 			return *this;
 		}
 
-		lock_owner lock()
+		scope_multilock lock()
 		{
 			std::vector<HANDLE> signals;
-			// now, if my calculations are correct we return a lock_owner with the array of signals
+			// now, if my calculations are correct we return a scope_multilock with the array of signals
 			// the lock owner will wait and lock the signals, so the thread waiting for the locks 
 			// will wait, but consumers of this lock manager itself will not.
-			return lock_owner(std::move(signals));
+			return scope_multilock(std::move(signals));
 		}
 
-		lock_owner lock(const key_type& _key)
+		scope_multilock lock(const key_type& _key)
 		{
 			std::vector<HANDLE> signals;
 			std::vector<key_type> keys;
@@ -237,13 +237,13 @@ namespace corona
 			// or create them.
 			load_signals(signals, keys);
 
-			// now, if my calculations are correct we return a lock_owner with the array of signals
+			// now, if my calculations are correct we return a scope_multilock with the array of signals
 			// the lock owner will wait and lock the signals, so the thread waiting for the locks 
 			// will wait, but consumers of this lock manager itself will not.
-			return lock_owner(std::move(signals));
+			return scope_multilock(std::move(signals));
 		}
 
-		lock_owner lock(const std::vector<key_type>& _keys)
+		scope_multilock lock(const std::vector<key_type>& _keys)
 		{
 			std::vector<HANDLE> signals;
 
@@ -253,13 +253,13 @@ namespace corona
 			// or create them.
 			load_signals(signals, _keys);
 			
-			// now, if my calculations are correct we return a lock_owner with the array of signals
+			// now, if my calculations are correct we return a scope_multilock with the array of signals
 			// the lock owner will wait and lock the signals, so the thread waiting for the locks 
 			// will wait, but consumers of this lock manager itself will not.
-			return lock_owner(signals);
+			return scope_multilock(std::move(signals));
 		}
 
-		void add_lock(lock_owner& _owner, const key_type& _key)
+		void add_lock(scope_multilock& _owner, const key_type& _key)
 		{
 			std::vector<HANDLE> signals;
 			std::vector<key_type> keys;
@@ -333,6 +333,7 @@ namespace corona
 	};
 
 	using object_locker = concept_locker<cob_key>;
+
 
 }
 

@@ -88,7 +88,6 @@ namespace corona {
 	public:
 		HANDLE notification_handle;
 		runnable function_to_run;
-		job_container container;
 		general_job();
 		general_job(runnable _runnable, HANDLE _notification_handle = nullptr);
 		virtual ~general_job();
@@ -160,6 +159,7 @@ namespace corona {
 		void post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam);
 		bool listen_job(job *_jobMessage);
 		void add_job(job* _jobMessage);
+		void add_job(runnable _function, HANDLE handle);
 		void shutDown();
 		void kill();
 
@@ -395,6 +395,17 @@ namespace corona {
 		}
 	}
 
+	void job_queue::add_job(runnable _function, HANDLE handle)
+	{
+		LONG result;
+		general_job* _job_message = new general_job(_function, handle);
+		if (_job_message->queued(this)) {
+			++num_outstanding_jobs;
+			ResetEvent(empty_queue_event);
+			result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_job_message->container));
+		}
+	}
+
 	bool job_queue::listen_job(job* _jobMessage)
 	{
 		if (not _jobMessage)
@@ -478,6 +489,67 @@ namespace corona {
 		::GetSystemInfo(&si);
 		int threadCount = si.dwNumberOfProcessors;
 		return threadCount;
+	}
+
+	void test_locks(json& _proof)
+	{
+		date_time st = date_time::now();
+		timer tx;
+		system_monitoring_interface::global_mon->log_function_start("lock proof", "start", st, __FILE__, __LINE__);
+
+		int test_seconds = 5;
+		int test_milliseconds = test_seconds * 1000;
+
+		json_parser jp;
+		json proof_assertions = jp.create_object();
+		proof_assertions.put_member("test_name", "locks");
+
+		object_locker locker;
+
+		std::vector<cob_key>  lock_keys = { { object_lock_types::lock_table, 0, 0 },
+											{ object_lock_types::lock_object, 0, 42 } };
+
+		HANDLE wait_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+		{
+			scope_multilock lock = locker.lock(lock_keys);
+			system_monitoring_interface::global_mon->log_information("1st lock on thread", __FILE__, __LINE__);
+
+			scope_multilock lock2 = locker.lock(lock_keys);
+			system_monitoring_interface::global_mon->log_information("2nd lock on same thread", __FILE__, __LINE__);
+
+			proof_assertions.put_member("same_thread", true);
+
+			global_job_queue->add_job([&locker, &proof_assertions, test_seconds]() -> void
+				{
+					timer tx2;
+					system_monitoring_interface::global_mon->log_information("waiting for lock", __FILE__, __LINE__);
+					scope_multilock locko = locker.lock({ object_lock_types::lock_table, 0, 0 });
+					if (tx2.get_elapsed_seconds() < test_seconds) {
+						system_monitoring_interface::global_mon->log_warning("thread skipped lock", __FILE__, __LINE__);
+						proof_assertions.put_member("thread_sufficient", false);
+					}
+					else {
+						proof_assertions.put_member("thread_sufficient", true);
+					}
+					system_monitoring_interface::global_mon->log_information("lock released", __FILE__, __LINE__);
+				}, wait_handle);
+
+			system_monitoring_interface::global_mon->log_information("waiting for job to get lock", __FILE__, __LINE__);
+			::Sleep(test_milliseconds);
+		}
+
+		system_monitoring_interface::global_mon->log_information("should have released", __FILE__, __LINE__);
+		WaitForSingleObject(wait_handle, INFINITE);
+		if (tx.get_elapsed_seconds() < test_seconds) {
+			proof_assertions.put_member("wait_sufficient", false);
+		}
+		else {
+			proof_assertions.put_member("wait_sufficient", true);
+		}
+
+		_proof.put_member("locks", proof_assertions);
+		system_monitoring_interface::global_mon->log_function_stop("lock proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 }

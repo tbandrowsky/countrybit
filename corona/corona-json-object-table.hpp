@@ -115,11 +115,11 @@ namespace corona
 		{
 			json_parser jp;
 
-			json_object_key_block header = create_node(JsonTableMaxLevel);
-			header.object_id = 0;
-			header.write(fb);
+			json_object_key_block node_header = create_node(JsonTableMaxLevel);
+			node_header.object_id = 0;
+			node_header.write(fb);
 
-			table_header->set_data_root_location(header.header.block_location);
+			table_header->set_data_root_location(node_header.header.block_location);
 			table_header->save(fb);
 
 			return table_header;
@@ -198,7 +198,7 @@ namespace corona
 				return 0;
 		}
 
-		relative_ptr_type find_advance(lock_owner& _transaction_lock, json_object_key_block& _node, json_object_key_block& _peek, int _level, KEY _key, int64_t* _found)
+		relative_ptr_type find_advance(scope_multilock& _transaction_lock, json_object_key_block& _node, json_object_key_block& _peek, int _level, KEY _key, int64_t* _found)
 		{
 			auto t = _node.foward[_level];
 			if (t != null_row) {
@@ -214,7 +214,7 @@ namespace corona
 			return -1;
 		}
 
-		relative_ptr_type find_node(lock_owner& _transaction_lock, relative_ptr_type* update, KEY _key, json_object_key_block& _found_node)
+		relative_ptr_type find_node(scope_multilock& _transaction_lock, relative_ptr_type* update, KEY _key, json_object_key_block& _found_node)
 		{
 			relative_ptr_type found = null_row;
 
@@ -235,7 +235,7 @@ namespace corona
 			return found;
 		}
 
-		relative_ptr_type find_first_gte(lock_owner& _transaction_lock, KEY _key, json_object_key_block& _found_node)
+		relative_ptr_type find_first_gte(scope_multilock& _transaction_lock, KEY _key, json_object_key_block& _found_node)
 		{
 			relative_ptr_type found = null_row, last_link;
 			json_parser jp;
@@ -364,8 +364,14 @@ namespace corona
 				lock_chumpy(_lock_chumpy),
 				fb(_fb)
 		{
-			json_parser jp;
-			table_header = {};
+			if (_header->get_data_root_location() < 0)
+			{
+				create();
+			}
+			else
+			{
+				open();
+			}
 		}
 
 		std::shared_ptr<json_table_header> get_table_header()
@@ -381,6 +387,8 @@ namespace corona
 
 		std::shared_ptr<json_table_header> create()
 		{
+			auto lock = lock_chumpy->lock({ object_lock_types::lock_table, table_class_id, 0 });
+
 			date_time start_time = date_time::now();
 			timer tx;
 
@@ -626,6 +634,7 @@ namespace corona
 				table_header->set_level(m);
 				table_header->sub_count();
 				header.write(fb);
+				table_header->save(fb);
 				if (ENABLE_JSON_LOGGING) {
 					system_monitoring_interface::global_mon->log_table_stop("table", "erase complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
