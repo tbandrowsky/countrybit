@@ -1180,7 +1180,8 @@ namespace corona
 
 			table_location = 0;
 
-			table = _ii_index->get_table(_locker, _fb);
+			auto temp = _ii_index->get_table(_locker, _fb);
+			table = temp;
 
 			if (table) {
 				table_header = table->get_table_header();
@@ -1319,12 +1320,14 @@ namespace corona
 				table_header = std::make_shared<json_table_header>();
 				table_header->open(_fb, table_location);
 				table = std::make_shared<json_table>(table_header, index_id, _locker, _fb, index_keys);
+				return table;
 			}
 			else {
 				table_header = std::make_shared<json_table_header>();
 				table_header->create(_fb);
 				table_location = table_header->get_location();
 				table = std::make_shared<json_table>(table_header, index_id, _locker, _fb, index_keys);
+				return table;
 			}
 		}
 
@@ -1431,7 +1434,6 @@ namespace corona
 				table_header = std::make_shared<json_table_header>();
 				table_header->open(_fb, table_location);
 				table = std::make_shared<json_object_table>(table_header, class_id, _locker, _fb);
-				table->open();
 			}
 			else
 			{
@@ -1439,8 +1441,8 @@ namespace corona
 				table_header->create(_fb);
 				table_location = table_header->get_location();
 				table = std::make_shared<json_object_table>(table_header, class_id, _locker, _fb);
-				table->create();
 			}
+			return table;
 		}
 
 		virtual std::map<std::string, bool>& get_descendants() override
@@ -1537,10 +1539,10 @@ namespace corona
 			jdescendants = _src["descendants"];
 			if (jdescendants.array())
 			{
-				for (auto jancestor : jancestors)
+				for (auto jdescendant : jdescendants)
 				{
-					std::string ancestor = jancestor;
-					ancestors.insert_or_assign(ancestor, true);
+					std::string descendant = jdescendant;
+					descendants.insert_or_assign(descendant, true);
 				}
 			}
 
@@ -1846,7 +1848,8 @@ namespace corona
 				}
 			}
 
-			table->put_array(_src_list);
+			auto tb = get_table(_db, _db);
+			tb->put_array(_src_list);
 		}
 
 		virtual json get_objects(corona_database_interface* _db, json _key, bool _include_children)
@@ -2745,7 +2748,7 @@ private:
 
 			auto classd = load_class(class_name);
 
-			classd->get_objects(this, _key, _children);
+			obj = classd->get_objects(this, _key, _children);
 
 			return obj;
 		}

@@ -214,6 +214,22 @@ namespace corona
 			return -1;
 		}
 
+		relative_ptr_type find_advance_gt(scope_multilock& _transaction_lock, json_object_key_block& _node, json_object_key_block& _peek, int _level, KEY _key, int64_t* _found)
+		{
+			auto t = _node.foward[_level];
+			if (t != null_row) {
+				_peek.read(fb, t);
+				lock_chumpy->add_lock(_transaction_lock, { object_lock_types::lock_object, table_class_id, _peek.object_id });
+				int comp = compare_node(_peek, _key);
+				if (comp < 0)
+					return t;
+				else if (comp >= 0) {
+					*_found = t;
+				}
+			}
+			return -1;
+		}
+
 		relative_ptr_type find_node(scope_multilock& _transaction_lock, relative_ptr_type* update, KEY _key, json_object_key_block& _found_node)
 		{
 			relative_ptr_type found = null_row;
@@ -245,11 +261,11 @@ namespace corona
 			for (int k = table_header->get_level(); k >= 0; k--)
 			{
 				int comp = -1;
-				relative_ptr_type nl = find_advance(_transaction_lock, x, _found_node, k, _key, &found);
+				relative_ptr_type nl = find_advance_gt(_transaction_lock, x, _found_node, k, _key, &found);
 				while (nl != null_row)
 				{
 					x = _found_node;
-					nl = find_advance(_transaction_lock, x, _found_node, k, _key, &found);
+					nl = find_advance_gt(_transaction_lock, x, _found_node, k, _key, &found);
 				}
 			}
 
@@ -502,6 +518,7 @@ namespace corona
 					put(item);
 				}
 			}
+			table_header->save(fb);
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "put_array", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
@@ -522,7 +539,7 @@ namespace corona
 					dest.assign_update(value);
 				}
 			);
-
+			table_header->save(fb);
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
