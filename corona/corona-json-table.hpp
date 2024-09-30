@@ -131,6 +131,7 @@ namespace corona
 		{
 			scope_lock locko(header_lock);
 			data.level = _new_level;
+			return data.level;
 		}
 
 		int64_t add_count()
@@ -163,6 +164,7 @@ namespace corona
 		{
 			scope_lock me(header_lock);
 			data.data_root_location = _root;
+			return data.data_root_location;
 		}
 
 		int64_t get_location()

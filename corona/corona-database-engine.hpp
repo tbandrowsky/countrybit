@@ -84,7 +84,7 @@ namespace corona
 	class child_bridge_interface
 	{
 	public:
-		virtual std::string get_class_name();
+		virtual std::string get_class_name() = 0;
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(json& _src) = 0;
 		virtual void copy(json& _dest, json& _src) = 0;
@@ -1170,12 +1170,11 @@ namespace corona
 			table_location = 0;
 		}
 
-		index_implementation(index_interface* _ii_index, object_locker* _locker, file_block* _fb)
+		index_implementation(std::shared_ptr<index_interface> _ii_index, object_locker* _locker, file_block* _fb)
 		{
 			index_id = _ii_index->get_index_id();
 			index_name = _ii_index->get_index_name();
 			index_keys = _ii_index->get_index_keys();
-
 
 			table_location = 0;
 
@@ -1317,14 +1316,14 @@ namespace corona
 			{
 				table_header = std::make_shared<json_table_header>();
 				table_header->open(_fb, table_location);
-				table = std::make_shared<json_table>(index_id, _locker, _fb);
+				table = std::make_shared<json_table>(table_header, index_id, _locker, _fb, index_keys);
 				table->open();
 			}
 			else {
 				table_header = std::make_shared<json_table_header>();
 				table_header->create(_fb);
 				table_location = table_header->get_location();
-				table = std::make_shared<json_table>(index_id, _locker, _fb);
+				table = std::make_shared<json_table>(table_header, index_id, _locker, _fb, index_keys);
 				table->create();
 			}
 		}
@@ -1354,6 +1353,24 @@ namespace corona
 	public:
 
 		class_implementation() = default;
+		class_implementation(class_interface* _src)
+		{
+			class_id = _src->get_class_id();
+			class_name = _src->get_class_name();
+			class_description = _src->get_class_description();
+			base_class_name = _src->get_base_class_name();
+			table_location = _src->get_location();
+			auto new_fields = _src->get_fields();
+			for (auto fld : new_fields) {
+				fields.insert_or_assign(fld->get_field_name(), fld);
+			}
+			auto new_indexes = _src->get_indexes();
+			for (auto idx : new_indexes) {
+				indexes.insert_or_assign(idx->get_index_name(), idx);
+			}
+			ancestors = _src->get_ancestors();
+			descendants = _src->get_descendants();
+		}
 		class_implementation(const class_implementation& _src) = default;
 		class_implementation(class_implementation&& _src) = default;
 		class_implementation& operator = (const class_implementation& _src) = default;
@@ -1413,7 +1430,7 @@ namespace corona
 			{
 				table_header = std::make_shared<json_table_header>();
 				table_header->open(_fb, table_location);
-				table = std::make_shared<json_object_table>(class_id, _locker, _fb);
+				table = std::make_shared<json_object_table>(table_header, class_id, _locker, _fb);
 				table->open();
 			}
 			else
@@ -1421,7 +1438,7 @@ namespace corona
 				table_header = std::make_shared<json_table_header>();
 				table_header->create(_fb);
 				table_location = table_header->get_location();
-				table = std::make_shared<json_object_table>(class_id, _locker, _fb);
+				table = std::make_shared<json_object_table>(table_header, class_id, _locker, _fb);
 				table->create();
 			}
 		}
@@ -1707,13 +1724,15 @@ namespace corona
 				{
 					index_to_create  = existing_class->get_index(new_index.first);
 					if (index_to_create) {
-						index_to_create = std::make_shared<index_implementation>(index_to_create);
+						auto temp = std::make_shared<index_implementation>(index_to_create, _db, _db);
+						index_to_create = std::dynamic_pointer_cast<index_implementation, index_interface>(temp);
 					}
 				}
 
 				if (not index_to_create)
 				{
-					index_to_create = std::make_shared<index_implementation>(new_index);
+					auto temp = std::make_shared<index_implementation>(new_index.second, _db, _db);
+					index_to_create = std::dynamic_pointer_cast<index_implementation, index_interface>(temp);
 				}
 
 				correct_indexes.insert_or_assign(new_index.first, index_to_create);
@@ -1891,7 +1910,7 @@ namespace corona
 					}
 				}
 			}
-
+			return obj;
 		}
 
 		virtual json delete_objects(corona_database_interface* _db, json _key, bool _include_children)
@@ -1920,6 +1939,7 @@ namespace corona
 				int64_t object_id = _src_obj[ object_id_field ];
 				tb->erase(object_id);
 			}
+			return matching_objects;
 		}
 	};
 
@@ -2810,8 +2830,6 @@ private:
 			corona_database_interface(_database_file)
 		{
 			time(&last_commit);
-			std::vector<std::string> class_key_fields({ class_name_field });
-			classes = std::make_shared<json_table>(this, class_key_fields);
 			token_life = time_span(1, time_models::hours);	
 		}
 
@@ -2905,7 +2923,7 @@ private:
 			}
 			else
 			{
-				cd = std::make_shared<class_implementation>(*_class_to_save);
+				cd = std::make_shared<class_implementation>(_class_to_save);
 				class_cache.insert_or_assign(cd->get_class_name(), cd);
 			}
 			json_parser jp;
