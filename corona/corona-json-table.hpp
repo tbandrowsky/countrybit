@@ -98,7 +98,7 @@ namespace corona
 
 	class json_table_header : protected poco_node<table_header_struct>
 	{
-		lockable header_lock;
+		shared_lockable header_lock;
 
 	public:
 
@@ -116,79 +116,79 @@ namespace corona
 
 		int32_t add_level( )
 		{
-			scope_lock locko(header_lock);
+			write_scope_lock locko(header_lock);
 			data.level++;
 			return data.level;
 		}
 
 		int32_t sub_level()
 		{
-			scope_lock locko(header_lock);
+			write_scope_lock locko(header_lock);
 			data.level--;
 			return data.level;
 		}
 
 		int32_t set_level(int32_t _new_level)
 		{
-			scope_lock locko(header_lock);
+			write_scope_lock locko(header_lock);
 			data.level = _new_level;
 			return data.level;
 		}
 
 		int64_t add_count()
 		{
-			scope_lock locko(header_lock);
+			write_scope_lock locko(header_lock);
 			data.count++;
 			return data.count;
 		}
 
 		int64_t sub_count()
 		{
-			scope_lock locko(header_lock);
+			write_scope_lock locko(header_lock);
 			data.count--;
 			return data.count;
 		}
 
 		int64_t get_count()
 		{
-			scope_lock locko(header_lock);
+			read_scope_lock locko(header_lock);
 			return data.count;
 		}
 
 		int64_t get_data_root_location()
 		{
-			scope_lock me(header_lock);
+			read_scope_lock me(header_lock);
 			return data.data_root_location;
 		}
 
 		int64_t set_data_root_location(int64_t _root)
 		{
-			scope_lock me(header_lock);
+			read_scope_lock me(header_lock);
 			data.data_root_location = _root;
 			return data.data_root_location;
 		}
 
 		int64_t get_location()
 		{
-			scope_lock me(header_lock);
+			read_scope_lock me(header_lock);
 			return header.block_location;
 		}
 
 		void open(file_block* fb, int64_t _location)
 		{
-			scope_lock me(header_lock);
+			write_scope_lock me(header_lock);
 			data_block::read(fb, _location);
 		}
 
 		void create(file_block *fb)
 		{
-			scope_lock me(header_lock);
+			write_scope_lock me(header_lock);
 			data_block::append(fb);
 		}
 
 		void save(file_block* fb)
 		{
-			scope_lock me(header_lock);
+			write_scope_lock me(header_lock);
 			data_block::write(fb);
 		}
 	};
@@ -196,6 +196,8 @@ namespace corona
 	class json_table 
 	{
 	private:
+
+		shared_lockable table_lock;
 
 		std::shared_ptr<json_table_header>	table_header;
 
@@ -509,8 +511,6 @@ namespace corona
 
 		void open()
 		{
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table, table_class_id, 0 });
-
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
@@ -522,15 +522,13 @@ namespace corona
 			}
 		}
 
-		object_locker*	lock_chumpy;
 		int64_t			table_class_id;
 
 	public:
 
-		json_table(std::shared_ptr<json_table_header> _header, int64_t _table_class_id, object_locker* _lock_chumpy, file_block* _fb, std::vector<std::string> _key_fields)
+		json_table(std::shared_ptr<json_table_header> _header, int64_t _table_class_id, file_block* _fb, std::vector<std::string> _key_fields)
 			:	table_header(_header),
 				table_class_id(_table_class_id),
-				lock_chumpy(_lock_chumpy),
 				fb(_fb),
 				key_fields(_key_fields)
 		{
@@ -568,12 +566,12 @@ namespace corona
 
 		bool contains(const KEY key)
 		{
+			read_scope_lock me(table_lock);
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "contains", start_time, __FILE__, __LINE__);
 			}
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 			json_key_block found_node;
 
 			relative_ptr_type result =  find_node(key, found_node);
@@ -590,8 +588,8 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
+			read_scope_lock me(table_lock);
 
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 			json_parser jp;
 			json key = jp.parse_object(_key);
 
@@ -629,9 +627,9 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
+			read_scope_lock me(table_lock);
 
 			auto hash = key.get_weak_ordered_hash(key_fields);
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 
 			json result;
 			json_key_block found_node;
@@ -654,9 +652,9 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
+			read_scope_lock me(table_lock);
 
 			auto hash = key.get_weak_ordered_hash(key_fields);
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 
 			json result;
 			json_key_block found_node;
@@ -698,10 +696,10 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "put", start_time, __FILE__, __LINE__);
 			}
+			write_scope_lock me(table_lock);
 
 			auto key = get_key(value);
 			auto hash = key.get_weak_ordered_hash(key_fields);
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 
 			relative_ptr_type modified_node = this->update_node(key,
 				[value](UPDATE_VALUE& dest) {
@@ -719,6 +717,8 @@ namespace corona
 
 		relative_ptr_type put(std::string _json)
 		{
+			write_scope_lock me(table_lock);
+
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
@@ -732,7 +732,6 @@ namespace corona
 			}
 			auto key = get_key(jx);
 			auto hash = key.get_weak_ordered_hash(key_fields);
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 
 			relative_ptr_type modified_node = this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_update(jx); });
 			if (ENABLE_JSON_LOGGING) {
@@ -744,6 +743,8 @@ namespace corona
 
 		relative_ptr_type replace(json value)
 		{
+			write_scope_lock me(table_lock);
+
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
@@ -752,7 +753,6 @@ namespace corona
 
 			auto key = get_key(value);
 			auto hash = key.get_weak_ordered_hash(key_fields);
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 
 			json_key_block found_node;
 			relative_ptr_type n = find_node(key, found_node);
@@ -778,6 +778,8 @@ namespace corona
 
 		bool erase(KEY& key)
 		{
+			write_scope_lock me(table_lock);
+
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
@@ -785,7 +787,6 @@ namespace corona
 			}
 
 			auto hash = key.get_weak_ordered_hash(key_fields);
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 
 			int k;
 			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
@@ -854,8 +855,7 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
 			}
-
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
+			read_scope_lock me(table_lock);
 
 			result.is_all = true;
 
@@ -918,14 +918,14 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "get_first", start_time, __FILE__, __LINE__);
 			}
+			read_scope_lock me(table_lock);
+
 
 			auto index_lists = 0;
 
 			int64_t index = 0;
 			json result_data;
 			json_key_block node;
-
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 
 			relative_ptr_type location = find_first_gte(_key_fragment, node);
 
@@ -2134,8 +2134,6 @@ namespace corona
 
 		proof_assertion.put_member("dependencies", dependencies);
 
-		object_locker lock_chumpy;
-
 		std::shared_ptr<json_table_header> header = std::make_shared<json_table_header>();
 		header->create(&fp);
 
@@ -2144,7 +2142,7 @@ namespace corona
 		test_write.put_member("Name", "Joe");
 		json test_key = test_write.extract({ object_id_field });
 
-		json_table test_table(header, 0, &lock_chumpy, &fp, {object_id_field});
+		json_table test_table(header, 0, &fp, {object_id_field});
 
 		auto read_header = test_table.get_table_header();
 

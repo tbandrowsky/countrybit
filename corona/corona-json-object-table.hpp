@@ -102,6 +102,8 @@ namespace corona
 	{
 	private:
 
+		shared_lockable table_lock;
+
 		std::shared_ptr<json_table_header>	table_header;
 
 		using KEY = int64_t;
@@ -362,15 +364,46 @@ namespace corona
 			return nd;
 		}
 
-		object_locker*  lock_chumpy;
 		int64_t			table_class_id;
+
+
+		std::shared_ptr<json_table_header> create()
+		{
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
+			}
+
+			create_header();
+
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_stop("table", "create complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+			return table_header;
+		}
+
+		void open()
+		{
+
+			date_time start_time = date_time::now();
+			timer tx;
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
+			}
+
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+		}
 
 	public:
 
-		json_object_table(std::shared_ptr<json_table_header> _header, int64_t _table_class_id, object_locker* _lock_chumpy, file_block* _fb)
+		json_object_table(std::shared_ptr<json_table_header> _header, int64_t _table_class_id, file_block* _fb)
 			:	table_header(_header),
 				table_class_id(_table_class_id),
-				lock_chumpy(_lock_chumpy),
 				fb(_fb)
 		{
 			if (_header->get_data_root_location() < 0)
@@ -394,40 +427,6 @@ namespace corona
 			return key;
 		}
 
-		std::shared_ptr<json_table_header> create()
-		{
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table, table_class_id, 0 });
-
-			date_time start_time = date_time::now();
-			timer tx;
-
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
-			}
-
-			create_header();
-
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "create complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			}
-			return table_header;
-		}
-
-		void open()
-		{
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table, table_class_id, 0 });
-
-			date_time start_time = date_time::now();
-			timer tx;
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
-			}
-
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			}
-		}
-
 		void clear()
 		{
 			// fill this out at some point;
@@ -435,7 +434,7 @@ namespace corona
 
 		bool contains(const KEY key)
 		{
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
+			read_scope_lock lock(table_lock);
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
@@ -459,7 +458,7 @@ namespace corona
 				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
 
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
+			read_scope_lock lock(table_lock);
 			json result;
 			json_object_key_block found_node;
 			relative_ptr_type n = find_node(key, found_node);
@@ -482,7 +481,7 @@ namespace corona
 				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
 
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
+			read_scope_lock lock(table_lock);
 
 			json result;
 			json_object_key_block found_node;
@@ -505,7 +504,6 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "put_array", start_time, __FILE__, __LINE__);
 			}
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 			if (_array.array()) {
 				for (auto item : _array) {
 					put(item);
@@ -524,7 +522,7 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "put", start_time, __FILE__, __LINE__);
 			}
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
+			write_scope_lock lock(table_lock);
 			auto key = get_key(value);
 			relative_ptr_type modified_node = this->update_node(key,
 				[value](UPDATE_VALUE& dest) {
@@ -553,7 +551,7 @@ namespace corona
 				return null_row;
 			}
 			auto key = get_key(jx);
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
+			write_scope_lock lock(table_lock);
 
 			relative_ptr_type modified_node = this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_update(jx); });
 			if (ENABLE_JSON_LOGGING) {
@@ -570,9 +568,9 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "replace", start_time, __FILE__, __LINE__);
 			}
+			write_scope_lock lock(table_lock);
 
 			auto key = get_key(value);
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
 
 			json_object_key_block found_node;
 			relative_ptr_type n = find_node(key, found_node);
@@ -603,7 +601,7 @@ namespace corona
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_start("table", "erase", start_time, __FILE__, __LINE__);
 			}
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table, table_class_id, 0 });
+			write_scope_lock lock(table_lock);
 
 			int k;
 			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
@@ -678,7 +676,7 @@ namespace corona
 
 			KEY key = get_key(_key_fragment);
 
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
+			read_scope_lock lock(table_lock);
 
 			json_object_key_block jkn;
 			relative_ptr_type location = find_first_gte(key, jkn);
@@ -746,8 +744,8 @@ namespace corona
 			json result_data;
 			json_object_key_block node;
 			KEY key = get_key(_key_fragment);
-			auto lock = lock_chumpy->lock({ object_lock_types::lock_table , table_class_id, 0 });
-
+			read_scope_lock lock(table_lock);
+			
 			relative_ptr_type location = find_first_gte( key, node);
 
 			while (location != null_row)

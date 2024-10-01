@@ -90,6 +90,72 @@ namespace corona
 
 	};
 
+	class shared_lockable
+	{
+		SRWLOCK lock;
+
+	public:
+
+		shared_lockable()
+		{
+			InitializeSRWLock(&lock);
+		}
+
+		void write_lock()
+		{
+			::AcquireSRWLockExclusive(&lock);
+		}
+
+		void write_unlock()
+		{
+			::ReleaseSRWLockExclusive(&lock);
+		}
+
+		void read_lock()
+		{
+			::AcquireSRWLockShared(&lock);
+		}
+
+		void read_unlock()
+		{
+			::ReleaseSRWLockShared(&lock);
+		}
+	};
+
+	class read_scope_lock
+	{
+		shared_lockable* src;
+
+	public:
+		read_scope_lock(shared_lockable& _src)
+		{
+			src = &_src;
+			src->read_lock();
+		}
+
+		virtual ~read_scope_lock()
+		{
+			src->read_unlock();
+		}
+	};
+
+	class write_scope_lock
+	{
+		shared_lockable* src;
+
+	public:
+		write_scope_lock(shared_lockable& _src)
+		{
+			src = &_src;
+			src->write_lock();
+		}
+
+		virtual ~write_scope_lock()
+		{
+			src->write_unlock();
+		}
+	};
+
 	class scope_multilock 
 	{
 		std::vector<HANDLE> signals;
