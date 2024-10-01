@@ -101,22 +101,22 @@ namespace corona
 			InitializeSRWLock(&lock);
 		}
 
-		void write_lock()
+		inline void write_lock()
 		{
 			::AcquireSRWLockExclusive(&lock);
 		}
 
-		void write_unlock()
+		inline void write_unlock()
 		{
 			::ReleaseSRWLockExclusive(&lock);
 		}
 
-		void read_lock()
+		inline void read_lock()
 		{
 			::AcquireSRWLockShared(&lock);
 		}
 
-		void read_unlock()
+		inline void read_unlock()
 		{
 			::ReleaseSRWLockShared(&lock);
 		}
@@ -124,36 +124,160 @@ namespace corona
 
 	class read_scope_lock
 	{
-		shared_lockable* src;
+		shared_lockable* locked;
 
 	public:
-		read_scope_lock(shared_lockable& _src)
+
+		read_scope_lock(shared_lockable& _lockable)
 		{
-			src = &_src;
-			src->read_lock();
+			locked = &_lockable;
+			locked->read_lock();
 		}
 
-		virtual ~read_scope_lock()
+		~read_scope_lock()
 		{
-			src->read_unlock();
+			locked->read_unlock();
 		}
 	};
 
 	class write_scope_lock
 	{
-		shared_lockable* src;
+		shared_lockable* locked;
 
 	public:
-		write_scope_lock(shared_lockable& _src)
+
+		write_scope_lock(shared_lockable& _lockable)
 		{
-			src = &_src;
-			src->write_lock();
+			locked = &_lockable;
+			locked->write_lock();
 		}
 
-		virtual ~write_scope_lock()
+		~write_scope_lock()
 		{
-			src->write_unlock();
+			locked->write_unlock();
 		}
+	};
+
+	template<typename T>
+	concept read_lockable_type = requires(T a)
+	{
+		{ a.read_lock() };
+		{ a.read_unlock() };
+	};
+
+	template<typename T>
+	concept write_lockable_type = requires(T a)
+	{
+		{ a.write_lock() };
+		{ a.write_unlock() };
+	};
+
+	template <read_lockable_type T>
+	class read_locked_sp
+	{
+		std::shared_ptr<T> data;
+	public:
+		read_locked_sp(std::shared_ptr<T>& _data) :
+			data(_data)
+		{
+			data->read_lock();
+		}
+
+		read_locked_sp(const read_locked_sp& _src) = delete;
+		read_locked_sp& operator =(const read_locked_sp& _src) = delete;
+
+		read_locked_sp(read_locked_sp&& _src)
+		{
+			std::swap(data, _src.data);
+		}
+
+		read_locked_sp& operator =(read_locked_sp&& _src)
+		{
+			std::swap(data, _src.data);
+			return *this;
+		}
+
+		virtual ~read_locked_sp()
+		{
+			if (data) 
+			{
+				data->read_unlock();
+			}
+		}
+
+		T* get()
+		{
+			return data.get();
+		}
+
+		T* operator->()
+		{
+			return data.get();
+		}
+
+		operator bool()
+		{
+			return data.get() != nullptr;
+		}
+
+		bool exists()
+		{
+			return data.get() != nullptr;
+		}
+
+	};
+
+	template <write_lockable_type T>
+	class write_locked_sp
+	{
+		std::shared_ptr<T> data;
+	public:
+		write_locked_sp(std::shared_ptr<T>& _data) :
+			data(_data)
+		{
+			data->write_lock();
+		}
+
+		write_locked_sp(const write_locked_sp& _src) = delete;
+		write_locked_sp& operator =(const write_locked_sp& _src) = delete;
+
+		write_locked_sp(write_locked_sp&& _src)
+		{
+			std::swap(data, _src.data);
+		}
+
+		write_locked_sp& operator =(write_locked_sp&& _src)
+		{
+			std::swap(data, _src.data);
+			return *this;
+		}
+
+		virtual ~write_locked_sp()
+		{
+			if (data)
+				data->write_unlock();
+		}
+
+		operator bool()
+		{
+			return data.get() != nullptr;
+		}
+
+		T* get()
+		{
+			return data.get();
+		}
+
+		T* operator->()
+		{
+			return data.get();
+		}
+
+		bool exists()
+		{
+			return data.get() != nullptr;
+		}
+
 	};
 
 	class scope_multilock 
