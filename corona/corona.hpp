@@ -95,6 +95,7 @@ namespace corona {
 #include "corona-object_id_box.hpp"
 
 #include "corona-system-monitor-bus.hpp"
+#include "corona-test.hpp"
 
 // these are the same, but are also hella useful in the UI.
 // a layout box is where Corona UI does element positioning.

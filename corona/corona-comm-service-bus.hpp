@@ -143,85 +143,49 @@ namespace corona
 			date_time t = date_time::now();
 
 			json_parser jp;
-			json system_proof = jp.create_object();
+			
+			test_master tm;
 
 			log_job_start("verification", "verification start", t, __FILE__, __LINE__);
 
-			test_locks(system_proof);
-			test_object(system_proof, app);
-			test_file_block(system_proof, app);
-			test_file(system_proof, app);
-			test_data_block(system_proof, app);
-			test_json_node(system_proof, app);
-			test_json_table(system_proof, app);
+			std::vector<std::string> dependencies;
 
-			bool system_works = system_proof.prove_member("is_true");
+			std::shared_ptr<test_set> testo = tm.create_test_set("locks", dependencies);
+			test_locks(testo);
+
+			testo = tm.create_test_set("rw locks", dependencies);
+			test_rw_locks(testo);
+
+			testo = tm.create_test_set("object", dependencies);
+			test_object(testo, app);
+
+			testo = tm.create_test_set("file block", dependencies);
+			test_file_block(testo, app);
+
+			dependencies = { "file block", "object" };
+			testo = tm.create_test_set("file", dependencies);
+			test_file(testo, app);
+
+			dependencies = { "file" };
+			testo = tm.create_test_set("data block", dependencies);
+			test_data_block(testo, app);
+
+			dependencies = { "data block" };
+			testo = tm.create_test_set("json node", dependencies);
+			test_json_node(testo, app);
+
+			dependencies = { "rw locks", "json node" };
+			testo = tm.create_test_set("json table", dependencies);
+			test_json_table(testo, app);
+
+			bool system_works = tm.prove("json table");
 			if (not system_works) {
-				json top_level = system_proof["table"];
-				json reason = failure_analysis(system_proof, top_level, "is_true");
-				log_warning("This system does not work because:", __FILE__, __LINE__);
-				log_json(reason);
 				log_job_stop("verification", "verification failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else
 			{
 				log_job_stop("verification", "verification complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-		}
-
-		// if the 
-
-		json failure_analysis(json _root_proof, json _current, std::string _proposition)
-		{
-			json_parser jp;
-			json reason;
-
-			reason = jp.create_object();
-
-			if (_current.object()) {
-				bool is_true = (bool)_current[_proposition];
-				if (is_true)
-				{
-					json reason = jp.from_integer(1);
-					return reason;
-				}
-				else
-				{
-					json dependencies = _current["dependencies"];
-					if (dependencies.object()) {
-						auto depmembers = dependencies.get_members();
-						for (auto depm : depmembers) {
-							std::string assertion_name = depm.first;
-							bool is_true = (bool)_current[assertion_name];
-							if (not is_true) {
-								json underlying = depm.second;
-								if (underlying.array()) {
-									for (auto path : underlying) {
-										json source_chumpy = _root_proof.query(path);
-										if (source_chumpy.object()) {
-											json fail_reason = failure_analysis(_root_proof,
-												source_chumpy["object"],
-												source_chumpy["name"]
-											);
-											if (fail_reason.object())
-											{
-												return fail_reason;
-											}
-										}
-										std::string test_name = _current["test_name"];
-										json fail_reason = jp.create_object();
-										fail_reason.put_member("object", assertion_name);
-										fail_reason.put_member("name", test_name);
-										return fail_reason;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			reason = jp.from_integer(1);
-			return reason;
 		}
 
 		std::string system_login()

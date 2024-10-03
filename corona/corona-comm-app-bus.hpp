@@ -232,60 +232,6 @@ namespace corona
 			}
 		}
 
-		// if the 
-
-		json failure_analysis(json _root_proof, json _current, std::string _proposition)
-		{
-			json_parser jp;
-			json reason;
-
-			reason = jp.create_object();
-
-			if (_current.object()) {
-				bool is_true = (bool)_current[_proposition];
-				if (is_true) 
-				{
-					json reason = jp.from_integer(1);
-					return reason;
-				}
-				else 
-				{
-					json dependencies = _current[ "dependencies" ];
-					if (dependencies.object()) {
-						auto depmembers = dependencies.get_members();
-						for (auto depm : depmembers) {
-							std::string assertion_name = depm.first;
-							bool is_true = (bool)_current[assertion_name];
-							if (not is_true) {
-								json underlying = depm.second;
-								if (underlying.array()) {
-									for (auto path : underlying) {
-										json source_chumpy = _root_proof.query(path);
-										if (source_chumpy.object()) {
-											json fail_reason = failure_analysis(_root_proof,
-												source_chumpy["object"],
-												source_chumpy["name"]
-											);
-											if (fail_reason.object())
-											{
-												return fail_reason;
-											}
-										}
-										std::string test_name = _current["test_name"];
-										json fail_reason = jp.create_object();
-										fail_reason.put_member("object", assertion_name);
-										fail_reason.put_member("name", test_name);
-										return fail_reason;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			reason = jp.from_integer(1);
-			return reason;
-		}
 
 		void poll_db()
 		{

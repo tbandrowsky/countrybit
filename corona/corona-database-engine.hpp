@@ -127,7 +127,7 @@ namespace corona
 		virtual void init_validation(corona_database_interface* _db) = 0;
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
 		virtual void get_json(json& _dest) = 0;
-		virtual void put_json(json& _src) = 0;
+		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
 
 		virtual std::string get_field_name()
 		{
@@ -155,7 +155,7 @@ namespace corona
 		std::shared_ptr<json_table>		   table;
 	public:
 		virtual void get_json(json& _dest) = 0;
-		virtual void put_json(json& _src) = 0;
+		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
 
 		virtual int64_t									get_index_id() = 0;
 		virtual std::string								get_index_name() = 0;
@@ -174,7 +174,7 @@ namespace corona
 	public:
 
 		virtual void get_json(json& _dest) = 0;
-		virtual void put_json(json& _src) = 0;
+		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
 
 		virtual int64_t									get_class_id() = 0;
 		virtual std::string								get_class_name() = 0;
@@ -184,7 +184,7 @@ namespace corona
 		virtual std::map<std::string, bool>&			get_ancestors() = 0;
 		virtual std::shared_ptr<json_object_table>		get_table(file_block* _fb) = 0;
 		virtual std::shared_ptr<json_table>				find_index(file_block* _fb, json& _keys) = 0;
-		virtual	void									apply_changes(corona_database_interface* _db) = 0;
+		virtual	bool									update(std::vector<validation_error> &_errors, corona_database_interface* _db, json _changed_class) = 0;
 
 		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name) = 0;
 		virtual std::vector<std::shared_ptr<field_interface>> get_fields() = 0;
@@ -244,9 +244,9 @@ namespace corona
 
 		virtual json select_object(json _key, bool _include_children) = 0;
 		virtual json select_single_object(json _key, bool _include_children) = 0;
-		virtual read_class_sp read_class(const std::string& _class_name) = 0;
-		virtual write_class_sp write_class(const std::string& _class_name) = 0;
-		virtual json save_class(class_interface *_class) = 0;
+		virtual read_class_sp read_lock_class(const std::string& _class_name) = 0;
+		virtual write_class_sp write_lock_class(const std::string& _class_name) = 0;
+		virtual json save_class(write_class_sp& _class_to_save) = 0;
 
 	};
 
@@ -464,7 +464,7 @@ namespace corona
 		{
 			all_constructors.clear();
 			for (auto class_name_pair : base_constructors) {
-				auto ci = _db->read_class(class_name_pair.first);
+				auto ci = _db->read_lock_class(class_name_pair.first);
 				if (ci) {
 					auto descendants = ci->get_descendants();
 					for (auto descendant : descendants) {
@@ -482,7 +482,7 @@ namespace corona
 			for (auto class_name_pair : all_constructors) 
 			{
 				json key = class_name_pair.second->get_key(_parent_object);
-				read_class_sp classy = _db->read_class(class_name_pair.first);
+				read_class_sp classy = _db->read_lock_class(class_name_pair.first);
 				if (classy) {
 					json temp_array = classy->get_objects(_db, key, true);
 					if (temp_array.array()) {
@@ -1082,7 +1082,7 @@ namespace corona
 			}
 		}
 
-		virtual void put_json(json& _src)
+		virtual void put_json(std::vector<validation_error>& _errors, json& _src)
 		{
 
 			auto s = _src["field_type"];
@@ -1255,7 +1255,7 @@ namespace corona
 			_dest.put_member_i64("table_location", table_location);
 		}
 
-		virtual void put_json(json& _src) override
+		virtual void put_json(std::vector<validation_error>& _errors, json& _src) override
 		{			
 			index_name = _src["index_name"];
 
@@ -1501,7 +1501,7 @@ namespace corona
 
 		}
 
-		virtual void put_json(json& _src)
+		virtual void put_json(std::vector<validation_error>& _errors, json& _src)
 		{
 
 			json jfields, jindexes, jancestors, jdescendants;
@@ -1544,7 +1544,7 @@ namespace corona
 					field->set_field_type(field_types::ft_none);
 					if (jfield.second.object()) 
 					{
-						field->put_json(jfield.second);
+						field->put_json(_errors, jfield.second);
 					}
 					else if (jfield.second.is_string()) 
 					{
@@ -1553,8 +1553,40 @@ namespace corona
 							field->set_field_type( fi->second);
 						}
 					}
-					if (field->get_field_type() != field_types::ft_none) {
+					else
+					{
+						validation_error ve;
+						ve.class_name = class_name;
+						ve.field_name = field->get_field_name();
+						ve.message = "Is not a valid field specification. Can either be a string or an object.";
+						ve.filename = __FILE__;
+						ve.line_number = __LINE__;
+						_errors.push_back(ve);
+					}
+
+					if (field->get_field_name().empty())
+					{
+						validation_error ve;
+						ve.class_name = class_name;
+						ve.field_name = field->get_field_name();
+						ve.message = "Missing field name.";
+						ve.filename = __FILE__;
+						ve.line_number = __LINE__;
+						_errors.push_back(ve);
+					}
+
+					if (field->get_field_type() != field_types::ft_none) 
+					{
 						fields.insert_or_assign(field->get_field_name(), field);
+					}
+					else {
+						validation_error ve;
+						ve.class_name = class_name;
+						ve.field_name = field->get_field_name();
+						ve.message = "Invalid field type";
+						ve.filename = __FILE__;
+						ve.line_number = __LINE__;
+						_errors.push_back(ve);
 					}
 				}
 			}
@@ -1565,8 +1597,32 @@ namespace corona
 				auto jindex_members = jindexes.get_members();
 				for (auto jindex : jindex_members) {
 					std::shared_ptr<index_implementation> index = std::make_shared<index_implementation>();
-					index->put_json(jindex.second);
+					index->put_json(_errors, jindex.second);
 					index->set_index_name(jindex.first);
+
+					if (index->get_index_name().empty())
+					{
+						validation_error ve;
+						ve.class_name = class_name;
+						ve.field_name = index->get_index_key_string();
+						ve.message = "Missing index name.";
+						ve.filename = __FILE__;
+						ve.line_number = __LINE__;
+						_errors.push_back(ve);
+					}
+
+					for (auto f : index->get_index_keys()) {
+						if (not fields.contains(f)) {
+							validation_error ve;
+							ve.class_name = class_name;
+							ve.field_name = f;
+							ve.message = "Invalid field for index";
+							ve.filename = __FILE__;
+							ve.line_number = __LINE__;
+							_errors.push_back(ve);
+						}
+					}
+
 					indexes.insert_or_assign(jindex.first, index);
 				}
 			}
@@ -1640,67 +1696,91 @@ namespace corona
 			return table_location;
 		}
 
-		virtual void apply_changes(corona_database_interface* _db) override
+		virtual bool update(std::vector<validation_error>& _errors, corona_database_interface* _db, json _changed_class) override
 		{
+			class_implementation changed_class;
 
-			write_class_sp existing_class = _db->write_class(class_name);
+			changed_class.put_json(_errors, _changed_class);
 
-			if (existing_class) {
-				table_location = existing_class->get_location();
-				if (existing_class) {
-					descendants = existing_class->get_descendants();
+			if (_errors.size())
+			{
+				system_monitoring_interface::global_mon->log_warning(std::format("Errors on updating class {0}", changed_class.class_name), __FILE__, __LINE__);
+				for (auto error : _errors) {
+					system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
 				}
+
+				return false;
 			}
 
-			if (not base_class_name.empty()) {
-				write_class_sp base_class = _db->write_class(base_class_name);
+			if (changed_class.class_description.empty()) {
+				validation_error ve;
+				ve.class_name = changed_class.class_name;
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "class description not found";
+				_errors.push_back(ve);
+				return false;
+			}
 
-				base_class->get_ancestors().insert_or_assign(base_class_name, true);
+			if (not base_class_name.empty() and changed_class.base_class_name != base_class_name)
+			{
+				validation_error ve;
+				ve.class_name = changed_class.class_name;
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "cannot change base class of a class.";
+				_errors.push_back(ve);
+				return false;
+			}	
+
+			class_name = changed_class.class_name;
+			class_description = changed_class.class_description;
+			ancestors.clear();
+
+			if (not changed_class.base_class_name.empty()) {
+
+				write_class_sp base_class = _db->write_lock_class(base_class_name);
+
+				ancestors = base_class->get_ancestors();
+				ancestors.insert_or_assign(base_class_name, true);
 				base_class->get_descendants().insert_or_assign(class_name, true);
-
-				descendants.insert_or_assign(class_name, true);
 
 				for (auto temp_field : base_class->get_fields())
 				{
 					fields.insert_or_assign(temp_field->get_field_name(), temp_field);
 				}
-
-				_db->save_class(base_class.get());
+				_db->save_class(base_class);
 			}
 
 			for (auto descendant : descendants)
 			{
-				write_class_sp desc_class = _db->write_class(descendant.first);
+				write_class_sp desc_class = _db->write_lock_class(descendant.first);
 				if (desc_class) {
 					desc_class->get_ancestors().insert_or_assign(class_name, true);
-					_db->save_class(desc_class.get());
+					_db->save_class(desc_class);
 				}
 			}
 
 			// The object id always part of the index key
 			// and I check it here, before looping through the existing indexes.
-			for (auto& new_index : indexes)
+			for (auto& new_index : changed_class.indexes)
 			{
 				new_index.second->apply_object_id_field();
 			}
 
 			// loop through existing indexes,
 			// dropping old ones that don't match
-			if (existing_class) 
+			auto existing_indexes = get_indexes();
+			for (auto old_index : existing_indexes)
 			{
-				auto existing_indexes = existing_class->get_indexes();
-				for (auto old_index : existing_indexes)
-				{
-					auto index = old_index;
-					auto existing = indexes.find(index->get_index_name());
-					// if the index is going away, then get rid of it.
-					if (existing == indexes.end() or
-						existing->second->get_index_key_string() != index->get_index_key_string()) {
-						auto index_table = index->get_table(_db);
-						if (index_table)
-						{
-							index_table->clear();
-						}
+				auto existing = changed_class.indexes.find(old_index->get_index_name());
+				// if the index is going away, then get rid of it.
+				if (existing == changed_class.indexes.end() or
+					existing->second->get_index_key_string() != old_index->get_index_key_string()) {
+					auto index_table = old_index->get_table(_db);
+					if (index_table)
+					{
+						index_table->clear();
 					}
 				}
 			}
@@ -1711,18 +1791,15 @@ namespace corona
 			// and once again through the indexes
 			// we make a copy of the existing index, so as to keep its table,
 			// while at the same time not trusting this index, which was passed in.
-			for (auto& new_index : indexes)
+			for (auto& new_index : changed_class.indexes)
 			{
 				std::shared_ptr<index_interface> index_to_create;
 
 				// we want to use the existing class to pick up if we have a table
-				if (existing_class)
-				{
-					index_to_create  = existing_class->get_index(new_index.first);
-					if (index_to_create) {
-						auto temp = std::make_shared<index_implementation>(index_to_create, _db);
-						index_to_create = std::dynamic_pointer_cast<index_implementation, index_interface>(temp);
-					}
+				index_to_create  = get_index(new_index.first);
+				if (index_to_create) {
+					auto temp = std::make_shared<index_implementation>(index_to_create, _db);
+					index_to_create = std::dynamic_pointer_cast<index_implementation, index_interface>(temp);
 				}
 
 				if (not index_to_create)
@@ -1736,9 +1813,9 @@ namespace corona
 
 			indexes = correct_indexes;
 
-			class_id = _db->get_next_object_id();
-
-			_db->save_class(this);
+			if (class_id == 0) {
+				class_id = _db->get_next_object_id();
+			}
 
 			auto class_data = get_table(_db);
 			// and populate the new indexes with any data that might exist
@@ -1752,6 +1829,8 @@ namespace corona
 					return 1;
 				});
 			}
+
+			return true;
 		}
 
 		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name) override
@@ -2528,7 +2607,7 @@ private:
 
 			for (auto class_pair : class_list)
 			{
-				write_class_sp cd = write_class(class_pair.first);
+				write_class_sp cd = write_lock_class(class_pair.first);
 				if (cd) {
 					cd->init_validation(this);
 					bool permission = has_class_permission(_user_name, class_pair.first, "Put");
@@ -2552,7 +2631,7 @@ private:
 				std::string class_name = class_pair.first;
 
 				json class_object_list = classes_group[class_name];
-				read_class_sp class_data = read_class(class_name);
+				read_class_sp class_data = read_lock_class(class_name);
 
 				if (not class_data) {
 					continue;
@@ -2730,7 +2809,7 @@ private:
 
 			std::string class_name = _key[class_name_field];
 
-			read_class_sp classd = read_class(class_name);
+			read_class_sp classd = read_lock_class(class_name);
 
 			obj = classd->get_objects(this, _key, _children);
 
@@ -2751,7 +2830,7 @@ private:
 			json key = jp.create_object();
 			key.put_member(user_name_field, _user_name);
 
-			read_class_sp classd = read_class("sys_users");
+			read_class_sp classd = read_lock_class("sys_users");
 			json users = classd->get_objects(this, key, true);
 
 			return users.get_first_element();
@@ -2765,7 +2844,7 @@ private:
 			key.put_member("schema_name", schema_name);
 			key.put_member("schema_version", schema_version);
 
-			auto classd = read_class("sys_schemas");
+			auto classd = read_lock_class("sys_schemas");
 			json data = classd->get_objects(this, key, true);
 
 			return data.get_first_element();
@@ -2778,7 +2857,7 @@ private:
 			key.put_member("dataset_name", dataset_name);
 			key.put_member("dataset_version", dataset_version);
 
-			auto classd = read_class("sys_datasets");
+			auto classd = read_lock_class("sys_datasets");
 			json data = classd->get_objects(this, key, true);
 
 			return data.get_first_element();
@@ -2836,14 +2915,24 @@ private:
 			std::shared_ptr<class_implementation> cd;
 			write_scope_lock my_lock(class_lock);
 			json_parser jp;
+			cd = std::make_shared<class_implementation>();
 			json key = jp.create_object();
 			key.put_member(class_name_field, _class_name);
 			json class_def = classes->get(key);
+
+			std::vector<validation_error> errors;
+
 			if (class_def.object()) {
-				cd = std::make_shared<class_implementation>();
-				cd->put_json(class_def);
-				class_cache.insert_or_assign(_class_name, cd);
+				cd->put_json(errors, class_def);
+				if (errors.size()) {
+					system_monitoring_interface::global_mon->log_warning(std::format("Errors on deserializing class {0}", _class_name), __FILE__, __LINE__);
+					for (auto error : errors) {
+						system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
+					}
+				}
 			}
+
+			class_cache.insert_or_assign(_class_name, cd);
 			return cd;
 		}
 
@@ -2922,7 +3011,7 @@ private:
 			return s_confirmation_code;
 		}
 
-		virtual read_class_sp read_class(const std::string& _class_name) override
+		virtual read_class_sp read_lock_class(const std::string& _class_name) override
 		{
 			std::shared_ptr<class_implementation> cd;
 
@@ -2937,7 +3026,7 @@ private:
 			return read_class_sp(cdi);
 		}
 
-		virtual write_class_sp write_class(const std::string& _class_name) override
+		virtual write_class_sp write_lock_class(const std::string& _class_name) override
 		{
 			std::shared_ptr<class_implementation> cd;
 
@@ -2953,20 +3042,14 @@ private:
 			return write_class_sp(cdi);
 		}
 
-		virtual json save_class(class_interface *_class_to_save) override
+		virtual json save_class(write_class_sp& _class_to_save) override
 		{
-			auto pcd = write_class(_class_to_save->get_class_name());
-
 			json_parser jp;
 			json class_def;
 
-			if (pcd) 
-			{
-				class_def = jp.create_object();
-				_class_to_save->get_json(class_def);
-				pcd->put_json(class_def);
-				classes->put(class_def);
-			}
+			class_def = jp.create_object();
+			_class_to_save->get_json(class_def);
+			classes->put(class_def);
 			return class_def;
 		}
 
@@ -3504,7 +3587,7 @@ private:
 			int64_t object_id = (int64_t)key[object_id_field];
 			std::string class_name = key[class_name_field];
 
-			auto edit_class = write_class(class_name);
+			auto edit_class = write_lock_class(class_name);
 			if (edit_class) 
 			{
 				edit_class->init_validation(this);
@@ -3515,7 +3598,7 @@ private:
 					edit_class->run_queries(this, token, jedit_object);
 				}
 				json jedit_class = jp.create_object();
-				edit_class->put_json(jedit_class);
+				edit_class->get_json(jedit_class);
 				result = jp.create_object();
 				result.put_member("class", jedit_class);
 				result.put_member("object", jedit_object);
@@ -3633,7 +3716,6 @@ private:
 
 			read_scope_lock my_lock(database_lock);
 
-
 			date_time start_time = date_time::now();
 			timer tx;
 
@@ -3667,6 +3749,13 @@ private:
 			json jclass_definition = put_class_request[data_field];
 			std::string class_name = jclass_definition[class_name_field];
 
+			std::vector<validation_error> errors;
+
+			if (class_name.empty()) {
+				result = create_response(put_class_request, false, "No class name", jclass_definition, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+
 			bool can_put_class =  has_class_permission(
 				user_name,
 				class_name,
@@ -3679,33 +3768,26 @@ private:
 				return result;
 			}
 
-			class_implementation class_def;
-			class_def.put_json(jclass_definition);
+			write_class_sp class_to_modify = write_lock_class(class_name);
 
-			if (trace_check_class) {
-				system_monitoring_interface::global_mon->log_activity("check_class", start_time);
+			bool success = class_to_modify->update(errors, this, jclass_definition);
+
+			json results_array = jp.create_array();
+			for (auto& ve : errors) {
+				json err = jp.create_object();
+				ve.get_json(err);
+				results_array.push_back(err);
 			}
 
-			result = create_response(put_class_request, true, "Ok", jclass_definition, method_timer.get_elapsed_seconds());
-
-			if (class_def.get_class_name().empty())
+			if (success) 
 			{
-				result = create_response(put_class_request, false, "Class must have a name", jclass_definition, method_timer.get_elapsed_seconds());
+				save_class(class_to_modify);
+				result = create_response(put_class_request, success, "Ok", results_array, method_timer.get_elapsed_seconds());
 			}
-
-			if (class_def.get_class_description().empty())
+			else 
 			{
-				result = create_response(put_class_request, false, "Class must have a description", jclass_definition, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, success, "errors", results_array, method_timer.get_elapsed_seconds());
 			}
-
-			class_name = class_def.get_class_name();
-
-			// here we are going to grab the ancestor chain for this class.
-			std::string base_class_name = class_def.get_base_class_name();
-
-			class_def.apply_changes(this);
-
-			result = create_response(put_class_request, true, "Ok", jclass_definition, method_timer.get_elapsed_seconds());
 
 			commit_check();
 			system_monitoring_interface::global_mon->log_function_stop("put_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3743,7 +3825,7 @@ private:
 				return response;
 			}
 
-			auto class_def = read_class(base_class_name);
+			auto class_def = read_lock_class(base_class_name);
 
 			json object_list = jp.create_array();
 
@@ -3823,7 +3905,7 @@ private:
 						system_monitoring_interface::global_mon->log_function_stop("query", "from with no class", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
-					auto cd = read_class(class_name);
+					auto cd = read_lock_class(class_name);
 					if (not cd) {
 						response = create_response(query_request, false, "from class not found", jp.create_object(), tx.get_elapsed_seconds());
 						system_monitoring_interface::global_mon->log_function_stop("query", "from class not found", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3856,7 +3938,7 @@ private:
 							bool include_children = (bool)from_class["include_children"];
 							if (include_children)
 							{
-								auto edit_class = read_class(class_name);
+								auto edit_class = read_lock_class(class_name);
 								std::string token = query_request[token_field];
 								for (auto obj : objects) {
 									edit_class->run_queries(this, token, obj);
@@ -3920,7 +4002,7 @@ private:
 				return result;
 			}
 
-			auto class_def = read_class(class_name);
+			auto class_def = read_lock_class(class_name);
 
 			if (class_def) {
 
@@ -4025,7 +4107,7 @@ private:
 
 				for (auto class_pair : classes_and_data)
 				{
-					auto cd = read_class(class_pair.first);
+					auto cd = read_lock_class(class_pair.first);
 
 					// now that we have our class, we can go ahead and open the storage for it
 
@@ -4096,7 +4178,7 @@ private:
 			{
 				if (include_children)
 				{
-					auto edit_class = read_class(class_name);
+					auto edit_class = read_lock_class(class_name);
 					std::string token = get_object_request[token_field];
 					edit_class->run_queries(this, token, obj);
 				}
@@ -4143,7 +4225,7 @@ private:
 				return response;
 			}
 
-			auto cd = read_class(class_name);
+			auto cd = read_lock_class(class_name);
 
 			cd->delete_objects(this, object_key, true);
 
