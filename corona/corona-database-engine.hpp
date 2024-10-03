@@ -84,6 +84,7 @@ namespace corona
 	{
 	public:
 		virtual std::string get_class_name() = 0;
+		virtual void set_class_name(std::string _class_name) = 0;
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(json& _src) = 0;
 		virtual void copy(json& _dest, json& _src) = 0;
@@ -246,6 +247,7 @@ namespace corona
 		virtual json select_single_object(json _key, bool _include_children) = 0;
 		virtual read_class_sp read_lock_class(const std::string& _class_name) = 0;
 		virtual write_class_sp write_lock_class(const std::string& _class_name) = 0;
+		virtual write_class_sp create_lock_class(const std::string& _class_name) = 0;
 		virtual json save_class(write_class_sp& _class_to_save) = 0;
 
 	};
@@ -336,28 +338,32 @@ namespace corona
 
 	class child_bridge_implementation : public child_bridge_interface
 	{
-		std::string							construct_class_name;
+		std::string							child_class_name;
 		json								copy_values;
 		json								construct_values;
 
 	public:
 
+		virtual void set_class_name(std::string _class_name) override
+		{
+			child_class_name = _class_name;
+		}
+
 		virtual std::string get_class_name() override
 		{
-			return construct_class_name;
+			return child_class_name;
 		}
 
 		virtual void get_json(json& _dest)  override
 		{
-			_dest.put_member("class_name", "child_constructor" );
-			_dest.put_member("construct_class_name", construct_class_name);
+			_dest.put_member("child_class_name", child_class_name);
 			_dest.put_member("copy_values", copy_values);
 			_dest.put_member("construct_values", construct_values);
 		}
 
 		virtual void put_json(json& _src)  override
 		{
-			construct_class_name = _src["construct_class_name"];
+			child_class_name = _src["child_class_name"];
 			copy_values = _src[copy_values];
 			construct_values = _src[construct_values];
 		}
@@ -436,8 +442,9 @@ namespace corona
 			for (auto member : members) {
 				json obj = member.second;
 				std::shared_ptr<child_bridge_implementation> new_bridge = std::make_shared<child_bridge_implementation>();
+				std::string class_name = member.first;
 				new_bridge->put_json(obj);
-				std::string class_name = new_bridge->get_class_name();
+				new_bridge->set_class_name(class_name);
 				base_constructors.insert_or_assign(class_name, new_bridge);
 			}
 		}
@@ -520,7 +527,7 @@ namespace corona
 			if (bridges) {
 				json jctors = jp.create_object();
 				bridges->get_json(jctors);
-				_dest.put_member("constructors", jctors);
+				_dest.put_member("child_objects", jctors);
 			}
 		}
 
@@ -528,7 +535,7 @@ namespace corona
 		{
 			field_options_base::put_json(_src);
 
-			json jctors = _src["constructors"];
+			json jctors = _src["child_objects"];
 			bridges = std::make_shared<child_bridges>();
 			if (jctors.object()) {
 				bridges->put_json(jctors);
@@ -551,10 +558,10 @@ namespace corona
 					for (auto obj : _object_to_test)
 					{
 						std::string object_class_name;
-						if (obj.object()) {
-							object_class_name = _object_to_test[class_name_field];
-							if (bridges)
-							{
+						if (bridges)
+						{
+							if (obj.object()) {
+								object_class_name = _object_to_test[class_name_field];
 								auto ctor = bridges->get_bridge(object_class_name);
 								if (not ctor) {
 									is_legit = false;
@@ -565,7 +572,7 @@ namespace corona
 							}
 						}
 						else {
-							is_legit = false;
+							is_legit = true;
 						}
 					}
 				}
@@ -613,7 +620,7 @@ namespace corona
 			if (bridges) {
 				json jctors = jp.create_object();
 				bridges->get_json(jctors);
-				_dest.put_member("constructors", jctors);
+				_dest.put_member("child_objects", jctors);
 			}
 		}
 
@@ -621,7 +628,7 @@ namespace corona
 		{
 			field_options_base::put_json(_src);
 
-			json jctors = _src["constructors"];
+			json jctors = _src["child_objects"];
 			bridges = std::make_shared<child_bridges>();
 			if (jctors.object()) {
 				bridges->put_json(jctors);
@@ -639,28 +646,25 @@ namespace corona
 			if (field_options_base::accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test)) {
 				bool is_legit = true;
 
-				if (_object_to_test.object())
+				if (bridges)
 				{
 					std::string object_class_name;
+
 					if (_object_to_test.object()) {
 						object_class_name = _object_to_test[class_name_field];
 
-						if (bridges)
-						{
-							auto ctor = bridges->get_bridge(object_class_name);
-							if (not ctor) {
-								is_legit = false;
-							}
-						}
-						else {
+						auto ctor = bridges->get_bridge(object_class_name);
+						if (not ctor) {
 							is_legit = false;
 						}
-
+					}
+					else {
+							is_legit = false;
 					}
 				}
 				else
 				{
-					is_legit = false;
+					is_legit = true;
 				}
 				if (not is_legit) {
 					validation_error ve;
@@ -1771,22 +1775,36 @@ namespace corona
 			}	
 
 			class_name = changed_class.class_name;
+			base_class_name = changed_class.base_class_name;
 			class_description = changed_class.class_description;
+			fields = changed_class.fields;
+		
 			ancestors.clear();
 
-			if (not changed_class.base_class_name.empty()) {
+			if (not base_class_name.empty()) {
 
 				write_class_sp base_class = _db->write_lock_class(base_class_name);
+				if (base_class) {
 
-				ancestors = base_class->get_ancestors();
-				ancestors.insert_or_assign(base_class_name, true);
-				base_class->get_descendants().insert_or_assign(class_name, true);
+					ancestors = base_class->get_ancestors();
+					ancestors.insert_or_assign(base_class_name, true);
+					base_class->get_descendants().insert_or_assign(class_name, true);
 
-				for (auto temp_field : base_class->get_fields())
-				{
-					fields.insert_or_assign(temp_field->get_field_name(), temp_field);
+					for (auto temp_field : base_class->get_fields())
+					{
+						fields.insert_or_assign(temp_field->get_field_name(), temp_field);
+					}
+					_db->save_class(base_class);
 				}
-				_db->save_class(base_class);
+				else {
+					validation_error ve;
+					ve.class_name = changed_class.class_name;
+					ve.filename = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = "base class nnot found";
+					_errors.push_back(ve);
+					return false;
+				}
 			}
 
 			for (auto descendant : descendants)
@@ -1795,6 +1813,15 @@ namespace corona
 				if (desc_class) {
 					desc_class->get_ancestors().insert_or_assign(class_name, true);
 					_db->save_class(desc_class);
+				}
+				else {
+					validation_error ve;
+					ve.class_name = changed_class.class_name;
+					ve.filename = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = "descendant class not found";
+					_errors.push_back(ve);
+					return false;
 				}
 			}
 
@@ -1920,19 +1947,19 @@ namespace corona
 					{
 						json array_field = _src_obj[fld->get_field_name()];
 						if (array_field.array()) {
-							for (auto obj : array_field) {
-								std::string class_name = obj[class_name_field];
-								auto bridges = fld->get_bridges();
-								if (bridges) {
+							auto bridges = fld->get_bridges();
+							if (bridges) {
+								for (auto obj : array_field) {
+									std::string class_name = obj[class_name_field];
 									auto bridge = bridges->get_bridge(class_name);
 									if (bridge) {
 										bridge->copy(obj, _src_obj);
 									}
+									_child_objects.push_back(obj);
 								}
-								_child_objects.push_back(obj);
+								json empty_array = jp.create_array();
+								_src_obj.put_member(fld->get_field_name(), empty_array);
 							}
-							json empty_array = jp.create_array();
-							_src_obj.put_member(fld->get_field_name(), empty_array);
 						}
 					}
 					else if (fld->get_field_type() == field_types::ft_object)
@@ -1946,10 +1973,10 @@ namespace corona
 								if (bridge) {
 									bridge->copy(obj, _src_obj);
 								}
+								json empty;
+								_src_obj.put_member(fld->get_field_name(), empty);
+								_child_objects.push_back(obj);
 							}
-							json empty;
-							_src_obj.put_member(fld->get_field_name(), empty);
-							_child_objects.push_back(obj);
 						}
 					}
 				}
@@ -2323,6 +2350,48 @@ namespace corona
 
 			created_classes.put_member("sys_object", true);
 
+			created_classes.put_member("sys_schemas", true);
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_datasets",
+	"base_class_name" : "sys_object",
+	"class_description" : "Database script changes",
+	"fields" : {
+			"schema_id" : "int64",
+			"dataset_name" : "string",
+			"dataset_description" : "string",
+			"dataset_version" : "string",
+			"dataset_authors" : "array",
+			"run_on_change": "bool",
+			"objects": "array",
+			"import" : "object"
+	},
+	"indexes" : {
+        "sys_dataset_schema_id": {
+          "index_keys": [ "schema_id" ]
+        }
+	}
+}
+)");
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class sys_datasets put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_datasets"})");
+			if (test.empty() or test.is_member("class_name", "SysParseError")) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_datasets after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			created_classes.put_member("sys_datasets", true);
+
 
 
 
@@ -2331,15 +2400,29 @@ namespace corona
 	"class_name" : "sys_schemas",
 	"base_class_name" : "sys_object",
 	"class_description" : "Database script changes",
-	"fields" : [			
+	"fields" : {		
 			"schema_name" : "string",
 			"schema_description" : "string",
 			"schema_version" : "string",
 			"schema_authors" : "array",
 			"classes" : "array",
 			"users" : "array",
-			"datasets" : "array" 
-		]
+			"datasets" : {
+				"field_type" : "array",
+				"field_name" : "datasets",
+				"child_objects" : {
+					"sys_datasets" : {
+						"child_class_name" : "sys_datasets",
+						"copy_values" : {
+							"object_id" : "schema_id"
+						},
+						"construct_values" : {
+							"object_id" : "schema_id"
+						}
+					}	
+				}
+			}
+		}
 	}
 }
 )");
@@ -2358,42 +2441,6 @@ namespace corona
 
 				return result;
 			}
-
-			created_classes.put_member("sys_schemas", true);
-
-			response =  create_class(R"(
-{
-	"class_name" : "sys_datasets",
-	"base_class_name" : "sys_object",
-	"class_description" : "Database script changes",
-	"fields" : {
-			"dataset_name" : "string",
-			"dataset_description" : "string",
-			"dataset_version" : "string",
-			"dataset_authors" : "array",
-			"run_on_change": "bool",
-			"objects": "array",
-			"import" : "object"
-	}
-}
-)");
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class sys_datasets put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				std::cout << response.to_json() << std::endl;
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test =  classes->get(R"({"class_name":"sys_datasets"})");
-			if (test.empty() or test.is_member("class_name", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_datasets after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			created_classes.put_member("sys_datasets", true);
 
 			response =  create_class(R"(
 {	
@@ -2442,14 +2489,14 @@ namespace corona
 				return (std::string)_item[class_name_field];
 				});
 
-			
-			json missing_classes = classes_array.map([classes_grouped](std::string _member, int _index, json& _item) {
-				json found;
-				if (classes_grouped.has_member(_item[class_name_field])) {
-					found = _item;
+			auto members = created_classes.get_members();
+			json missing_classes = jp.create_array();
+			for (auto created_class : members) {
+				const std::string& created_class_name = created_class.first;
+				if (not classes_grouped.has_member(created_class_name)) {
+					missing_classes.push_back(created_class_name);
 				}
-				return found;
-				});
+			}
 
 			if (missing_classes.size() > 0) {
 				system_monitoring_interface::global_mon->log_warning("system classes not saved", __FILE__, __LINE__);
@@ -2634,12 +2681,22 @@ private:
 				object_list,
 				result_list;
 
-			if (object_load.array()) {
+			std::vector<validation_error> validation_errors;
+
+			if (object_load.array()) 
+			{
 				object_list = object_load;
 			}
-			else {
+			else if (object_load.object()) 
+			{
 				object_list = jp.create_array();
 				object_list.push_back(object_load);
+			}
+			else
+			{
+				response.put_member(success_field, false);
+				response.put_member(message_field, "not an object");
+				return response;
 			}
 
 			json classes_group = object_list.group([](json _item) -> std::string {
@@ -2647,8 +2704,6 @@ private:
 				});
 
 			auto class_list = classes_group.get_members();
-
-			std::vector<validation_error> validation_errors;
 
 			bool all_objects_good = true;
 
@@ -3079,6 +3134,17 @@ private:
 		}
 
 		virtual write_class_sp write_lock_class(const std::string& _class_name) override
+		{
+			std::shared_ptr<class_implementation> cd;
+
+			cd = get_cached_class(_class_name);
+
+			std::shared_ptr<class_interface> cdi = std::dynamic_pointer_cast<class_interface>(cd);
+
+			return write_class_sp(cdi);
+		}
+
+		virtual write_class_sp create_lock_class(const std::string& _class_name) override
 		{
 			std::shared_ptr<class_implementation> cd;
 
@@ -3820,7 +3886,7 @@ private:
 				return result;
 			}
 
-			write_class_sp class_to_modify = write_lock_class(class_name);
+			write_class_sp class_to_modify = create_lock_class(class_name);
 
 			bool success = class_to_modify->update(errors, this, jclass_definition);
 

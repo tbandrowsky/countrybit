@@ -39,7 +39,7 @@
       },
       "indexes": {
         "committee_committee_id_idx": {
-          "index_keys": [ "candidate_id" ]
+          "index_keys": [ "committee_id" ]
         }
       }
     },
@@ -52,6 +52,14 @@
         "candidate_id": "string",
         "election_year": "string",
         "linkage_id": "string"
+      },
+      "indexes": {
+        "committee_candidate_committee_id_idx": {
+          "index_keys": [ "committee_id" ]
+        },
+        "committee_candidate_candidate_id_idx": {
+          "index_keys": [ "candidate_id" ]
+        }
       }
     },
     {

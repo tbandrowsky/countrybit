@@ -485,9 +485,11 @@ namespace corona {
 
 	int job_queue::numberOfProcessors()
 	{
-		SYSTEM_INFO si;
-		::GetSystemInfo(&si);
-		int threadCount = si.dwNumberOfProcessors;
+		PROCESSOR_NUMBER pn;
+
+		GetCurrentProcessorNumberEx(&pn);
+		int threadCount = GetMaximumProcessorCount(pn.Group);
+
 		return threadCount;
 	}
 
@@ -555,7 +557,7 @@ namespace corona {
 		timer tx;
 		system_monitoring_interface::global_mon->log_function_start("rw lock proof", "start", st, __FILE__, __LINE__);
 
-		int test_seconds = 2;
+		double test_seconds = .5;
 		int test_milliseconds = test_seconds * 1000;
 
 		json_parser jp;
