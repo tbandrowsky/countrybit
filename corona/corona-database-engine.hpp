@@ -2039,15 +2039,19 @@ namespace corona
 						if (fld->get_field_type() == field_types::ft_array)
 						{
 							auto bridges = fld->get_bridges();
-							json results = bridges->get_children(_db, _src_obj);
-							_src_obj.put_member(fld->get_field_name(), results);
+							if (bridges) {
+								json results = bridges->get_children(_db, _src_obj);
+								_src_obj.put_member(fld->get_field_name(), results);
+							}
 						}
 						else if (fld->get_field_type() == field_types::ft_object)
 						{
 							auto bridges = fld->get_bridges();
-							json results = bridges->get_children(_db, _src_obj);
-							json first = results.get_first_element();
-							_src_obj.put_member(fld->get_field_name(), first);
+							if (bridges) {
+								json results = bridges->get_children(_db, _src_obj);
+								json first = results.get_first_element();
+								_src_obj.put_member(fld->get_field_name(), first);
+							}
 						}
 					}
 				}
@@ -2362,7 +2366,8 @@ namespace corona
 			"dataset_name" : "string",
 			"dataset_description" : "string",
 			"dataset_version" : "string",
-			"dataset_authors" : "array",
+			"dataset_author" : "string",
+			"dataset_source" : "string",
 			"run_on_change": "bool",
 			"objects": "array",
 			"import" : "object"
@@ -4215,10 +4220,10 @@ private:
 
 			result =  check_object(user_name, object_definition);
 
+			json grouped_by_class_name = result[data_field];
+
 			if (result[success_field])
 			{
-				json grouped_by_class_name = result[data_field];
-
 				auto classes_and_data = grouped_by_class_name.get_members();
 
 				json child_objects = jp.create_array();
@@ -4252,7 +4257,7 @@ private:
 			}
 			else 
 			{
-				result = create_response(put_object_request, false, result[message_field], result["Warnings"], method_timer.get_elapsed_seconds());
+				result = create_response(put_object_request, false, result[message_field], grouped_by_class_name, method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 

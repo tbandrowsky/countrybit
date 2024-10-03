@@ -86,8 +86,8 @@
       "dataset_name": "Candidate Master",
       "dataset_description": "Load Candidates",
       "dataset_version": "1.0",
-      "author": "Federal Elections Commission",
-      "source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
       "import": {
         "type": "csv",
         "delimiter": "|",
@@ -110,8 +110,8 @@
       "dataset_name": "Committee Master",
       "dataset_description": "Load Candidates",
       "dataset_version": "1.0",
-      "author": "Federal Elections Commission",
-      "source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
       "import": {
         "type": "csv",
         "delimiter": "|",
@@ -129,8 +129,8 @@
       "dataset_name": "Individual Master",
       "dataset_description": "Load Individuals",
       "dataset_version": "1.0",
-      "author": "Federal Elections Commission",
-      "source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
       "import": {
         "type": "csv",
         "delimiter": "|",
