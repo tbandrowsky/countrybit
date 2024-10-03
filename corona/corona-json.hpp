@@ -2465,7 +2465,7 @@ namespace corona
 							result_item.append_element( j);
 						}
 					}
-					else 
+					else if (not new_element.empty())
 					{
 						result_item.append_element(new_element);
 					}

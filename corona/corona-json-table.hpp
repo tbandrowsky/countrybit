@@ -1170,8 +1170,8 @@ namespace corona
 		}
 
 		bool result;
-		result = fb.buffer_count();
-		_tests->test({ "append_cont", result, __FILE__, __LINE__ });
+		result = fb.buffer_count() == 0;
+		_tests->test({ "append_continuity", result, __FILE__, __LINE__ });
 
 		fb.commit();
 		fb.wait();
@@ -1305,7 +1305,7 @@ namespace corona
 		corona::json test_eq1 = jp.parse_object(R"({ "name":"bill", "age":42 })");
 		corona::json test_eq2 = jp.parse_object(R"({ "name":"bill", "age":42 })");
 
-		result = test_eq1.empty() or test_eq2.empty();
+		result = test_eq1.object() and test_eq2.object();
 		_tests->test({ "parse", result, __FILE__, __LINE__ });
 
 		json member_result = jp.create_object();
@@ -1316,7 +1316,7 @@ namespace corona
 		result = not test_eq1.has_member("box");
 		_tests->test({ "negative_member", result, __FILE__, __LINE__ });
 		
-		result = test_eq1.has_member("bill");
+		result = test_eq1.has_member("name");
 		_tests->test({ "member1", result, __FILE__, __LINE__ });
 
 		result = test_eq1.has_member("age");
@@ -1799,8 +1799,8 @@ namespace corona
 		_tests->test({ "create table", result, __FILE__, __LINE__ });
 
 		relative_ptr_type rpt =  test_table.put(test_write);
-		result = (rpt == 0);
-		_tests->test({ "create table", result, __FILE__, __LINE__ });
+		result = (rpt >= 0);
+		_tests->test({ "put", result, __FILE__, __LINE__ });
 
 		json test_read =  test_table.get(test_key);
 		result = not test_read.empty();
@@ -1922,7 +1922,7 @@ namespace corona
 
 		test_read =  test_table.get(test_key);
 
-		result = test_read.compare(test_write);
+		result = test_read.compare(test_write) == 0;
 		_tests->test({ "update 2", result, __FILE__, __LINE__ });
 
 		test_write.put_member_i64(object_id_field, 1);

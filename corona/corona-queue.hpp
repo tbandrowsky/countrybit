@@ -661,8 +661,8 @@ namespace corona {
 				}, wait_handle[i]);
 		}
 
-		read_lock = nullptr;
 		::Sleep(test_milliseconds);
+		read_lock = nullptr;
 		WaitForMultipleObjects(10, wait_handle, TRUE, INFINITE);
 
 		for (int i = 0; i < 10; i++)

@@ -1521,6 +1521,14 @@ namespace corona
 					ancestors.insert_or_assign(ancestor, true);
 				}
 			}
+			else if (not jancestors.empty()) {
+				validation_error ve;
+				ve.class_name = class_name;
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "ancestors must be an array of strings";
+				_errors.push_back(ve);
+			}
 
 			descendants.clear();
 			jdescendants = _src["descendants"];
@@ -1531,6 +1539,15 @@ namespace corona
 					std::string descendant = jdescendant;
 					descendants.insert_or_assign(descendant, true);
 				}
+			}
+			else if (not jdescendants.empty())
+			{
+				validation_error ve;
+				ve.class_name = class_name;
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "descendants must be an array of strings";
+				_errors.push_back(ve);
 			}
 
 			fields.clear();
@@ -1590,6 +1607,15 @@ namespace corona
 					}
 				}
 			}
+			else if (not jfields.empty())
+			{
+				validation_error ve;
+				ve.class_name = class_name;
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "fields must be an object.  each field is a member, with a field as the '\"field_name\" : \"field_type\"' or '\"field_name\" : { options }'";
+				_errors.push_back(ve);
+			}
 
 			indexes.clear();
 			jindexes = _src["indexes"];
@@ -1626,6 +1652,17 @@ namespace corona
 					indexes.insert_or_assign(jindex.first, index);
 				}
 			}
+			else if (not jindexes.empty())
+			{
+				validation_error ve;
+				ve.class_name = class_name;
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "indexes must be an object.";
+				_errors.push_back(ve);
+			}
+
+
 		}
 
 		virtual void clear_queries(json& _target) override
@@ -2405,13 +2442,23 @@ namespace corona
 				return (std::string)_item[class_name_field];
 				});
 
-			bool missing = classes_array.any([classes_grouped](json& _item) {
-				return !classes_grouped.has_member(_item[class_name_field]);
+			
+			json missing_classes = classes_array.map([classes_grouped](std::string _member, int _index, json& _item) {
+				json found;
+				if (classes_grouped.has_member(_item[class_name_field])) {
+					found = _item;
+				}
+				return found;
 				});
 
-			if (missing) {
+			if (missing_classes.size() > 0) {
+				system_monitoring_interface::global_mon->log_warning("system classes not saved", __FILE__, __LINE__);
+
+				for (auto mc : missing_classes) {
+					system_monitoring_interface::global_mon->log_information(mc[class_name_field], __FILE__, __LINE__);
+				}
+
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				std::cout << __FILE__ << " " << __LINE__ << ":Class list returned from database missed some classes." << std::endl;
 				return result;
 			}
 
@@ -2930,6 +2977,11 @@ private:
 						system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
 					}
 				}
+			}
+			else 
+			{
+				// this will be a new, empty class.
+				cd->set_class_name(_class_name);
 			}
 
 			class_cache.insert_or_assign(_class_name, cd);
