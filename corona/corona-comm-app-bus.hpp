@@ -207,26 +207,46 @@ namespace corona
 			date_time t = date_time::now();
 
 			json_parser jp;
-			json system_proof = jp.create_object();
+
+			test_master tm;
 
 			log_job_start("verification", "verification start", t, __FILE__, __LINE__);
 
-			test_object(system_proof, app);
-			test_file_block(system_proof, app);
-			test_file(system_proof, app);
-			test_data_block(system_proof, app);
-			test_json_node(system_proof, app);
-			test_json_table(system_proof, app);
+			std::vector<std::string> dependencies;
 
-			bool system_works = system_proof.prove_member("is_true");
+			std::shared_ptr<test_set> testo = tm.create_test_set("locks", dependencies);
+			test_locks(testo);
+
+			testo = tm.create_test_set("rw locks", dependencies);
+			test_rw_locks(testo);
+
+			testo = tm.create_test_set("object", dependencies);
+			test_object(testo, app);
+
+			testo = tm.create_test_set("file block", dependencies);
+			test_file_block(testo, app);
+
+			dependencies = { "file block", "object" };
+			testo = tm.create_test_set("file", dependencies);
+			test_file(testo, app);
+
+			dependencies = { "file" };
+			testo = tm.create_test_set("data block", dependencies);
+			test_data_block(testo, app);
+
+			dependencies = { "data block" };
+			testo = tm.create_test_set("json node", dependencies);
+			test_json_node(testo, app);
+
+			dependencies = { "rw locks", "json node" };
+			testo = tm.create_test_set("json table", dependencies);
+			test_json_table(testo, app);
+
+			bool system_works = tm.prove("json table");
 			if (not system_works) {
-				json top_level = system_proof["table"];
-				json reason = failure_analysis(system_proof, top_level, "is_true");
-				log_warning("This system does not work because:", __FILE__, __LINE__);
-				log_json(reason);
 				log_job_stop("verification", "verification failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-			else 
+			else
 			{
 				log_job_stop("verification", "verification complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}

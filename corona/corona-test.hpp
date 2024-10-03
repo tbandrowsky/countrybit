@@ -35,22 +35,33 @@ namespace corona
 		std::vector<std::shared_ptr<test_set>>		dependencies;
 		std::vector<std::shared_ptr<test_result>>	tests;
 
+		CRITICAL_SECTION cs;
+
 	public:
 
 		test_set( std::string _name, std::vector<std::shared_ptr<test_set>>&& _dependencies )
 		{
+			InitializeCriticalSection(&cs);
 			test_set_name = _name;
 			dependencies = std::move(_dependencies);
 		}
 
+		virtual ~test_set()
+		{
+			DeleteCriticalSection(&cs);
+		}
+
 		virtual void test(test_result _test)
 		{
+			EnterCriticalSection(&cs);
 			std::shared_ptr<test_result> tr = std::make_shared<test_result>(_test);
 			tests.push_back(tr);
+			LeaveCriticalSection(&cs);
 		}
 
 		virtual bool prove( int _indent )
 		{
+			EnterCriticalSection(&cs);
 			std::string indent(_indent, ' ');
 			bool is_true = true;
 
@@ -72,6 +83,7 @@ namespace corona
 				}
 			}
 
+			LeaveCriticalSection(&cs);
 			return is_true;
 		}
 	};
@@ -80,21 +92,37 @@ namespace corona
 	{
 	protected:
 		std::map<std::string, std::shared_ptr<test_set>> test_sets;
-
+		CRITICAL_SECTION cs;
 	public:
+
+		test_master()
+		{
+			InitializeCriticalSection(&cs);
+		}
+
+		virtual ~test_master()
+		{
+			DeleteCriticalSection(&cs);
+		}
+
 		std::shared_ptr<test_set> create_test_set(std::string set_name, std::vector<std::string> _dependencies)
 		{
+			EnterCriticalSection(&cs);
 			std::vector<std::shared_ptr<test_set>> dependencies;
 			for (auto name : _dependencies) 
 			{
 				auto iter = test_sets.find(name);
 				if (iter == std::end(test_sets)) {
+					LeaveCriticalSection(&cs);
 					std::string error = "Missing test set '" + name + "'";
 					throw std::logic_error(error);
 				}
 				dependencies.push_back(iter->second);
 			}
 			std::shared_ptr<test_set> new_set = std::make_shared<test_set>(set_name, std::move(dependencies));
+			test_sets.insert_or_assign(set_name, new_set);
+			LeaveCriticalSection(&cs);
+			return new_set;
 		}
 
 		bool prove(std::string test_name)
