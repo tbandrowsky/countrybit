@@ -160,7 +160,7 @@ namespace corona
 
 		virtual int64_t									get_index_id() = 0;
 		virtual std::string								get_index_name() = 0;
-		virtual std::vector<std::string>				get_index_keys() = 0;
+		virtual std::vector<std::string>				&get_index_keys() = 0;
 		virtual std::shared_ptr<json_table>				get_table(file_block* _fb) = 0;
 		virtual void									apply_object_id_field() = 0;
 		virtual std::string								get_index_key_string() = 0;
@@ -1253,7 +1253,7 @@ namespace corona
 			return join(index_keys, ".");
 		}
 		
-		virtual std::vector<std::string> get_index_keys() override
+		virtual std::vector<std::string> &get_index_keys() override
 		{
 			return index_keys;
 		}
@@ -1714,7 +1714,7 @@ namespace corona
 
 			for (auto idx : indexes) 
 			{
-				auto keys = idx.second->get_index_keys();
+				auto& keys = idx.second->get_index_keys();
 
 				int matched_key_count = 0;
 
@@ -1904,7 +1904,7 @@ namespace corona
 			for (auto idc : indexes) {
 				auto my_index = idc.second;
 				auto table = my_index->get_table(_db);
-				auto keys = my_index->get_index_keys();
+				auto& keys = my_index->get_index_keys();
 				class_data->for_each([&keys, &my_index, this, table](int _idx, json& _item) -> relative_ptr_type {
 					json index_item = _item.extract(keys);
 					table->put(index_item);
@@ -1961,7 +1961,7 @@ namespace corona
 				json objects_to_delete;
 			};
 
-			std::vector<index_object_pair> objects_to_update;
+			std::vector<index_object_pair> index_updates;
 
 			for (auto idx : indexes) 
 			{
@@ -1969,8 +1969,10 @@ namespace corona
 				iop.index = idx.second;
 				iop.objects_to_add = jp.create_array();
 				iop.objects_to_delete = jp.create_array();
-				objects_to_update.push_back(iop);
+				index_updates.push_back(iop);
 			}
+
+			auto tb = get_table(_db);
 
 			for (auto _src_obj : _src_list)
 			{
@@ -2017,14 +2019,44 @@ namespace corona
 					}
 				}
 
-				for (auto& iop : objects_to_update)
+				if (index_updates.size() > 0)
 				{
-
+					int64_t object_id = (int64_t)_src_obj[object_id_field];
+					json old_obj = tb->get(object_id);
+					if (old_obj)
+					{
+						for (auto& iop : index_updates)
+						{
+							auto& idx_keys = iop.index->get_index_keys();
+							json obj_to_delete = old_obj.extract(idx_keys);
+							json obj_to_add = _src_obj.extract(idx_keys);
+							if (obj_to_delete.compare(obj_to_add) != 0) {
+								iop.objects_to_delete.push_back(obj_to_delete);
+							}
+							iop.objects_to_add.push_back(obj_to_add);
+						}
+					}
+					else 
+					{
+						for (auto& iop : index_updates)
+						{
+							auto& idx_keys = iop.index->get_index_keys();
+							json obj_to_add = _src_obj.extract(idx_keys);
+							iop.objects_to_add.push_back(obj_to_add);
+						}
+					}
 				}
+
 			}
 
-			auto tb = get_table(_db);
 			tb->put_array(_src_list);
+			for (auto& iop : index_updates)
+			{
+				auto idx_table = iop.index->get_table(_db);
+				idx_table->erase_array(iop.objects_to_delete);
+				idx_table->put_array(iop.objects_to_add);
+			}
+
 		}
 
 		virtual json get_objects(corona_database_interface* _db, json _key, bool _include_children)

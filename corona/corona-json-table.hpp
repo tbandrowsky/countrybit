@@ -776,6 +776,24 @@ namespace corona
 			return replace(jx);
 		}
 
+		void erase_array(json _array)
+		{
+			date_time start_time = date_time::now();
+			timer tx;
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_start("table", "put_array", start_time, __FILE__, __LINE__);
+			}
+
+			if (_array.array()) {
+				for (auto item : _array) {
+					erase(item);
+				}
+			}
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_stop("table", "put_array", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+		}
+
 		bool erase(KEY& key)
 		{
 			write_scope_lock me(table_lock);
