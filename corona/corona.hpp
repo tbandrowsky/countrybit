@@ -57,6 +57,7 @@ For Future Consideration
 #include <thread>
 #include <regex>
 #include <queue>
+#include <ranges>
 
 #include <io.h>
 #include <fcntl.h>

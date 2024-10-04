@@ -364,8 +364,8 @@ namespace corona
 		virtual void put_json(json& _src)  override
 		{
 			child_class_name = _src["child_class_name"];
-			copy_values = _src[copy_values];
-			construct_values = _src[construct_values];
+			copy_values = _src["copy_values"];
+			construct_values = _src["construct_values"];
 		}
 
 		virtual void copy(json& _dest, json& _src)  override
@@ -561,36 +561,49 @@ namespace corona
 						if (bridges)
 						{
 							if (obj.object()) {
-								object_class_name = _object_to_test[class_name_field];
+								object_class_name = obj[class_name_field];
 								auto ctor = bridges->get_bridge(object_class_name);
 								if (not ctor) {
-									is_legit = false;
+									validation_error ve;
+									ve.class_name = _class_name;
+									ve.field_name = _field_name;
+									ve.filename = __FILE__;
+									ve.line_number = __LINE__;
+									ve.message = "This array does not accept child objects of " + object_class_name;
+									_validation_errors.push_back(ve);
+									return false;
 								}
 							}
 							else {
-								is_legit = false;
+								validation_error ve;
+								ve.class_name = _class_name;
+								ve.field_name = _field_name;
+								ve.filename = __FILE__;
+								ve.line_number = __LINE__;
+								ve.message = "Child objects were specified for this array, but this is not an object.";
+								_validation_errors.push_back(ve);
+								return false;
+
 							}
 						}
 						else {
-							is_legit = true;
+							return true;
 						}
 					}
 				}
 				else 
 				{
-					is_legit = false;
-				}
-				if (not is_legit) {
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
 					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
-					ve.message = "Value must be an array of correct types.";
+					ve.message = "Value must be an array for an array field.";
 					_validation_errors.push_back(ve);
 					return false;
-				};
+				}
 			}
+			return true;
 		}
 
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() override
@@ -1789,6 +1802,7 @@ namespace corona
 					ancestors = base_class->get_ancestors();
 					ancestors.insert_or_assign(base_class_name, true);
 					base_class->get_descendants().insert_or_assign(class_name, true);
+					descendants.insert_or_assign(class_name, true);
 
 					for (auto temp_field : base_class->get_fields())
 					{
@@ -1807,8 +1821,12 @@ namespace corona
 				}
 			}
 
-			for (auto descendant : descendants)
-			{
+			auto view_descendants = descendants | std::views::filter([this](auto& pair){
+				return pair.first != class_name;
+				});
+
+			for (auto descendant : view_descendants)
+			{		
 				write_class_sp desc_class = _db->write_lock_class(descendant.first);
 				if (desc_class) {
 					desc_class->get_ancestors().insert_or_assign(class_name, true);
@@ -1936,6 +1954,24 @@ namespace corona
 		virtual void put_objects(corona_database_interface* _db, json& _child_objects, json& _src_list)
 		{
 			json_parser jp;
+
+			struct index_object_pair {
+				std::shared_ptr<index_interface> index;
+				json objects_to_add;
+				json objects_to_delete;
+			};
+
+			std::vector<index_object_pair> objects_to_update;
+
+			for (auto idx : indexes) 
+			{
+				index_object_pair iop;
+				iop.index = idx.second;
+				iop.objects_to_add = jp.create_array();
+				iop.objects_to_delete = jp.create_array();
+				objects_to_update.push_back(iop);
+			}
+
 			for (auto _src_obj : _src_list)
 			{
 				int64_t parent_object_id = (int64_t)_src_obj[object_id_field];
@@ -1979,6 +2015,11 @@ namespace corona
 							}
 						}
 					}
+				}
+
+				for (auto& iop : objects_to_update)
+				{
+
 				}
 			}
 
@@ -2354,8 +2395,6 @@ namespace corona
 
 			created_classes.put_member("sys_object", true);
 
-			created_classes.put_member("sys_schemas", true);
-
 			response = create_class(R"(
 {
 	"class_name" : "sys_datasets",
@@ -2431,6 +2470,8 @@ namespace corona
 	}
 }
 )");
+
+			created_classes.put_member("sys_schemas", true);
 
 			if (not response[success_field]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
