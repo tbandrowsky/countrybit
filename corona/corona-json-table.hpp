@@ -370,8 +370,12 @@ namespace corona
 				if (_key.has_member(key)) {
 					table_key.copy_member(key, _key);
 				}
+				else if (key == object_id_field) {
+					table_key.put_member_i64(key, 0);
+				}
 				else {
 					table_key = jp.create_object();
+					break;
 				}
 			}
 
@@ -875,17 +879,36 @@ namespace corona
 			}
 			read_scope_lock me(table_lock);
 
+			json_parser jp;
+			json actual_key = jp.create_object();
+
+			if (_key_fragment.object()) {
+				bool key_compliant = true;
+				for (auto& skey : key_fields) 
+				{
+					if (not _key_fragment.has_member(skey)) {
+						key_compliant = false;
+					}
+					if (key_compliant) {
+						actual_key.copy_member(skey, _key_fragment);
+					}
+					else {
+						actual_key.put_member_i64(skey, 0);
+					}
+				}
+				actual_key.set_compare_order(key_fields);
+			}
 			result.is_all = true;
 
 			json_key_block jkn;
-			relative_ptr_type location = find_first_gte(_key_fragment, jkn);
+			relative_ptr_type location = find_first_gte(actual_key, jkn);
 			int64_t index = 0;
 
 			while (location != null_row)
 			{
 				jkn = get_key_node(location);
 				json_data_block node = jkn.get_node(fb);
-				int comparison;
+				int comparison = 0;
 
 				if (_key_fragment.empty())
 					comparison = 0;
@@ -904,7 +927,11 @@ namespace corona
 						result.is_all = false;
 					}
 				}
-				location = jkn.foward[0];
+
+				if (not actual_key.empty() and actual_key.compare(node.data) > 0)
+					location = 0;
+				else 
+					location = jkn.foward[0];
 			}
 
 			if (ENABLE_JSON_LOGGING) {

@@ -162,7 +162,6 @@ namespace corona
 		virtual std::string								get_index_name() = 0;
 		virtual std::vector<std::string>				&get_index_keys() = 0;
 		virtual std::shared_ptr<json_table>				get_table(file_block* _fb) = 0;
-		virtual void									apply_object_id_field() = 0;
 		virtual std::string								get_index_key_string() = 0;
 
 	};
@@ -1280,12 +1279,17 @@ namespace corona
 			if (jindex_keys.array())
 			{
 				index_keys.clear();
+				bool add_object_id = true;
 				for (auto key : jindex_keys) {
 					std::string key_name = key;
+					if (key_name == object_id_field)
+						add_object_id = false;
 					index_keys.push_back(key);
 				}
+				if (add_object_id) {
+					index_keys.push_back(object_id_field);
+				}
 			}
-			apply_object_id_field();
 			table_location = (int64_t)_src["table_location"];
 		}
 
@@ -1333,13 +1337,6 @@ namespace corona
 			}
 		}
 
-		virtual void apply_object_id_field() override
-		{
-
-			if (std::find(index_keys.begin(), index_keys.end(), object_id_field) != std::end(index_keys)) {
-				index_keys.push_back(object_id_field);
-			}
-		}
 	};
 
 	class class_implementation : public class_interface
@@ -1654,18 +1651,6 @@ namespace corona
 						_errors.push_back(ve);
 					}
 
-					for (auto f : index->get_index_keys()) {
-						if (not fields.contains(f)) {
-							validation_error ve;
-							ve.class_name = class_name;
-							ve.field_name = f;
-							ve.message = "Invalid field for index";
-							ve.filename = __FILE__;
-							ve.line_number = __LINE__;
-							_errors.push_back(ve);
-						}
-					}
-
 					indexes.insert_or_assign(jindex.first, index);
 				}
 			}
@@ -1722,7 +1707,6 @@ namespace corona
 				{
 					if (not _object.has_member(ikey))
 					{
-						matched_key_count = 0;
 						break;
 					}
 					else
@@ -1785,13 +1769,13 @@ namespace corona
 				ve.message = "cannot change base class of a class.";
 				_errors.push_back(ve);
 				return false;
-			}	
+			}
 
 			class_name = changed_class.class_name;
 			base_class_name = changed_class.base_class_name;
 			class_description = changed_class.class_description;
 			fields = changed_class.fields;
-		
+
 			ancestors.clear();
 
 			if (not base_class_name.empty()) {
@@ -1821,12 +1805,12 @@ namespace corona
 				}
 			}
 
-			auto view_descendants = descendants | std::views::filter([this](auto& pair){
+			auto view_descendants = descendants | std::views::filter([this](auto& pair) {
 				return pair.first != class_name;
 				});
 
 			for (auto descendant : view_descendants)
-			{		
+			{
 				write_class_sp desc_class = _db->write_lock_class(descendant.first);
 				if (desc_class) {
 					desc_class->get_ancestors().insert_or_assign(class_name, true);
@@ -1843,11 +1827,26 @@ namespace corona
 				}
 			}
 
-			// The object id always part of the index key
-			// and I check it here, before looping through the existing indexes.
-			for (auto& new_index : changed_class.indexes)
+			// check the indexes here, because here we have all of our fields from class anncestors.
+
+			for (auto idx : indexes)
 			{
-				new_index.second->apply_object_id_field();
+				for (auto f : idx.second->get_index_keys()) {
+					if (not fields.contains(f)) {
+						validation_error ve;
+						ve.class_name = class_name;
+						ve.field_name = f;
+						ve.message = "Invalid field for index";
+						ve.filename = __FILE__;
+						ve.line_number = __LINE__;
+						_errors.push_back(ve);
+					}
+				}
+			}
+
+			if (_errors.size() > 0) 
+			{
+				return false;
 			}
 
 			// loop through existing indexes,
@@ -2083,7 +2082,6 @@ namespace corona
 				if (index_table)
 				{
 					json object_key = jp.create_object();
-					object_key.put_member(class_name_field, class_name);
 
 					obj = index_table->select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
 						object_key.copy_member(object_id_field, _item);
@@ -4032,10 +4030,9 @@ private:
 
 			for (auto class_pair : class_def->get_descendants())
 			{
-				json class_key;
-				class_key = filter.clone();
-				class_key.put_member(class_name_field, class_pair.first);
-				json objects = select_object(class_key, include_children);
+				read_class_sp classd = read_lock_class(class_pair.first);
+				json objects = classd->get_objects(this, filter, include_children);
+
 				if (objects.array()) {
 					for (auto obj : objects) {
 						object_list.push_back(obj);
