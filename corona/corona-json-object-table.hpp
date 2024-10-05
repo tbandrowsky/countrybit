@@ -238,6 +238,7 @@ namespace corona
 
 			for (int k = table_header->get_level(); k >= 0; k--)
 			{
+				x = get_header();
 				int comp = -1;
 				relative_ptr_type nl = find_advance(x, _found_node, k, _key, &found); // TODO Found node could be here.
 				while (nl != null_row)
@@ -947,6 +948,323 @@ namespace corona
 		std::cout << "[json_table]" << std::endl;
 		return output;
 	}
+
+	void test_json_object_table(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
+	{
+		date_time st = date_time::now();
+		timer tx;
+		system_monitoring_interface::global_mon->log_function_start("object table proof", "start", st, __FILE__, __LINE__);
+
+		using return_type = bool;
+		json_parser jp;
+
+		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "corona_table.ctb");
+		file_block fp(f);
+
+		std::shared_ptr<json_table_header> header = std::make_shared<json_table_header>();
+		header->create(&fp);
+
+		json test_write = jp.create_object();
+		test_write.put_member_i64(object_id_field, 5);
+		test_write.put_member("Name", "Joe");
+		int64_t test_key = (int64_t)test_write[object_id_field];
+
+		json_object_table test_table(header, 0, &fp);
+
+		auto read_header = test_table.get_table_header();
+
+		bool result;
+
+		result = (bool)read_header;
+		_tests->test({ "create table", result, __FILE__, __LINE__ });
+
+		relative_ptr_type rpt = test_table.put(test_write);
+		result = (rpt >= 0);
+		_tests->test({ "put", result, __FILE__, __LINE__ });
+
+		json test_read = test_table.get(test_key);
+		result = not test_read.empty();
+		_tests->test({ "read 1", result, __FILE__, __LINE__ });
+
+		test_read.set_compare_order({ object_id_field });
+		result = test_read.compare(test_write) == 0;
+		_tests->test({ "check read 1", result, __FILE__, __LINE__ });
+
+		json db_contents = test_table.select([](int _index, json& item) {
+			return item;
+			});
+
+		result = db_contents.array();
+		_tests->test({ "array result", result, __FILE__, __LINE__ });
+
+		test_write.put_member_i64(object_id_field, 7);
+		test_write.put_member("Name", "Jack");
+		test_key = (int64_t)test_write[object_id_field];
+
+		test_table.put(test_write);
+
+		test_read = test_table.get(test_key);
+		test_read.set_natural_order();
+
+		result = test_read.compare(test_write) == 0;
+		_tests->test({ "read 2", result, __FILE__, __LINE__ });
+
+		test_read = jp.create_object();
+		test_read.put_member_i64(object_id_field, 5);
+		test_read.set_natural_order();
+
+		json joe = test_table.get(test_read);
+		result = not joe.empty();
+		_tests->test({ "out of order", result, __FILE__, __LINE__ });
+
+		db_contents = test_table.select([](int _index, json& item) {
+			return item;
+			});
+
+		int db_size1 = db_contents.size();
+
+		test_write.put_member_i64(object_id_field, 7);
+		test_write.put_member("Name", "Jill");
+		test_key = (int64_t)test_write[object_id_field];
+		test_table.put(test_write);
+
+		test_read = test_table.get(test_key);
+		test_read.set_natural_order();
+
+		result = test_read.compare(test_write) == 0;
+		_tests->test({ "read 3", result, __FILE__, __LINE__ });
+
+		db_contents = test_table.select([](int _index, json& item) {
+			return item;
+			});
+
+		int db_size1b = db_contents.size();
+
+		try
+		{
+			json t5 = test_table.get(6);
+			_tests->test({ "null access", true, __FILE__, __LINE__ });
+		}
+		catch (std::exception exc)
+		{
+			_tests->test({ "null access", false, __FILE__, __LINE__ });
+		}
+
+		db_contents = test_table.select([](int _index, json& item) {
+			return item;
+			});
+
+		result = (db_contents.size() == 2);
+		_tests->test({ "table results size", result, __FILE__, __LINE__ });
+
+		test_write.put_member_i64(object_id_field, 2);
+		test_write.put_member("Name", "Sydney");
+		test_key = (int64_t)test_write[object_id_field];
+		test_table.put(test_write);
+
+		test_read = test_table.get(test_key);
+
+		result = test_read.compare(test_write) == 0;
+		_tests->test({ "insert", result, __FILE__, __LINE__ });
+
+		test_read = jp.create_object();
+		test_read.put_member_i64(object_id_field, 5);
+		test_read.set_natural_order();
+
+		joe = test_table.get(test_read);
+		result = not joe.empty();
+		_tests->test({ "insert front", result, __FILE__, __LINE__ });
+
+		test_write.put_member_i64(object_id_field, 7);
+		test_write.put_member("Name", "Orwell");
+		test_key = (int64_t)test_write[object_id_field];
+		test_table.put(test_write);
+
+		test_read = test_table.get(test_key);
+
+		result = test_read.compare(test_write) == 0;
+		_tests->test({ "update", result, __FILE__, __LINE__ });
+
+		test_write.put_member_i64(object_id_field, 1);
+		test_write.put_member("Name", "Canada");
+		test_key = (int64_t)test_write[object_id_field];
+		test_table.put(test_write);
+
+		test_read = test_table.get(test_key);
+
+		result = test_read.compare(test_write) == 0;
+		_tests->test({ "insert first 2", result, __FILE__, __LINE__ });
+
+		test_write.put_member_i64(object_id_field, 7);
+		test_write.put_member("Name", "Roger");
+		test_key = (int64_t)test_write[object_id_field];
+		test_table.put(test_write);
+
+		test_read = test_table.get(test_key);
+
+		result = test_read.compare(test_write) == 0;
+		_tests->test({ "update 2", result, __FILE__, __LINE__ });
+
+		test_write.put_member_i64(object_id_field, 1);
+		test_write.put_member("Name", "Maraca");
+		test_key = (int64_t)test_write[object_id_field];
+		test_table.put(test_write);
+
+		test_read = test_table.get(test_key);
+
+		result = test_read.compare(test_write) == 0;
+		_tests->test({ "insert first 2", result, __FILE__, __LINE__ });
+
+		db_contents = test_table.select([](int _index, json& item) {
+			return item;
+			});
+
+		result = test_table.size() == 4;
+		_tests->test({ "table size", result, __FILE__, __LINE__ });
+		result = db_contents.size() == 4;
+		_tests->test({ "select size", result, __FILE__, __LINE__ });
+
+		int64_t tests[4] = { 1, 2, 5, 7 };
+		int k = 0;
+
+		json counts = jp.create_object();
+		json* pcounts = &counts;
+
+		auto fr = test_table.for_each([tests, pcounts](int _index, json& _item) -> bool {
+			int64_t test_index = tests[_index];
+			std::string member_names = std::format("item{0}", (int64_t)_item[object_id_field]);
+			int64_t counto = 0;
+			if (pcounts->has_member(member_names)) {
+				counto = pcounts->get_member(member_names);
+			}
+			counto++;
+			pcounts->put_member_i64(member_names, counto);
+			return 1;
+			});
+
+		result = counts.object() and counts.size() == 4;
+		_tests->test({ "for_each", result, __FILE__, __LINE__ });
+
+		std::string count_string = counts.to_json();
+
+		db_contents = test_table.select([tests](int _index, json& _item) -> json {
+			int64_t temp = _item[object_id_field];
+			return (temp > 0i64) ? _item : json();
+			}
+		);
+
+		result = db_contents.array();
+		_tests->test({ "select", result, __FILE__, __LINE__ });
+
+		bool any_fails = db_contents.any([](json& _item)->bool {
+			int64_t temp = _item[object_id_field];
+			return temp <= 0i64;
+			});
+
+		result = not any_fails;
+		_tests->test({ "any", result, __FILE__, __LINE__ });
+
+		auto summary = db_contents.array_to_object([](json& _item) {
+			return (std::string)_item[object_id_field];
+			},
+			[](json& _target) {
+				return _target;
+			});
+
+		result = summary.has_member("1") and summary.has_member("2") and summary.has_member("5") and summary.has_member("7");
+		_tests->test({ "array_to_object", result, __FILE__, __LINE__ });
+
+		json search_key = jp.create_object("Name", "Zeus");
+		search_key.set_compare_order({ "Name" });
+
+		db_contents = test_table.select(search_key, [tests](int _index, json& _item) -> json {
+			return _item;
+			}
+		);
+
+		any_fails = db_contents.any([](json& _item)->bool {
+			std::string temp = _item["Name"];
+			return temp != "Zeus";
+			});
+
+		result = not any_fails;
+		_tests->test({ "any 2", result, __FILE__, __LINE__ });
+
+		result = not test_table.erase(3);
+		_tests->test({ "erase negative", result, __FILE__, __LINE__ });
+
+		result = test_table.erase(1);
+		_tests->test({ "erase", result, __FILE__, __LINE__ });
+
+		result = test_table.erase(7);
+		_tests->test({ "erase tail", result, __FILE__, __LINE__ });
+
+		json testi = test_table.select([tests](int _index, json& item) -> json {
+			int64_t object_id = item[object_id_field];
+			return object_id == 7 ? item : json();
+			});
+
+		result = (testi.size() == 0);
+		_tests->test({ "table after erase", result, __FILE__, __LINE__ });
+
+		db_contents = test_table.select([tests](int _index, json& item) {
+			return item;
+			}
+		);
+
+		bool any_iteration_fails = db_contents.any([](json& _item)->bool {
+			int64_t object_id = _item[object_id_field];
+			return  object_id != 2 and object_id != 5;
+			});
+
+		result = not any_iteration_fails;
+		_tests->test({ "table correct", result, __FILE__, __LINE__ });
+
+		system_monitoring_interface::global_mon->log_function_stop("object table proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+	}
+
+	void test_json_object_table_load(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
+	{
+		date_time st = date_time::now();
+		timer tx;
+		system_monitoring_interface::global_mon->log_function_start("object table load proof", "start", st, __FILE__, __LINE__);
+
+		using return_type = bool;
+		json_parser jp;
+
+		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "corona_table.ctb");
+		file_block fp(f);
+
+		std::shared_ptr<json_table_header> header = std::make_shared<json_table_header>();
+		header->create(&fp);
+
+
+		json_object_table test_table(header, 0, &fp);
+
+		for (int i = 1; i < 1000; i++)
+		{
+			json test_write = jp.create_object();
+			test_write.put_member_i64(object_id_field, i);
+			test_write.put_member("Name", "Joe " + std::to_string(i));
+			test_table.put(test_write);
+		}
+
+		_tests->test({ "write 1000", true, __FILE__, __LINE__ });
+
+		for (int i = 1; i < 1000; i++)
+		{
+			json obj = test_table.get(i);
+			if (obj.empty()) {
+				_tests->test({ "read 1000", false, __FILE__, __LINE__ });;
+				return;
+			}
+		}
+
+		_tests->test({ "read 1000", true, __FILE__, __LINE__ });
+
+		system_monitoring_interface::global_mon->log_function_stop("object table load proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+	}
+
 }
 
 #endif

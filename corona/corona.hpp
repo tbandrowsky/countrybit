@@ -193,6 +193,9 @@ namespace corona {
 // the data block allows for serialization and deserialization of resizable objects to and from a file.
 #include "corona-data-block.hpp"
 
+// this is going to replace json-table, because the skip list doesn't work and its too damned slow anyway.
+#include "corona-express-table.hpp"
+
 // a json table here is a physical table in a file beginning at some point within it.
 #include "corona-json-table.hpp"
 

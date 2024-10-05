@@ -2084,8 +2084,8 @@ namespace corona
 					json object_key = jp.create_object();
 
 					obj = index_table->select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
-						object_key.copy_member(object_id_field, _item);
-						json objfound = class_data->get(object_key);
+						int64_t object_id = (int64_t)_item[object_id_field];
+						json objfound = class_data->get(object_id);
 						return objfound;
 					});
 				}

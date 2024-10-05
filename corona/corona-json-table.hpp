@@ -364,37 +364,22 @@ namespace corona
 			relative_ptr_type found = null_row, last_link;
 			json_parser jp;
 
-			json table_key = jp.create_object();
-
-			for (auto key : key_fields) {
-				if (_key.has_member(key)) {
-					table_key.copy_member(key, _key);
-				}
-				else if (key == object_id_field) {
-					table_key.put_member_i64(key, 0);
-				}
-				else {
-					table_key = jp.create_object();
-					break;
-				}
-			}
-
-			uint64_t key_hash = table_key.get_weak_ordered_hash(key_fields);
+			uint64_t key_hash = _key.get_weak_ordered_hash(key_fields);
 
 			json_key_block x = get_header();
 
-			if (table_key.empty() or table_key.size() == 0) {
+			if (_key.empty() or _key.size() == 0) {
 				return x.foward[0];
 			}
 
 			for (int k = table_header->get_level(); k >= 0; k--)
 			{
 				int comp = -1;
-				relative_ptr_type nl = find_advance_gt( x, _found_node, k, table_key, key_hash, &found);
+				relative_ptr_type nl = find_advance_gt( x, _found_node, k, _key, key_hash, &found);
 				while (nl != null_row)
 				{
 					x = _found_node;
-					nl = find_advance_gt( x, _found_node, k, table_key, key_hash, &found);
+					nl = find_advance_gt( x, _found_node, k, _key, key_hash, &found);
 				}
 			}
 
@@ -867,24 +852,14 @@ namespace corona
 			int64_t count;
 		};
 
-		for_each_result for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json_data_block& _item)> _process_clause)
+		json get_normalized_key(json _key_fragment)
 		{
-
-			for_each_result result = {};
-
-			date_time start_time = date_time::now();
-			timer tx;
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
-			}
-			read_scope_lock me(table_lock);
-
 			json_parser jp;
 			json actual_key = jp.create_object();
 
 			if (_key_fragment.object()) {
 				bool key_compliant = true;
-				for (auto& skey : key_fields) 
+				for (auto& skey : key_fields)
 				{
 					if (not _key_fragment.has_member(skey)) {
 						key_compliant = false;
@@ -898,7 +873,24 @@ namespace corona
 				}
 				actual_key.set_compare_order(key_fields);
 			}
+			return actual_key;
+		}
+
+		for_each_result for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json_data_block& _item)> _process_clause)
+		{
+
+			for_each_result result = {};
+
+			date_time start_time = date_time::now();
+			timer tx;
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
+			}
+			read_scope_lock me(table_lock);
+
 			result.is_all = true;
+
+			json actual_key = get_normalized_key(_key_fragment);
 
 			json_key_block jkn;
 			relative_ptr_type location = find_first_gte(actual_key, jkn);
@@ -972,7 +964,9 @@ namespace corona
 			json result_data;
 			json_key_block node;
 
-			relative_ptr_type location = find_first_gte(_key_fragment, node);
+			json actual_key = get_normalized_key(_key_fragment);
+
+			relative_ptr_type location = find_first_gte(actual_key, node);
 
 			while (location != null_row)
 			{

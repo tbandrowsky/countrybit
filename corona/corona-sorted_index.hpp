@@ -342,11 +342,15 @@ public:
 		return this->find_node(key) != null_row;
 	}
 
-	data_pair& get(const KEY& key)
+	data_pair *get(const KEY& key)
 	{
 		mapper_check();
 		auto n = this->find_node(key);
-		return get_node(n).item();
+		if (n != null_row) {
+			data_pair &dp = get_node(n).item();
+			return &dp;
+		}
+		return nullptr;
 	}
 
 	bool has(const KEY& key, VALUE& value)
@@ -623,6 +627,39 @@ template <typename KEY, typename VALUE, int SORT_ORDER> std::ostream& operator <
 
 bool test_index();
 
+bool test_sorted_index2(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
+{
+	date_time st = date_time::now();
+	timer tx;
+
+	std::shared_ptr<dynamic_box> box =
+		std::make_shared<dynamic_box>(1<<20);
+
+	system_monitoring_interface::global_mon->log_function_start("sort_index", "start", st, __FILE__, __LINE__);
+
+	using test_sorted_index_type = sorted_index<int64_t, int64_t, 1>;
+
+	relative_ptr_type test_location;
+	test_sorted_index_type test;
+	test = test_sorted_index_type::create_sorted_index(box, test_location);
+
+	for (int i = 0; i < 10000; i++) {
+		test.insert_or_assign(i, i);
+	}
+	_tests->test({ "write", true, __FILE__, __LINE__ });
+
+	for (int i = 0; i < 10000; i++) {
+		auto key = test.get(i);
+		if (not key) {
+			_tests->test({ "read", false, __FILE__, __LINE__ });
+			return false;
+		}
+	}
+	_tests->test({ "read", true, __FILE__, __LINE__ });
+
+	system_monitoring_interface::global_mon->log_function_stop("sort_index", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+	return true;
+}
 
 bool test_index()
 {

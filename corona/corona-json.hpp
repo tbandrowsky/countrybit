@@ -776,11 +776,12 @@ namespace corona
 
 	};
 
-
 	class json
 	{
+	public:
 		using compared_item = std::tuple<int, std::string>;
 
+	private:
 		std::vector<compared_item> comparison_fields;
 
 		std::shared_ptr<json_value> value_base;
@@ -816,6 +817,14 @@ namespace corona
 			blob_impl = std::dynamic_pointer_cast<json_blob>(_value);
 			object_impl = std::dynamic_pointer_cast<json_object>(_value);
 			function_impl = std::dynamic_pointer_cast<json_function>(_value);
+		}
+
+		virtual field_types get_field_type()
+		{
+			if (value_base) {
+				return value_base->get_field_type();
+			}
+			return field_types::ft_none;
 		}
 
 		json query(std::string _path);
@@ -1369,7 +1378,7 @@ namespace corona
 		{
 			if (not empty()) 
 			{
-				std::string temp_s = to_json();
+				std::string temp_s = to_json(); // this is probably wrong for some applications, but right for others
 				int sz = temp_s.size();
 				buffer temp(sz + 1);
 				char* dest = temp.get_ptr();
@@ -1837,6 +1846,11 @@ namespace corona
 			std::sort(comparison_fields.begin(), comparison_fields.end());
 
 			return *this;
+		}
+
+		std::vector<compared_item>& get_compare_order()
+		{
+			return comparison_fields;
 		}
 
 		json set_compare_order(std::vector<std::string> _fields)
