@@ -472,13 +472,15 @@ namespace corona
 		virtual void after_read(char* _bytes) override
 		{
 			records.clear();
-			dirty = false;
 			xblock_record_list* header = (xblock_record_list*)_bytes;
 			for (int i = 0; i < header->count; i++)
 			{
 				xblock_record_list::xblock_ref* rl = &header->offsets[i];
-				xrecord kv(); // just deserializing the records.
+				xrecord k(bytes.data() + rl->key_offset, rl->key_size); // just deserializing the records.
+				xrecord v(bytes.data() + rl->value_offset, rl->value_size); // just deserializing the records.
+				records.insert_or_assign(k, v);
 			}
+			dirty = false;
 		}
 
 		virtual void finished_io(char* _bytes) override
