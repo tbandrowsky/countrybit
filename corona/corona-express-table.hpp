@@ -388,12 +388,38 @@ namespace corona
 
 	};
 
-	class xrecord_block_base : public data_block
+	class xfor_each_result {
+	public:
+		bool is_any;
+		bool is_all;
+		int64_t count;
+	};
+
+	class xrecord_block : public data_block
 	{
+	public:
+
+		virtual int64_t get_location() {
+			return data_block::header.block_location;
+		}
+
+		virtual xrecord get_start_key()
+		{
+			;
+		}
+
+		virtual xrecord get_end_key()
+		{
+			;
+		}
+
+		xrecord_block_ptr parent_tree;
+		express_table_ptr parent_table;
+
 		struct xblock_record_list
 		{
 			int count;
-			struct xblock_ref 
+			struct xblock_ref
 			{
 				int key_offset;
 				int key_size;
@@ -410,13 +436,33 @@ namespace corona
 		std::map<xrecord, xrecord>				records;
 		std::vector<char>						bytes;
 
-		xrecord_block_base(int _capacity)
+		xrecord_block(int _capacity)
 		{
 			capacity = _capacity;
 			dirty = false;
 		}
 
-		void put(const xrecord& key, xrecord& value)
+		virtual void erase(const xrecord& key)
+		{
+			;
+		}
+
+		virtual xrecord get(const xrecord& key)
+		{
+			;
+		}
+
+		virtual xfor_each_result for_each(const xrecord& key, std::function<xrecord(xrecord& _item)> _process)
+		{
+			;
+		}
+
+		virtual std::vector<xrecord> select(const xrecord& key, std::function<xrecord(xrecord& _item)> _process)
+		{
+			;
+		}
+
+		virtual void put(const xrecord& key, xrecord& value) 
 		{
 			dirty = true;
 			records.insert_or_assign(key, value);
@@ -437,7 +483,7 @@ namespace corona
 
 				for (auto& kv : records)
 				{
-					if (count < rsz) {
+					if (count > rsz) {
 						keys_to_delete[count] = kv.first;
 						new_xb->put(kv.first, kv.second);
 					}
@@ -451,17 +497,6 @@ namespace corona
 			}
 		}
 
-		void put(std::vector<std::string>& _key_members, std::vector<std::string>& _data_members, json _object)
-		{
-			// first, we create our new record
-			json key_json = _object.extract(_key_members);
-			json data_json = _object.extract(_data_members);
-
-			xrecord key(key_json);
-			xrecord data(data_json);
-
-			put(key, data);
-		}
 
 		virtual char* before_read(int32_t _size)  override
 		{
@@ -515,14 +550,14 @@ namespace corona
 			int i = 0;
 			for (auto& r : records)
 			{
-				auto *rl = &header->offsets[i];
+				auto* rl = &header->offsets[i];
 				xrecord rkey = r.first;
-				xrecord &skey = r.second;
+				xrecord& skey = r.second;
 				rl->key_size = rkey.size();
 				rl->key_offset = current - base;
 				int size_actual;
 				xrecord* dest;
-				dest = (xrecord *)rkey.before_write(&size_actual);
+				dest = (xrecord*)rkey.before_write(&size_actual);
 				std::copy(dest, dest + size_actual, current);
 				current += rl->key_size;
 
@@ -540,60 +575,50 @@ namespace corona
 
 		}
 
+		virtual void on_split(xrecord_block_ptr* _split_block, xrecord_block_ptr* _new_block)
+		{
+			;
+		}
 	};
 
+	using xrecord_block_ptr = xrecord_block *;
 
-	class xrecord_block : public data_block
+	class express_table_interface 
+	{
+	public:
+		xrecord_block_ptr root;
+		virtual void on_root_changed(xrecord_block_ptr _ptr) = 0;
+
+		virtual json get(std::vector<std::string>& _key_members, json _object) = 0;
+		virtual void put(std::vector<std::string>& _key_members, std::vector<std::string>& _data_members, json _object) = 0;
+		virtual void erase(std::vector<std::string>& _key_members, json _object) = 0;
+		virtual xfor_each_result for_each(std::vector<std::string>& _key, json _object, std::function<json(json& _item)> _process) = 0;
+		virtual std::vector<xrecord> select(std::vector<std::string>& _key, json _object, std::function<json(json& _item)> _process) = 0;
+
+		virtual void on_created(xrecord_block_ptr* _new_block) = 0;
+	};
+
+	using express_table_ptr = express_table_interface*;
+
+	class xrecord_tree_block : public xrecord_block
 	{
 	public:
 
-		int										capacity;
-		bool									dirty;
+		virtual xrecord_block_ptr get(xrecord& _key) = 0;
+		virtual void put(xrecord_block_ptr _src) = 0;
+		virtual void erase(xrecord_block_ptr _src) = 0;
+		virtual xfor_each_result for_each(xrecord& _key, std::function<xrecord_block_ptr(xrecord_block_ptr& _item)> _process) = 0;
+		virtual std::vector<xrecord> select(xrecord& _key, std::function<xrecord_block_ptr(xrecord_block_ptr& _item)> _process) = 0;
+	};
 
-		std::map<xrecord, xrecord>				records;
-
-		xrecord_block(int _capacity)
+	class xrecord_json_block : public xrecord_block
+	{
+	public:
+		virtual json get(std::vector<std::string>& _key_members, json _object)
 		{
-			capacity = _capacity;
-			dirty = false;
-		}
 
-		void put(const xrecord& key, xrecord& value)
-		{
-			dirty = true;
-			records.insert_or_assign(key, value);
-
-			// then, we check to see if we have to split the block
-
-			int rsz = records.size() / 2;
-			if (records.size() >= capacity)
-			{
-				xrecord_block* new_xb = new xrecord_block(capacity);
-				new_xb->dirty = true;
-
-				// time to split the block
-				std::vector<xrecord> keys_to_delete;
-				keys_to_delete.resize(rsz);
-
-				int count = 0;
-
-				for (auto& kv : records)
-				{
-					if (count < rsz) {
-						keys_to_delete[count] = kv.first;
-						new_xb->put(kv.first, kv.second);
-					}
-					count++;
-				}
-
-				for (auto& kv : keys_to_delete)
-				{
-					records.erase(kv);
-				}
-			}
-		}
-
-		void put(std::vector<std::string>& _key_members, std::vector<std::string>& _data_members, json _object)
+		};
+		virtual void put(std::vector<std::string>& _key_members, std::vector<std::string>& _data_members, json _object)
 		{
 			// first, we create our new record
 			json key_json = _object.extract(_key_members);
@@ -602,49 +627,20 @@ namespace corona
 			xrecord key(key_json);
 			xrecord data(data_json);
 
-			put(key, data);
+			xrecord_block::put(key, data);
 		}
-
-		virtual char* before_read(int32_t _size)  override
-		{
-			bytes.resize(_size);
-			return (char*)bytes.c_str();
-		}
-
-		virtual void after_read(char* _bytes) override
-		{
-			const char* contents = _bytes;
-			if (contents) {
-				json_parser jp;
-				if (*contents == '[') {
-					data = jp.parse_array(contents);
-				}
-				else {
-					data = jp.parse_object(contents);
-				}
-			}
-		}
-
-		virtual void finished_io(char* _bytes) override
+		virtual void erase(std::vector<std::string>& _key_members, json _object)
 		{
 			;
 		}
-
-		virtual char* before_write(int32_t* _size) override
+		virtual xfor_each_result for_each(std::vector<std::string>& _key, json _object, std::function<json(json& _item)> _process)
 		{
-			std::stringstream buff;
-
-			data.serialize(buff);
-			bytes = buff.str();
-			*_size = bytes.size();
-			return (char*)bytes.c_str();
+			;
 		}
-
-		virtual void after_write(char* _t) override
+		virtual std::vector<xrecord> select(std::vector<std::string>& _key, json _object, std::function<json(json& _item)> _process)
 		{
-
+			;
 		}
-
 	};
 
 }
