@@ -212,75 +212,95 @@ namespace corona
 			return key;
 		}
 
+		operator bool()
+		{
+			return key != nullptr;
+		}
+
 		bool operator < (xfield_holder& _other)
 		{
-			xfield* this_key = get_key();
-			xfield* other_key = _other.get_key();
-			if (this_key->data_type != other_key->data_type)
-				return this_key->data_type < other_key->data_type;
+			if (*this and _other) {
+				xfield* this_key = get_key();
+				xfield* other_key = _other.get_key();
+				if (this_key->data_type != other_key->data_type)
+					return this_key->data_type < other_key->data_type;
 
-			switch (get_key()->data_type)
-			{
-			case field_types::ft_string:
-				return this_key->get_string() < other_key->get_string();
-			case field_types::ft_double:
-				return this_key->get_double() < other_key->get_double();
-			case field_types::ft_datetime:
-				return this_key->get_datetime() < other_key->get_datetime();
-			case field_types::ft_int64:
-				return this_key->get_int64() < other_key->get_int64();
+				switch (get_key()->data_type)
+				{
+				case field_types::ft_string:
+					return this_key->get_string() < other_key->get_string();
+				case field_types::ft_double:
+					return this_key->get_double() < other_key->get_double();
+				case field_types::ft_datetime:
+					return this_key->get_datetime() < other_key->get_datetime();
+				case field_types::ft_int64:
+					return this_key->get_int64() < other_key->get_int64();
+				}
 			}
-
-			return true;
+			else if (*this and not _other)
+			{
+				return false;
+			}
+			else
+				return false;
 		}
 
 		bool operator == (xfield_holder& _other)
 		{
-			xfield* this_key = get_key();
-			xfield* other_key = _other.get_key();
-			if (this_key->data_type != other_key->data_type)
-				return this_key->data_type < other_key->data_type;
+			if (*this and _other) {
+				xfield* this_key = get_key();
+				xfield* other_key = _other.get_key();
+				if (this_key->data_type != other_key->data_type)
+					return this_key->data_type < other_key->data_type;
 
-			switch (get_key()->data_type)
-			{
-			case field_types::ft_string:
-				return this_key->get_string() == other_key->get_string();
-			case field_types::ft_double:
-				return this_key->get_double() == other_key->get_double();
-			case field_types::ft_datetime:
-				return this_key->get_datetime() == other_key->get_datetime();
-			case field_types::ft_int64:
-				return this_key->get_int64() == other_key->get_int64();
+				switch (get_key()->data_type)
+				{
+				case field_types::ft_string:
+					return this_key->get_string() == other_key->get_string();
+				case field_types::ft_double:
+					return this_key->get_double() == other_key->get_double();
+				case field_types::ft_datetime:
+					return this_key->get_datetime() == other_key->get_datetime();
+				case field_types::ft_int64:
+					return this_key->get_int64() == other_key->get_int64();
+				}
 			}
 
-			return true;
+			return false;
 		}
 
 		bool operator > (xfield_holder& _other)
 		{
-			xfield* this_key = get_key();
-			xfield* other_key = _other.get_key();
-			if (this_key->data_type != other_key->data_type)
-				return this_key->data_type < other_key->data_type;
+			if (*this and _other) {
+				xfield* this_key = get_key();
+				xfield* other_key = _other.get_key();
+				if (this_key->data_type != other_key->data_type)
+					return this_key->data_type < other_key->data_type;
 
-			switch (get_key()->data_type)
+				switch (get_key()->data_type)
+				{
+				case field_types::ft_string:
+					return this_key->get_string() > other_key->get_string();
+				case field_types::ft_double:
+					return this_key->get_double() > other_key->get_double();
+				case field_types::ft_datetime:
+					return this_key->get_datetime() > other_key->get_datetime();
+				case field_types::ft_int64:
+					return this_key->get_int64() > other_key->get_int64();
+				}
+			}
+			else if (*this and not _other)
 			{
-			case field_types::ft_string:
-				return this_key->get_string() > other_key->get_string();
-			case field_types::ft_double:
-				return this_key->get_double() > other_key->get_double();
-			case field_types::ft_datetime:
-				return this_key->get_datetime() > other_key->get_datetime();
-			case field_types::ft_int64:
-				return this_key->get_int64() > other_key->get_int64();
+				return true;
 			}
 
-			return true;
+			return false;
 		}
 
 		~xfield_holder()
 		{
-			if (bytes) {
+			if (bytes) 
+			{
 				delete[] bytes;
 			}
 		}
@@ -291,56 +311,88 @@ namespace corona
 	{
 		std::vector<char> key;
 
-		void from_json(json _j)
-		{
-			key.clear();
-			int copy_dest = 0;
-
-			if (_j.object()) 
-			{
-				auto& ord = _j.get_compare_order();
-				for (auto& fld : ord)
-				{
-					std::string field_name = std::get<1>(fld);
-					auto m = _j[field_name];
-					xfield_holder new_key;
-					switch (m.get_field_type())
-					{
-					case field_types::ft_string:
-						new_key = std::move(xfield_holder(m.get_string()));
-						break;
-					case field_types::ft_double:
-						new_key = std::move(xfield_holder(m.get_double()));
-						break;
-					case field_types::ft_datetime:
-						new_key = std::move(xfield_holder(m.get_datetime()));
-						break;
-					case field_types::ft_int64:
-						new_key = std::move(xfield_holder(m.get_int64()));
-						break;
-					default:
-						throw std::logic_error("Only use string, double, datetime and int64 for index keys");
-						break;
-					}
-					key.insert(key.end(), new_key.get_key(), new_key.get_key()+new_key.get_total_size());
-				}
-			}
-		}
 
 	public:
 
 		xrecord()
 		{
+
 		}
 
-		xrecord(json _src)
+		xrecord(std::vector<std::string>& _keys, json _src)
 		{
-			from_json(_src);
+			put_json(_keys, _src);
 		}
 
 		xrecord(char* _src, int _length)
 		{
 			key.insert(key.end(), _src, _src + _length);
+		}
+
+		void put_json(std::vector<std::string>& _keys, json _j)
+		{
+			key.clear();
+			int index = 0;
+
+			for (auto& fld : _keys)
+			{
+				std::string field_name = fld;
+				auto m = _j[field_name];
+				xfield_holder new_key;
+				switch (m.get_field_type())
+				{
+				case field_types::ft_string:
+					new_key = std::move(xfield_holder(m.get_string()));
+					break;
+				case field_types::ft_double:
+					new_key = std::move(xfield_holder(m.get_double()));
+					break;
+				case field_types::ft_datetime:
+					new_key = std::move(xfield_holder(m.get_datetime()));
+					break;
+				case field_types::ft_int64:
+					new_key = std::move(xfield_holder(m.get_int64()));
+					break;
+				default:
+					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
+					break;
+				}
+				key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+			}
+		}
+
+		void get_json(json& _dest, std::vector<std::string>& _keys)
+		{
+			int index = 0;
+
+			int this_offset = 0;
+			xfield_holder this_key;
+
+			this_key = std::move(get_key(this_offset, &this_offset));
+			while (this_key);
+			{
+				std::string field_name = _keys[index];
+				switch (this_key.get_key()->data_type)
+				{
+				case field_types::ft_string:
+					_dest.put_member(field_name, this_key.get_key()->get_string());
+					break;
+				case field_types::ft_double:
+					_dest.put_member(field_name, this_key.get_key()->get_double());
+					break;
+				case field_types::ft_datetime:
+					_dest.put_member(field_name, this_key.get_key()->get_datetime());
+					break;
+				case field_types::ft_int64:
+					_dest.put_member(field_name, this_key.get_key()->get_int64());
+					break;
+				default:
+					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
+					break;
+				}
+				this_key = std::move(get_key(this_offset, &this_offset));
+				index++;
+			}
 		}
 
 		xrecord& add(double _value)
@@ -368,12 +420,6 @@ namespace corona
 		{
 			xfield_holder new_key(_value);
 			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
-			return *this;
-		}
-
-		xrecord& operator = (json _key)
-		{
-			from_json(_key);
 			return *this;
 		}
 
@@ -436,6 +482,7 @@ namespace corona
 			return t;
 		}
 
+
 		bool operator == (xrecord& _other)
 		{
 			int this_offset = 0;
@@ -443,17 +490,17 @@ namespace corona
 			xfield_holder this_key;
 			xfield_holder other_key;
 
-			do {
+			other_key = std::move(_other.get_key(other_offset, &other_offset));
+			this_key = std::move(get_key(this_offset, &this_offset));
+			while (this_key and other_key);
+			{
+				if (not (this_key == other_key))
+				{
+					return false;
+				}
 				other_key = std::move(_other.get_key(other_offset, &other_offset));
 				this_key = std::move(get_key(this_offset, &this_offset));
-				if (this_offset and other_offset)
-				{
-					if (not (this_key == other_key))
-					{
-						return false;
-					}
-				}
-			} while (this_offset and other_offset);
+			}
 
 			return true;
 		}
