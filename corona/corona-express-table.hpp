@@ -234,6 +234,50 @@ namespace corona
 			return true;
 		}
 
+		bool operator == (xfield_holder& _other)
+		{
+			xfield* this_key = get_key();
+			xfield* other_key = _other.get_key();
+			if (this_key->data_type != other_key->data_type)
+				return this_key->data_type < other_key->data_type;
+
+			switch (get_key()->data_type)
+			{
+			case field_types::ft_string:
+				return this_key->get_string() == other_key->get_string();
+			case field_types::ft_double:
+				return this_key->get_double() == other_key->get_double();
+			case field_types::ft_datetime:
+				return this_key->get_datetime() == other_key->get_datetime();
+			case field_types::ft_int64:
+				return this_key->get_int64() == other_key->get_int64();
+			}
+
+			return true;
+		}
+
+		bool operator > (xfield_holder& _other)
+		{
+			xfield* this_key = get_key();
+			xfield* other_key = _other.get_key();
+			if (this_key->data_type != other_key->data_type)
+				return this_key->data_type < other_key->data_type;
+
+			switch (get_key()->data_type)
+			{
+			case field_types::ft_string:
+				return this_key->get_string() > other_key->get_string();
+			case field_types::ft_double:
+				return this_key->get_double() > other_key->get_double();
+			case field_types::ft_datetime:
+				return this_key->get_datetime() > other_key->get_datetime();
+			case field_types::ft_int64:
+				return this_key->get_int64() > other_key->get_int64();
+			}
+
+			return true;
+		}
+
 		~xfield_holder()
 		{
 			if (bytes) {
@@ -299,6 +343,34 @@ namespace corona
 			key.insert(key.end(), _src, _src + _length);
 		}
 
+		xrecord& add(double _value)
+		{
+			xfield_holder new_key(_value);
+			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+			return *this;
+		}
+
+		xrecord& add(std::string _value)
+		{
+			xfield_holder new_key(_value);
+			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+			return *this;
+		}
+
+		xrecord& add(date_time _value)
+		{
+			xfield_holder new_key(_value);
+			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+			return *this;
+		}
+
+		xrecord& add(int64_t _value)
+		{
+			xfield_holder new_key(_value);
+			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+			return *this;
+		}
+
 		xrecord& operator = (json _key)
 		{
 			from_json(_key);
@@ -362,6 +434,28 @@ namespace corona
 				*_next_offset = t.get_total_size() + _offset;
 			}
 			return t;
+		}
+
+		bool operator == (xrecord& _other)
+		{
+			int this_offset = 0;
+			int other_offset = 0;
+			xfield_holder this_key;
+			xfield_holder other_key;
+
+			do {
+				other_key = std::move(_other.get_key(other_offset, &other_offset));
+				this_key = std::move(get_key(this_offset, &this_offset));
+				if (this_offset and other_offset)
+				{
+					if (not (this_key == other_key))
+					{
+						return false;
+					}
+				}
+			} while (this_offset and other_offset);
+
+			return true;
 		}
 
 		bool operator < (xrecord& _other)
@@ -441,28 +535,7 @@ namespace corona
 			capacity = _capacity;
 			dirty = false;
 		}
-
-		virtual void erase(const xrecord& key)
-		{
-			;
-		}
-
-		virtual xrecord get(const xrecord& key)
-		{
-			;
-		}
-
-		virtual xfor_each_result for_each(const xrecord& key, std::function<xrecord(xrecord& _item)> _process)
-		{
-			;
-		}
-
-		virtual std::vector<xrecord> select(const xrecord& key, std::function<xrecord(xrecord& _item)> _process)
-		{
-			;
-		}
-
-		virtual void put(const xrecord& key, xrecord& value) 
+		virtual void put(const xrecord& key, xrecord& value)
 		{
 			dirty = true;
 			records.insert_or_assign(key, value);
@@ -497,6 +570,65 @@ namespace corona
 			}
 		}
 
+		virtual xrecord get(const xrecord& key)
+		{
+			xrecord temp;
+			records.find(key);
+			records.erase(key);
+		}
+
+		virtual void erase(const xrecord& key)
+		{
+			records.erase(key);
+		}
+
+		virtual xfor_each_result for_each(xrecord key, std::function<xrecord(int _index, xrecord& _item)> _process)
+		{
+			xfor_each_result result;
+			auto it = records.lower_bound(key);
+			int index = 0;
+			while (it != records.end()) {
+				xrecord t = _process( index, it->second );
+				if (not t.is_empty())
+				{
+					if (t == key) {
+						result.is_any = true;
+						index++;
+					}
+					else if (key < t)
+					{
+						break;
+					}
+				}
+				it++;
+			}
+			result.is_all = index == records.size();
+			result.count = index;
+			return result;
+		}
+
+		virtual std::vector<xrecord> select(xrecord key, std::function<xrecord(int _index, xrecord& _item)> _process)
+		{
+			std::vector<xrecord> results;
+			auto it = records.lower_bound(key);
+			int index = 0;
+			while (it != records.end()) {
+				xrecord t = _process(index, it->second);
+				if (not t.is_empty())
+				{
+					if (t == key) {
+						results.push_back(t);
+						index++;
+					}
+					else if (key < t) 
+					{
+						break;
+					}
+				}
+				it++;
+			}
+			return results;
+		}
 
 		virtual char* before_read(int32_t _size)  override
 		{
@@ -604,11 +736,31 @@ namespace corona
 	{
 	public:
 
-		virtual xrecord_block_ptr get(xrecord& _key) = 0;
-		virtual void put(xrecord_block_ptr _src) = 0;
-		virtual void erase(xrecord_block_ptr _src) = 0;
-		virtual xfor_each_result for_each(xrecord& _key, std::function<xrecord_block_ptr(xrecord_block_ptr& _item)> _process) = 0;
-		virtual std::vector<xrecord> select(xrecord& _key, std::function<xrecord_block_ptr(xrecord_block_ptr& _item)> _process) = 0;
+		virtual xrecord_block_ptr get(xrecord& _key)
+		{
+			xrecord found = xrecord_block::get(_key);
+
+		}
+
+		virtual void put(xrecord_block_ptr _src)
+		{
+			;
+		}
+
+		virtual void erase(xrecord_block_ptr _src)
+		{
+			;
+		}
+
+		virtual xfor_each_result for_each(xrecord& _key, std::function<xrecord_block_ptr(xrecord_block_ptr& _item)> _process)
+		{
+			;
+		}
+
+		virtual std::vector<xrecord> select(xrecord& _key, std::function<xrecord_block_ptr(xrecord_block_ptr& _item)> _process)
+		{
+			;
+		}
 	};
 
 	class xrecord_json_block : public xrecord_block
