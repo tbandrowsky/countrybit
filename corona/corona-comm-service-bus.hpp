@@ -174,10 +174,19 @@ namespace corona
 			testo = tm.create_test_set("json node", dependencies);
 			test_json_node(testo, app);
 
+
+			dependencies = {  };
+			testo = tm.create_test_set("xfield", dependencies);
+			test_xfield(testo, app);
+
+			dependencies = { "xfield" };
+			testo = tm.create_test_set("xrecord", dependencies);
+			test_xrecord(testo, app);
+/*
 			dependencies = {  };
 			testo = tm.create_test_set("sorted index", dependencies);
 			test_sorted_index2(testo, app);
-/*
+
 			dependencies = { "rw locks", "json node" };
 			testo = tm.create_test_set("json table", dependencies);
 			test_json_table(testo, app);
@@ -190,7 +199,7 @@ namespace corona
 			testo = tm.create_test_set("table load", dependencies);
 			test_json_object_table_load(testo, app);
 */
-			bool system_works = tm.prove("sorted index");
+			bool system_works = tm.prove("xrecord");
 			if (not system_works) {
 				log_job_stop("verification", "verification failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}

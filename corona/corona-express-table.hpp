@@ -82,6 +82,11 @@ namespace corona
 		int			data_length;
 		char		data[0];
 
+		xfield()
+		{
+			// don't change a thing.
+		}
+
 		std::string get_string() const
 		{
 			std::string t;
@@ -148,9 +153,15 @@ namespace corona
 		xfield_holder(const xfield_holder& _src)
 		{
 			total_size = _src.total_size;
-			bytes = new char[total_size];
-			std::copy(_src.bytes, _src.bytes + total_size, bytes);
-			key = new (bytes) xfield();
+			if (_src.bytes) {
+				bytes = new char[total_size];
+				std::copy(_src.bytes, _src.bytes + total_size, bytes);
+				key = new (bytes) xfield();
+			}
+			else {
+				bytes = nullptr;
+				key = _src.key;
+			}
 		}
 
 		xfield_holder(xfield_holder&& _src)
@@ -236,6 +247,11 @@ namespace corona
 		xfield* get_field() const
 		{
 			return key;
+		}
+
+		char* get_bytes() const
+		{
+			return (char*)key;
 		}
 
 		operator bool() const
@@ -386,6 +402,9 @@ namespace corona
 		char* c;
 		char* test_copy;
 
+		// these tests shouldn't leak
+
+		//datetime
 		l = test_datetimeb.get_total_size();
 		c = (char*)test_datetimeb.get_field();
 		test_copy = new char[l];
@@ -394,33 +413,40 @@ namespace corona
 		xfield_holder copydt(c, l);
 		result = copydt.get_field()->get_string() == test_int64b.get_field()->get_string();
 		_tests->test({ "copy dt", result, __FILE__, __LINE__ });
+		delete test_copy;
 
+		//double
 		l = test_doubleb.get_total_size();
-		c = (char*)test_doubleb.get_field();
+		c = test_doubleb.get_bytes();
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
-		xfield_holder copydb(c, l);
+		xfield_holder copydb(c, 0);
 		result = copydb.get_field()->get_double() == test_doubleb.get_field()->get_double();
 		_tests->test({ "copy dbl", result, __FILE__, __LINE__ });
+		delete test_copy;
 
+		//int64
 		l = test_int64b.get_total_size();
-		c = (char*)test_int64b.get_field();
+		c = test_int64b.get_bytes();
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
-		xfield_holder copyi(c, l);
+		xfield_holder copyi(c, 0);
 		result = copyi.get_field()->get_int64() == test_int64b.get_field()->get_int64();
 		_tests->test({ "copy i64", result, __FILE__, __LINE__ });
+		delete test_copy;
 
+		// string
 		l = test_stringb.get_total_size();
-		c = (char*)test_stringb.get_field();
+		c = test_stringb.get_bytes();
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
 		xfield_holder copys(c, l);
 		result = copys.get_field()->get_string() == test_int64b.get_field()->get_string();
 		_tests->test({ "copy str", result, __FILE__, __LINE__ });
+		delete test_copy;
 
 		// comparisons, three sets, these first should all be true
 
@@ -577,8 +603,8 @@ namespace corona
 			int this_offset = 0;
 			xfield_holder this_key;
 
-			this_key = std::move(get_field(this_offset, &this_offset));
-			while (this_key and index < _keys.size());
+			this_key = get_field(this_offset, &this_offset);
+			while (this_key and index < _keys.size())
 			{
 				std::string field_name = _keys[index];
 				switch (this_key.get_field()->data_type)
@@ -599,7 +625,7 @@ namespace corona
 					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
 					break;
 				}
-				this_key = std::move(get_field(this_offset, &this_offset));
+				this_key = get_field(this_offset, &this_offset);
 				index++;
 			}
 		}
@@ -683,7 +709,7 @@ namespace corona
 
 		xfield_holder get_field(int _offset, int* _next_offset) const
 		{
-			xfield_holder t;
+			xfield_holder t = {};
 			if (_offset < key.size()) {
 				t = xfield_holder((char *)key.data(), _offset);
 				*_next_offset = t.get_total_size() + _offset;
@@ -698,16 +724,16 @@ namespace corona
 			xfield_holder this_key;
 			xfield_holder other_key;
 
-			other_key = std::move(_other.get_field(other_offset, &other_offset));
-			this_key = std::move(get_field(this_offset, &this_offset));
-			while (this_key and other_key);
+			other_key = _other.get_field(other_offset, &other_offset);
+			this_key = get_field(this_offset, &this_offset);
+			while (this_key and other_key)
 			{
 				if (not (this_key == other_key))
 				{
 					return false;
 				}
-				other_key = std::move(_other.get_field(other_offset, &other_offset));
-				this_key = std::move(get_field(this_offset, &this_offset));
+				other_key = _other.get_field(other_offset, &other_offset);
+				this_key = get_field(this_offset, &this_offset);
 			}
 
 			return true;
@@ -721,8 +747,8 @@ namespace corona
 			xfield_holder other_key;
 
 			do {
-				other_key = std::move(_other.get_field(other_offset, &other_offset));
-				this_key = std::move(get_field(this_offset, &this_offset));
+				other_key = _other.get_field(other_offset, &other_offset);
+				this_key = get_field(this_offset, &this_offset);
 				if (this_offset and other_offset)
 				{
 					if (not (this_key < other_key))
@@ -857,9 +883,9 @@ namespace corona
 		result = (date_time)jsrc["Today"] == (date_time)jdst["Today"];
 		_tests->test({ "rt today", result, __FILE__, __LINE__ });
 
-		xrecord compj, copy, readin;
+		xrecord copy, readin;
 		compj.clear();
-		poco_node<date_time> block;
+		poco_node<rectangle> block;
 		block.header.block_location = 122;
 		compj.put_location(block);
 		copy = compj;

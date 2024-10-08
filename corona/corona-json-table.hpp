@@ -1337,7 +1337,7 @@ namespace corona
 		json parse_result = jp.create_object();
 		bool result;
 
-		corona::json test_negative = jp.parse_object(R"({ "name:"bill", "age":42 })");
+		corona::json test_negative = jp.parse_object(R"({ "name":"bill", "age":42 })");
 		result = not test_negative.error();
 		_tests->test({ "negative_parse", result, __FILE__, __LINE__ });
 
