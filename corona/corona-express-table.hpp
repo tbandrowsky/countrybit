@@ -857,6 +857,47 @@ namespace corona
 		result = (date_time)jsrc["Today"] == (date_time)jdst["Today"];
 		_tests->test({ "rt today", result, __FILE__, __LINE__ });
 
+		xrecord compj, copy, readin;
+		compj.clear();
+		poco_node<date_time> block;
+		block.header.block_location = 122;
+		compj.put_location(block);
+		copy = compj;
+		result = (compj.get_location() == 122);
+		_tests->test({ "rt loc", result, __FILE__, __LINE__ });
+		result = (copy.get_location() == 122);
+		_tests->test({ "rt loc cp", result, __FILE__, __LINE__ });
+
+		// write the copy back to readin and see if the round trip works
+		char* src;
+		char* dest;
+		int length;
+
+		dest = copy.before_write(&length);
+		src = readin.before_read(length);
+		std::copy(dest, dest + length, src);
+		result = (readin.get_location() == 122);
+
+		// and with the json
+		jdst = jp.create_object();
+		xrecord xsrc(keys, jsrc);
+		dest = xsrc.before_write(&length);
+		src = readin.before_read(length);
+		std::copy(dest, dest + length, src);
+		readin.get_json(jdst, keys);
+
+		// and finally, checking our matches after the round trip
+		result = (std::string)jsrc["Name"] == (std::string)jdst["Name"];
+		_tests->test({ "rts name", result, __FILE__, __LINE__ });
+
+		result = (double)jsrc["Age"] == (double)jdst["Age"];
+		_tests->test({ "rts age", result, __FILE__, __LINE__ });
+
+		result = (_int64)jsrc["Atoms"] == (_int64)jdst["Atoms"];
+		_tests->test({ "rts atoms", result, __FILE__, __LINE__ });
+
+		result = (date_time)jsrc["Today"] == (date_time)jdst["Today"];
+		_tests->test({ "rts today", result, __FILE__, __LINE__ });
 
 	}
 
