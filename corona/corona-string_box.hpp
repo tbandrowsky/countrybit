@@ -276,10 +276,8 @@ namespace corona {
 			{
 				return std::strong_ordering::equal;
 			}
-			else if (x > 0)
-			{
-				return std::strong_ordering::greater;
-			}
+
+			return std::strong_ordering::greater;
 		}
 
 		std::strong_ordering operator<=>(const char* _src) const

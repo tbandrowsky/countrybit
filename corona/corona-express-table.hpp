@@ -30,7 +30,7 @@ namespace corona
 		virtual void put(json _object) = 0;
 		virtual void erase(json _object) = 0;
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) = 0;
-		virtual std::vector<json> select(json _object, std::function<json(json& _item)> _process) = 0;
+		virtual json select(json _object, std::function<json(json& _item)> _process) = 0;
 		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block) = 0;
 	};
 
@@ -80,9 +80,9 @@ namespace corona
 	public:
 		field_types data_type;
 		int			data_length;
-		char		data[];
+		char		data[0];
 
-		std::string get_string()
+		std::string get_string() const
 		{
 			std::string t;
 			if (data_type == field_types::ft_string)
@@ -92,7 +92,7 @@ namespace corona
 			return t;
 		}
 
-		double get_double()
+		double get_double() const
 		{
 			double t;
 			if (data_type == field_types::ft_double)
@@ -102,7 +102,7 @@ namespace corona
 			return t;
 		}
 
-		int64_t get_int64()
+		int64_t get_int64() const
 		{
 			int64_t t;
 			if (data_type == field_types::ft_int64)
@@ -112,7 +112,7 @@ namespace corona
 			return t;
 		}
 
-		date_time get_datetime()
+		date_time get_datetime() const
 		{
 			date_time t;
 			if (data_type == field_types::ft_datetime)
@@ -133,7 +133,6 @@ namespace corona
 		// won't try and free them.
 
 		char* bytes;
-
 		xfield* key;
 		int total_size;
 
@@ -229,30 +228,30 @@ namespace corona
 			*dest = _data;
 		}
 
-		int get_total_size()
+		int get_total_size() const
 		{
 			return total_size;
 		}
 
-		xfield* get_key()
+		xfield* get_key() const
 		{
 			return key;
 		}
 
-		operator bool()
+		operator bool() const
 		{
 			return key != nullptr;
 		}
 
-		bool operator < (xfield_holder& _other)
+		bool operator < (const xfield_holder& _other) const
 		{
-			if (*this and _other) {
-				xfield* this_key = get_key();
-				xfield* other_key = _other.get_key();
+			xfield* this_key = get_key();
+			xfield* other_key = _other.get_key();
+			if (this_key and other_key) {
 				if (this_key->data_type != other_key->data_type)
 					return this_key->data_type < other_key->data_type;
 
-				switch (get_key()->data_type)
+				switch (this_key->data_type)
 				{
 				case field_types::ft_string:
 					return this_key->get_string() < other_key->get_string();
@@ -263,20 +262,25 @@ namespace corona
 				case field_types::ft_int64:
 					return this_key->get_int64() < other_key->get_int64();
 				}
-			}
-			else if (*this and not _other)
+			} 
+			else if (this_key and not other_key)
 			{
 				return false;
+			}
+			else if (other_key and not this_key)
+			{
+				return true;
 			}
 			else
 				return false;
 		}
 
-		bool operator == (xfield_holder& _other)
+		bool operator == (const xfield_holder& _other) const
 		{
-			if (*this and _other) {
-				xfield* this_key = get_key();
-				xfield* other_key = _other.get_key();
+			xfield* this_key = get_key();
+			xfield* other_key = _other.get_key();
+
+			if (this_key and other_key) {
 				if (this_key->data_type != other_key->data_type)
 					return this_key->data_type < other_key->data_type;
 
@@ -296,7 +300,7 @@ namespace corona
 			return false;
 		}
 
-		bool operator > (xfield_holder& _other)
+		bool operator > (const xfield_holder& _other) const
 		{
 			if (*this and _other) {
 				xfield* this_key = get_key();
@@ -329,9 +333,10 @@ namespace corona
 			if (bytes) 
 			{
 				delete[] bytes;
+				bytes = nullptr;
 			}
 		}
-
+	
 	};
 
 	class xrecord : public xblock
@@ -351,7 +356,7 @@ namespace corona
 			put_json(_keys, _src);
 		}
 
-		xrecord(char* _src, int _length)
+		xrecord(const char* _src, int _length)
 		{
 			key.insert(key.end(), _src, _src + _length);
 		}
@@ -369,15 +374,15 @@ namespace corona
 
 		xrecord(xrecord&& _src)
 		{
-			key = std::move(_src.key);
+			std::swap(key, _src.key);
 		}
 
 		xrecord& operator = (xrecord&& _src)
 		{
-			key = std::move(_src.key);
+			std::swap(key, _src.key);
 			return *this;
 		}
-
+		
 		void put_json(std::vector<std::string>& _keys, json _j)
 		{
 			key.clear();
@@ -406,10 +411,10 @@ namespace corona
 					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
 					break;
 				}
-				key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+				key.insert(key.end(), (char *)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
 			}
 		}
-
+		
 		void get_json(json& _dest, std::vector<std::string>& _keys)
 		{
 			int index = 0;
@@ -433,7 +438,7 @@ namespace corona
 					_dest.put_member(field_name, this_key.get_key()->get_datetime());
 					break;
 				case field_types::ft_int64:
-					_dest.put_member(field_name, this_key.get_key()->get_int64());
+					_dest.put_member_i64(field_name, this_key.get_key()->get_int64());
 					break;
 				default:
 					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
@@ -443,7 +448,7 @@ namespace corona
 				index++;
 			}
 		}
-
+		
 		relative_ptr_type get_location()
 		{
 			int next_offset;
@@ -465,35 +470,35 @@ namespace corona
 		{
 			key.clear();
 		}
-
+		
 		xrecord& add(double _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+			key.insert(key.end(), (char *)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
 			return *this;
 		}
 
 		xrecord& add(std::string _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
 			return *this;
 		}
 
 		xrecord& add(date_time _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
 			return *this;
 		}
 
 		xrecord& add(int64_t _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
 			return *this;
 		}
-
+		
 		size_t size() const
 		{
 			return key.size();
@@ -525,12 +530,11 @@ namespace corona
 		{
 			xfield_holder t;
 			if (_offset < key.size()) {
-				t = xfield_holder(key, _offset);
+				t = xfield_holder((char *)key.data(), _offset);
 				*_next_offset = t.get_total_size() + _offset;
 			}
 			return t;
 		}
-
 
 		bool operator == (const xrecord& _other)
 		{
@@ -554,7 +558,7 @@ namespace corona
 			return true;
 		}
 
-		bool operator < (xrecord& _other)
+		bool operator < (const xrecord& _other) const
 		{
 			int this_offset = 0;
 			int other_offset = 0;
@@ -575,8 +579,8 @@ namespace corona
 
 			return true;
 		}
-
 	};
+
 
 	class xrecord_block : public data_block
 	{
@@ -661,8 +665,11 @@ namespace corona
 		virtual xrecord get(const xrecord& key)
 		{
 			xrecord temp;
-			records.find(key);
-			records.erase(key);
+			auto ri = records.find(key);
+			if (ri != records.end()) {
+				temp = ri->second;
+			}
+			return temp;
 		}
 
 		virtual void erase(const xrecord& key)
@@ -720,8 +727,9 @@ namespace corona
 			for (int i = 0; i < header->count; i++)
 			{
 				xblock_record_list::xblock_ref* rl = &header->offsets[i];
-				xrecord k(bytes.data() + rl->key_offset, rl->key_size); // just deserializing the records.
-				xrecord v(bytes.data() + rl->value_offset, rl->value_size); // just deserializing the records.
+				char* pdata = bytes.data();
+				xrecord k(pdata + rl->key_offset, rl->key_size); // just deserializing the records.
+				xrecord v(pdata + rl->value_offset, rl->value_size); // just deserializing the records.
 				records.insert_or_assign(k, v);
 			}
 			dirty = false;
@@ -765,15 +773,14 @@ namespace corona
 				rl->key_size = rkey.size();
 				rl->key_offset = current - base;
 				int size_actual;
-				xrecord* dest;
-				dest = (xrecord*)rkey.before_write(&size_actual);
-				std::copy(dest, dest + size_actual, current);
+				char *rsrc = rkey.before_write(&size_actual);
+				std::copy(rsrc, rsrc + size_actual, current);
 				current += rl->key_size;
 
 				rl->value_size = skey.size();
 				rl->value_offset = current - base;
-				dest = (xrecord*)skey.before_write(&size_actual);
-				std::copy(dest, dest + size_actual, current);
+				char *vsrc = skey.before_write(&size_actual);
+				std::copy(vsrc, vsrc + size_actual, current);
 				current += size_actual;
 			}
 			return base;
@@ -794,14 +801,13 @@ namespace corona
 
 			// time to split the block
 			std::vector<xrecord> keys_to_delete;
-			keys_to_delete.resize(rsz);
 
 			int count = 0;
 
 			for (auto& kv : records)
 			{
 				if (count > rsz) {
-					keys_to_delete[count] = kv.first;
+					keys_to_delete.push_back( kv.first );
 					new_xb->put(kv.first, kv.second);
 				}
 				count++;
@@ -900,12 +906,14 @@ namespace corona
 
 		std::vector<std::string> key_members;
 		std::vector<std::string> object_members;
+		int capacity;
 
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
 			_dest.put_member_i64("self_location", self_location);
 			_dest.put_member_i64("root_location", root_location);
+			_dest.put_member_i64("capacity", capacity);
 			json kms = jp.create_array(key_members);
 			_dest.put_member("key_members", kms);
 			json oms = jp.create_array(object_members);
@@ -918,6 +926,7 @@ namespace corona
 			json_parser jp;
 			self_location = _src["self_location"];
 			root_location = _src["root_location"];
+			capacity = (int64_t)_src["capacity"];
 			json kms = _src["key_members"];
 			key_members = kms.to_string_array();
 			json oms = _src["object_members"];
@@ -966,6 +975,7 @@ namespace corona
 	{
 
 	public:
+		const int								block_capacity = 1000;
 		std::string								data;
 		file_block*								fb;
 		std::shared_ptr<express_table_header>	table_header;
@@ -990,7 +1000,8 @@ namespace corona
 			json_parser jp;
 
 			table_header = std::make_shared<express_table_header>();
-			root = std::make_shared<xblock_branch>();			
+			table_header->capacity = block_capacity;
+			root = std::make_shared<xblock_branch>(this, nullptr, table_header->capacity);
 			table_header->root_location = root->append(fb);
 			relative_ptr_type table_header_location = table_header->append(fb);
 			table_header->self_location = table_header_location;
@@ -1069,16 +1080,21 @@ namespace corona
 				});
 		}
 
-		virtual std::vector<json> select(json _object, std::function<json(json& _item)> _process) override
+		virtual json select(json _object, std::function<json(json& _item)> _process) override
 		{
 			xrecord key(table_header->key_members, _object);
-			root->select(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
+			json_parser jp;
+			json target = jp.create_array();
+			root->select(key, [_process, this, &target](int _index, xrecord& _key, xrecord& _data)->xrecord {
 				json_parser jp;
 				json obj = jp.create_object();
 				_key.get_json(obj, table_header->key_members);
 				_data.get_json(obj, table_header->object_members);
-				return _process(obj);
+				json jresult = _process(obj);
+				target.push_back(jresult);
+				return _key;
 				});
+			return target;
 		}
 
 		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block)
@@ -1086,6 +1102,7 @@ namespace corona
 			;
 		}
 	};
+
 }
 
 #endif

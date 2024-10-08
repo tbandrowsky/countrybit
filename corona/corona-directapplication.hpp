@@ -263,7 +263,7 @@ namespace corona
 				// here, we tell the children to draw on their own surfaces...
 				// and then, draw on this one.
 				currentController->drawFrame(ctx);
-
+/*
 				auto wbounds = winroot->getBoundsDips();
 
 				pos += sign;
@@ -279,7 +279,7 @@ namespace corona
 					sign = -1;
 				}
 
-/*				D2D1_RECT_F dest;
+				D2D1_RECT_F dest;
 				dest.left = pos;
 				dest.top = (wbounds.h - boxh) / 2;
 				dest.right = pos + boxw;
@@ -383,7 +383,6 @@ namespace corona
 	{
 		HFONT hfont = nullptr;
 
-		double ifontSize = fontSizePixels;
 		istring<2048> fontList = _fontName;
 
 		int state = 0;
@@ -392,6 +391,8 @@ namespace corona
 		while (fontExtractedName and !hfont)
 		{
 			strcpy_s(srcFont.lfFaceName, fontExtractedName);
+			// added this, remember.
+			srcFont.lfHeight = fontSizePixels;
 			srcFont.lfWeight = bold ? FW_BOLD : FW_NORMAL;
 			srcFont.lfItalic = italic;
 			fontExtractedName = fontList.next_token(',', state);
@@ -404,7 +405,7 @@ namespace corona
 	std::weak_ptr<direct2dChildWindow> directApplicationWin32::createDirect2Window(DWORD control_id, rectangle bounds)
 	{
 		std::weak_ptr<direct2dChildWindow> cx;
-		if (bounds.w < 1 or bounds.h < 1)
+		if (bounds.w < 1 or bounds.h < 1 or bounds.x < 0 or bounds.y < 0)
 			return cx;
 
 		auto dpi = GetDpiForWindow(hwndRoot);
@@ -413,7 +414,7 @@ namespace corona
 
 		if (win) 
 		{
-			auto child = win->createChild(control_id, bounds.x, bounds.y, bounds.w, bounds.h);
+			auto child = win->createChild(control_id, (UINT)bounds.x, (UINT)bounds.y, (UINT)bounds.w, (UINT)bounds.h);
 			return child;
 		}
 		else 
@@ -480,7 +481,7 @@ namespace corona
 			}
 		case WM_ERASEBKGND:
 			{
-				RECT rect, rect2;
+				RECT rect;
 				HDC eraseDc = (HDC)wParam;
 				HBRUSH hbrBkgnd = (HBRUSH)::GetStockObject(WHITE_BRUSH);
 				::GetClientRect(hwndchild, &rect);
@@ -577,7 +578,6 @@ namespace corona
 		point temp_pt;
 		static HBRUSH hbrBkgnd2 = NULL;
 		char className[256];
-		HRESULT hr;
 		const int BORDERWIDTH = 8;
 
 		auto &pfactory = factory;
@@ -760,7 +760,7 @@ namespace corona
 						::GetClassName(lpnm->hwndFrom, className, sizeof(className) - 1);
 						if (strcmp(className, "SysLink") == 0) {
 							auto plink = (PNMLINK)lParam;
-							auto r = ::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
+							::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
 						}
 						else {
 							currentController->onListViewChanged(lpnm->idFrom);
@@ -848,8 +848,7 @@ namespace corona
 			break;
 			case WM_ERASEBKGND:
 			{
-				RECT rect, rect2;
-				HDC eraseDc = (HDC)wParam;
+				RECT rect;
 				HBRUSH hbrBkgnd = (HBRUSH)::GetStockObject(WHITE_BRUSH);
 				::GetClientRect(hwnd, &rect);
 				::FillRect((HDC)wParam, &rect, hbrBkgnd);
@@ -917,7 +916,6 @@ namespace corona
 				else if (currentController)
 				{
 					POINT p;
-					bool lbutton = true;
 					if (GetCursorPos(&p))
 					{
 						ScreenToClient(hwnd, &p);
@@ -1025,7 +1023,7 @@ namespace corona
 				if (pfactory) {
 					auto wwin = pfactory->getWindow(hwnd);
 					if (auto win = wwin.lock()) {
-						win->resize(rect.w, rect.h);
+						win->resize((UINT)rect.w, (UINT)rect.h);
 						if (currentController) {
 #if TRACE_SIZE
 							std::cout << " w " << rect.w << "h " << rect.h << std::endl;
@@ -1057,7 +1055,7 @@ namespace corona
 				if (pfactory) {
 					auto wwin = pfactory->getWindow(hwnd);
 					if (auto win = wwin.lock()) {
-						win->resize(rect.w, rect.h);
+						win->resize((UINT)rect.w, (UINT)rect.h);
 						if (currentController) {
 #if TRACE_SIZE
 							std::cout << " w " << rect.w << "h " << rect.h << std::endl;
@@ -1270,7 +1268,6 @@ namespace corona
 			dwExStyle = WS_EX_APPWINDOW | WS_EX_TOPMOST;
 		}
 		else {
-			int desktop_width, desktop_height;
 			desktop_width = desktop_rect.right - desktop_rect.left;
 			desktop_height = desktop_rect.bottom - desktop_rect.top;
 			window_width = desktop_width * .75;

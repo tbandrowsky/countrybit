@@ -327,6 +327,8 @@ namespace corona
 				_validation_errors.push_back(ve);
 				return false;
 			};
+			return false;
+
 		}
 
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() override
@@ -767,6 +769,8 @@ namespace corona
 					return false;
 				};
 			}
+			return false;
+
 		}
 
 	};
@@ -823,6 +827,7 @@ namespace corona
 					return false;
 				};
 			}
+			return false;
 		}
 
 	};
@@ -880,6 +885,7 @@ namespace corona
 					return false;
 				};
 			}
+			return false;
 		}
 
 	};
@@ -1987,8 +1993,8 @@ namespace corona
 							auto bridges = fld->get_bridges();
 							if (bridges) {
 								for (auto obj : array_field) {
-									std::string class_name = obj[class_name_field];
-									auto bridge = bridges->get_bridge(class_name);
+									std::string obj_class_name = obj[class_name_field];
+									auto bridge = bridges->get_bridge(obj_class_name);
 									if (bridge) {
 										bridge->copy(obj, _src_obj);
 									}
@@ -2003,10 +2009,10 @@ namespace corona
 					{
 						json obj = _src_obj[fld->get_field_name()];
 						if (obj.object()) {
-							std::string class_name = obj[class_name_field];
+							std::string obj_class_name = obj[class_name_field];
 							auto bridges = fld->get_bridges();
 							if (bridges) {
-								auto bridge = bridges->get_bridge(class_name);
+								auto bridge = bridges->get_bridge(obj_class_name);
 								if (bridge) {
 									bridge->copy(obj, _src_obj);
 								}
@@ -2255,8 +2261,6 @@ namespace corona
 		{
 			write_scope_lock my_lock(allocation_lock);
 
-			relative_ptr_type pt = 0;
-
 			allocation_index ai = get_allocation_index(_size);
 
 			*_actual_size = ai.size;
@@ -2286,7 +2290,7 @@ namespace corona
 			}
 
 			int64_t total_size = sizeof(allocation_block_struct) + ai.size;
-			int64_t base_space = add(sizeof(allocation_block_struct) + ai.size);
+			int64_t base_space = add(total_size);
 			if (base_space > 0) {
 				free_block.data_location = base_space + sizeof(allocation_block_struct);
 				free_block.next_block = 0;
@@ -2817,9 +2821,9 @@ private:
 
 				result_list = jp.create_array();
 
-				for (auto object_definition : class_object_list)
+				for (auto item_definition : class_object_list)
 				{
-					json result = check_single_object(current_date, _user_name, class_data, object_definition);
+					json result = check_single_object(current_date, _user_name, class_data, item_definition);
 					result_list.push_back(result);
 
 					if (not result[success_field]) 
@@ -4660,19 +4664,7 @@ private:
 }
 )");
 
-		bool create_success;
 		bool login_success;
-		bool class_success;
-		bool put_success;
-		bool get_success;
-		bool class_index_success;
-		bool put_index_success;
-		bool get_index_success;
-		bool delete_success;
-		bool team_class_success;
-		bool team_get_success;
-		bool team_put_success;
-		bool team_delete_success;
 
 		date_time start_schema = date_time::now();
 		system_monitoring_interface::global_mon->log_job_start("test_database_engine", "start", start_schema, __FILE__, __LINE__);

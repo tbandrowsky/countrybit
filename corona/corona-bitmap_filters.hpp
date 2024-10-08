@@ -344,7 +344,7 @@ namespace corona
 	{
 		PBGRAPixel* base = (PBGRAPixel*)pv;
 
-		double minL, maxL;
+		double minL = 0.0, maxL = 0.0;
 
 		for (int r = 0; r < _size.y; r++) {
 			auto row = (PBGRAPixel*)(pv + cbStride * r);
