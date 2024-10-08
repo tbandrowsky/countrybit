@@ -7,6 +7,7 @@
 namespace corona
 {
 
+
 	class xrecord_block;
 	using xrecord_block_ptr = xrecord_block*;
 
@@ -17,11 +18,11 @@ namespace corona
 		xrecord_block_ptr root;
 		virtual void on_root_changed(xrecord_block_ptr _ptr) = 0;
 
-		virtual json get(std::vector<std::string>& _key_members, json _object) = 0;
-		virtual void put(std::vector<std::string>& _key_members, std::vector<std::string>& _data_members, json _object) = 0;
-		virtual void erase(std::vector<std::string>& _key_members, json _object) = 0;
-		virtual xfor_each_result for_each_object(json _object, std::function<relative_ptr_type>(json& _item)> _process) = 0;
-		virtual std::vector<json> select_objects(json _object, std::function<json(json& _item)> _process) = 0;
+		virtual json get(corona::json _object) = 0;
+		virtual void put(corona::json _object) = 0;
+		virtual void erase(json _object) = 0;
+		virtual xfor_each_result for_each_object(corona::json _object, std::function<relative_ptr_type(corona::json& _item)> _process) = 0;
+		virtual std::vector<json> select_objects(corona::json _object, std::function<corona::json(corona::json& _item)> _process) = 0;
 		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block) = 0;
 	};
 
@@ -169,7 +170,7 @@ namespace corona
 			return *this;
 		}
 
-		xfield_holder(std::vector<char>& _bytes, int _offset)
+		xfield_holder(char *_bytes, int _offset)
 		{
 			char *sb = &_bytes[_offset];
 			key = new (sb) xfield();
@@ -512,7 +513,7 @@ namespace corona
 			return (char*)key.data();
 		}
 
-		xfield_holder get_key(int _offset, int* _next_offset)
+		xfield_holder get_key(int _offset, int* _next_offset) const
 		{
 			xfield_holder t;
 			if (_offset < key.size()) {
@@ -523,7 +524,7 @@ namespace corona
 		}
 
 
-		bool operator == (xrecord& _other)
+		bool operator == (const xrecord& _other)
 		{
 			int this_offset = 0;
 			int other_offset = 0;
@@ -669,13 +670,13 @@ namespace corona
 			records.erase(key);
 		}
 
-		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(int _index, xrecord& _item)> _process)
+		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(int _index, xrecord& _key, xrecord& _value)> _process)
 		{
 			xfor_each_result result;
-			auto it = records.lower_bound(key);
+			auto it = records.lower_bound(_key);
 			int index = 0;
-			while (it != records.end() and key < it->get_key()) {
-				relative_ptr_type t = _process( index, it->second );
+			while (it != records.end() and _key == it->first) {
+				relative_ptr_type t = _process( index, it->first, it->second );
 				if (t != null_row) {
 					result.is_any = true;
 					index++;
@@ -687,23 +688,17 @@ namespace corona
 			return result;
 		}
 
-		virtual std::vector<xrecord> select(xrecord key, std::function<xrecord(int _index, xrecord& _item)> _process)
+		virtual std::vector<xrecord> select(xrecord _key, std::function<xrecord(int _index, xrecord& _key, xrecord& _value)> _process)
 		{
 			std::vector<xrecord> results;
-			auto it = records.lower_bound(key);
+			auto it = records.lower_bound(_key);
 			int index = 0;
-			while (it != records.end()) {
-				xrecord t = _process(index, it->second);
+			while (it != records.end() and _key == it->first) {
+				xrecord t = _process(index, it->first, it->second);
 				if (not t.is_empty())
 				{
-					if (t == key) {
-						results.push_back(t);
-						index++;
-					}
-					else if (key < t) 
-					{
-						break;
-					}
+					results.push_back(t);
+					index++;
 				}
 				it++;
 			}
@@ -1060,17 +1055,28 @@ namespace corona
 			root->erase(key);
 		}
 
-		virtual xfor_each_result for_each(json _object, std::function<json(json& _item)> _process)
+		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process)
 		{
 			xrecord key(table_header->key_members, _object);
-			root->for_each(key, [this](int _index, xrecord& _src)->xrecord {
-				;
+			root->for_each(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
+				json_parser jp;
+				json obj = jp.create_object();
+				_key.get_json(obj, table_header->key_members);
+				_data.get_json(obj, table_header->object_members);
+				return _process(obj);
 				});
 		}
 
 		virtual std::vector<xrecord> select(json _object, std::function<json(json& _item)> _process)
 		{
-			;
+			xrecord key(table_header->key_members, _object);
+			root->for_each(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
+				json_parser jp;
+				json obj = jp.create_object();
+				_key.get_json(obj, table_header->key_members);
+				_data.get_json(obj, table_header->object_members);
+				return _process(obj);
+				});
 		}
 
 		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block)
