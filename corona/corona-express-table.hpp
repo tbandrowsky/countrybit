@@ -11,6 +11,14 @@ namespace corona
 	class xrecord_block;
 	using xrecord_block_ptr = xrecord_block*;
 
+	class xfor_each_result
+	{
+	public:
+		bool is_any;
+		bool is_all;
+		int64_t count;
+	};
+
 	class express_table_interface
 	{
 	public:
@@ -18,11 +26,11 @@ namespace corona
 		xrecord_block_ptr root;
 		virtual void on_root_changed(xrecord_block_ptr _ptr) = 0;
 
-		virtual json get(corona::json _object) = 0;
-		virtual void put(corona::json _object) = 0;
+		virtual json get(json _object) = 0;
+		virtual void put(json _object) = 0;
 		virtual void erase(json _object) = 0;
-		virtual xfor_each_result for_each_object(corona::json _object, std::function<relative_ptr_type(corona::json& _item)> _process) = 0;
-		virtual std::vector<json> select_objects(corona::json _object, std::function<corona::json(corona::json& _item)> _process) = 0;
+		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) = 0;
+		virtual std::vector<json> select(json _object, std::function<json(json& _item)> _process) = 0;
 		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block) = 0;
 	};
 
@@ -59,7 +67,7 @@ namespace corona
 			return io_bytes;
 		}
 
-		bool operator < (const poco_block_serializable& _t)
+		bool operator < (const poco_xblock& _t)
 		{
 			return data < _t.data;
 		}
@@ -570,14 +578,6 @@ namespace corona
 
 	};
 
-	class xfor_each_result 
-	{
-	public:
-		bool is_any;
-		bool is_all;
-		int64_t count;
-	};
-
 	class xrecord_block : public data_block
 	{
 	protected:
@@ -676,7 +676,8 @@ namespace corona
 			auto it = records.lower_bound(_key);
 			int index = 0;
 			while (it != records.end() and _key == it->first) {
-				relative_ptr_type t = _process( index, it->first, it->second );
+				xrecord it_temp = it->first;
+				relative_ptr_type t = _process(index, it_temp, it->second);
 				if (t != null_row) {
 					result.is_any = true;
 					index++;
@@ -694,7 +695,8 @@ namespace corona
 			auto it = records.lower_bound(_key);
 			int index = 0;
 			while (it != records.end() and _key == it->first) {
-				xrecord t = _process(index, it->first, it->second);
+				xrecord it_temp = it->first;
+				xrecord t = _process(index, it_temp, it->second);
 				if (not t.is_empty())
 				{
 					results.push_back(t);
@@ -1055,7 +1057,7 @@ namespace corona
 			root->erase(key);
 		}
 
-		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process)
+		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) override
 		{
 			xrecord key(table_header->key_members, _object);
 			root->for_each(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
@@ -1067,10 +1069,10 @@ namespace corona
 				});
 		}
 
-		virtual std::vector<xrecord> select(json _object, std::function<json(json& _item)> _process)
+		virtual std::vector<json> select(json _object, std::function<json(json& _item)> _process) override
 		{
 			xrecord key(table_header->key_members, _object);
-			root->for_each(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
+			root->select(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
 				json_parser jp;
 				json obj = jp.create_object();
 				_key.get_json(obj, table_header->key_members);
