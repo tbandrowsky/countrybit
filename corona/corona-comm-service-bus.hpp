@@ -200,7 +200,8 @@ namespace corona
 			test_json_object_table_load(testo, app);
 */
 			bool system_works = tm.prove("xrecord");
-			if (not system_works) {
+			if (not system_works) 
+			{
 				log_job_stop("verification", "verification failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else

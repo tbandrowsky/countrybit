@@ -344,6 +344,34 @@ namespace corona
 			return false;
 		}
 
+		bool operator != (const xfield_holder& _other) const
+		{
+			if (*this and _other) {
+				xfield* this_key = get_field();
+				xfield* other_key = _other.get_field();
+				if (this_key->data_type != other_key->data_type)
+					return this_key->data_type < other_key->data_type;
+
+				switch (get_field()->data_type)
+				{
+				case field_types::ft_string:
+					return this_key->get_string() != other_key->get_string();
+				case field_types::ft_double:
+					return this_key->get_double() != other_key->get_double();
+				case field_types::ft_datetime:
+					return this_key->get_datetime() != other_key->get_datetime();
+				case field_types::ft_int64:
+					return this_key->get_int64() != other_key->get_int64();
+				}
+			}
+			else if (*this and not _other)
+			{
+				return true;
+			}
+
+			return false;
+		}
+
 		~xfield_holder()
 		{
 			if (bytes) 
@@ -459,7 +487,7 @@ namespace corona
 		result = test_int64a < test_int64b;
 		_tests->test({ "< i64", result, __FILE__, __LINE__ });
 
-		result = test_stringb < test_stringa;
+		result = test_stringa < test_stringb;
 		_tests->test({ "< string", result, __FILE__, __LINE__ });
 
 		// these are the opposites and we expect them to be false
@@ -475,7 +503,7 @@ namespace corona
 		result = not test_stringb < test_stringa;
 		_tests->test({ "< string 2", result, __FILE__, __LINE__ });
 
-		// these are the opposites and we expect them to be false
+		// these are the equals and we expect them to be false
 		// and so if all are good we should have decent strong weak ordering
 		result = not test_datetimeb < test_datetimeb;
 		_tests->test({ "< dt 3", result, __FILE__, __LINE__ });
@@ -497,7 +525,7 @@ namespace corona
 		result = test_doubleb > test_doublea;
 		_tests->test({ "> dbl 2", result, __FILE__, __LINE__ });
 
-		result = test_int64b < test_int64a;
+		result = test_int64b > test_int64a;
 		_tests->test({ "> i64 2", result, __FILE__, __LINE__ });
 
 		result = test_stringb > test_stringa;
@@ -506,18 +534,31 @@ namespace corona
 
 		// and this one
 
-		result = test_datetimeb == test_datetimeb;
+		result = test_datetimea != test_datetimeb;
+		_tests->test({ "!= dt 2", result, __FILE__, __LINE__ });
+
+		result = test_doublea != test_doubleb;
+		_tests->test({ "!= dbl 2", result, __FILE__, __LINE__ });
+
+		result = test_int64a != test_int64b;
+		_tests->test({ "!= i64 2", result, __FILE__, __LINE__ });
+
+		result = test_stringa != test_stringb;
+		_tests->test({ "!= string 2", result, __FILE__, __LINE__ });
+
+		// and this one
+
+		result = test_datetimea == test_datetimea;
 		_tests->test({ "== dt 2", result, __FILE__, __LINE__ });
 
-		result = test_doubleb == test_doubleb;
+		result = test_doublea == test_doublea;
 		_tests->test({ "== dbl 2", result, __FILE__, __LINE__ });
 
-		result = test_int64b == test_int64b;
+		result = test_int64a == test_int64a;
 		_tests->test({ "== i64 2", result, __FILE__, __LINE__ });
 
-		result = test_stringb == test_stringb;
+		result = test_stringa == test_stringa;
 		_tests->test({ "== string 2", result, __FILE__, __LINE__ });
-
 	}
 
 	class xrecord : public xblock
@@ -745,18 +786,18 @@ namespace corona
 			int other_offset = 0;
 			xfield_holder this_key;
 			xfield_holder other_key;
+			other_key = _other.get_field(other_offset, &other_offset);
+			this_key = get_field(this_offset, &this_offset);
 
-			do {
+			while (this_key and other_key)
+			{
+				if (not (this_key < other_key))
+				{
+					return false;
+				}
 				other_key = _other.get_field(other_offset, &other_offset);
 				this_key = get_field(this_offset, &this_offset);
-				if (this_offset and other_offset)
-				{
-					if (not (this_key < other_key))
-					{
-						return false;
-					}
-				}
-			} while (this_offset and other_offset);
+			}
 
 			return true;
 		}
