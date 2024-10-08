@@ -89,7 +89,7 @@ namespace corona
 		virtual void put_json(json& _src) = 0;
 		virtual void copy(json& _dest, json& _src) = 0;
 		virtual void construct(json& _dest) = 0;
-		virtual json get_key(json& src) = 0;
+		virtual json get_field(json& src) = 0;
 	};
 
 	class child_bridges_interface
@@ -395,7 +395,7 @@ namespace corona
 			}
 		}
 
-		virtual json get_key(json& _src) override
+		virtual json get_field(json& _src) override
 		{
 			json_parser jp;
 			json key;
@@ -489,7 +489,7 @@ namespace corona
 
 			for (auto class_name_pair : all_constructors) 
 			{
-				json key = class_name_pair.second->get_key(_parent_object);
+				json key = class_name_pair.second->get_field(_parent_object);
 				read_class_sp classy = _db->read_lock_class(class_name_pair.first);
 				if (classy) {
 					json temp_array = classy->get_objects(_db, key, true);

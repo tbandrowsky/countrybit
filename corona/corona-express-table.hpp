@@ -233,7 +233,7 @@ namespace corona
 			return total_size;
 		}
 
-		xfield* get_key() const
+		xfield* get_field() const
 		{
 			return key;
 		}
@@ -245,8 +245,8 @@ namespace corona
 
 		bool operator < (const xfield_holder& _other) const
 		{
-			xfield* this_key = get_key();
-			xfield* other_key = _other.get_key();
+			xfield* this_key = get_field();
+			xfield* other_key = _other.get_field();
 			if (this_key and other_key) {
 				if (this_key->data_type != other_key->data_type)
 					return this_key->data_type < other_key->data_type;
@@ -277,14 +277,14 @@ namespace corona
 
 		bool operator == (const xfield_holder& _other) const
 		{
-			xfield* this_key = get_key();
-			xfield* other_key = _other.get_key();
+			xfield* this_key = get_field();
+			xfield* other_key = _other.get_field();
 
 			if (this_key and other_key) {
 				if (this_key->data_type != other_key->data_type)
 					return this_key->data_type < other_key->data_type;
 
-				switch (get_key()->data_type)
+				switch (get_field()->data_type)
 				{
 				case field_types::ft_string:
 					return this_key->get_string() == other_key->get_string();
@@ -303,12 +303,12 @@ namespace corona
 		bool operator > (const xfield_holder& _other) const
 		{
 			if (*this and _other) {
-				xfield* this_key = get_key();
-				xfield* other_key = _other.get_key();
+				xfield* this_key = get_field();
+				xfield* other_key = _other.get_field();
 				if (this_key->data_type != other_key->data_type)
 					return this_key->data_type < other_key->data_type;
 
-				switch (get_key()->data_type)
+				switch (get_field()->data_type)
 				{
 				case field_types::ft_string:
 					return this_key->get_string() > other_key->get_string();
@@ -338,6 +338,161 @@ namespace corona
 		}
 	
 	};
+
+	void test_xfield(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
+	{
+		date_time testa = date_time(2024, 10, 8);
+		date_time testb = date_time(2024, 11, 8);
+
+		xfield_holder test_datetimea(testa);
+		xfield_holder test_doublea(42.0);
+		xfield_holder test_int64a(12i64);
+		xfield_holder test_stringa("testa");
+
+		xfield_holder test_datetimeb(testb);
+		xfield_holder test_doubleb(52.0);
+		xfield_holder test_int64b(22i64);
+		xfield_holder test_stringb("testb");
+
+		bool result;
+
+		// check values
+
+		result = test_datetimea.get_field()->get_datetime() == testa;
+		_tests->test({ "data dt", result, __FILE__, __LINE__ });
+
+		result = test_doublea.get_field()->get_double() == 42.0;
+		_tests->test({ "data dble", result, __FILE__, __LINE__ });
+
+		result = test_int64a.get_field()->get_int64() == 12;
+		_tests->test({ "data i64", result, __FILE__, __LINE__ });
+
+		result = test_stringa.get_field()->get_string() == "testa";
+		_tests->test({ "data i64", result, __FILE__, __LINE__ });
+
+		result = test_datetimeb.get_field()->get_datetime() == testb;
+		_tests->test({ "data dt 2", result, __FILE__, __LINE__ });
+
+		result = test_doubleb.get_field()->get_double() == 52.0;
+		_tests->test({ "data dble 2", result, __FILE__, __LINE__ });
+
+		result = test_int64b.get_field()->get_int64() == 22;
+		_tests->test({ "data i64 2", result, __FILE__, __LINE__ });
+
+		result = test_stringb.get_field()->get_string() == "testb";
+		_tests->test({ "data i64 2", result, __FILE__, __LINE__ });
+
+		int l;
+		char* c;
+		char* test_copy;
+
+		l = test_datetimeb.get_total_size();
+		c = (char*)test_datetimeb.get_field();
+		test_copy = new char[l];
+		std::copy(c, c + l, test_copy);
+
+		xfield_holder copydt(c, l);
+		result = copydt.get_field()->get_string() == test_int64b.get_field()->get_string();
+		_tests->test({ "copy dt", result, __FILE__, __LINE__ });
+
+		l = test_doubleb.get_total_size();
+		c = (char*)test_doubleb.get_field();
+		test_copy = new char[l];
+		std::copy(c, c + l, test_copy);
+
+		xfield_holder copydb(c, l);
+		result = copydb.get_field()->get_double() == test_doubleb.get_field()->get_double();
+		_tests->test({ "copy dbl", result, __FILE__, __LINE__ });
+
+		l = test_int64b.get_total_size();
+		c = (char*)test_int64b.get_field();
+		test_copy = new char[l];
+		std::copy(c, c + l, test_copy);
+
+		xfield_holder copyi(c, l);
+		result = copyi.get_field()->get_int64() == test_int64b.get_field()->get_int64();
+		_tests->test({ "copy i64", result, __FILE__, __LINE__ });
+
+		l = test_stringb.get_total_size();
+		c = (char*)test_stringb.get_field();
+		test_copy = new char[l];
+		std::copy(c, c + l, test_copy);
+
+		xfield_holder copys(c, l);
+		result = copys.get_field()->get_string() == test_int64b.get_field()->get_string();
+		_tests->test({ "copy str", result, __FILE__, __LINE__ });
+
+		// comparisons, three sets, these first should all be true
+
+		result = test_datetimea < test_datetimeb;
+		_tests->test({ "< dt", result, __FILE__, __LINE__ });
+
+		result = test_doublea < test_doubleb;
+		_tests->test({ "< dbl", result, __FILE__, __LINE__ });
+
+		result = test_int64a < test_int64b;
+		_tests->test({ "< i64", result, __FILE__, __LINE__ });
+
+		result = test_stringb < test_stringa;
+		_tests->test({ "< string", result, __FILE__, __LINE__ });
+
+		// these are the opposites and we expect them to be false
+		result = not test_datetimeb < test_datetimea;
+		_tests->test({ "< dt 2", result, __FILE__, __LINE__ });
+
+		result = not test_doubleb < test_doublea;
+		_tests->test({ "< dbl 2", result, __FILE__, __LINE__ });
+
+		result = not test_int64b < test_int64a;
+		_tests->test({ "< i64 2", result, __FILE__, __LINE__ });
+
+		result = not test_stringb < test_stringa;
+		_tests->test({ "< string 2", result, __FILE__, __LINE__ });
+
+		// these are the opposites and we expect them to be false
+		// and so if all are good we should have decent strong weak ordering
+		result = not test_datetimeb < test_datetimeb;
+		_tests->test({ "< dt 3", result, __FILE__, __LINE__ });
+
+		result = not test_doubleb < test_doubleb;
+		_tests->test({ "< dbl 3", result, __FILE__, __LINE__ });
+
+		result = not test_int64b < test_int64b;
+		_tests->test({ "< i64 3", result, __FILE__, __LINE__ });
+
+		result = not test_stringb < test_stringb;
+		_tests->test({ "< string 3", result, __FILE__, __LINE__ });
+
+		// and we want to test these operators out
+
+		result = test_datetimeb > test_datetimea;
+		_tests->test({ "> dt 2", result, __FILE__, __LINE__ });
+
+		result = test_doubleb > test_doublea;
+		_tests->test({ "> dbl 2", result, __FILE__, __LINE__ });
+
+		result = test_int64b < test_int64a;
+		_tests->test({ "> i64 2", result, __FILE__, __LINE__ });
+
+		result = test_stringb > test_stringa;
+		_tests->test({ "> string 2", result, __FILE__, __LINE__ });
+
+
+		// and this one
+
+		result = test_datetimeb == test_datetimeb;
+		_tests->test({ "== dt 2", result, __FILE__, __LINE__ });
+
+		result = test_doubleb == test_doubleb;
+		_tests->test({ "== dbl 2", result, __FILE__, __LINE__ });
+
+		result = test_int64b == test_int64b;
+		_tests->test({ "== i64 2", result, __FILE__, __LINE__ });
+
+		result = test_stringb == test_stringb;
+		_tests->test({ "== string 2", result, __FILE__, __LINE__ });
+
+	}
 
 	class xrecord : public xblock
 	{
@@ -411,7 +566,7 @@ namespace corona
 					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
 					break;
 				}
-				key.insert(key.end(), (char *)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
+				key.insert(key.end(), (char *)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
 			}
 		}
 		
@@ -422,29 +577,29 @@ namespace corona
 			int this_offset = 0;
 			xfield_holder this_key;
 
-			this_key = std::move(get_key(this_offset, &this_offset));
+			this_key = std::move(get_field(this_offset, &this_offset));
 			while (this_key and index < _keys.size());
 			{
 				std::string field_name = _keys[index];
-				switch (this_key.get_key()->data_type)
+				switch (this_key.get_field()->data_type)
 				{
 				case field_types::ft_string:
-					_dest.put_member(field_name, this_key.get_key()->get_string());
+					_dest.put_member(field_name, this_key.get_field()->get_string());
 					break;
 				case field_types::ft_double:
-					_dest.put_member(field_name, this_key.get_key()->get_double());
+					_dest.put_member(field_name, this_key.get_field()->get_double());
 					break;
 				case field_types::ft_datetime:
-					_dest.put_member(field_name, this_key.get_key()->get_datetime());
+					_dest.put_member(field_name, this_key.get_field()->get_datetime());
 					break;
 				case field_types::ft_int64:
-					_dest.put_member_i64(field_name, this_key.get_key()->get_int64());
+					_dest.put_member_i64(field_name, this_key.get_field()->get_int64());
 					break;
 				default:
 					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
 					break;
 				}
-				this_key = std::move(get_key(this_offset, &this_offset));
+				this_key = std::move(get_field(this_offset, &this_offset));
 				index++;
 			}
 		}
@@ -453,9 +608,9 @@ namespace corona
 		{
 			int next_offset;
 			xfield_holder xfkey;
-			xfkey = get_key(0, &next_offset);
-			if (xfkey and xfkey.get_key()->data_type == field_types::ft_int64) {
-				return xfkey.get_key()->get_int64();
+			xfkey = get_field(0, &next_offset);
+			if (xfkey and xfkey.get_field()->data_type == field_types::ft_int64) {
+				return xfkey.get_field()->get_int64();
 			}
 			return null_row;
 		}
@@ -474,28 +629,28 @@ namespace corona
 		xrecord& add(double _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char *)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
+			key.insert(key.end(), (char *)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
 			return *this;
 		}
 
 		xrecord& add(std::string _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char*)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
 			return *this;
 		}
 
 		xrecord& add(date_time _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char*)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
 			return *this;
 		}
 
 		xrecord& add(int64_t _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char*)new_key.get_key(), (char*)new_key.get_key() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
 			return *this;
 		}
 		
@@ -526,7 +681,7 @@ namespace corona
 			return (char*)key.data();
 		}
 
-		xfield_holder get_key(int _offset, int* _next_offset) const
+		xfield_holder get_field(int _offset, int* _next_offset) const
 		{
 			xfield_holder t;
 			if (_offset < key.size()) {
@@ -536,23 +691,23 @@ namespace corona
 			return t;
 		}
 
-		bool operator == (const xrecord& _other)
+		bool operator == (const xrecord& _other) const
 		{
 			int this_offset = 0;
 			int other_offset = 0;
 			xfield_holder this_key;
 			xfield_holder other_key;
 
-			other_key = std::move(_other.get_key(other_offset, &other_offset));
-			this_key = std::move(get_key(this_offset, &this_offset));
+			other_key = std::move(_other.get_field(other_offset, &other_offset));
+			this_key = std::move(get_field(this_offset, &this_offset));
 			while (this_key and other_key);
 			{
 				if (not (this_key == other_key))
 				{
 					return false;
 				}
-				other_key = std::move(_other.get_key(other_offset, &other_offset));
-				this_key = std::move(get_key(this_offset, &this_offset));
+				other_key = std::move(_other.get_field(other_offset, &other_offset));
+				this_key = std::move(get_field(this_offset, &this_offset));
 			}
 
 			return true;
@@ -566,8 +721,8 @@ namespace corona
 			xfield_holder other_key;
 
 			do {
-				other_key = std::move(_other.get_key(other_offset, &other_offset));
-				this_key = std::move(get_key(this_offset, &this_offset));
+				other_key = std::move(_other.get_field(other_offset, &other_offset));
+				this_key = std::move(get_field(this_offset, &this_offset));
 				if (this_offset and other_offset)
 				{
 					if (not (this_key < other_key))
@@ -581,6 +736,129 @@ namespace corona
 		}
 	};
 
+	void test_xrecord(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
+	{
+		xrecord comp1, comp2, comp3;
+
+		comp1.add(4.0);
+		comp1.add("hello");
+		comp1.add(42i64);
+
+		comp2.add(4.0);
+		comp2.add("hello");
+		comp2.add(42i64);
+
+		bool result;
+		result = comp1 == comp2;
+		_tests->test({ "xr =", result, __FILE__, __LINE__ });
+
+		comp3.add(2.0);
+		result = comp3 < comp1;
+		_tests->test({ "xr <", result, __FILE__, __LINE__ });
+
+		// partial keys are equal.
+		comp3.clear();
+		comp3.add(4.0);
+		result = comp3 == comp1;
+		_tests->test({ "xr == key 1", result, __FILE__, __LINE__ });
+
+		comp3.add("hello");
+		result = comp3 == comp1;
+		_tests->test({ "xr == key 2", result, __FILE__, __LINE__ });
+
+		comp3.add(42.0);
+		result = comp3 == comp1;
+		_tests->test({ "xr == key 3", result, __FILE__, __LINE__ });
+
+		comp3.clear();
+		comp3.add(2.0);
+		result = comp3 < comp1;
+		_tests->test({ "xr < key 1", result, __FILE__, __LINE__ });
+
+		comp3.add("hello");
+		result = comp3 < comp1;
+		_tests->test({ "xr < key 2", result, __FILE__, __LINE__ });
+
+		comp3.add(42.0);
+		result = comp3 < comp1;
+		_tests->test({ "xr < key 3", result, __FILE__, __LINE__ });
+
+		comp3.clear();
+		comp3.add(4.0);
+		result = comp3 < comp1;
+		_tests->test({ "xr < key 2.1", result, __FILE__, __LINE__ });
+
+		comp3.add("hello");
+		result = comp3 < comp1;
+		_tests->test({ "xr < key 2.2", result, __FILE__, __LINE__ });
+
+		comp3.add(43.0);
+		result = comp3 < comp1;
+		_tests->test({ "xr < key 2.3", result, __FILE__, __LINE__ });
+
+		comp3.clear();
+		comp3.add(4.0);
+		comp3.add("ahello");
+		result = comp3 < comp1;
+		_tests->test({ "xr < key 3", result, __FILE__, __LINE__ });
+
+		// keys, more partial tests
+
+		// partial keys are equal.
+		comp3.clear();
+		comp3.add(4.0);
+		result = comp3 == comp1;
+		_tests->test({ "xr == key 1", result, __FILE__, __LINE__ });
+
+		comp3.add("hello");
+		result = comp3 == comp1;
+		_tests->test({ "xr == key 2", result, __FILE__, __LINE__ });
+
+		comp3.add(42i64);
+		result = comp3 == comp1;
+		_tests->test({ "xr == key 3", result, __FILE__, __LINE__ });
+
+		comp3.clear();
+		comp3.add(2.0);
+		result = not (comp3 == comp1);
+		_tests->test({ "xr == key 1", result, __FILE__, __LINE__ });
+
+		comp3.add("hello");
+		result = not (comp3 == comp1);
+		_tests->test({ "xr == key 2", result, __FILE__, __LINE__ });
+
+		comp3.add(42i64);
+		result = not (comp3 == comp1);
+		_tests->test({ "xr == key 3", result, __FILE__, __LINE__ });
+
+		// and now json tests.
+		json_parser jp;
+		json jsrc = jp.create_object();
+		jsrc.put_member("Name", "Bill");
+		jsrc.put_member("Age", "41");
+		jsrc.put_member_i64("Atoms", 124);
+		jsrc.put_member("Today", date_time::now());
+
+		std::vector<std::string> keys = { "Name", "Age", "Atoms", "Today" };
+
+		xrecord compj(keys, jsrc);
+		json jdst = jp.create_object();
+		compj.get_json(jdst, keys);
+		
+		result = (std::string)jsrc["Name"] == (std::string)jdst["Name"];
+		_tests->test({ "rt name", result, __FILE__, __LINE__ });
+
+		result = (double)jsrc["Age"] == (double)jdst["Age"];
+		_tests->test({ "rt age", result, __FILE__, __LINE__ });
+
+		result = (_int64)jsrc["Atoms"] == (_int64)jdst["Atoms"];
+		_tests->test({ "rt atoms", result, __FILE__, __LINE__ });
+
+		result = (date_time)jsrc["Today"] == (date_time)jdst["Today"];
+		_tests->test({ "rt today", result, __FILE__, __LINE__ });
+
+
+	}
 
 	class xrecord_block : public data_block
 	{
