@@ -198,12 +198,12 @@ namespace corona
 
 		xfield_holder(const std::string& _data)
 		{
-			total_size = _data.size() + sizeof(xfield);
+			total_size = _data.size() + sizeof(xfield) + 1;
 			bytes = new char[total_size];
 			key = new (bytes) xfield();
-			key->data_length = _data.size();
+			key->data_length = _data.size() + 1; // +1 are for the nullptrs
 			key->data_type = field_types::ft_string;
-			std::copy(_data.c_str(), _data.c_str() + _data.size(), key->data);
+			std::copy(_data.c_str(), _data.c_str() + _data.size()+1, key->data);
 		}
 
 		xfield_holder(int64_t _data)
@@ -577,16 +577,16 @@ namespace corona
 				switch (m.get_field_type())
 				{
 				case field_types::ft_string:
-					new_key = std::move(xfield_holder(m.get_string()));
+					new_key = xfield_holder(m.get_string());
 					break;
 				case field_types::ft_double:
-					new_key = std::move(xfield_holder(m.get_double()));
+					new_key = xfield_holder(m.get_double());
 					break;
 				case field_types::ft_datetime:
-					new_key = std::move(xfield_holder(m.get_datetime()));
+					new_key = xfield_holder(m.get_datetime());
 					break;
 				case field_types::ft_int64:
-					new_key = std::move(xfield_holder(m.get_int64()));
+					new_key = xfield_holder(m.get_int64());
 					break;
 				default:
 					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
