@@ -1,10 +1,29 @@
 
+#pragma once
 
 #ifndef CORONA_EXPRESS_TABLE_H
 #define CORONA_EXPRESS_TABLE_H
 
 namespace corona
 {
+
+	class xrecord_block;
+	using xrecord_block_ptr = xrecord_block*;
+
+	class express_table_interface
+	{
+	public:
+
+		xrecord_block_ptr root;
+		virtual void on_root_changed(xrecord_block_ptr _ptr) = 0;
+
+		virtual json get(std::vector<std::string>& _key_members, json _object) = 0;
+		virtual void put(std::vector<std::string>& _key_members, std::vector<std::string>& _data_members, json _object) = 0;
+		virtual void erase(std::vector<std::string>& _key_members, json _object) = 0;
+		virtual xfor_each_result for_each_object(json _object, std::function<relative_ptr_type>(json& _item)> _process) = 0;
+		virtual std::vector<json> select_objects(json _object, std::function<json(json& _item)> _process) = 0;
+		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block) = 0;
+	};
 
 	class xblock
 	{
@@ -117,7 +136,6 @@ namespace corona
 			key = nullptr;
 			total_size = 0;
 		}
-
 
 		xfield_holder(const xfield_holder& _src)
 		{
@@ -329,6 +347,28 @@ namespace corona
 			key.insert(key.end(), _src, _src + _length);
 		}
 
+		xrecord(const xrecord& _src)
+		{
+			key = _src.key;
+		}
+
+		xrecord& operator =(const xrecord& _src)
+		{
+			key = _src.key;
+			return *this;
+		}
+
+		xrecord(xrecord&& _src)
+		{
+			key = std::move(_src.key);
+		}
+
+		xrecord& operator = (xrecord&& _src)
+		{
+			key = std::move(_src.key);
+			return *this;
+		}
+
 		void put_json(std::vector<std::string>& _keys, json _j)
 		{
 			key.clear();
@@ -369,7 +409,7 @@ namespace corona
 			xfield_holder this_key;
 
 			this_key = std::move(get_key(this_offset, &this_offset));
-			while (this_key);
+			while (this_key and index < _keys.size());
 			{
 				std::string field_name = _keys[index];
 				switch (this_key.get_key()->data_type)
@@ -393,6 +433,28 @@ namespace corona
 				this_key = std::move(get_key(this_offset, &this_offset));
 				index++;
 			}
+		}
+
+		relative_ptr_type get_location()
+		{
+			int next_offset;
+			xfield_holder xfkey;
+			xfkey = get_key(0, &next_offset);
+			if (xfkey and xfkey.get_key()->data_type == field_types::ft_int64) {
+				return xfkey.get_key()->get_int64();
+			}
+			return null_row;
+		}
+
+		void put_location(data_block& db)
+		{
+			clear();
+			add( db.header.block_location );
+		}
+
+		void clear()
+		{
+			key.clear();
 		}
 
 		xrecord& add(double _value)
@@ -420,28 +482,6 @@ namespace corona
 		{
 			xfield_holder new_key(_value);
 			key.insert(key.end(), new_key.get_key(), new_key.get_key() + new_key.get_total_size());
-			return *this;
-		}
-
-		xrecord(const xrecord &_src)
-		{
-			key = _src.key;
-		}
-
-		xrecord& operator =(const xrecord& _src)
-		{
-			key = _src.key;
-			return *this;
-		}
-
-		xrecord(xrecord&& _src)
-		{
-			key = std::move(_src.key);
-		}
-
-		xrecord& operator = (xrecord&& _src)
-		{
-			key = std::move(_src.key);
 			return *this;
 		}
 
@@ -529,7 +569,8 @@ namespace corona
 
 	};
 
-	class xfor_each_result {
+	class xfor_each_result 
+	{
 	public:
 		bool is_any;
 		bool is_all;
@@ -538,24 +579,13 @@ namespace corona
 
 	class xrecord_block : public data_block
 	{
-	public:
+	protected:
 
-		virtual int64_t get_location() {
-			return data_block::header.block_location;
-		}
+		int										capacity;
+		bool									dirty;
 
-		virtual xrecord get_start_key()
-		{
-			;
-		}
-
-		virtual xrecord get_end_key()
-		{
-			;
-		}
-
-		xrecord_block_ptr parent_tree;
-		express_table_ptr parent_table;
+		std::map<xrecord, xrecord>				records;
+		std::vector<char>						bytes;
 
 		struct xblock_record_list
 		{
@@ -571,17 +601,49 @@ namespace corona
 
 	public:
 
-		int										capacity;
-		bool									dirty;
-
-		std::map<xrecord, xrecord>				records;
-		std::vector<char>						bytes;
-
 		xrecord_block(int _capacity)
 		{
 			capacity = _capacity;
 			dirty = false;
 		}
+
+		virtual int64_t get_location() 
+		{
+			return data_block::header.block_location;
+		}
+
+		bool get_dirty()
+		{
+			return dirty;
+		}
+
+		void set_dirty(bool _dirty)
+		{
+			dirty = false;
+		}
+
+		virtual xrecord get_start_key()
+		{
+			xrecord key;
+			auto max_key = records.begin();
+			if (max_key != records.end())
+			{
+				key = max_key->first;
+			}
+			return key;
+		}
+
+		virtual xrecord get_end_key()
+		{
+			xrecord key;
+			auto max_key = records.crbegin();
+			if (max_key != records.rend())
+			{
+				key = max_key->first;
+			}
+			return key;
+		}
+
 		virtual void put(const xrecord& key, xrecord& value)
 		{
 			dirty = true;
@@ -589,31 +651,9 @@ namespace corona
 
 			// then, we check to see if we have to split the block
 
-			int rsz = records.size() / 2;
 			if (records.size() >= capacity)
 			{
-				xrecord_block* new_xb = new xrecord_block(capacity);
-				new_xb->dirty = true;
-
-				// time to split the block
-				std::vector<xrecord> keys_to_delete;
-				keys_to_delete.resize(rsz);
-
-				int count = 0;
-
-				for (auto& kv : records)
-				{
-					if (count > rsz) {
-						keys_to_delete[count] = kv.first;
-						new_xb->put(kv.first, kv.second);
-					}
-					count++;
-				}
-
-				for (auto& kv : keys_to_delete)
-				{
-					records.erase(kv);
-				}
+				on_full();
 			}
 		}
 
@@ -629,23 +669,16 @@ namespace corona
 			records.erase(key);
 		}
 
-		virtual xfor_each_result for_each(xrecord key, std::function<xrecord(int _index, xrecord& _item)> _process)
+		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(int _index, xrecord& _item)> _process)
 		{
 			xfor_each_result result;
 			auto it = records.lower_bound(key);
 			int index = 0;
-			while (it != records.end()) {
-				xrecord t = _process( index, it->second );
-				if (not t.is_empty())
-				{
-					if (t == key) {
-						result.is_any = true;
-						index++;
-					}
-					else if (key < t)
-					{
-						break;
-					}
+			while (it != records.end() and key < it->get_key()) {
+				relative_ptr_type t = _process( index, it->second );
+				if (t != null_row) {
+					result.is_any = true;
+					index++;
 				}
 				it++;
 			}
@@ -754,94 +787,297 @@ namespace corona
 
 		}
 
-		virtual void on_split(xrecord_block_ptr* _split_block, xrecord_block_ptr* _new_block)
+
+		virtual void on_full()
+		{
+			xrecord_block* new_xb = get_new_block();
+			new_xb->set_dirty(true);
+
+			int rsz = records.size() / 2;
+
+			// time to split the block
+			std::vector<xrecord> keys_to_delete;
+			keys_to_delete.resize(rsz);
+
+			int count = 0;
+
+			for (auto& kv : records)
+			{
+				if (count > rsz) {
+					keys_to_delete[count] = kv.first;
+					new_xb->put(kv.first, kv.second);
+				}
+				count++;
+			}
+
+			for (auto& kv : keys_to_delete)
+			{
+				records.erase(kv);
+			}
+
+			notify_split(this, new_xb);
+		}
+
+		virtual void notify_split(xrecord_block_ptr _split_block, xrecord_block_ptr _new_block) = 0;
+		virtual xrecord_block_ptr get_new_block() = 0;
+	};
+
+	class xblock_branch : public xrecord_block
+	{
+	public:
+
+		express_table_interface		*table;
+		xblock_branch				*parent;
+
+		xblock_branch(express_table_interface* _table, xblock_branch *_parent, int _capacity) :
+			table(_table),
+			parent(_parent),
+			xrecord_block(_capacity)
+		{
+			
+		}
+
+		virtual void put_block(xrecord_block_ptr _block)
+		{
+			auto new_key = _block->get_start_key();
+			int64_t location = _block->get_location(); // remember this is not written yet.
+			xrecord xlocation;
+			xlocation.add(location);
+			put(new_key, xlocation);
+		}
+
+		virtual xrecord_block_ptr get_new_block()
+		{
+			return new xblock_branch(table, parent, capacity);
+		}
+
+		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block)
+		{
+		}
+
+		virtual void notify_split(xrecord_block_ptr _split_block, xrecord_block_ptr _new_block)
+		{
+			if (parent) {
+				parent->on_split(_split_block, _new_block);
+			}
+			else if (table)
+			{
+				table->on_split(_split_block, _new_block);
+			}
+		}
+	};
+
+	class xblock_leaf: public xrecord_block
+	{
+	public:
+
+		xblock_branch* parent;
+
+		xblock_leaf(xblock_branch*_parent, int _capacity) : xrecord_block(_capacity), parent(nullptr)
+		{
+			;
+		}
+
+		virtual void notify_split(xrecord_block_ptr _split_block, xrecord_block_ptr _new_block)
+		{
+			if (parent) 
+			{
+				parent->on_split(_split_block, _new_block);
+			}
+		}
+
+		virtual xrecord_block_ptr get_new_block() 
 		{
 			;
 		}
 	};
 
-	using xrecord_block_ptr = xrecord_block *;
-
-	class express_table_interface 
+	class express_table_header : public data_block
 	{
 	public:
+		std::string data;
+
+		relative_ptr_type self_location;
+		relative_ptr_type root_location;
 		xrecord_block_ptr root;
-		virtual void on_root_changed(xrecord_block_ptr _ptr) = 0;
 
-		virtual json get(std::vector<std::string>& _key_members, json _object) = 0;
-		virtual void put(std::vector<std::string>& _key_members, std::vector<std::string>& _data_members, json _object) = 0;
-		virtual void erase(std::vector<std::string>& _key_members, json _object) = 0;
-		virtual xfor_each_result for_each(std::vector<std::string>& _key, json _object, std::function<json(json& _item)> _process) = 0;
-		virtual std::vector<xrecord> select(std::vector<std::string>& _key, json _object, std::function<json(json& _item)> _process) = 0;
+		std::vector<std::string> key_members;
+		std::vector<std::string> object_members;
 
-		virtual void on_created(xrecord_block_ptr* _new_block) = 0;
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+			_dest.put_member_i64("self_location", self_location);
+			_dest.put_member_i64("root_location", root_location);
+			json kms = jp.create_array(key_members);
+			_dest.put_member("key_members", kms);
+			json oms = jp.create_array(object_members);
+			_dest.put_member("object_members", kms); 
+			_dest.put_member("keys", kms);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json_parser jp;
+			self_location = _src["self_location"];
+			root_location = _src["root_location"];
+			json kms = _src["key_members"];
+			key_members = kms.to_string_array();
+			json oms = _src["object_members"];
+			object_members = oms.to_string_array();
+		}
+
+		virtual char* before_read(int32_t _size)  override
+		{
+			data.resize(_size);
+			return (char*)data.c_str();
+		}
+
+		virtual void after_read(char* _bytes) override
+		{
+			json_parser parser;
+			json temp = parser.parse_object(data);
+			put_json(temp);
+		}
+
+		virtual void finished_io(char* _bytes) override
+		{
+			;
+		}
+
+		virtual char* before_write(int32_t* _size) override
+		{
+			json_parser jp;
+			json temp = jp.create_object();
+			get_json(temp);
+			data = temp.to_json_typed();
+			if (data.size() > (1 << 30))
+				throw std::logic_error("Block too big");
+			*_size = (int32_t)data.size();
+			char *r = data.data();
+			return r;
+		}
+
+		virtual void after_write(char* _t) override
+		{
+
+		}
+
 	};
 
-	using express_table_ptr = express_table_interface*;
-
-	class xrecord_tree_block : public xrecord_block
+	class express_table : public express_table_interface
 	{
+
 	public:
+		std::string								data;
+		file_block*								fb;
+		std::shared_ptr<express_table_header>	table_header;
+		std::shared_ptr<xblock_branch>			root;
 
-		virtual xrecord_block_ptr get(xrecord& _key)
+		express_table(file_block* _fb, std::shared_ptr<express_table_header> _header) :
+			fb(_fb),
+			table_header(_header)
 		{
-			xrecord found = xrecord_block::get(_key);
-
+			if (_header->self_location < 0)
+			{
+				create();
+			}
+			else
+			{
+				open();
+			}
 		}
 
-		virtual void put(xrecord_block_ptr _src)
+		std::shared_ptr<express_table_header> create_header()
+		{
+			json_parser jp;
+
+			table_header = std::make_shared<express_table_header>();
+			root = std::make_shared<xblock_branch>();			
+			table_header->root_location = root->append(fb);
+			relative_ptr_type table_header_location = table_header->append(fb);
+			table_header->self_location = table_header_location;
+			table_header->write(fb);
+
+			return table_header;
+		}
+
+		std::shared_ptr<express_table_header> create()
+		{
+			date_time start_time = date_time::now();
+			timer tx;
+
+			create_header();
+
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
+			}
+
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_stop("table", "create complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+			return table_header;
+		}
+
+		void open()
+		{
+			date_time start_time = date_time::now();
+			timer tx;
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
+			}
+
+			if (ENABLE_JSON_LOGGING) {
+				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+		}
+
+		virtual json get(json _object)
+		{
+			json_parser jp;
+			json jresult;
+			xrecord key(table_header->key_members, _object);
+			xrecord result = root->get(key);
+			if (not result.is_empty()) {
+				jresult = jp.create_object();
+				key.get_json(jresult, table_header->key_members);
+				result.get_json(jresult, table_header->object_members);
+				return jresult;
+			}
+			return jresult;
+		}
+
+		virtual void put(json _object)
+		{
+			xrecord key(table_header->key_members, _object);
+			xrecord data(table_header->object_members, _object);
+			root->put(key, data);
+		}
+
+		virtual void erase(json _object)
+		{
+			xrecord key(table_header->key_members, _object);
+			root->erase(key);
+		}
+
+		virtual xfor_each_result for_each(json _object, std::function<json(json& _item)> _process)
+		{
+			xrecord key(table_header->key_members, _object);
+			root->for_each(key, [this](int _index, xrecord& _src)->xrecord {
+				;
+				});
+		}
+
+		virtual std::vector<xrecord> select(json _object, std::function<json(json& _item)> _process)
 		{
 			;
 		}
 
-		virtual void erase(xrecord_block_ptr _src)
-		{
-			;
-		}
-
-		virtual xfor_each_result for_each(xrecord& _key, std::function<xrecord_block_ptr(xrecord_block_ptr& _item)> _process)
-		{
-			;
-		}
-
-		virtual std::vector<xrecord> select(xrecord& _key, std::function<xrecord_block_ptr(xrecord_block_ptr& _item)> _process)
+		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block)
 		{
 			;
 		}
 	};
-
-	class xrecord_json_block : public xrecord_block
-	{
-	public:
-		virtual json get(std::vector<std::string>& _key_members, json _object)
-		{
-
-		};
-		virtual void put(std::vector<std::string>& _key_members, std::vector<std::string>& _data_members, json _object)
-		{
-			// first, we create our new record
-			json key_json = _object.extract(_key_members);
-			json data_json = _object.extract(_data_members);
-
-			xrecord key(key_json);
-			xrecord data(data_json);
-
-			xrecord_block::put(key, data);
-		}
-		virtual void erase(std::vector<std::string>& _key_members, json _object)
-		{
-			;
-		}
-		virtual xfor_each_result for_each(std::vector<std::string>& _key, json _object, std::function<json(json& _item)> _process)
-		{
-			;
-		}
-		virtual std::vector<xrecord> select(std::vector<std::string>& _key, json _object, std::function<json(json& _item)> _process)
-		{
-			;
-		}
-	};
-
 }
 
 #endif

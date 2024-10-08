@@ -468,10 +468,10 @@ namespace corona
 	class data_block_struct
 	{
 	public:
-		int64_t		block_location;
-		int64_t		data_location;
-		int32_t		data_capacity;
-		int32_t		data_size;
+		relative_ptr_type		block_location;
+		relative_ptr_type		data_location;
+		int32_t					data_capacity;
+		int32_t					data_size;
 
 		data_block_struct() = default;
 		data_block_struct(const data_block_struct& _src) = default;
@@ -482,9 +482,9 @@ namespace corona
 
 	struct allocation_block_struct
 	{
-		int64_t		data_location;
-		int64_t		next_block;
-		int32_t		data_capacity;
+		relative_ptr_type		data_location;
+		relative_ptr_type		next_block;
+		int32_t					data_capacity;
 	};
 
 	template <typename blocked_type> concept named_block =

@@ -2137,6 +2137,20 @@ namespace corona
 			return *this;
 		}
 
+		std::vector<std::string> to_string_array()
+		{
+			std::vector<std::string> temp;
+			if (array_impl) 
+			{
+				for (auto& array_item : array_impl->elements)
+				{
+					std::string sitem = array_item->to_string();
+					temp.push_back(sitem);
+				}
+			}
+			return temp;
+		}
+
 		int compare(json& _item)
 		{
 			if (object() and !_item.object())
@@ -2928,6 +2942,19 @@ namespace corona
 			else {
 				return get_errors();
 			}
+		}
+
+		json create_array(std::vector<std::string>& _sarray)
+		{
+			line_number = 1;
+			char_index = 0;
+			parse_errors.clear();
+			auto jo = std::make_shared<json_array>();
+			json jn(jo);
+			for (auto s : _sarray) {
+				jn.push_back(s);
+			}
+			return jn;
 		}
 
 		json create_array()
@@ -3746,128 +3773,37 @@ namespace corona
 		else if (_srcA.is_datetime() and _srcB.is_double())
 		{
 			date_time d1 = _srcA.get_datetime();
-			double elapsed = _srcB.get_double();
-			double start = elapsed;
-			double days = floor(elapsed);
-			d1 = d1 + time_span(days, time_models::days);
-
-			double hours = start / 24.0;
-			d1 = d1 + time_span(hours, time_models::hours);
-			start = fmod(start, 24.0);
-
-			double minutes = start / 60.0;
-			d1 = d1 + time_span(minutes, time_models::minutes);
-			start = fmod(start, 60.0);
-
-			double seconds = minutes / 60.0;
-			d1 = d1 + time_span(seconds, time_models::seconds);
-			start = fmod(start, 60.0);
-
-			double milliseconds = start / 1000;
-			d1 = d1 + time_span(seconds, time_models::milliseconds);
-
+			time_t start_seconds = d1.get_time_t();
+			int64_t elapsed_seconds = (int64_t)_srcB.get_double();
+			time_t new_time = start_seconds + elapsed_seconds;
+			d1 = date_time(new_time);
 			result = jp.from_datetime(d1);
 		}
 		else if (_srcA.is_datetime() or _srcB.is_int64())
 		{
 			date_time d1 = _srcA.get_datetime();
-			double elapsed = _srcB.get_int64();
-			d1 = d1 + time_span(elapsed, time_models::days);
-		}
-		else if (_srcA.is_datetime() and _srcB.is_double())
-		{
-			date_time d1 = _srcA.get_datetime();
-			double elapsed = _srcB.get_double();
-			double start = elapsed;
-
-			double days = floor(elapsed);
-			d1 = d1 + time_span(days, time_models::days);
-
-			double hours = start / 24.0;
-			d1 = d1 + time_span(hours, time_models::hours);
-			start = fmod(start, 24.0);
-
-			double minutes = start / 60.0;
-			d1 = d1 + time_span(minutes, time_models::minutes);
-			start = fmod(start, 60.0);
-
-			double seconds = minutes / 60.0;
-			d1 = d1 + time_span(seconds, time_models::seconds);
-			start = fmod(start, 60.0);
-
-			double milliseconds = start / 1000;
-			d1 = d1 + time_span(seconds, time_models::milliseconds);
-
-			result = jp.from_datetime(d1);
-		}
-		else if (_srcA.is_datetime() and _srcB.is_int64())
-		{
-			date_time d1 = _srcA.get_datetime();
-			double elapsed = (double)_srcB.get_int64();
-			d1 = d1 + time_span(elapsed, time_models::days);
+			time_t start_seconds = d1.get_time_t();
+			int64_t elapsed_seconds = (int64_t)_srcB.get_int64();
+			time_t new_time = start_seconds + elapsed_seconds;
+			d1 = date_time(new_time);
 			result = jp.from_datetime(d1);
 		}
 		else if (_srcA.is_double() and _srcB.is_datetime())
 		{
 			date_time d1 = _srcB.get_datetime();
-			double elapsed = _srcA.get_double();
-			double start = elapsed;
-			double days = floor(elapsed);
-			d1 = d1 + time_span(days, time_models::days);
-
-			double hours = start / 24.0;
-			d1 = d1 + time_span(hours, time_models::hours);
-			start = fmod(start, 24.0);
-
-			double minutes = start / 60.0;
-			d1 = d1 + time_span(minutes, time_models::minutes);
-			start = fmod(start, 60.0);
-
-			double seconds = minutes / 60.0;
-			d1 = d1 + time_span(seconds, time_models::seconds);
-			start = fmod(start, 60.0);
-
-			double milliseconds = start / 1000;
-			d1 = d1 + time_span(seconds, time_models::milliseconds);
-
+			int64_t start_seconds = (int64_t)_srcA.get_double();
+			time_t  elapsed_seconds = d1.get_time_t();
+			time_t new_time = start_seconds + elapsed_seconds;
+			d1 = date_time(new_time);
 			result = jp.from_datetime(d1);
 		}
 		else if (_srcA.is_int64() or _srcB.is_datetime())
 		{
 			date_time d1 = _srcB.get_datetime();
-			double elapsed = (double)_srcA.get_int64();
-			d1 = d1 + time_span(elapsed, time_models::days);
-		}
-		else if (_srcA.is_double() and _srcB.is_datetime())
-		{
-			date_time d1 = _srcB.get_datetime();
-			double elapsed = _srcA.get_double();
-			double start = elapsed;
-			double days = floor(elapsed);
-			d1 = d1 + time_span(days, time_models::days);
-
-			double hours = start / 24.0;
-			d1 = d1 + time_span(hours, time_models::hours);
-			start = fmod(start, 24.0);
-
-			double minutes = start / 60.0;
-			d1 = d1 + time_span(minutes, time_models::minutes);
-			start = fmod(start, 60.0);
-
-			double seconds = minutes / 60.0;
-			d1 = d1 + time_span(seconds, time_models::seconds);
-			start = fmod(start, 60.0);
-
-			double milliseconds = start / 1000;
-			d1 = d1 + time_span(seconds, time_models::milliseconds);
-
-			result = jp.from_datetime(d1);
-		}
-		else if (_srcA.is_int64() or _srcB.is_datetime())
-		{
-			date_time d1 = _srcB.get_datetime();
-			double elapsed = (double)_srcA.get_int64();
-			d1 = d1 + time_span(elapsed, time_models::days);
+			int64_t start_seconds = (int64_t)_srcA.get_int64();
+			time_t  elapsed_seconds = d1.get_time_t();
+			time_t new_time = start_seconds + elapsed_seconds;
+			d1 = date_time(new_time);
 			result = jp.from_datetime(d1);
 		}
 		return result;
@@ -3917,130 +3853,37 @@ namespace corona
 		else if (_srcA.is_datetime() and _srcB.is_double())
 		{
 			date_time d1 = _srcA.get_datetime();
-			double elapsed = _srcB.get_double();
-			double start = elapsed;
-
-			double days = floor(elapsed);
-			d1 = d1 + time_span(days, time_models::days);
-
-			double hours = start / 24.0;
-			d1 = d1 - time_span(hours, time_models::hours);
-			start = fmod(start, 24.0);
-
-			double minutes = start / 60.0;
-			d1 = d1 - time_span(minutes, time_models::minutes);
-			start = fmod(start, 60.0);
-
-			double seconds = minutes / 60.0;
-			d1 = d1 - time_span(seconds, time_models::seconds);
-			start = fmod(start, 60.0);
-
-			double milliseconds = start / 1000;
-			d1 = d1 - time_span(seconds, time_models::milliseconds);
-
+			time_t start_seconds = d1.get_time_t();
+			int64_t elapsed_seconds = (int64_t)_srcB.get_double();
+			time_t new_time = start_seconds - elapsed_seconds;
+			d1 = date_time(new_time);
 			result = jp.from_datetime(d1);
 		}
 		else if (_srcA.is_datetime() or _srcB.is_int64())
 		{
 			date_time d1 = _srcA.get_datetime();
-			int64_t elapsed = _srcB.get_int64();
-			d1 = d1 - time_span(elapsed, time_models::days);
-		}
-		else if (_srcA.is_datetime() and _srcB.is_double())
-		{
-			date_time d1 = _srcA.get_datetime();
-			double elapsed = _srcB.get_double();
-			double start = elapsed;
-			double days = floor(elapsed);
-			d1 = d1 - time_span(days, time_models::days);
-
-			double hours = start / 24.0;
-			d1 = d1 - time_span(hours, time_models::hours);
-			start = fmod(start, 24.0);
-
-			double minutes = start / 60.0;
-			d1 = d1 - time_span(minutes, time_models::minutes);
-			start = fmod(start, 60.0);
-
-			double seconds = minutes / 60.0;
-			d1 = d1 - time_span(seconds, time_models::seconds);
-			start = fmod(start, 60.0);
-
-			double milliseconds = start / 1000;
-			d1 = d1 - time_span(seconds, time_models::milliseconds);
-
-			result = jp.from_datetime(d1);
-		}
-		else if (_srcA.is_datetime() and _srcB.is_int64())
-		{
-			date_time d1 = _srcA.get_datetime();
-			int64_t elapsed = _srcB.get_int64();
-			d1 = d1 - time_span(elapsed, time_models::days);
+			time_t start_seconds = d1.get_time_t();
+			int64_t elapsed_seconds = (int64_t)_srcB.get_int64();
+			time_t new_time = start_seconds - elapsed_seconds;
+			d1 = date_time(new_time);
 			result = jp.from_datetime(d1);
 		}
 		else if (_srcA.is_double() and _srcB.is_datetime())
 		{
 			date_time d1 = _srcB.get_datetime();
-			double elapsed = _srcA.get_double();
-			double start = elapsed;
-
-			double days = floor(elapsed);
-			d1 = d1 - time_span(days, time_models::days);
-
-			double hours = start / 24.0;
-			d1 = d1 - time_span(hours, time_models::hours);
-			start = fmod(start, 24.0);
-
-			double minutes = start / 60.0;
-			d1 = d1 - time_span(minutes, time_models::minutes);
-			start = fmod(start, 60.0);
-
-			double seconds = minutes / 60.0;
-			d1 = d1 - time_span(seconds, time_models::seconds);
-			start = fmod(start, 60.0);
-
-			double milliseconds = start / 1000;
-			d1 = d1 - time_span(seconds, time_models::milliseconds);
-
+			int64_t start_seconds = (int64_t)_srcA.get_double();
+			time_t  elapsed_seconds = d1.get_time_t();
+			time_t new_time = start_seconds - elapsed_seconds;
+			d1 = date_time(new_time);
 			result = jp.from_datetime(d1);
 		}
 		else if (_srcA.is_int64() or _srcB.is_datetime())
 		{
 			date_time d1 = _srcB.get_datetime();
-			int64_t elapsed = _srcA.get_int64();
-			d1 = d1 - time_span(elapsed, time_models::days);
-		}
-		else if (_srcA.is_double() and _srcB.is_datetime())
-		{
-			date_time d1 = _srcB.get_datetime();
-			double elapsed = _srcA.get_double();
-			double start = elapsed;
-			double days = floor(elapsed);
-			d1 = d1 - time_span(days, time_models::days);
-
-			start -= days;
-			double hours = floor(start / 24.0);
-			d1 = d1 - time_span(hours, time_models::hours);
-
-			start -= hours;
-			double minutes = floor(start / 60.0);
-			d1 = d1 - time_span(minutes, time_models::minutes);
-
-			start -= minutes;
-			double seconds = floor(minutes / 60.0);
-			d1 = d1 - time_span(seconds, time_models::seconds);
-
-			start -= seconds;
-			double milliseconds = floor(start / 1000);
-			d1 = d1 - time_span(seconds, time_models::milliseconds);
-
-			result = jp.from_datetime(d1);
-		}
-		else if (_srcA.is_int64() or _srcB.is_datetime())
-		{
-			date_time d1 = _srcB.get_datetime();
-			int64_t elapsed = _srcA.get_int64();
-			d1 = d1 - time_span(elapsed, time_models::days);
+			int64_t start_seconds = (int64_t)_srcA.get_int64();
+			time_t  elapsed_seconds = d1.get_time_t();
+			time_t new_time = start_seconds - elapsed_seconds;
+			d1 = date_time(new_time);
 			result = jp.from_datetime(d1);
 		}
 		return result;
