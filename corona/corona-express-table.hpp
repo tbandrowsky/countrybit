@@ -385,6 +385,11 @@ namespace corona
 
 	void test_xfield(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
 	{
+		timer tx;
+		date_time start = date_time::now();
+
+		system_monitoring_interface::global_mon->log_function_start("xfield", "start", start, __FILE__, __LINE__);
+
 		date_time testa = date_time(2024, 10, 8);
 		date_time testb = date_time(2024, 11, 8);
 
@@ -559,7 +564,23 @@ namespace corona
 
 		result = test_stringa == test_stringa;
 		_tests->test({ "== string 2", result, __FILE__, __LINE__ });
+
+		system_monitoring_interface::global_mon->log_function_stop("xfield", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
+
+	enum xblock_types 
+	{
+		xb_none = 0,
+		xb_branch = 1,
+		xb_leaf = 2
+	};
+
+	struct xblock_ref
+	{
+	public:
+		xblock_types		block_type;
+		relative_ptr_type	location;
+	};
 
 	class xrecord : public xblock
 	{
@@ -671,21 +692,27 @@ namespace corona
 			}
 		}
 		
-		relative_ptr_type get_location()
+		xblock_ref get_xblock_ref()
 		{
+			xblock_ref result = { xblock_types::xb_none, null_row };
 			int next_offset;
 			xfield_holder xfkey;
 			xfkey = get_field(0, &next_offset);
 			if (xfkey and xfkey.get_field()->data_type == field_types::ft_int64) {
-				return xfkey.get_field()->get_int64();
+				result.location = xfkey.get_field()->get_int64();
 			}
-			return null_row;
+			xfkey = get_field(next_offset, &next_offset);
+			if (xfkey and xfkey.get_field()->data_type == field_types::ft_int64) {
+				result.block_type = (xblock_types)xfkey.get_field()->get_int64();
+			}
+			return result;
 		}
 
-		void put_location(data_block& db)
+		void put_xblock_ref(xblock_types _table_type, data_block& db)
 		{
 			clear();
 			add( db.header.block_location );
+			add( (int64_t)_table_type );
 		}
 
 		void clear()
@@ -769,7 +796,7 @@ namespace corona
 			this_key = get_field(this_offset, &this_offset);
 			while (this_key and other_key)
 			{
-				if (not (this_key == other_key))
+				if (this_key != other_key)
 				{
 					return false;
 				}
@@ -791,21 +818,25 @@ namespace corona
 
 			while (this_key and other_key)
 			{
-				if (not (this_key < other_key))
+				if (this_key < other_key)
 				{
-					return false;
+					return true;
 				}
 				other_key = _other.get_field(other_offset, &other_offset);
 				this_key = get_field(this_offset, &this_offset);
 			}
 
-			return true;
+			return false;
 		}
 	};
 
 	void test_xrecord(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
 	{
 		xrecord comp1, comp2, comp3;
+		timer tx;
+		date_time start = date_time::now();
+
+		system_monitoring_interface::global_mon->log_function_start("xrecord", "start", start, __FILE__, __LINE__);
 
 		comp1.add(4.0);
 		comp1.add("hello");
@@ -833,7 +864,7 @@ namespace corona
 		result = comp3 == comp1;
 		_tests->test({ "xr == key 2", result, __FILE__, __LINE__ });
 
-		comp3.add(42.0);
+		comp3.add(42i64);
 		result = comp3 == comp1;
 		_tests->test({ "xr == key 3", result, __FILE__, __LINE__ });
 
@@ -846,21 +877,21 @@ namespace corona
 		result = comp3 < comp1;
 		_tests->test({ "xr < key 2", result, __FILE__, __LINE__ });
 
-		comp3.add(42.0);
+		comp3.add(42i64);
 		result = comp3 < comp1;
 		_tests->test({ "xr < key 3", result, __FILE__, __LINE__ });
 
 		comp3.clear();
 		comp3.add(4.0);
-		result = comp3 < comp1;
+		result = not (comp3 < comp1);
 		_tests->test({ "xr < key 2.1", result, __FILE__, __LINE__ });
 
 		comp3.add("hello");
-		result = comp3 < comp1;
+		result = not(comp3 < comp1);
 		_tests->test({ "xr < key 2.2", result, __FILE__, __LINE__ });
 
-		comp3.add(43.0);
-		result = comp3 < comp1;
+		comp3.add(43i64);
+		result = not(comp3 < comp1);
 		_tests->test({ "xr < key 2.3", result, __FILE__, __LINE__ });
 
 		comp3.clear();
@@ -924,16 +955,24 @@ namespace corona
 		result = (date_time)jsrc["Today"] == (date_time)jdst["Today"];
 		_tests->test({ "rt today", result, __FILE__, __LINE__ });
 
+		xblock_ref tst_ref = { xblock_types::xb_none, null_row };
 		xrecord copy, readin;
 		compj.clear();
 		poco_node<rectangle> block;
 		block.header.block_location = 122;
-		compj.put_location(block);
+		compj.put_xblock_ref(xblock_types::xb_branch, block);
 		copy = compj;
-		result = (compj.get_location() == 122);
+		tst_ref = compj.get_xblock_ref();
+		result = (tst_ref.location == 122);
 		_tests->test({ "rt loc", result, __FILE__, __LINE__ });
-		result = (copy.get_location() == 122);
+		result = (tst_ref.block_type == xblock_types::xb_branch);
+		_tests->test({ "rt type", result, __FILE__, __LINE__ });
+		tst_ref = copy.get_xblock_ref();
+		result = (tst_ref.location == 122);
 		_tests->test({ "rt loc cp", result, __FILE__, __LINE__ });
+		result = (tst_ref.block_type == xblock_types::xb_branch);
+		_tests->test({ "rt type cp", result, __FILE__, __LINE__ });
+
 
 		// write the copy back to readin and see if the round trip works
 		char* src;
@@ -943,7 +982,16 @@ namespace corona
 		dest = copy.before_write(&length);
 		src = readin.before_read(length);
 		std::copy(dest, dest + length, src);
-		result = (readin.get_location() == 122);
+		tst_ref = readin.get_xblock_ref();
+		result = (tst_ref.location == 122);
+		_tests->test({ "rt locs", result, __FILE__, __LINE__ });
+		result = (tst_ref.block_type == xblock_types::xb_branch);
+		_tests->test({ "rt types", result, __FILE__, __LINE__ });
+		tst_ref = copy.get_xblock_ref();
+		result = (tst_ref.location == 122);
+		_tests->test({ "rt locs cp", result, __FILE__, __LINE__ });
+		result = (tst_ref.block_type == xblock_types::xb_branch);
+		_tests->test({ "rt types cp", result, __FILE__, __LINE__ });
 
 		// and with the json
 		jdst = jp.create_object();
@@ -966,6 +1014,7 @@ namespace corona
 		result = (date_time)jsrc["Today"] == (date_time)jdst["Today"];
 		_tests->test({ "rts today", result, __FILE__, __LINE__ });
 
+		system_monitoring_interface::global_mon->log_function_stop("xrecord", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 	class xrecord_block : public data_block
@@ -1254,6 +1303,78 @@ namespace corona
 				table->on_split(_split_block, _new_block);
 			}
 		}
+
+		virtual void put(const xrecord& key, xrecord& value)
+		{
+			auto ifirst = records.lower_bound(key);
+			if (ifirst != std::end(records)) {
+				auto& ifkey = ifirst->first;
+				auto& iftable = ifirst->second;
+			}
+			else 
+			{
+				auto irecord = records.rbegin();
+				if (irecord != std::rend(records)) {
+					auto& ifkey = ifirst->first;
+					auto& iftable = ifirst->second;
+				}
+				else 
+				{
+
+				}
+
+			}
+			
+		}
+
+		virtual xrecord get(const xrecord& key)
+		{
+			xrecord temp;
+			return temp;
+		}
+
+		virtual void erase(const xrecord& key)
+		{
+			records.erase(key);
+		}
+
+		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(int _index, xrecord& _key, xrecord& _value)> _process)
+		{
+			xfor_each_result result;
+			auto it = records.lower_bound(_key);
+			int index = 0;
+			while (it != records.end() and _key == it->first) {
+				xrecord it_temp = it->first;
+				relative_ptr_type t = _process(index, it_temp, it->second);
+				if (t != null_row) {
+					result.is_any = true;
+					index++;
+				}
+				it++;
+			}
+			result.is_all = index == records.size();
+			result.count = index;
+			return result;
+		}
+
+		virtual std::vector<xrecord> select(xrecord _key, std::function<xrecord(int _index, xrecord& _key, xrecord& _value)> _process)
+		{
+			std::vector<xrecord> results;
+			auto it = records.lower_bound(_key);
+			int index = 0;
+			while (it != records.end() and _key == it->first) {
+				xrecord it_temp = it->first;
+				xrecord t = _process(index, it_temp, it->second);
+				if (not t.is_empty())
+				{
+					results.push_back(t);
+					index++;
+				}
+				it++;
+			}
+			return results;
+		}
+
 	};
 
 	class xblock_leaf: public xrecord_block
@@ -1477,7 +1598,9 @@ namespace corona
 				_key.get_json(obj, table_header->key_members);
 				_data.get_json(obj, table_header->object_members);
 				json jresult = _process(obj);
-				target.push_back(jresult);
+				if (jresult.object()) {
+					target.push_back(jresult);
+				}
 				return _key;
 				});
 			return target;
