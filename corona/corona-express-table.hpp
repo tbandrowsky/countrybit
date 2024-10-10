@@ -34,12 +34,9 @@ namespace corona
 	};
 	
 
-	class express_table_interface
+	class xtable_interface
 	{
 	public:
-
-		xrecord_block_ptr root;
-		virtual void on_root_changed(xrecord_block_ptr _ptr) = 0;
 
 		virtual json get(json _object) = 0;
 		virtual void put(json _object) = 0;
@@ -1075,6 +1072,38 @@ namespace corona
 			return ref;
 		}
 
+		void save()
+		{
+
+			if (xheader.dirty)
+			{
+				xheader.dirty = false;
+				write(fb);
+			}
+
+			for (auto block_pair : child_cache)
+			{
+				block_pair.second->save();
+			}
+		}
+
+		void flush()
+		{
+
+			if (xheader.dirty)
+			{
+				xheader.dirty = false;
+				write(fb);
+			}
+
+			for (auto block_pair : child_cache)
+			{
+				block_pair.second->save();
+			}
+
+			child_cache.clear();
+		}
+
 		bool get_dirty()
 		{
 			return xheader.dirty;
@@ -1506,7 +1535,7 @@ namespace corona
 
 	};
 
-	class express_table_header : public data_block
+	class xtable_header : public data_block
 	{
 	public:
 		std::string data;
@@ -1582,17 +1611,16 @@ namespace corona
 
 	};
 
-	class express_table : public express_table_interface
+	class xtable : public xtable_interface
 	{
 
 	public:
 		const int								block_capacity = 100;
 		std::string								data;
 		file_block*								fb;
-		std::shared_ptr<express_table_header>	table_header;
-		std::shared_ptr<xbranch_block>			root;
+		std::shared_ptr<xtable_header>	table_header;
 
-		express_table(file_block* _fb, std::shared_ptr<express_table_header> _header) :
+		xtable(file_block* _fb, std::shared_ptr<xtable_header> _header) :
 			fb(_fb),
 			table_header(_header)
 		{
@@ -1606,18 +1634,18 @@ namespace corona
 			}
 		}
 
-		std::shared_ptr<express_table_header> create_header()
+		std::shared_ptr<xtable_header> create_header()
 		{
 			json_parser jp;
 
-			table_header = std::make_shared<express_table_header>();
+			table_header = std::make_shared<xtable_header>();
 			table_header->capacity = block_capacity;
 			xrecord_block_header new_header;
 			new_header.capacity = block_capacity;
 			new_header.content_type = xblock_types::xb_leaf;
 			new_header.type = xblock_types::xb_branch;
-			root = std::make_shared<xbranch_block>();
-			table_header->root_location = root->append(fb);
+			table_header->root = std::make_shared<xbranch_block>();
+			table_header->root_location = table_header->root->append(fb);
 			relative_ptr_type table_header_location = table_header->append(fb);
 			table_header->self_location = table_header_location;
 			table_header->write(fb);
@@ -1625,7 +1653,7 @@ namespace corona
 			return table_header;
 		}
 
-		std::shared_ptr<express_table_header> create()
+		std::shared_ptr<xtable_header> create()
 		{
 			date_time start_time = date_time::now();
 			timer tx;
@@ -1650,12 +1678,17 @@ namespace corona
 				system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
 			}
 
-			root = std::make_shared<xbranch_block>();
-			root->read(fb, table_header->root_location);
+			table_header->root = std::make_shared<xbranch_block>();
+			table_header->root->read(fb, table_header->root_location);
 
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
+		}
+
+		void save()
+		{
+			table_header->root->save();
 		}
 
 		virtual json get(json _object)
@@ -1663,7 +1696,7 @@ namespace corona
 			json_parser jp;
 			json jresult;
 			xrecord key(table_header->key_members, _object);
-			xrecord result = root->get(key);
+			xrecord result = table_header->root->get(key);
 			if (not result.is_empty()) {
 				jresult = jp.create_object();
 				key.get_json(jresult, table_header->key_members);
@@ -1677,7 +1710,7 @@ namespace corona
 		{
 			xrecord key(table_header->key_members, _object);
 			xrecord data(table_header->object_members, _object);			 
-			std::vector<xrecord_block_change> changes = root->put(key, data);
+			std::vector<xrecord_block_change> changes = table_header->root->put(key, data);
 			if (changes.size() > 1) {
 				xrecord_block_header new_header;
 				new_header.content_type = xblock_types::xb_branch;
@@ -1710,13 +1743,13 @@ namespace corona
 		virtual void erase(json _object)
 		{
 			xrecord key(table_header->key_members, _object);
-			root->erase(key);
+			table_header->root->erase(key);
 		}
 
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) override
 		{
 			xrecord key(table_header->key_members, _object);
-			root->for_each(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
+			table_header->root->for_each(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
 				json_parser jp;
 				json obj = jp.create_object();
 				_key.get_json(obj, table_header->key_members);
@@ -1730,7 +1763,7 @@ namespace corona
 			xrecord key(table_header->key_members, _object);
 			json_parser jp;
 			json target = jp.create_array();
-			root->select(key, [_process, this, &target](int _index, xrecord& _key, xrecord& _data)->xrecord {
+			table_header->root->select(key, [_process, this, &target](int _index, xrecord& _key, xrecord& _data)->xrecord {
 				json_parser jp;
 				json obj = jp.create_object();
 				_key.get_json(obj, table_header->key_members);
@@ -1819,6 +1852,46 @@ namespace corona
 		}
 
 		return return_block;
+
+	}
+
+	void test_xtable(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
+	{
+		std::shared_ptr<xtable_header> header;
+
+		std::shared_ptr<xtable> ptable;
+
+		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
+		file_block fb(fp);
+
+		header->key_members = { object_id_field };
+		header->object_members = { "name", "age", "weight" };
+		header->append(&fb);
+
+		ptable = std::make_shared<xtable>(&fb, header);
+
+		json_parser jp;
+
+		for (int i = 1; i <= 10000; i++)
+		{
+			json obj = jp.create_object();
+			obj.put_member(object_id_field, i);
+			obj.put_member("age", 10 + i % 50);
+			obj.put_member("weight", 100 + (i % 4) * 50);
+			ptable->put(obj);
+		}
+
+		for (int i = 1; i <= 10000; i++)
+		{
+			json key = jp.create_object();
+			key.put_member(object_id_field, i);
+			json obj = jp.create_object();
+			obj.put_member(object_id_field, i);
+			obj.put_member("age", 10 + i % 50);
+			obj.put_member("weight", 100 + (i % 4) * 50);
+			json objd;
+			objd = ptable->get(key);
+		}
 
 	}
 

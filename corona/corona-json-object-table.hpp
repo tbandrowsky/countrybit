@@ -145,6 +145,7 @@ namespace corona
 
 			return in;
 		}
+
 		json_object_key_block create_node(int _max_level)
 		{
 			json_object_key_block new_node;

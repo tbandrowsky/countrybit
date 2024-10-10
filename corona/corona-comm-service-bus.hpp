@@ -182,6 +182,10 @@ namespace corona
 			testo = tm.create_test_set("xrecord", dependencies);
 			test_xrecord(testo, app);
 
+			dependencies = { "xrecord" };
+			testo = tm.create_test_set("xtable", dependencies);
+			test_express_table(testo, app);
+
 			dependencies = { "json node", "xrecord" };
 			testo = tm.create_test_set("master", dependencies);
 
