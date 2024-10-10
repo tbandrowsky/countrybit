@@ -157,9 +157,11 @@ namespace corona
 
 		xfield_holder()
 		{
-			bytes = nullptr;
-			key = nullptr;
-			total_size = 0;
+			total_size = sizeof(xfield);
+			bytes = new char[total_size];
+			key = new (bytes) xfield();
+			key->data_length = 0;
+			key->data_type = field_types::ft_none;
 		}
 
 		xfield_holder(const xfield_holder& _src)
@@ -289,6 +291,8 @@ namespace corona
 					return this_key->get_datetime() < other_key->get_datetime();
 				case field_types::ft_int64:
 					return this_key->get_int64() < other_key->get_int64();
+				case field_types::ft_none:
+					return false;
 				}
 			} 
 			else if (this_key and not other_key)
@@ -322,6 +326,8 @@ namespace corona
 					return this_key->get_datetime() == other_key->get_datetime();
 				case field_types::ft_int64:
 					return this_key->get_int64() == other_key->get_int64();
+				case field_types::ft_none:
+					return true;
 				}
 			}
 
@@ -346,6 +352,8 @@ namespace corona
 					return this_key->get_datetime() > other_key->get_datetime();
 				case field_types::ft_int64:
 					return this_key->get_int64() > other_key->get_int64();
+				case field_types::ft_none:
+					return false;
 				}
 			}
 			else if (*this and not _other)
@@ -374,6 +382,8 @@ namespace corona
 					return this_key->get_datetime() != other_key->get_datetime();
 				case field_types::ft_int64:
 					return this_key->get_int64() != other_key->get_int64();
+				case field_types::ft_none:
+					return false;
 				}
 			}
 			else if (*this and not _other)
@@ -649,7 +659,7 @@ namespace corona
 					new_key = xfield_holder(m.get_int64());
 					break;
 				default:
-					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
+					new_key = xfield_holder();
 					break;
 				}
 				key.insert(key.end(), (char *)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
@@ -682,7 +692,6 @@ namespace corona
 					_dest.put_member_i64(field_name, this_key.get_field()->get_int64());
 					break;
 				default:
-					throw std::logic_error("Only use string, double, datetime and int64 for index keys");
 					break;
 				}
 				this_key = get_field(this_offset, &this_offset);
@@ -1844,22 +1853,20 @@ namespace corona
 
 		system_monitoring_interface::global_mon->log_function_start("xtable", "start", start, __FILE__, __LINE__);
 
-		std::shared_ptr<xtable_header> header;
-
-		std::shared_ptr<xtable> ptable;
 
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
 
+		std::shared_ptr<xtable_header> header = std::make_shared<xtable_header>();
 		header->key_members = { object_id_field };
 		header->object_members = { "name", "age", "weight" };
-		header->append(&fb);
 
+		std::shared_ptr<xtable> ptable;
 		ptable = std::make_shared<xtable>(&fb, header);
 
 		json_parser jp;
 
-		for (int i = 1; i <= 10000; i++)
+		for (int i = 1; i <= 20000; i++)
 		{
 			json obj = jp.create_object();
 			obj.put_member(object_id_field, i);
@@ -1868,9 +1875,14 @@ namespace corona
 			ptable->put(obj);
 		}
 
+		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
+
+		ptable->save();
+		_tests->test({ "save_survived", true, __FILE__, __LINE__ });
+
 		std::vector<std::string> keys = { object_id_field, "age", "weight"};
 		bool round_trip_success = true;
-		for (int i = 1; i <= 10000; i++)
+		for (int i = 1; i <= 20000; i++)
 		{
 			json key = jp.create_object();
 			key.put_member(object_id_field, i);
