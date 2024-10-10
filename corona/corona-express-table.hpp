@@ -11,6 +11,13 @@ namespace corona
 	class xrecord_block;
 	using xrecord_block_ptr = xrecord_block*;
 
+	enum xblock_types
+	{
+		xb_none = 0,
+		xb_branch = 1,
+		xb_leaf = 2
+	};
+
 	struct xblock_ref
 	{
 	public:
@@ -25,6 +32,7 @@ namespace corona
 		bool is_all;
 		int64_t count;
 	};
+	
 
 	class express_table_interface
 	{
@@ -38,7 +46,6 @@ namespace corona
 		virtual void erase(json _object) = 0;
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) = 0;
 		virtual json select(json _object, std::function<json(json& _item)> _process) = 0;
-		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block) = 0;
 
 	};
 
@@ -576,13 +583,6 @@ namespace corona
 		system_monitoring_interface::global_mon->log_function_stop("xfield", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
-	enum xblock_types 
-	{
-		xb_none = 0,
-		xb_branch = 1,
-		xb_leaf = 2
-	};
-
 	class xrecord : public xblock
 	{
 		std::vector<char> key;
@@ -709,11 +709,11 @@ namespace corona
 			return result;
 		}
 
-		void put_xblock_ref(xblock_types _table_type, data_block& db)
+		void put_xblock_ref(const xblock_ref& ref)
 		{
 			clear();
-			add( db.header.block_location );
-			add( (int64_t)_table_type );
+			add( ref.location );
+			add( (int64_t)ref.block_type );
 		}
 
 		void clear()
@@ -959,9 +959,10 @@ namespace corona
 		xblock_ref tst_ref = { xblock_types::xb_none, null_row };
 		xrecord copy, readin;
 		compj.clear();
-		poco_node<rectangle> block;
-		block.header.block_location = 122;
-		compj.put_xblock_ref(xblock_types::xb_branch, block);
+		xblock_ref ref;
+		ref.location = 122;
+		ref.block_type = xblock_types::xb_branch;
+		compj.put_xblock_ref(ref);
 		copy = compj;
 		tst_ref = compj.get_xblock_ref();
 		result = (tst_ref.location == 122);
@@ -1021,15 +1022,24 @@ namespace corona
 	struct xrecord_block_header
 	{
 		xblock_types							type;
+		xblock_types							content_type;
 		int										capacity;
 		bool									dirty;
+	};
+
+	struct xrecord_block_change
+	{
+	public:
+		xrecord							original_key;
+		std::shared_ptr<xrecord_block>	modified_block_sp;
+		xrecord_block*					modified_block_p = nullptr;
 	};
 
 	class xrecord_block : public data_block
 	{
 	protected:
 
-		xrecord_block_header								header;
+		xrecord_block_header								xheader;
 		std::map<xrecord, xrecord>							records;
 		std::vector<char>									bytes;
 		std::map<int64_t, std::shared_ptr<xrecord_block>>	child_cache;
@@ -1052,27 +1062,27 @@ namespace corona
 		xrecord_block(file_block *_fb, xrecord_block_header& _src)
 		{
 			fb = _fb;
-			header.capacity = _src.capacity;
-			header.dirty = _src.dirty;
-			header.type = _src.type;
+			xheader.capacity = _src.capacity;
+			xheader.dirty = _src.dirty;
+			xheader.type = _src.type;
 		}
 
 		xblock_ref get_reference()
 		{
 			xblock_ref ref;
-			ref.block_type = header.type;
+			ref.block_type = xheader.type;
 			ref.location = data_block::header.block_location;
 			return ref;
 		}
 
 		bool get_dirty()
 		{
-			return header.dirty;
+			return xheader.dirty;
 		}
 
 		void set_dirty(bool _dirty)
 		{
-			header.dirty = false;
+			xheader.dirty = false;
 		}
 
 		virtual xrecord get_start_key()
@@ -1097,17 +1107,12 @@ namespace corona
 			return key;
 		}
 
-		virtual void put(const xrecord& key, xrecord& value)
+		virtual std::vector<xrecord_block_change> put(const xrecord& key, xrecord& value)
 		{
-			header.dirty = true;
+			std::vector<xrecord_block_change> changes;
+			xheader.dirty = true;
 			records.insert_or_assign(key, value);
-
-			// then, we check to see if we have to split the block
-
-			if (records.size() >= header.capacity)
-			{
-				on_full();
-			}
+			return changes;
 		}
 
 		virtual xrecord get(const xrecord& key)
@@ -1171,7 +1176,7 @@ namespace corona
 		virtual void after_read(char* _bytes) override
 		{
 			records.clear();
-			header = *((xrecord_block_header*)_bytes);
+			xheader = *((xrecord_block_header*)_bytes);
 			_bytes += sizeof(xrecord_block_header);
 			xblock_record_list* record_list = (xblock_record_list*)_bytes;
 			for (int i = 0; i < record_list->count; i++)
@@ -1182,7 +1187,7 @@ namespace corona
 				xrecord v(pdata + rl->value_offset, rl->value_size); // just deserializing the records.
 				records.insert_or_assign(k, v);
 			}
-			header.dirty = false;
+			xheader.dirty = false;
 		}
 
 		virtual void finished_io(char* _bytes) override
@@ -1212,7 +1217,7 @@ namespace corona
 			char* base = bytes.data();
 			char* current = base;
 			xrecord_block_header* hdr = (xrecord_block_header*)current;
-			*hdr = header;
+			*hdr = xheader;
 			current += sizeof(xrecord_block_header);
 			xblock_record_list* record_list = (xblock_record_list*)current;
 			current += header_bytes;
@@ -1244,9 +1249,22 @@ namespace corona
 
 		}
 
-		virtual void on_full()
+		bool is_full()
 		{
-			xrecord_block* new_xb = get_new_block();
+			return xheader.capacity <= xrecord_block::records.size() + 1;
+		}
+
+		protected:
+
+		std::shared_ptr<xrecord_block> create_block(xrecord_block_header& _header);
+		std::shared_ptr<xrecord_block> get_block(xblock_ref& _ref);
+		std::shared_ptr<xrecord_block> find_block(const xrecord& key);
+
+		virtual std::vector<xrecord_block_change> split_to_peer()
+		{
+			std::vector<xrecord_block_change> changes;
+
+			auto new_xb = create_block(xheader);
 			new_xb->set_dirty(true);
 
 			int rsz = records.size() / 2;
@@ -1256,10 +1274,19 @@ namespace corona
 
 			int count = 0;
 
+			xrecord_block_change change_this;
+			change_this.modified_block_p = this;
+			change_this.original_key = get_end_key();
+			changes.push_back(change_this);
+
+			xrecord_block_change change_new;
+			change_this.modified_block_sp = new_xb;
+			changes.push_back(change_this);
+
 			for (auto& kv : records)
 			{
 				if (count > rsz) {
-					keys_to_delete.push_back( kv.first );
+					keys_to_delete.push_back(kv.first);
 					new_xb->put(kv.first, kv.second);
 				}
 				count++;
@@ -1270,144 +1297,213 @@ namespace corona
 				records.erase(kv);
 			}
 
-			notify_split(this, new_xb);
+			return changes;
 		}
 
-		virtual void notify_split(xrecord_block_ptr _split_block, xrecord_block_ptr _new_block) = 0;
-		virtual xrecord_block_ptr get_new_block() = 0;
+
 	};
 
-	class xblock_branch : public xrecord_block
+	class xbranch_block : public xrecord_block
 	{
 	public:
 
-		express_table_interface		*table;
-		xblock_branch				*parent;
-
-		xblock_branch(file_block *_fb, xrecord_block_header& _header, express_table_interface* _table) :
-			table(_table),
-			parent(nullptr),
+		xbranch_block(file_block *_fb, xrecord_block_header& _header) :
 			xrecord_block(_fb, _header)
 		{
 			;
 		}
 
-		xblock_branch(file_block *_fb, xrecord_block_header& _header, xblock_branch *_parent) :
-			table(nullptr),
-			parent(_parent),
-			xrecord_block(_fb, _header)
+		void split_into_children()
 		{
-			;
-		}
+			auto new_child1 = xrecord_block::create_block(xheader);
+			auto new_child2 = xrecord_block::create_block(xheader);
 
-		virtual void put_block(xrecord_block_ptr _block)
-		{
-			auto new_key = _block->get_start_key();
-			int64_t location = _block->get_location(); // remember this is not written yet.
-			xrecord xlocation;
-			xlocation.add(location);
-			put(new_key, xlocation);
-		}
+			int rsz = records.size() / 2;
+			int count = 0;
 
-		virtual xrecord_block_ptr get_new_block()
-		{
-			;
-		}
-
-		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block)
-		{
-		}
-
-		virtual void notify_split(xrecord_block_ptr _split_block, xrecord_block_ptr _new_block)
-		{
-			if (parent) {
-				parent->on_split(_split_block, _new_block);
-			}
-			else if (table)
+			for (auto r : records) 
 			{
-				table->on_split(_split_block, _new_block);
-			}
-		}
-
-		std::shared_ptr<xrecord_block> create_block(xrecord_block_header& _header);
-		std::shared_ptr<xrecord_block> get_block(xblock_ref& _ref);
-		std::shared_ptr<xrecord_block> find_block(const xrecord& key);
-
-		virtual void put(const xrecord& key, xrecord& value)
-		{
-			
-		}
-
-		virtual xrecord get(const xrecord& key)
-		{
-			xrecord temp;
-			return temp;
-		}
-
-		virtual void erase(const xrecord& key)
-		{
-			records.erase(key);
-		}
-
-		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(int _index, xrecord& _key, xrecord& _value)> _process)
-		{
-			xfor_each_result result;
-			auto it = records.lower_bound(_key);
-			int index = 0;
-			while (it != records.end() and _key == it->first) {
-				xrecord it_temp = it->first;
-				relative_ptr_type t = _process(index, it_temp, it->second);
-				if (t != null_row) {
-					result.is_any = true;
-					index++;
+				if (count >= rsz) 
+				{
+					new_child1->put(r.first, r.second);
 				}
-				it++;
+				else 
+				{
+					new_child2->put(r.first, r.second);
+				}
+				count++;
 			}
-			result.is_all = index == records.size();
-			result.count = index;
+			records.clear();
+
+			new_child1->append(fb);
+			new_child2->append(fb);
+
+			xblock_ref child1_ref = new_child1->get_reference();
+			xblock_ref child2_ref = new_child2->get_reference();
+
+			// we turn these reference into xrecords because I am a lazy 
+			// whore and am using xrecord for everything.
+			xrecord xchild1_ref;
+			xchild1_ref.put_xblock_ref(child1_ref);
+
+			xrecord xchild2_ref;
+			xchild2_ref.put_xblock_ref(child2_ref);
+
+			// we find the keys for the new children so that we can insert
+			// then right things into our map
+			xrecord child1_key = new_child1->get_end_key();
+			xrecord child2_key = new_child2->get_end_key();
+
+			xheader.content_type = xblock_types::xb_branch;
+
+			records.insert_or_assign(child1_key, child1_ref);
+			records.insert_or_assign(child2_key, child2_ref);
+		}
+
+		virtual std::vector<xrecord_block_change> put(const xrecord& key, xrecord& value) override
+		{
+			std::vector<xrecord_block_change> my_changes;
+
+			std::shared_ptr<xrecord_block> found_block = find_block(key);
+
+			std::vector<xrecord_block_change> child_changes;
+
+			if (not found_block) 
+			{
+				found_block = create_block(xheader);
+				child_changes = found_block->put(key, value);
+				xrecord_block_change this_change;
+				this_change.modified_block_p = this;
+				child_changes.push_back(this_change);
+			}
+			else 
+			{
+				child_changes = found_block->put(key, value);
+			}
+
+			for (auto &change : child_changes) {
+
+				xrecord new_key;
+				xblock_ref ref;
+
+				xrecord existing_key = change.original_key;
+
+				if (change.modified_block_p) {
+					new_key = change.modified_block_p->get_end_key();
+					ref = change.modified_block_p->get_reference();
+				}
+				else if (change.modified_block_sp)
+				{
+					new_key = change.modified_block_sp->get_end_key();
+					ref = change.modified_block_sp->get_reference();
+				}
+
+				if (new_key != existing_key) 
+				{
+					xheader.dirty = true;
+					if (not existing_key.is_empty())
+					{
+						records.erase(existing_key);
+					}
+					xrecord xref;
+					xref.put_xblock_ref(ref);
+					records.insert_or_assign(new_key, xref);
+				}
+			}
+
+			if (is_full()) // now, I need to split
+			{
+				// the rule is, if I am a branch block stuffed with leaves,
+				// then I will take all the leaves, make a new block, split,
+				// with both of them as my children.
+				if (xheader.content_type == xblock_types::xb_leaf)
+				{
+					split_into_children();
+				}
+				else if (xheader.content_type == xblock_types::xb_branch)
+				{
+					my_changes = split_to_peer();
+				}
+			}
+
+			return my_changes;
+		}
+
+		virtual xrecord get(const xrecord& key) override
+		{
+			xrecord record;
+			std::shared_ptr<xrecord_block> block = find_block(key);
+			if (block) {
+				record = block->get(key);
+			}
+			return record;			
+		}
+
+		virtual void erase(const xrecord& key) override
+		{
+			xrecord record;
+			std::shared_ptr<xrecord_block> block = find_block(key);
+			if (block) {
+				block->erase(key);
+			}
+		}
+
+		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(int _index, xrecord& _key, xrecord& _value)> _process) override
+		{
+			xfor_each_result result = {};
+			result.is_all = false;
+			result.is_any = false;
+			for (auto item : records) {
+				if (item.first == _key) {
+					xblock_ref ref = item.second.get_xblock_ref();
+					auto block = get_block(ref);
+					xfor_each_result temp =	block->for_each(_key, _process);
+					result.count += temp.count;
+					if (temp.is_any)
+						result.is_any = true;
+					if (not temp.is_all)
+						result.is_all = false;
+				}
+			}
 			return result;
 		}
 
-		virtual std::vector<xrecord> select(xrecord _key, std::function<xrecord(int _index, xrecord& _key, xrecord& _value)> _process)
+		virtual std::vector<xrecord> select(xrecord _key, std::function<xrecord(int _index, xrecord& _key, xrecord& _value)> _process) override
 		{
-			std::vector<xrecord> results;
-			auto it = records.lower_bound(_key);
-			int index = 0;
-			while (it != records.end() and _key == it->first) {
-				xrecord it_temp = it->first;
-				xrecord t = _process(index, it_temp, it->second);
-				if (not t.is_empty())
-				{
-					results.push_back(t);
-					index++;
+			std::vector<xrecord> result = {};
+			for (auto item : records) {
+				if (item.first == _key) {
+					xblock_ref ref = item.second.get_xblock_ref();
+					auto block = get_block(ref);
+					std::vector<xrecord> temp = block->select(_key, _process);
+					result.insert(result.end(), temp.begin(), temp.end());
 				}
-				it++;
 			}
-			return results;
+			return result;
 		}
 
 	};
 
-	class xblock_leaf: public xrecord_block
+	class xleaf_block: public xrecord_block
 	{
 	public:
 
-		xblock_branch* parent;
-
-		xblock_leaf(file_block *_fb, xrecord_block_header& _header, xblock_branch* _parent) 
-			: xrecord_block(_fb, _header), 
-			parent(_parent)
+		xleaf_block(file_block *_fb, xrecord_block_header& _header) 
+			: xrecord_block(_fb, _header)
 		{
 			;
 		}
 
-		virtual void notify_split(xrecord_block_ptr _split_block, xrecord_block_ptr _new_block)
+		virtual std::vector<xrecord_block_change> put(const xrecord& key, xrecord& value) override
 		{
-			if (parent) 
-			{
-				parent->on_split(_split_block, _new_block);
+			std::vector<xrecord_block_change> changes;
+			records.insert_or_assign(key, value);
+			if (is_full()) {
+				changes = split_to_peer();
 			}
+			return changes;
 		}
+
 	};
 
 	class express_table_header : public data_block
@@ -1417,7 +1513,7 @@ namespace corona
 
 		relative_ptr_type self_location;
 		relative_ptr_type root_location;
-		xrecord_block_ptr root;
+		std::shared_ptr<xrecord_block> root;
 
 		std::vector<std::string> key_members;
 		std::vector<std::string> object_members;
@@ -1490,11 +1586,11 @@ namespace corona
 	{
 
 	public:
-		const int								block_capacity = 1000;
+		const int								block_capacity = 100;
 		std::string								data;
 		file_block*								fb;
 		std::shared_ptr<express_table_header>	table_header;
-		std::shared_ptr<xblock_branch>			root;
+		std::shared_ptr<xbranch_block>			root;
 
 		express_table(file_block* _fb, std::shared_ptr<express_table_header> _header) :
 			fb(_fb),
@@ -1516,7 +1612,11 @@ namespace corona
 
 			table_header = std::make_shared<express_table_header>();
 			table_header->capacity = block_capacity;
-			root = std::make_shared<xblock_branch>(this, nullptr, table_header->capacity);
+			xrecord_block_header new_header;
+			new_header.capacity = block_capacity;
+			new_header.content_type = xblock_types::xb_leaf;
+			new_header.type = xblock_types::xb_branch;
+			root = std::make_shared<xbranch_block>();
 			table_header->root_location = root->append(fb);
 			relative_ptr_type table_header_location = table_header->append(fb);
 			table_header->self_location = table_header_location;
@@ -1550,6 +1650,9 @@ namespace corona
 				system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
 			}
 
+			root = std::make_shared<xbranch_block>();
+			root->read(fb, table_header->root_location);
+
 			if (ENABLE_JSON_LOGGING) {
 				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
@@ -1573,8 +1676,35 @@ namespace corona
 		virtual void put(json _object)
 		{
 			xrecord key(table_header->key_members, _object);
-			xrecord data(table_header->object_members, _object);
-			root->put(key, data);
+			xrecord data(table_header->object_members, _object);			 
+			std::vector<xrecord_block_change> changes = root->put(key, data);
+			if (changes.size() > 1) {
+				xrecord_block_header new_header;
+				new_header.content_type = xblock_types::xb_branch;
+				new_header.type = xblock_types::xb_branch;
+				std::shared_ptr<xbranch_block> new_branch = std::make_shared<xbranch_block>(new_header);
+				for (auto change : changes) 
+				{
+					xrecord xkey;
+					xrecord xref;
+					xblock_ref ref;
+					if (change.modified_block_p) {
+						ref = change.modified_block_p->get_reference();
+						xref.put_xblock_ref(ref);
+						xkey = change.modified_block_p->get_end_key();
+						new_branch->put(xkey, xref);
+					}
+					else if (change.modified_block_p)
+					{
+						ref = change.modified_block_p->get_reference();
+						xref.put_xblock_ref(ref);
+						xkey = change.modified_block_p->get_end_key();
+						new_branch->put(xkey, xref);
+					}
+				}
+				table_header->root_location = new_branch->append(fb);
+				table_header->root = new_branch;
+			}
 		}
 
 		virtual void erase(json _object)
@@ -1614,28 +1744,27 @@ namespace corona
 			return target;
 		}
 
-		virtual void on_split(xrecord_block_ptr _left_root_block, xrecord_block_ptr _right_root_block)
-		{
-			;
-		}
 	};
 
-	std::shared_ptr<xrecord_block> xblock_branch::create_block(xrecord_block_header& _header)
+	std::shared_ptr<xrecord_block> xrecord_block::create_block(xrecord_block_header& _header)
 	{
 		std::shared_ptr<xrecord_block> result;
 		switch (_header.type) {
 		case xblock_types::xb_branch:
-			result = std::make_shared<xblock_branch>(table, parent, _header.capacity);
+			result = std::make_shared<xbranch_block>(_header);
 			break;
 		case xblock_types::xb_leaf:
-			result = std::make_shared<xblock_leaf>(table, parent, _header.capacity);
+			result = std::make_shared<xleaf_block>(_header);
 			break;
 		}
+		result->append(fb);
+		xblock_ref ref = result->get_reference();
+		child_cache.insert_or_assign(ref.location, result);
 		return result;
 	}
 
 	// you're getting an xblock ref and you have to read an a result.
-	std::shared_ptr<xrecord_block> xblock_branch::get_block(xblock_ref& _ref)
+	std::shared_ptr<xrecord_block> xrecord_block::get_block(xblock_ref& _ref)
 	{
 		std::shared_ptr<xrecord_block> result;
 		auto itrcached = child_cache.find(_ref.location);
@@ -1644,45 +1773,52 @@ namespace corona
 		}
 
 		xrecord_block_header hbr;
-		hbr.capacity = header.capacity;
+		hbr.capacity = xheader.capacity;
 		hbr.dirty = false;
 		hbr.type = _ref.block_type;
 		switch (_ref.block_type) {
 		case xblock_types::xb_branch:			
-			result = std::make_shared<xblock_branch>(fb, hbr, parent);
+			result = std::make_shared<xbranch_block>(fb, hbr);
 			break;
 		case xblock_types::xb_leaf:
-			result = std::make_shared<xblock_leaf>(fb, hbr, parent);
+			result = std::make_shared<xleaf_block>(fb, hbr);
 			break;
 		}
-		if (_ref.location != null_row) {
+		if (_ref.location != null_row) 
+		{
 			result->read(fb, _ref.location);
 		}
-		else {
+		else 
+		{
 			result->append(fb);
 		}
 		child_cache.insert_or_assign(_ref.location, result);
 		return result;
 	}
 
-	std::shared_ptr<xrecord_block> xblock_branch::find_block(const xrecord& key)
+	std::shared_ptr<xrecord_block> xrecord_block::find_block(const xrecord& key)
 	{
-
 		std::shared_ptr<xrecord_block> return_block;
 
+		// taking the left end
 		auto ifirst = records.lower_bound(key);
 		if (ifirst != std::end(records)) {
 			auto& iftable = ifirst->second;
-			return_block
+			auto block_xref = iftable.get_xblock_ref();
+			return_block = get_block(block_xref);
+			return return_block;
 		}
+
+		// taking the right end
 		auto irecord = records.rbegin();
 		if (irecord != std::rend(records)) {
 			auto& iftable = ifirst->second;
+			auto block_xref = iftable.get_xblock_ref();
+			return_block = get_block(block_xref);
+			return return_block;
 		}
 
-		xblock_ref new_table;
-
-		xrecord new_table;
+		return return_block;
 
 	}
 
