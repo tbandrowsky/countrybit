@@ -830,11 +830,12 @@ namespace corona
 
 	void test_xrecord(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
 	{
-		xrecord comp1, comp2, comp3;
 		timer tx;
 		date_time start = date_time::now();
 
 		system_monitoring_interface::global_mon->log_function_start("xrecord", "start", start, __FILE__, __LINE__);
+
+		xrecord comp1, comp2, comp3;
 
 		comp1.add(4.0);
 		comp1.add("hello");
@@ -1032,7 +1033,7 @@ namespace corona
 		xrecord_block*					modified_block_p = nullptr;
 	};
 
-	class xrecord_block : public data_block
+	class xrecord_block : protected data_block
 	{
 	protected:
 
@@ -1062,6 +1063,16 @@ namespace corona
 			xheader.capacity = _src.capacity;
 			xheader.dirty = _src.dirty;
 			xheader.type = _src.type;
+			append(_fb);
+		}
+
+		xrecord_block(file_block* _fb, int64_t _location)
+		{
+			if (_location == null_row) {
+				throw std::invalid_argument("Invalid location");
+			}
+			fb = _fb;
+			read(fb, _location);
 		}
 
 		xblock_ref get_reference()
@@ -1196,6 +1207,13 @@ namespace corona
 			return results;
 		}
 
+		bool is_full()
+		{
+			return xheader.capacity <= xrecord_block::records.size() + 1;
+		}
+
+	protected:
+
 		virtual char* before_read(int32_t _size)  override
 		{
 			bytes.resize(_size);
@@ -1229,7 +1247,7 @@ namespace corona
 			int32_t record_bytes = 0;
 			int32_t total_bytes = 0;
 			int32_t header_bytes = 0;
-			int32_t count;
+			int32_t count = 0;
 
 			for (auto& r : records)
 			{
@@ -1278,12 +1296,6 @@ namespace corona
 
 		}
 
-		bool is_full()
-		{
-			return xheader.capacity <= xrecord_block::records.size() + 1;
-		}
-
-		protected:
 
 		std::shared_ptr<xrecord_block> create_block(xrecord_block_header& _header);
 		std::shared_ptr<xrecord_block> get_block(xblock_ref& _ref);
@@ -1342,6 +1354,11 @@ namespace corona
 			;
 		}
 
+		xbranch_block(file_block* _fb, relative_ptr_type _location) : xrecord_block(_fb, _location)
+		{
+			;
+		}
+
 		void split_into_children()
 		{
 			auto new_child1 = xrecord_block::create_block(xheader);
@@ -1385,8 +1402,8 @@ namespace corona
 
 			xheader.content_type = xblock_types::xb_branch;
 
-			records.insert_or_assign(child1_key, child1_ref);
-			records.insert_or_assign(child2_key, child2_ref);
+			records.insert_or_assign(child1_key, xchild1_ref);
+			records.insert_or_assign(child2_key, xchild2_ref);
 		}
 
 		virtual std::vector<xrecord_block_change> put(const xrecord& key, xrecord& value) override
@@ -1454,6 +1471,8 @@ namespace corona
 					my_changes = split_to_peer();
 				}
 			}
+
+			save();
 
 			return my_changes;
 		}
@@ -1523,6 +1542,11 @@ namespace corona
 			;
 		}
 
+		xleaf_block(file_block* _fb, int64_t _location) : xrecord_block(_fb, _location)
+		{
+			;
+		}
+
 		virtual std::vector<xrecord_block_change> put(const xrecord& key, xrecord& value) override
 		{
 			std::vector<xrecord_block_change> changes;
@@ -1537,13 +1561,13 @@ namespace corona
 
 	class xtable_header : public data_block
 	{
+		std::string		  data;
+
 	public:
-		std::string data;
 
-		relative_ptr_type self_location;
-		relative_ptr_type root_location;
+		xblock_ref		  root_block;
+
 		std::shared_ptr<xrecord_block> root;
-
 		std::vector<std::string> key_members;
 		std::vector<std::string> object_members;
 		int capacity;
@@ -1551,8 +1575,8 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
-			_dest.put_member_i64("self_location", self_location);
-			_dest.put_member_i64("root_location", root_location);
+			_dest.put_member_i64("root_type", root_block.block_type);
+			_dest.put_member_i64("root_location", root_block.location);
 			_dest.put_member_i64("capacity", capacity);
 			json kms = jp.create_array(key_members);
 			_dest.put_member("key_members", kms);
@@ -1564,8 +1588,8 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			json_parser jp;
-			self_location = _src["self_location"];
-			root_location = _src["root_location"];
+			root_block.location = _src["root_location"];
+			root_block.block_type = (xblock_types)((int64_t)_src["root_type"]);
 			capacity = (int64_t)_src["capacity"];
 			json kms = _src["key_members"];
 			key_members = kms.to_string_array();
@@ -1618,72 +1642,38 @@ namespace corona
 		const int								block_capacity = 100;
 		std::string								data;
 		file_block*								fb;
-		std::shared_ptr<xtable_header>	table_header;
+		std::shared_ptr<xtable_header>			table_header;
 
 		xtable(file_block* _fb, std::shared_ptr<xtable_header> _header) :
 			fb(_fb),
 			table_header(_header)
 		{
-			if (_header->self_location < 0)
-			{
-				create();
-			}
-			else
-			{
-				open();
-			}
-		}
-
-		std::shared_ptr<xtable_header> create_header()
-		{
-			json_parser jp;
-
-			table_header = std::make_shared<xtable_header>();
 			table_header->capacity = block_capacity;
 			xrecord_block_header new_header;
 			new_header.capacity = block_capacity;
 			new_header.content_type = xblock_types::xb_leaf;
 			new_header.type = xblock_types::xb_branch;
-			table_header->root = std::make_shared<xbranch_block>();
-			table_header->root_location = table_header->root->append(fb);
+			table_header->root = std::make_shared<xbranch_block>(fb, new_header);
+			table_header->root_block = table_header->root->get_reference();
 			relative_ptr_type table_header_location = table_header->append(fb);
-			table_header->self_location = table_header_location;
-			table_header->write(fb);
-
-			return table_header;
+			table_header->append(fb);
 		}
 
-		std::shared_ptr<xtable_header> create()
+		xtable(file_block* _fb, int64_t _location) :
+			fb(_fb)
 		{
-			date_time start_time = date_time::now();
-			timer tx;
-
-			create_header();
-
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
+			if (_location == null_row) {
+				throw std::invalid_argument("Invalid location");
 			}
+			table_header = std::make_shared<xtable_header>();
+			table_header->read(fb, _location);
 
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "create complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			}
-			return table_header;
+			table_header->root = std::make_shared<xbranch_block>(fb, table_header->root_block.location);
 		}
 
-		void open()
+		relative_ptr_type get_location()
 		{
-			date_time start_time = date_time::now();
-			timer tx;
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
-			}
 
-			table_header->root = std::make_shared<xbranch_block>();
-			table_header->root->read(fb, table_header->root_location);
-
-			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			}
 		}
 
 		void save()
@@ -1715,7 +1705,7 @@ namespace corona
 				xrecord_block_header new_header;
 				new_header.content_type = xblock_types::xb_branch;
 				new_header.type = xblock_types::xb_branch;
-				std::shared_ptr<xbranch_block> new_branch = std::make_shared<xbranch_block>(new_header);
+				std::shared_ptr<xbranch_block> new_branch = std::make_shared<xbranch_block>(fb, new_header);
 				for (auto change : changes) 
 				{
 					xrecord xkey;
@@ -1735,8 +1725,8 @@ namespace corona
 						new_branch->put(xkey, xref);
 					}
 				}
-				table_header->root_location = new_branch->append(fb);
 				table_header->root = new_branch;
+				table_header->root_block = new_branch->get_reference();
 			}
 		}
 
@@ -1744,18 +1734,21 @@ namespace corona
 		{
 			xrecord key(table_header->key_members, _object);
 			table_header->root->erase(key);
+			save();
 		}
 
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) override
 		{
 			xrecord key(table_header->key_members, _object);
-			table_header->root->for_each(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
+			xfor_each_result result;
+			result = table_header->root->for_each(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
 				json_parser jp;
 				json obj = jp.create_object();
 				_key.get_json(obj, table_header->key_members);
 				_data.get_json(obj, table_header->object_members);
 				return _process(obj);
 				});
+			return result;
 		}
 
 		virtual json select(json _object, std::function<json(json& _item)> _process) override
@@ -1784,10 +1777,10 @@ namespace corona
 		std::shared_ptr<xrecord_block> result;
 		switch (_header.type) {
 		case xblock_types::xb_branch:
-			result = std::make_shared<xbranch_block>(_header);
+			result = std::make_shared<xbranch_block>(fb, _header);
 			break;
 		case xblock_types::xb_leaf:
-			result = std::make_shared<xleaf_block>(_header);
+			result = std::make_shared<xleaf_block>(fb, _header);
 			break;
 		}
 		result->append(fb);
@@ -1805,26 +1798,15 @@ namespace corona
 			return itrcached->second;
 		}
 
-		xrecord_block_header hbr;
-		hbr.capacity = xheader.capacity;
-		hbr.dirty = false;
-		hbr.type = _ref.block_type;
 		switch (_ref.block_type) {
 		case xblock_types::xb_branch:			
-			result = std::make_shared<xbranch_block>(fb, hbr);
+			result = std::make_shared<xbranch_block>(fb, _ref.location);
 			break;
 		case xblock_types::xb_leaf:
-			result = std::make_shared<xleaf_block>(fb, hbr);
+			result = std::make_shared<xleaf_block>(fb, _ref.location);
 			break;
 		}
-		if (_ref.location != null_row) 
-		{
-			result->read(fb, _ref.location);
-		}
-		else 
-		{
-			result->append(fb);
-		}
+
 		child_cache.insert_or_assign(_ref.location, result);
 		return result;
 	}
@@ -1857,6 +1839,11 @@ namespace corona
 
 	void test_xtable(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
 	{
+		timer tx;
+		date_time start = date_time::now();
+
+		system_monitoring_interface::global_mon->log_function_start("xtable", "start", start, __FILE__, __LINE__);
+
 		std::shared_ptr<xtable_header> header;
 
 		std::shared_ptr<xtable> ptable;
@@ -1881,6 +1868,8 @@ namespace corona
 			ptable->put(obj);
 		}
 
+		std::vector<std::string> keys = { object_id_field, "age", "weight"};
+		bool round_trip_success = true;
 		for (int i = 1; i <= 10000; i++)
 		{
 			json key = jp.create_object();
@@ -1889,10 +1878,18 @@ namespace corona
 			obj.put_member(object_id_field, i);
 			obj.put_member("age", 10 + i % 50);
 			obj.put_member("weight", 100 + (i % 4) * 50);
+			obj.set_compare_order(keys);
 			json objd;
 			objd = ptable->get(key);
+			objd.set_compare_order(keys);
+			if (objd.compare(obj) != 0) {
+				round_trip_success = false;
+				break;
+			}
 		}
+		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
 
+		system_monitoring_interface::global_mon->log_function_stop("xtable", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 }
