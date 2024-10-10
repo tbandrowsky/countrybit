@@ -15,7 +15,8 @@ namespace corona
 	{
 		xb_none = 0,
 		xb_branch = 1,
-		xb_leaf = 2
+		xb_leaf = 2,
+		xb_record = 3
 	};
 
 	struct xblock_ref
@@ -157,11 +158,9 @@ namespace corona
 
 		xfield_holder()
 		{
-			total_size = sizeof(xfield);
-			bytes = new char[total_size];
-			key = new (bytes) xfield();
-			key->data_length = 0;
-			key->data_type = field_types::ft_none;
+			total_size = 0;
+			bytes = nullptr;
+			key = nullptr;
 		}
 
 		xfield_holder(const xfield_holder& _src)
@@ -251,6 +250,15 @@ namespace corona
 			key->data_type = field_types::ft_datetime;
 			date_time* dest = (date_time*)key->data;
 			*dest = _data;
+		}
+
+		xfield_holder(void* _dummy)
+		{
+			total_size = sizeof(xfield);
+			bytes = new char[total_size];
+			key = new (bytes) xfield();
+			key->data_length = 0;
+			key->data_type = field_types::ft_none;
 		}
 
 		int get_total_size() const
@@ -659,7 +667,7 @@ namespace corona
 					new_key = xfield_holder(m.get_int64());
 					break;
 				default:
-					new_key = xfield_holder();
+					new_key = xfield_holder(nullptr);
 					break;
 				}
 				key.insert(key.end(), (char *)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
@@ -790,6 +798,34 @@ namespace corona
 				*_next_offset = t.get_total_size() + _offset;
 			}
 			return t;
+		}
+
+		bool all_equal(const xrecord& _other) const
+		{
+			int this_offset = 0;
+			int other_offset = 0;
+			xfield_holder this_key;
+			xfield_holder other_key;
+
+			other_key = _other.get_field(other_offset, &other_offset);
+			this_key = get_field(this_offset, &this_offset);
+
+			while (this_key and other_key)
+			{
+				if (this_key != other_key)
+				{
+					return false;
+				}
+				other_key = _other.get_field(other_offset, &other_offset);
+				this_key = get_field(this_offset, &this_offset);
+			}
+
+			if (not this_key and other_key)
+				return false;
+			else if (this_key and not other_key)
+				return false;
+
+			return true;
 		}
 
 		bool operator == (const xrecord& _other) const
@@ -1048,7 +1084,6 @@ namespace corona
 
 		xrecord_block_header								xheader;
 		std::map<xrecord, xrecord>							records;
-		std::vector<char>									bytes;
 		std::map<int64_t, std::shared_ptr<xrecord_block>>	child_cache;
 		file_block		*									fb;
 
@@ -1069,9 +1104,7 @@ namespace corona
 		xrecord_block(file_block *_fb, xrecord_block_header& _src)
 		{
 			fb = _fb;
-			xheader.capacity = _src.capacity;
-			xheader.dirty = _src.dirty;
-			xheader.type = _src.type;
+			xheader = _src;
 			append(_fb);
 		}
 
@@ -1082,6 +1115,10 @@ namespace corona
 			}
 			fb = _fb;
 			read(fb, _location);
+		}
+
+		virtual ~xrecord_block()
+		{
 		}
 
 		xblock_ref get_reference()
@@ -1160,7 +1197,11 @@ namespace corona
 		{
 			std::vector<xrecord_block_change> changes;
 			xheader.dirty = true;
+			xrecord_block_change this_change;
+			this_change.original_key = get_end_key();
+			this_change.modified_block_p = this;
 			records.insert_or_assign(key, value);
+			changes.push_back(this_change);
 			return changes;
 		}
 
@@ -1225,8 +1266,8 @@ namespace corona
 
 		virtual char* before_read(int32_t _size)  override
 		{
-			bytes.resize(_size);
-			return (char*)bytes.data();
+			char *bytes = new char[_size + 10];
+			return bytes;
 		}
 
 		virtual void after_read(char* _bytes) override
@@ -1238,17 +1279,12 @@ namespace corona
 			for (int i = 0; i < record_list->count; i++)
 			{
 				xblock_record_list::xblock_ref* rl = &record_list->offsets[i];
-				char* pdata = bytes.data();
+				char* pdata = _bytes;
 				xrecord k(pdata + rl->key_offset, rl->key_size); // just deserializing the records.
 				xrecord v(pdata + rl->value_offset, rl->value_size); // just deserializing the records.
 				records.insert_or_assign(k, v);
 			}
 			xheader.dirty = false;
-		}
-
-		virtual void finished_io(char* _bytes) override
-		{
-			;
 		}
 
 		virtual char* before_write(int32_t* _size) override
@@ -1268,15 +1304,13 @@ namespace corona
 			header_bytes = sizeof(xrecord_block_header) + sizeof(xblock_record_list) + sizeof(xblock_record_list::xblock_ref) * count;
 			total_bytes += header_bytes;
 			*_size = total_bytes;
-			bytes.resize(total_bytes);
-
-			char* base = bytes.data();
-			char* current = base;
+			char *bytes = new char[total_bytes + 10];
+			char* current = bytes;
 			xrecord_block_header* hdr = (xrecord_block_header*)current;
 			*hdr = xheader;
 			current += sizeof(xrecord_block_header);
 			xblock_record_list* record_list = (xblock_record_list*)current;
-			current += header_bytes;
+			current += sizeof(xblock_record_list);
 
 			int i = 0;
 			for (auto& r : records)
@@ -1285,19 +1319,19 @@ namespace corona
 				xrecord rkey = r.first;
 				xrecord& skey = r.second;
 				rl->key_size = rkey.size();
-				rl->key_offset = current - base;
+				rl->key_offset = current - bytes;
 				int size_actual;
 				char *rsrc = rkey.before_write(&size_actual);
 				std::copy(rsrc, rsrc + size_actual, current);
 				current += rl->key_size;
 
 				rl->value_size = skey.size();
-				rl->value_offset = current - base;
+				rl->value_offset = current - bytes;
 				char *vsrc = skey.before_write(&size_actual);
 				std::copy(vsrc, vsrc + size_actual, current);
 				current += size_actual;
 			}
-			return base;
+			return bytes;
 		}
 
 		virtual void after_write(char* _t) override
@@ -1305,6 +1339,12 @@ namespace corona
 
 		}
 
+		virtual void finished_io(char* _bytes) override
+		{
+			if (_bytes)
+				delete[] _bytes;
+			_bytes = nullptr;
+		}
 
 		std::shared_ptr<xrecord_block> create_block(xrecord_block_header& _header);
 		std::shared_ptr<xrecord_block> get_block(xblock_ref& _ref);
@@ -1390,9 +1430,6 @@ namespace corona
 			}
 			records.clear();
 
-			new_child1->append(fb);
-			new_child2->append(fb);
-
 			xblock_ref child1_ref = new_child1->get_reference();
 			xblock_ref child2_ref = new_child2->get_reference();
 
@@ -1419,17 +1456,23 @@ namespace corona
 		{
 			std::vector<xrecord_block_change> my_changes;
 
+			xrecord_block_change this_change;
+			this_change.original_key = get_end_key();
+			this_change.modified_block_p = this;
+			my_changes.push_back(this_change);
+
 			std::shared_ptr<xrecord_block> found_block = find_block(key);
 
 			std::vector<xrecord_block_change> child_changes;
 
 			if (not found_block) 
 			{
-				found_block = create_block(xheader);
+				xrecord_block_header new_block_header;
+				new_block_header.capacity = xheader.capacity;
+				new_block_header.type = xheader.content_type;
+				new_block_header.content_type = xblock_types::xb_record;
+				found_block = create_block(new_block_header);
 				child_changes = found_block->put(key, value);
-				xrecord_block_change this_change;
-				this_change.modified_block_p = this;
-				child_changes.push_back(this_change);
 			}
 			else 
 			{
@@ -1453,7 +1496,7 @@ namespace corona
 					ref = change.modified_block_sp->get_reference();
 				}
 
-				if (new_key != existing_key) 
+				if (not new_key.all_equal(existing_key))
 				{
 					xheader.dirty = true;
 					if (not existing_key.is_empty())
@@ -1558,10 +1601,11 @@ namespace corona
 
 		virtual std::vector<xrecord_block_change> put(const xrecord& key, xrecord& value) override
 		{
-			std::vector<xrecord_block_change> changes;
-			records.insert_or_assign(key, value);
+			std::vector<xrecord_block_change> changes = xrecord_block::put(key, value);
 			if (is_full()) {
-				changes = split_to_peer();
+				std::vector<xrecord_block_change> more_changes;
+				more_changes = split_to_peer();
+				changes.insert(changes.end(), more_changes.begin(), more_changes.end());
 			}
 			return changes;
 		}
@@ -1664,7 +1708,6 @@ namespace corona
 			new_header.type = xblock_types::xb_branch;
 			table_header->root = std::make_shared<xbranch_block>(fb, new_header);
 			table_header->root_block = table_header->root->get_reference();
-			relative_ptr_type table_header_location = table_header->append(fb);
 			table_header->append(fb);
 		}
 
@@ -1792,7 +1835,6 @@ namespace corona
 			result = std::make_shared<xleaf_block>(fb, _header);
 			break;
 		}
-		result->append(fb);
 		xblock_ref ref = result->get_reference();
 		child_cache.insert_or_assign(ref.location, result);
 		return result;
@@ -1834,9 +1876,9 @@ namespace corona
 		}
 
 		// taking the right end
-		auto irecord = records.rbegin();
-		if (irecord != std::rend(records)) {
-			auto& iftable = ifirst->second;
+		auto ilast = records.rbegin();
+		if (ilast != std::rend(records)) {
+			auto& iftable = ilast->second;
 			auto block_xref = iftable.get_xblock_ref();
 			return_block = get_block(block_xref);
 			return return_block;
@@ -1893,6 +1935,11 @@ namespace corona
 			obj.set_compare_order(keys);
 			json objd;
 			objd = ptable->get(key);
+			if (objd.empty())
+			{
+				round_trip_success = false;
+				break;
+			}
 			objd.set_compare_order(keys);
 			if (objd.compare(obj) != 0) {
 				round_trip_success = false;
