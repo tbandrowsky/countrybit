@@ -1073,9 +1073,16 @@ namespace corona
 	struct xrecord_block_change
 	{
 	public:
-		xrecord							original_key;
-		std::shared_ptr<xrecord_block>	modified_block_sp;
-		xrecord_block*					modified_block_p = nullptr;
+		struct parent_change_type 
+		{
+			xrecord							original_key;
+			xrecord_block*					modified;
+		} parent_change;
+		
+		struct created_change_type
+		{
+			std::shared_ptr<xrecord_block>	new_block;
+		} peer_change;
 	};
 
 	class xrecord_block : protected data_block
@@ -1193,15 +1200,13 @@ namespace corona
 			return key;
 		}
 
-		virtual std::vector<xrecord_block_change> put(const xrecord& key, xrecord& value)
+		virtual xrecord_block_change put(const xrecord& key, xrecord& value)
 		{
-			std::vector<xrecord_block_change> changes;
+			xrecord_block_change changes = {};
 			xheader.dirty = true;
-			xrecord_block_change this_change;
-			this_change.original_key = get_end_key();
-			this_change.modified_block_p = this;
+			changes.parent_change.original_key = get_end_key();
+			changes.parent_change.modified = this;
 			records.insert_or_assign(key, value);
-			changes.push_back(this_change);
 			return changes;
 		}
 
@@ -1301,6 +1306,7 @@ namespace corona
 				total_bytes = record_bytes;
 				count++;
 			}
+
 			header_bytes = sizeof(xrecord_block_header) + sizeof(xblock_record_list) + sizeof(xblock_record_list::xblock_ref) * count;
 			total_bytes += header_bytes;
 			*_size = total_bytes;
@@ -1350,9 +1356,25 @@ namespace corona
 		std::shared_ptr<xrecord_block> get_block(xblock_ref& _ref);
 		std::shared_ptr<xrecord_block> find_block(const xrecord& key);
 
-		virtual std::vector<xrecord_block_change> split_to_peer()
+		virtual std::shared_ptr<xrecord_block> split_to_peer()
 		{
-			std::vector<xrecord_block_change> changes;
+
+/************************************************
+
+split into children from this:
+
+Block A - Full [ 0........n ]
+
+to this
+
+Block A - [ 0...n/2 ]        Block B - [ n/2...n ]
+
+In this case, the parent of A is not involved, 
+and only needs to know that A may changed its key contents
+as is the case in all puts
+
+***********************************************/
+
 
 			auto new_xb = create_block(xheader);
 			new_xb->set_dirty(true);
@@ -1363,15 +1385,6 @@ namespace corona
 			std::vector<xrecord> keys_to_delete;
 
 			int count = 0;
-
-			xrecord_block_change change_this;
-			change_this.modified_block_p = this;
-			change_this.original_key = get_end_key();
-			changes.push_back(change_this);
-
-			xrecord_block_change change_new;
-			change_this.modified_block_sp = new_xb;
-			changes.push_back(change_this);
 
 			for (auto& kv : records)
 			{
@@ -1387,7 +1400,7 @@ namespace corona
 				records.erase(kv);
 			}
 
-			return changes;
+			return new_xb;
 		}
 
 
@@ -1410,6 +1423,27 @@ namespace corona
 
 		void split_into_children()
 		{
+
+			/************************************************
+
+			split into children from this:
+
+			Block A - Full [ 0........n ]
+
+			to this
+
+				  Block A - [ Block B, Block C ]
+						//                  \\
+					   //                    \\
+			Block B - [ 0...n/2 ]        Block C - [ n/2...n ]
+
+			Note that the parent of Block A is not changed, 
+			unless it needs to know Block A's key references.
+
+
+
+			***********************************************/
+
 			auto new_child1 = xrecord_block::create_block(xheader);
 			auto new_child2 = xrecord_block::create_block(xheader);
 
@@ -1428,6 +1462,7 @@ namespace corona
 				}
 				count++;
 			}
+
 			records.clear();
 
 			xblock_ref child1_ref = new_child1->get_reference();
@@ -1452,25 +1487,22 @@ namespace corona
 			records.insert_or_assign(child2_key, xchild2_ref);
 		}
 
-		virtual std::vector<xrecord_block_change> put(const xrecord& key, xrecord& value) override
+		virtual xrecord_block_change put(const xrecord& key, xrecord& value) override
 		{
-			std::vector<xrecord_block_change> my_changes;
-
-			xrecord_block_change this_change;
-			this_change.original_key = get_end_key();
-			this_change.modified_block_p = this;
-			my_changes.push_back(this_change);
+			xrecord_block_change my_changes;
 
 			std::shared_ptr<xrecord_block> found_block = find_block(key);
 
-			std::vector<xrecord_block_change> child_changes;
+			xrecord_block_change child_changes;
+
+			xrecord this_old_key = get_end_key();
 
 			if (not found_block) 
 			{
 				xrecord_block_header new_block_header;
 				new_block_header.capacity = xheader.capacity;
 				new_block_header.type = xheader.content_type;
-				new_block_header.content_type = xblock_types::xb_record;
+				new_block_header.content_type = xblock_types::xb_leaf;
 				found_block = create_block(new_block_header);
 				child_changes = found_block->put(key, value);
 			}
@@ -1479,34 +1511,28 @@ namespace corona
 				child_changes = found_block->put(key, value);
 			}
 
-			for (auto &change : child_changes) {
+			if (child_changes.parent_change.modified) 
+			{
+				xrecord& old_key = child_changes.parent_change.original_key;
+				xrecord  new_key = child_changes.parent_change.modified->get_end_key();
 
-				xrecord new_key;
-				xblock_ref ref;
-
-				xrecord existing_key = change.original_key;
-
-				if (change.modified_block_p) {
-					new_key = change.modified_block_p->get_end_key();
-					ref = change.modified_block_p->get_reference();
-				}
-				else if (change.modified_block_sp)
+				if (not new_key.all_equal(old_key))
 				{
-					new_key = change.modified_block_sp->get_end_key();
-					ref = change.modified_block_sp->get_reference();
+					xblock_ref	location = child_changes.parent_change.modified->get_reference();
+					xrecord		new_location;
+					new_location.put_xblock_ref(location);
+					records.erase(old_key);
+					records.insert_or_assign(new_key, new_location);
 				}
+			}
 
-				if (not new_key.all_equal(existing_key))
-				{
-					xheader.dirty = true;
-					if (not existing_key.is_empty())
-					{
-						records.erase(existing_key);
-					}
-					xrecord xref;
-					xref.put_xblock_ref(ref);
-					records.insert_or_assign(new_key, xref);
-				}
+			if (child_changes.peer_change.new_block)
+			{
+				xblock_ref	location = child_changes.peer_change.new_block->get_reference();
+				xrecord		new_location;
+				xrecord  new_key = child_changes.peer_change.new_block->get_end_key();
+				new_location.put_xblock_ref(location);
+				records.insert_or_assign(new_key, new_location);
 			}
 
 			if (is_full()) // now, I need to split
@@ -1520,9 +1546,12 @@ namespace corona
 				}
 				else if (xheader.content_type == xblock_types::xb_branch)
 				{
-					my_changes = split_to_peer();
+					my_changes.peer_change.new_block = split_to_peer();
 				}
 			}
+			
+			my_changes.parent_change.original_key = this_old_key;
+			my_changes.parent_change.modified = this;
 
 			save();
 
@@ -1599,14 +1628,21 @@ namespace corona
 			;
 		}
 
-		virtual std::vector<xrecord_block_change> put(const xrecord& key, xrecord& value) override
+		virtual xrecord_block_change put(const xrecord& key, xrecord& value) override
 		{
-			std::vector<xrecord_block_change> changes = xrecord_block::put(key, value);
-			if (is_full()) {
-				std::vector<xrecord_block_change> more_changes;
-				more_changes = split_to_peer();
-				changes.insert(changes.end(), more_changes.begin(), more_changes.end());
+			xrecord_block_change changes;
+
+			xrecord this_old_key = get_end_key();
+
+			xrecord_block::put(key, value);
+
+			if (is_full()) 
+			{
+				changes.peer_change.new_block = split_to_peer();
 			}
+			changes.parent_change.original_key = this_old_key;
+			changes.parent_change.modified = this;
+
 			return changes;
 		}
 
@@ -1752,34 +1788,7 @@ namespace corona
 		{
 			xrecord key(table_header->key_members, _object);
 			xrecord data(table_header->object_members, _object);			 
-			std::vector<xrecord_block_change> changes = table_header->root->put(key, data);
-			if (changes.size() > 1) {
-				xrecord_block_header new_header;
-				new_header.content_type = xblock_types::xb_branch;
-				new_header.type = xblock_types::xb_branch;
-				std::shared_ptr<xbranch_block> new_branch = std::make_shared<xbranch_block>(fb, new_header);
-				for (auto change : changes) 
-				{
-					xrecord xkey;
-					xrecord xref;
-					xblock_ref ref;
-					if (change.modified_block_p) {
-						ref = change.modified_block_p->get_reference();
-						xref.put_xblock_ref(ref);
-						xkey = change.modified_block_p->get_end_key();
-						new_branch->put(xkey, xref);
-					}
-					else if (change.modified_block_p)
-					{
-						ref = change.modified_block_p->get_reference();
-						xref.put_xblock_ref(ref);
-						xkey = change.modified_block_p->get_end_key();
-						new_branch->put(xkey, xref);
-					}
-				}
-				table_header->root = new_branch;
-				table_header->root_block = new_branch->get_reference();
-			}
+			table_header->root->put(key, data);
 		}
 
 		virtual void erase(json _object)
@@ -1911,7 +1920,7 @@ namespace corona
 		for (int i = 1; i <= 20000; i++)
 		{
 			json obj = jp.create_object();
-			obj.put_member(object_id_field, i);
+			obj.put_member_i64(object_id_field, i);
 			obj.put_member("age", 10 + i % 50);
 			obj.put_member("weight", 100 + (i % 4) * 50);
 			ptable->put(obj);
@@ -1927,9 +1936,9 @@ namespace corona
 		for (int i = 1; i <= 20000; i++)
 		{
 			json key = jp.create_object();
-			key.put_member(object_id_field, i);
+			key.put_member_i64(object_id_field, i);
 			json obj = jp.create_object();
-			obj.put_member(object_id_field, i);
+			obj.put_member_i64(object_id_field, i);
 			obj.put_member("age", 10 + i % 50);
 			obj.put_member("weight", 100 + (i % 4) * 50);
 			obj.set_compare_order(keys);
