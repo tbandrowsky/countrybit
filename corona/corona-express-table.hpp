@@ -1494,7 +1494,7 @@ as is the case in all puts
 		{
 			xrecord_block_change my_changes;
 
-			std::string message = std::format("branch {0} put:{1}", ((int64_t)this % 10000), key.to_string());
+			std::string message = std::format("branch {0}, count: {1}, put:{2}", (int64_t)this, records.size(), key.to_string());
 			system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 
 			std::shared_ptr<xrecord_block> found_block = find_block(key);
@@ -1651,7 +1651,7 @@ as is the case in all puts
 		{
 			xrecord_block_change changes;
 
-			std::string message = "leaf put:" + key.to_string();
+			std::string message = std::format("leaf: {0}, count: {1} put:{2}", (int64_t)this, records.size(), key.to_string());
 			system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 
 			xrecord this_old_key = get_end_key();
