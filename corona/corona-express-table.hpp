@@ -673,6 +673,42 @@ namespace corona
 				key.insert(key.end(), (char *)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
 			}
 		}
+
+		std::string to_string() const
+		{
+			std::stringstream output;
+
+			int this_offset = 0;
+			xfield_holder this_key;
+			std::string separator = "";
+			this_key = get_field(this_offset, &this_offset);
+			while (this_key)
+			{
+				output << separator;
+				switch (this_key.get_field()->data_type)
+				{
+				case field_types::ft_string:
+					output << this_key.get_field()->get_string();
+					break;
+				case field_types::ft_double:
+					output << this_key.get_field()->get_double();
+					break;
+				case field_types::ft_datetime:
+					output << (std::string)this_key.get_field()->get_datetime();
+					break;
+				case field_types::ft_int64:
+					output << this_key.get_field()->get_int64();
+					break;
+				default:
+					break;
+				}
+				this_key = get_field(this_offset, &this_offset);
+				separator = ".";
+			}
+
+			std::string results = output.str();
+			return results;
+		}
 		
 		void get_json(json& _dest, std::vector<std::string>& _keys)
 		{
@@ -1067,7 +1103,6 @@ namespace corona
 		xblock_types							type;
 		xblock_types							content_type;
 		int										capacity;
-		bool									dirty;
 	};
 
 	struct xrecord_block_change
@@ -1091,7 +1126,6 @@ namespace corona
 
 		xrecord_block_header								xheader;
 		std::map<xrecord, xrecord>							records;
-		std::map<int64_t, std::shared_ptr<xrecord_block>>	child_cache;
 		file_block		*									fb;
 
 		struct xblock_record_list
@@ -1138,44 +1172,13 @@ namespace corona
 
 		void save()
 		{
-
-			if (xheader.dirty)
-			{
-				xheader.dirty = false;
+			if (data_block::header.block_location >= 0) {
 				write(fb);
 			}
-
-			for (auto block_pair : child_cache)
+			else 
 			{
-				block_pair.second->save();
+				append(fb);
 			}
-		}
-
-		void flush()
-		{
-
-			if (xheader.dirty)
-			{
-				xheader.dirty = false;
-				write(fb);
-			}
-
-			for (auto block_pair : child_cache)
-			{
-				block_pair.second->save();
-			}
-
-			child_cache.clear();
-		}
-
-		bool get_dirty()
-		{
-			return xheader.dirty;
-		}
-
-		void set_dirty(bool _dirty)
-		{
-			xheader.dirty = false;
 		}
 
 		virtual xrecord get_start_key()
@@ -1203,7 +1206,6 @@ namespace corona
 		virtual xrecord_block_change put(const xrecord& key, xrecord& value)
 		{
 			xrecord_block_change changes = {};
-			xheader.dirty = true;
 			changes.parent_change.original_key = get_end_key();
 			changes.parent_change.modified = this;
 			records.insert_or_assign(key, value);
@@ -1289,7 +1291,6 @@ namespace corona
 				xrecord v(pdata + rl->value_offset, rl->value_size); // just deserializing the records.
 				records.insert_or_assign(k, v);
 			}
-			xheader.dirty = false;
 		}
 
 		virtual char* before_write(int32_t* _size) override
@@ -1377,7 +1378,6 @@ as is the case in all puts
 
 
 			auto new_xb = create_block(xheader);
-			new_xb->set_dirty(true);
 
 			int rsz = records.size() / 2;
 
@@ -1465,6 +1465,9 @@ as is the case in all puts
 
 			records.clear();
 
+			new_child1->save();
+			new_child2->save();
+
 			xblock_ref child1_ref = new_child1->get_reference();
 			xblock_ref child2_ref = new_child2->get_reference();
 
@@ -1491,6 +1494,9 @@ as is the case in all puts
 		{
 			xrecord_block_change my_changes;
 
+			std::string message = std::format("branch {0} put:{1}", ((int64_t)this % 10000), key.to_string());
+			system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+
 			std::shared_ptr<xrecord_block> found_block = find_block(key);
 
 			xrecord_block_change child_changes;
@@ -1505,14 +1511,22 @@ as is the case in all puts
 				new_block_header.content_type = xblock_types::xb_leaf;
 				found_block = create_block(new_block_header);
 				child_changes = found_block->put(key, value);
+				found_block->save();
+				xblock_ref xref = found_block->get_reference();
+				xrecord xrefxrec;
+				xrefxrec.put_xblock_ref(xref);
+				records.insert_or_assign(key, xrefxrec);
 			}
 			else 
 			{
 				child_changes = found_block->put(key, value);
 			}
 
+			found_block->save();
+
 			if (child_changes.parent_change.modified) 
 			{
+				child_changes.parent_change.modified->save();
 				xrecord& old_key = child_changes.parent_change.original_key;
 				xrecord  new_key = child_changes.parent_change.modified->get_end_key();
 
@@ -1528,6 +1542,7 @@ as is the case in all puts
 
 			if (child_changes.peer_change.new_block)
 			{
+				child_changes.peer_change.new_block->save();
 				xblock_ref	location = child_changes.peer_change.new_block->get_reference();
 				xrecord		new_location;
 				xrecord  new_key = child_changes.peer_change.new_block->get_end_key();
@@ -1542,10 +1557,14 @@ as is the case in all puts
 				// with both of them as my children.
 				if (xheader.content_type == xblock_types::xb_leaf)
 				{
+					std::string message = std::format("branch {0} split_children", ((int64_t)this % 10000));
+					system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 					split_into_children();
 				}
 				else if (xheader.content_type == xblock_types::xb_branch)
 				{
+					std::string message = std::format("branch {0} split_peer", ((int64_t)this % 10000));
+					system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 					my_changes.peer_change.new_block = split_to_peer();
 				}
 			}
@@ -1631,6 +1650,9 @@ as is the case in all puts
 		virtual xrecord_block_change put(const xrecord& key, xrecord& value) override
 		{
 			xrecord_block_change changes;
+
+			std::string message = "leaf put:" + key.to_string();
+			system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 
 			xrecord this_old_key = get_end_key();
 
@@ -1788,7 +1810,14 @@ as is the case in all puts
 		{
 			xrecord key(table_header->key_members, _object);
 			xrecord data(table_header->object_members, _object);			 
-			table_header->root->put(key, data);
+			auto changes = table_header->root->put(key, data);
+			if (changes.parent_change.modified) {
+				changes.parent_change.modified->save();
+			}
+			if (changes.peer_change.new_block) {
+				changes.peer_change.new_block->save();
+			}
+			table_header->root->save();
 		}
 
 		virtual void erase(json _object)
@@ -1844,8 +1873,6 @@ as is the case in all puts
 			result = std::make_shared<xleaf_block>(fb, _header);
 			break;
 		}
-		xblock_ref ref = result->get_reference();
-		child_cache.insert_or_assign(ref.location, result);
 		return result;
 	}
 
@@ -1853,10 +1880,6 @@ as is the case in all puts
 	std::shared_ptr<xrecord_block> xrecord_block::get_block(xblock_ref& _ref)
 	{
 		std::shared_ptr<xrecord_block> result;
-		auto itrcached = child_cache.find(_ref.location);
-		if (itrcached != child_cache.end()) {
-			return itrcached->second;
-		}
 
 		switch (_ref.block_type) {
 		case xblock_types::xb_branch:			
@@ -1867,7 +1890,6 @@ as is the case in all puts
 			break;
 		}
 
-		child_cache.insert_or_assign(_ref.location, result);
 		return result;
 	}
 
