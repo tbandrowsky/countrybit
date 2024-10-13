@@ -1279,9 +1279,10 @@ namespace corona
 
 		virtual void after_read(char* _bytes) override
 		{
+			char* current = _bytes;
 			records.clear();
-			xheader = *((xrecord_block_header*)_bytes);
-			_bytes += sizeof(xrecord_block_header);
+			xheader = *((xrecord_block_header*)current);
+			current += sizeof(xrecord_block_header);
 			xblock_record_list* record_list = (xblock_record_list*)_bytes;
 			for (int i = 0; i < record_list->count; i++)
 			{
@@ -1311,30 +1312,35 @@ namespace corona
 			header_bytes = sizeof(xrecord_block_header) + sizeof(xblock_record_list) + sizeof(xblock_record_list::xblock_ref) * count;
 			total_bytes += header_bytes;
 			*_size = total_bytes;
+
 			char *bytes = new char[total_bytes + 10];
 			char* current = bytes;
 			xrecord_block_header* hdr = (xrecord_block_header*)current;
 			*hdr = xheader;
+
 			current += sizeof(xrecord_block_header);
 			xblock_record_list* record_list = (xblock_record_list*)current;
-			current += sizeof(xblock_record_list);
+			record_list->count = count;
+
+			current = &bytes[header_bytes];
 
 			int i = 0;
 			for (auto& r : records)
 			{
 				auto* rl = &record_list->offsets[i];
-				xrecord rkey = r.first;
-				xrecord& skey = r.second;
-				rl->key_size = rkey.size();
-				rl->key_offset = current - bytes;
 				int size_actual;
-				char *rsrc = rkey.before_write(&size_actual);
-				std::copy(rsrc, rsrc + size_actual, current);
-				current += rl->key_size;
 
-				rl->value_size = skey.size();
+				xrecord record_key = r.first;
+				rl->key_size = record_key.size();
+				rl->key_offset = current - bytes;
+				char *rsrc = record_key.before_write(&size_actual);
+				std::copy(rsrc, rsrc + size_actual, current);
+				current += size_actual;
+
+				xrecord& record_value = r.second;
+				rl->value_size = record_value.size();
 				rl->value_offset = current - bytes;
-				char *vsrc = skey.before_write(&size_actual);
+				char *vsrc = record_value.before_write(&size_actual);
 				std::copy(vsrc, vsrc + size_actual, current);
 				current += size_actual;
 			}
@@ -1418,7 +1424,7 @@ as is the case in all puts
 
 		xbranch_block(file_block* _fb, relative_ptr_type _location) : xrecord_block(_fb, _location)
 		{
-			;
+			read(_fb, _location);
 		}
 
 		void split_into_children()
@@ -1494,7 +1500,7 @@ as is the case in all puts
 		{
 			xrecord_block_change my_changes;
 
-			std::string message = std::format("branch {0}, count: {1}, put:{2}", (int64_t)this, records.size(), key.to_string());
+			std::string message = std::format("branch {0}, count: {1}, put:{2}", get_reference().location, records.size(), key.to_string());
 			system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 
 			std::shared_ptr<xrecord_block> found_block = find_block(key);
@@ -1557,13 +1563,13 @@ as is the case in all puts
 				// with both of them as my children.
 				if (xheader.content_type == xblock_types::xb_leaf)
 				{
-					std::string message = std::format("branch {0} split_children", ((int64_t)this % 10000));
+					std::string message = std::format("branch {0} split_children", ((int64_t)this));
 					system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 					split_into_children();
 				}
 				else if (xheader.content_type == xblock_types::xb_branch)
 				{
-					std::string message = std::format("branch {0} split_peer", ((int64_t)this % 10000));
+					std::string message = std::format("branch {0} split_peer", ((int64_t)this));
 					system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 					my_changes.peer_change.new_block = split_to_peer();
 				}
@@ -1651,7 +1657,7 @@ as is the case in all puts
 		{
 			xrecord_block_change changes;
 
-			std::string message = std::format("leaf: {0}, count: {1} put:{2}", (int64_t)this, records.size(), key.to_string());
+			std::string message = std::format("leaf: {0}, count: {1} put:{2}", get_reference().location, records.size(), key.to_string());
 			system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 
 			xrecord this_old_key = get_end_key();
