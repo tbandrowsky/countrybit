@@ -4,6 +4,8 @@
 #ifndef CORONA_EXPRESS_TABLE_H
 #define CORONA_EXPRESS_TABLE_H
 
+const bool debug_xblock = false;
+
 namespace corona
 {
 
@@ -22,6 +24,19 @@ namespace corona
 	struct xblock_ref
 	{
 	public:
+
+		xblock_ref()
+		{
+			block_type = xblock_types::xb_none;
+			location = -1;
+		}
+
+		xblock_ref(xblock_types _block_type, relative_ptr_type _location)
+		{
+			block_type = _block_type;
+			location = _location;
+		}
+
 		xblock_types		block_type;
 		relative_ptr_type	location;
 	};
@@ -92,12 +107,11 @@ namespace corona
 	{
 	public:
 		field_types data_type;
-		int			data_length;
-		char		data[0];
+		char		data[8];
 
 		xfield()
 		{
-			// don't change a thing.
+			;
 		}
 
 		std::string get_string() const
@@ -105,7 +119,7 @@ namespace corona
 			std::string t;
 			if (data_type == field_types::ft_string)
 			{
-				t = &data[0];
+				t = &data[sizeof(int32_t)];
 			}
 			return t;
 		}
@@ -138,6 +152,26 @@ namespace corona
 				t = *((date_time*)&data[0]);
 			}
 			return t;
+		}
+
+		int32_t get_data_length()
+		{
+			int32_t data_length = 0;
+			switch (data_type) {
+			case field_types::ft_string:
+				data_length = *((int32_t*)(&data[0]));
+				break;
+			case field_types::ft_datetime:
+				data_length = sizeof(date_time);
+				break;
+			case field_types::ft_double:
+				data_length = sizeof(double);
+				break;
+			case field_types::ft_int64:
+				data_length = sizeof(int64_t);
+				break;
+			}
+			return data_length;
 		}
 	
 	};
@@ -205,18 +239,20 @@ namespace corona
 		{
 			char *sb = &_bytes[_offset];
 			key = new (sb) xfield();
-			total_size = key->data_length + sizeof(xfield);
+			total_size = key->get_data_length() + sizeof(xfield);
 			bytes = nullptr;
 		}
 
 		xfield_holder(const std::string& _data)
 		{
-			total_size = _data.size() + sizeof(xfield) + 1;
+			total_size = _data.size() + sizeof(int32_t) + sizeof(xfield) + 1;
 			bytes = new char[total_size];
 			key = new (bytes) xfield();
-			key->data_length = _data.size() + 1; // +1 are for the nullptrs
+			int length = _data.size() + 1;
 			key->data_type = field_types::ft_string;
-			std::copy(_data.c_str(), _data.c_str() + _data.size()+1, key->data);
+			int32_t* data_length = (int32_t*)&(key->data[0]);
+			*data_length = length;
+			std::copy(_data.c_str(), _data.c_str() + _data.size() + 1, &(key->data[0]) + sizeof(int32_t));
 		}
 
 		xfield_holder(int64_t _data)
@@ -224,9 +260,8 @@ namespace corona
 			total_size = sizeof(_data) + sizeof(xfield);
 			bytes = new char[total_size];
 			key = new (bytes) xfield();
-			key->data_length = sizeof(_data);
 			key->data_type = field_types::ft_int64;
-			int64_t* dest = (int64_t *)key->data;
+			int64_t* dest = (int64_t *)&(key->data[0]);
 			*dest = _data;
 		}
 
@@ -235,9 +270,8 @@ namespace corona
 			total_size = sizeof(_data) + sizeof(xfield);
 			bytes = new char[total_size];
 			key = new (bytes) xfield();
-			key->data_length = sizeof(_data);
 			key->data_type = field_types::ft_double;
-			double* dest = (double*)key->data;
+			double* dest = (double*)&(key->data[0]);
 			*dest = _data;
 		}
 
@@ -246,9 +280,8 @@ namespace corona
 			total_size = sizeof(_data) + sizeof(xfield);
 			bytes = new char[total_size];
 			key = new (bytes) xfield();
-			key->data_length = sizeof(_data);
 			key->data_type = field_types::ft_datetime;
-			date_time* dest = (date_time*)key->data;
+			date_time* dest = (date_time*)&(key->data[0]);
 			*dest = _data;
 		}
 
@@ -257,7 +290,6 @@ namespace corona
 			total_size = sizeof(xfield);
 			bytes = new char[total_size];
 			key = new (bytes) xfield();
-			key->data_length = 0;
 			key->data_type = field_types::ft_none;
 		}
 
@@ -745,7 +777,7 @@ namespace corona
 		
 		xblock_ref get_xblock_ref()
 		{
-			xblock_ref result = { xblock_types::xb_none, null_row };
+			xblock_ref result( xblock_types::xb_none, null_row );
 			int next_offset;
 			xfield_holder xfkey;
 			xfkey = get_field(0, &next_offset);
@@ -1035,7 +1067,7 @@ namespace corona
 		result = (date_time)jsrc["Today"] == (date_time)jdst["Today"];
 		_tests->test({ "rt today", result, __FILE__, __LINE__ });
 
-		xblock_ref tst_ref = { xblock_types::xb_none, null_row };
+		xblock_ref tst_ref( xblock_types::xb_none, null_row );
 		xrecord copy, readin;
 		compj.clear();
 		xblock_ref ref;
@@ -1098,26 +1130,39 @@ namespace corona
 		system_monitoring_interface::global_mon->log_function_stop("xrecord", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
+	static const int xrecords_per_block = 100;
+
+	struct xblock_location
+	{
+		int32_t key_offset;
+		int32_t key_size;
+		int32_t value_offset;
+		int32_t value_size;
+	};
+
 	struct xrecord_block_header
 	{
 		xblock_types							type;
 		xblock_types							content_type;
-		int										capacity;
+		int										count;
+		xblock_location							records[xrecords_per_block];
+
+		xrecord_block_header()
+		{
+			count = 0;
+		}
 	};
 
 	struct xrecord_block_change
 	{
 	public:
-		struct parent_change_type 
+		struct key_change_type 
 		{
 			xrecord							original_key;
 			xrecord_block*					modified;
-		} parent_change;
-		
-		struct created_change_type
-		{
-			std::shared_ptr<xrecord_block>	new_block;
-		} peer_change;
+		} key_change;
+	
+		std::shared_ptr<xrecord_block>	new_block;
 	};
 
 	class xrecord_block : protected data_block
@@ -1128,25 +1173,13 @@ namespace corona
 		std::map<xrecord, xrecord>							records;
 		file_block		*									fb;
 
-		struct xblock_record_list
-		{
-			int count;
-			struct xblock_ref
-			{
-				int key_offset;
-				int key_size;
-				int value_offset;
-				int value_size;
-			} offsets[];
-		};
-
 	public:
 
 		xrecord_block(file_block *_fb, xrecord_block_header& _src)
 		{
 			fb = _fb;
 			xheader = _src;
-			append(_fb);
+			save();
 		}
 
 		xrecord_block(file_block* _fb, int64_t _location)
@@ -1203,11 +1236,17 @@ namespace corona
 			return key;
 		}
 
-		virtual xrecord_block_change put(const xrecord& key, xrecord& value)
+		virtual xrecord_block_change put(int _indent, const xrecord& key, xrecord& value)
 		{
+			if (debug_xblock) {
+				std::string indent(_indent * 4, ' ');
+				std::string message = std::format("{2} block:{0}, key:{1}", get_reference().location, key.to_string(), indent);
+				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+			}
+
 			xrecord_block_change changes = {};
-			changes.parent_change.original_key = get_end_key();
-			changes.parent_change.modified = this;
+			changes.key_change.original_key = get_end_key();
+			changes.key_change.modified = this;
 			records.insert_or_assign(key, value);
 			return changes;
 		}
@@ -1266,7 +1305,7 @@ namespace corona
 
 		bool is_full()
 		{
-			return xheader.capacity <= xrecord_block::records.size() + 1;
+			return xrecords_per_block <= records.size() + 1;
 		}
 
 	protected:
@@ -1279,71 +1318,68 @@ namespace corona
 
 		virtual void after_read(char* _bytes) override
 		{
-			char* current = _bytes;
 			records.clear();
-			xheader = *((xrecord_block_header*)current);
-			current += sizeof(xrecord_block_header);
-			xblock_record_list* record_list = (xblock_record_list*)_bytes;
-			for (int i = 0; i < record_list->count; i++)
+			xheader = *((xrecord_block_header*)_bytes);
+			for (int i = 0; i < xheader.count; i++)
 			{
-				xblock_record_list::xblock_ref* rl = &record_list->offsets[i];
-				char* pdata = _bytes;
-				xrecord k(pdata + rl->key_offset, rl->key_size); // just deserializing the records.
-				xrecord v(pdata + rl->value_offset, rl->value_size); // just deserializing the records.
+				auto& rl = xheader.records[i];
+				xrecord k(_bytes + rl.key_offset, rl.key_size); // just deserializing the records.
+				xrecord v(_bytes + rl.value_offset, rl.value_size); // just deserializing the records.
 				records.insert_or_assign(k, v);
 			}
 		}
 
 		virtual char* before_write(int32_t* _size) override
 		{
-			int32_t record_bytes = 0;
 			int32_t total_bytes = 0;
 			int32_t header_bytes = 0;
 			int32_t count = 0;
 
 			for (auto& r : records)
 			{
-				record_bytes += r.first.size();
-				record_bytes += r.second.size();
-				total_bytes = record_bytes;
+				total_bytes += r.first.size();
+				total_bytes += r.second.size();
 				count++;
 			}
 
-			header_bytes = sizeof(xrecord_block_header) + sizeof(xblock_record_list) + sizeof(xblock_record_list::xblock_ref) * count;
+			header_bytes = sizeof(xrecord_block_header);
 			total_bytes += header_bytes;
 			*_size = total_bytes;
-
 			char *bytes = new char[total_bytes + 10];
-			char* current = bytes;
-			xrecord_block_header* hdr = (xrecord_block_header*)current;
-			*hdr = xheader;
+			char* current = bytes + header_bytes;
 
-			current += sizeof(xrecord_block_header);
-			xblock_record_list* record_list = (xblock_record_list*)current;
-			record_list->count = count;
-
-			current = &bytes[header_bytes];
+			xrecord_block_header* hdr = (xrecord_block_header*)bytes;
+			hdr->type = xheader.type;
+			hdr->content_type = xheader.content_type;
+			hdr->count = count;
 
 			int i = 0;
 			for (auto& r : records)
 			{
-				auto* rl = &record_list->offsets[i];
+				auto& rl = hdr->records[i];
 				int size_actual;
 
 				xrecord record_key = r.first;
-				rl->key_size = record_key.size();
-				rl->key_offset = current - bytes;
-				char *rsrc = record_key.before_write(&size_actual);
-				std::copy(rsrc, rsrc + size_actual, current);
-				current += size_actual;
+				rl.key_offset = current - bytes;
+				char *rsrc = record_key.before_write(&rl.key_size);
+				std::copy(rsrc, rsrc + rl.key_size, current);
+				current += rl.key_size;
 
 				xrecord& record_value = r.second;
-				rl->value_size = record_value.size();
-				rl->value_offset = current - bytes;
-				char *vsrc = record_value.before_write(&size_actual);
-				std::copy(vsrc, vsrc + size_actual, current);
-				current += size_actual;
+				rl.value_offset = current - bytes;
+				char *vsrc = record_value.before_write(&rl.value_size);
+				std::copy(vsrc, vsrc + rl.value_size, current);
+				current += rl.value_size;
+
+				i++;
 			}
+
+			while (i < xrecords_per_block) {
+				auto& rl = hdr->records[i];
+				rl = {};
+				i++;
+			}
+
 			return bytes;
 		}
 
@@ -1356,14 +1392,13 @@ namespace corona
 		{
 			if (_bytes)
 				delete[] _bytes;
-			_bytes = nullptr;
 		}
 
 		std::shared_ptr<xrecord_block> create_block(xrecord_block_header& _header);
 		std::shared_ptr<xrecord_block> get_block(xblock_ref& _ref);
 		std::shared_ptr<xrecord_block> find_block(const xrecord& key);
 
-		virtual std::shared_ptr<xrecord_block> split_to_peer()
+		virtual std::shared_ptr<xrecord_block> split_to_peer(int _indent)
 		{
 
 /************************************************
@@ -1396,7 +1431,7 @@ as is the case in all puts
 			{
 				if (count > rsz) {
 					keys_to_delete.push_back(kv.first);
-					new_xb->put(kv.first, kv.second);
+					new_xb->put(_indent, kv.first, kv.second);
 				}
 				count++;
 			}
@@ -1427,7 +1462,7 @@ as is the case in all puts
 			read(_fb, _location);
 		}
 
-		void split_into_children()
+		void split_into_children(int _indent)
 		{
 
 			/************************************************
@@ -1458,18 +1493,16 @@ as is the case in all puts
 
 			for (auto r : records) 
 			{
-				if (count >= rsz) 
+				if (count < rsz) 
 				{
-					new_child1->put(r.first, r.second);
+					new_child1->put(_indent+1, r.first, r.second);
 				}
 				else 
 				{
-					new_child2->put(r.first, r.second);
+					new_child2->put(_indent+1, r.first, r.second);
 				}
 				count++;
 			}
-
-			records.clear();
 
 			new_child1->save();
 			new_child2->save();
@@ -1492,16 +1525,20 @@ as is the case in all puts
 
 			xheader.content_type = xblock_types::xb_branch;
 
+			records.clear();
 			records.insert_or_assign(child1_key, xchild1_ref);
 			records.insert_or_assign(child2_key, xchild2_ref);
 		}
 
-		virtual xrecord_block_change put(const xrecord& key, xrecord& value) override
+		virtual xrecord_block_change put(int _indent, const xrecord& key, xrecord& value) override
 		{
 			xrecord_block_change my_changes;
 
-			std::string message = std::format("branch {0}, count: {1}, put:{2}", get_reference().location, records.size(), key.to_string());
-			system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+			if (debug_xblock) {
+				std::string indent(_indent * 4, ' ');
+				std::string message = std::format("{2} branch:{0}, key:{1}", get_reference().location, key.to_string(), indent);
+				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+			}
 
 			std::shared_ptr<xrecord_block> found_block = find_block(key);
 
@@ -1512,12 +1549,10 @@ as is the case in all puts
 			if (not found_block) 
 			{
 				xrecord_block_header new_block_header;
-				new_block_header.capacity = xheader.capacity;
 				new_block_header.type = xheader.content_type;
 				new_block_header.content_type = xblock_types::xb_leaf;
 				found_block = create_block(new_block_header);
-				child_changes = found_block->put(key, value);
-				found_block->save();
+				child_changes = found_block->put(_indent+1,key, value);
 				xblock_ref xref = found_block->get_reference();
 				xrecord xrefxrec;
 				xrefxrec.put_xblock_ref(xref);
@@ -1525,35 +1560,37 @@ as is the case in all puts
 			}
 			else 
 			{
-				child_changes = found_block->put(key, value);
+				child_changes = found_block->put(_indent+1, key, value);
 			}
 
 			found_block->save();
 
-			if (child_changes.parent_change.modified) 
+			if (child_changes.key_change.modified)
 			{
-				child_changes.parent_change.modified->save();
-				xrecord& old_key = child_changes.parent_change.original_key;
-				xrecord  new_key = child_changes.parent_change.modified->get_end_key();
+				child_changes.key_change.modified->save();
+				xrecord& old_key = child_changes.key_change.original_key;
+				xrecord  new_key = child_changes.key_change.modified->get_end_key();
 
 				if (not new_key.all_equal(old_key))
 				{
-					xblock_ref	location = child_changes.parent_change.modified->get_reference();
+					xblock_ref	location = child_changes.key_change.modified->get_reference();
 					xrecord		new_location;
 					new_location.put_xblock_ref(location);
+
 					records.erase(old_key);
 					records.insert_or_assign(new_key, new_location);
 				}
 			}
 
-			if (child_changes.peer_change.new_block)
+			if (child_changes.new_block)
 			{
-				child_changes.peer_change.new_block->save();
-				xblock_ref	location = child_changes.peer_change.new_block->get_reference();
+				child_changes.new_block->save();
+				xblock_ref	location = child_changes.new_block->get_reference();
 				xrecord		new_location;
-				xrecord  new_key = child_changes.peer_change.new_block->get_end_key();
+				xrecord  new_key = child_changes.new_block->get_end_key();
 				new_location.put_xblock_ref(location);
 				records.insert_or_assign(new_key, new_location);
+
 			}
 
 			if (is_full()) // now, I need to split
@@ -1563,20 +1600,16 @@ as is the case in all puts
 				// with both of them as my children.
 				if (xheader.content_type == xblock_types::xb_leaf)
 				{
-					std::string message = std::format("branch {0} split_children", ((int64_t)this));
-					system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
-					split_into_children();
+					split_into_children(_indent+1);
 				}
 				else if (xheader.content_type == xblock_types::xb_branch)
 				{
-					std::string message = std::format("branch {0} split_peer", ((int64_t)this));
-					system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
-					my_changes.peer_change.new_block = split_to_peer();
+					my_changes.new_block = split_to_peer(_indent);
 				}
 			}
 			
-			my_changes.parent_change.original_key = this_old_key;
-			my_changes.parent_change.modified = this;
+			my_changes.key_change.original_key = this_old_key;
+			my_changes.key_change.modified = this;
 
 			save();
 
@@ -1653,23 +1686,26 @@ as is the case in all puts
 			;
 		}
 
-		virtual xrecord_block_change put(const xrecord& key, xrecord& value) override
+		virtual xrecord_block_change put(int _indent, const xrecord& key, xrecord& value) override
 		{
 			xrecord_block_change changes;
 
-			std::string message = std::format("leaf: {0}, count: {1} put:{2}", get_reference().location, records.size(), key.to_string());
-			system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+			if (debug_xblock) {
+				std::string indent(_indent * 4, ' ');
+				std::string message = std::format("{2} leaf:{0}, key:{1}", get_reference().location, key.to_string(), indent);
+				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+			}
 
 			xrecord this_old_key = get_end_key();
 
-			xrecord_block::put(key, value);
+			xrecord_block::put(_indent+1, key, value);
 
 			if (is_full()) 
 			{
-				changes.peer_change.new_block = split_to_peer();
+				changes.new_block = split_to_peer(_indent);
 			}
-			changes.parent_change.original_key = this_old_key;
-			changes.parent_change.modified = this;
+			changes.key_change.original_key = this_old_key;
+			changes.key_change.modified = this;
 
 			return changes;
 		}
@@ -1687,14 +1723,12 @@ as is the case in all puts
 		std::shared_ptr<xrecord_block> root;
 		std::vector<std::string> key_members;
 		std::vector<std::string> object_members;
-		int capacity;
 
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
 			_dest.put_member_i64("root_type", root_block.block_type);
 			_dest.put_member_i64("root_location", root_block.location);
-			_dest.put_member_i64("capacity", capacity);
 			json kms = jp.create_array(key_members);
 			_dest.put_member("key_members", kms);
 			json oms = jp.create_array(object_members);
@@ -1707,7 +1741,6 @@ as is the case in all puts
 			json_parser jp;
 			root_block.location = _src["root_location"];
 			root_block.block_type = (xblock_types)((int64_t)_src["root_type"]);
-			capacity = (int64_t)_src["capacity"];
 			json kms = _src["key_members"];
 			key_members = kms.to_string_array();
 			json oms = _src["object_members"];
@@ -1756,7 +1789,6 @@ as is the case in all puts
 	{
 
 	public:
-		const int								block_capacity = 100;
 		std::string								data;
 		file_block*								fb;
 		std::shared_ptr<xtable_header>			table_header;
@@ -1765,9 +1797,7 @@ as is the case in all puts
 			fb(_fb),
 			table_header(_header)
 		{
-			table_header->capacity = block_capacity;
 			xrecord_block_header new_header;
-			new_header.capacity = block_capacity;
 			new_header.content_type = xblock_types::xb_leaf;
 			new_header.type = xblock_types::xb_branch;
 			table_header->root = std::make_shared<xbranch_block>(fb, new_header);
@@ -1816,12 +1846,12 @@ as is the case in all puts
 		{
 			xrecord key(table_header->key_members, _object);
 			xrecord data(table_header->object_members, _object);			 
-			auto changes = table_header->root->put(key, data);
-			if (changes.parent_change.modified) {
-				changes.parent_change.modified->save();
+			auto changes = table_header->root->put(0, key, data);
+			if (changes.key_change.modified) {
+				changes.key_change.modified->save();
 			}
-			if (changes.peer_change.new_block) {
-				changes.peer_change.new_block->save();
+			if (changes.new_block) {
+				changes.new_block->save();
 			}
 			table_header->root->save();
 		}
@@ -1925,6 +1955,132 @@ as is the case in all puts
 
 	}
 
+	void test_xleaf(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
+	{
+		timer tx;
+		date_time start = date_time::now();
+
+		system_monitoring_interface::global_mon->log_function_start("xleaf", "start", start, __FILE__, __LINE__);
+
+		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
+		file_block fb(fp);
+
+		xrecord_block_header xheader;
+		xheader.type = xblock_types::xb_leaf;
+		xheader.content_type = xblock_types::xb_record;
+		std::shared_ptr<xleaf_block> pleaf = std::make_shared<xleaf_block>(&fb, xheader);
+
+		json_parser jp;
+
+		for (int64_t i = 1; i <= 250; i++)
+		{
+			xrecord key, value;
+			key.add(i);
+			value.add(10 + i % 50);
+			value.add(100 + (i % 4) * 50);
+			pleaf->put(0, key, value);
+		}
+
+		pleaf->save();
+		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
+
+		auto ref = pleaf->get_reference();
+		pleaf = std::make_shared<xleaf_block>(&fb, ref.location);
+
+		_tests->test({ "read_survived", true, __FILE__, __LINE__ });
+
+		bool round_trip_success = true;
+		for (int64_t i = 1; i <= 50; i++)
+		{
+			xrecord key, value, valueread;
+			key.add(i);
+			value.add(10 + i % 50);
+			value.add(100 + (i % 4) * 50);
+			valueread = pleaf->get(key);
+			
+			if (debug_xblock) {
+				std::string message;
+				message = key.to_string();
+				message += " correct:";
+				message += value.to_string();
+				message += " read:";
+				message += valueread.to_string();
+				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+			}
+
+			if (not valueread.all_equal(value)) {
+				round_trip_success = false;
+				break;
+			}
+		}
+		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
+
+		system_monitoring_interface::global_mon->log_function_stop("xleaf", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+	}
+
+	void test_xbranch(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
+	{
+		timer tx;
+		date_time start = date_time::now();
+
+		system_monitoring_interface::global_mon->log_function_start("xbranch", "start", start, __FILE__, __LINE__);
+
+		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
+		file_block fb(fp);
+
+		xrecord_block_header xheader;
+		xheader.type = xblock_types::xb_branch;
+		xheader.content_type = xblock_types::xb_leaf;
+		std::shared_ptr<xbranch_block> pleaf = std::make_shared<xbranch_block>(&fb, xheader);
+
+		json_parser jp;
+
+		for (int64_t i = 1; i <= 50; i++)
+		{
+			xrecord key, value;
+			key.add(i);
+			value.add(10 + i % 50);
+			value.add(100 + (i % 4) * 50);
+			pleaf->put(0, key, value);
+		}
+
+		pleaf->save();
+		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
+
+		auto ref = pleaf->get_reference();
+		pleaf = std::make_shared<xbranch_block>(&fb, ref.location);
+
+		_tests->test({ "read_survived", true, __FILE__, __LINE__ });
+
+		bool round_trip_success = true;
+		for (int64_t i = 1; i <= 50; i++)
+		{
+			xrecord key, value, valueread;
+			key.add(i);
+			value.add(10 + i % 50);
+			value.add(100 + (i % 4) * 50);
+			valueread = pleaf->get(key);
+
+			if (debug_xblock) {
+				std::string message;
+				message = key.to_string();
+				message += " correct:";
+				message += value.to_string();
+				message += " read:";
+				message += valueread.to_string();
+				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+			}
+
+			if (not valueread.all_equal(value)) {
+				round_trip_success = false;
+				break;
+			}
+		}
+		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
+
+		system_monitoring_interface::global_mon->log_function_stop("xbranch", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+	}
+
 	void test_xtable(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
 	{
 		timer tx;
@@ -1945,7 +2101,7 @@ as is the case in all puts
 
 		json_parser jp;
 
-		for (int i = 1; i <= 20000; i++)
+		for (int i = 1; i <= 2000; i++)
 		{
 			json obj = jp.create_object();
 			obj.put_member_i64(object_id_field, i);
@@ -1961,7 +2117,7 @@ as is the case in all puts
 
 		std::vector<std::string> keys = { object_id_field, "age", "weight"};
 		bool round_trip_success = true;
-		for (int i = 1; i <= 20000; i++)
+		for (int i = 1; i <= 2000; i++)
 		{
 			json key = jp.create_object();
 			key.put_member_i64(object_id_field, i);

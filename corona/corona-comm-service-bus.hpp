@@ -183,29 +183,20 @@ namespace corona
 			test_xrecord(testo, app);
 
 			dependencies = { "xrecord" };
+			testo = tm.create_test_set("xleaf", dependencies);
+			test_xleaf(testo, app);
+
+			dependencies = { "xleaf" };
+			testo = tm.create_test_set("xbranch", dependencies);
+			test_xbranch(testo, app);
+
+			dependencies = {"xbranch"};
 			testo = tm.create_test_set("xtable", dependencies);
 			test_xtable(testo, app);
 
-			dependencies = { "json node", "xrecord" };
+			dependencies = { "json node", "xtable" };
 			testo = tm.create_test_set("master", dependencies);
 
-/*
-			dependencies = {  };
-			testo = tm.create_test_set("sorted index", dependencies);
-			test_sorted_index2(testo, app);
-
-			dependencies = { "rw locks", "json node" };
-			testo = tm.create_test_set("json table", dependencies);
-			test_json_table(testo, app);
-
-			dependencies = { "rw locks", "json node" };
-			testo = tm.create_test_set("object table", dependencies);
-			test_json_object_table(testo, app);
-
-			dependencies = { "object table" };
-			testo = tm.create_test_set("table load", dependencies);
-			test_json_object_table_load(testo, app);
-*/
 			bool system_works = tm.prove("master");
 			if (not system_works) 
 			{

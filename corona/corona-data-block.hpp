@@ -31,6 +31,8 @@ namespace corona
 		data_block()
 		{
 			header = {};
+			header.block_location = null_row;
+			header.data_location = null_row;
 		}
 
 		data_block(const data_block& _src) = default;

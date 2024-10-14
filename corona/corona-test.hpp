@@ -57,6 +57,9 @@ namespace corona
 			std::shared_ptr<test_result> tr = std::make_shared<test_result>(_test);
 			tests.push_back(tr);
 			LeaveCriticalSection(&cs);
+			if (not _test.success) {
+				system_monitoring_interface::global_mon->log_warning(_test.test_name, _test.file.c_str(), _test.line);
+			}
 		}
 
 		virtual bool prove( int _indent )

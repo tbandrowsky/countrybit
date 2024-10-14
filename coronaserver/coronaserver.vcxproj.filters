@@ -27,5 +27,6 @@
     <None Include="ccl.csv" />
     <None Include="cm.csv" />
     <None Include="cn.csv" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
