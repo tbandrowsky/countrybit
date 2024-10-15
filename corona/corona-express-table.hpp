@@ -154,7 +154,7 @@ namespace corona
 			switch (data_type) {
 			case field_types::ft_string:
 				data.str = (xstring*)t;
-				total_size += sizeof(xstring) + data.str->length + 1;
+				total_size += sizeof(xstring) + data.str->length;
 				break;
 			case field_types::ft_double:
 				data.dbl = (xdouble*)t;
