@@ -60,6 +60,9 @@ namespace corona
 			if (not _test.success) {
 				system_monitoring_interface::global_mon->log_warning(_test.test_name, _test.file.c_str(), _test.line);
 			}
+			else {
+				system_monitoring_interface::global_mon->log_information(_test.test_name + " passed", _test.file.c_str(), _test.line);
+			}
 		}
 
 		virtual bool prove( int _indent )
