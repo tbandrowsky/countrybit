@@ -152,8 +152,8 @@ namespace corona
 	class index_interface
 	{
 	protected:
-		std::shared_ptr<json_table_header> table_header;
-		std::shared_ptr<json_table>		   table;
+		relative_ptr_type				table_location;
+		std::shared_ptr<xtable>			table;
 	public:
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
@@ -161,7 +161,7 @@ namespace corona
 		virtual int64_t									get_index_id() = 0;
 		virtual std::string								get_index_name() = 0;
 		virtual std::vector<std::string>				&get_index_keys() = 0;
-		virtual std::shared_ptr<json_table>				get_table(file_block* _fb) = 0;
+		virtual std::shared_ptr<xtable>				get_table(file_block* _fb) = 0;
 		virtual std::string								get_index_key_string() = 0;
 
 	};
@@ -169,8 +169,7 @@ namespace corona
 	class class_interface : public shared_lockable
 	{
 	protected:
-		std::shared_ptr<json_table_header> table_header;
-		std::shared_ptr<json_object_table> table;
+		std::shared_ptr<xtable> table;
 	public:
 
 		virtual void get_json(json& _dest) = 0;
@@ -182,9 +181,10 @@ namespace corona
 		virtual std::string								get_base_class_name() = 0;
 		virtual std::map<std::string, bool>&			get_descendants() = 0;
 		virtual std::map<std::string, bool>&			get_ancestors() = 0;
-		virtual std::shared_ptr<json_object_table>		get_table(file_block* _fb) = 0;
-		virtual std::shared_ptr<json_table>				find_index(file_block* _fb, json& _keys) = 0;
+		virtual std::shared_ptr<xtable>					get_table(file_block* _fb) = 0;
+		virtual std::shared_ptr<xtable>					find_index(file_block* _fb, json& _keys) = 0;
 		virtual	bool									update(std::vector<validation_error> &_errors, corona_database_interface* _db, json _changed_class) = 0;
+		virtual std::vector<std::string>				get_table_fields() = 0;
 
 		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name) = 0;
 		virtual std::vector<std::shared_ptr<field_interface>> get_fields() = 0;
@@ -1205,8 +1205,7 @@ namespace corona
 			table = temp;
 
 			if (table) {
-				table_header = table->get_table_header();
-				table_location = table_header->get_location();
+				table_location = table->get_location();
 			}
 		}
 
@@ -1216,7 +1215,6 @@ namespace corona
 			index_name = _src.index_name;
 			index_keys = _src.index_keys;
 			table_location = _src.table_location;
-			table_header = _src.table_header;
 			table = _src.table;
 		}
 
@@ -1226,7 +1224,6 @@ namespace corona
 			std::swap(index_name, _src.index_name);
 			std::swap(index_keys, _src.index_keys);
 			std::swap(table_location, _src.table_location);
-			std::swap(table_header, _src.table_header);
 			std::swap(table, _src.table);
 		}
 
@@ -1236,7 +1233,6 @@ namespace corona
 			index_name = _src.index_name;
 			index_keys = _src.index_keys;
 			table_location = _src.table_location;
-			table_header = _src.table_header;
 			table = _src.table;
 			return *this;
 		}
@@ -1247,7 +1243,6 @@ namespace corona
 			std::swap(index_name, _src.index_name);
 			std::swap(index_keys, _src.index_keys);
 			std::swap(table_location, _src.table_location);
-			std::swap(table_header, _src.table_header);
 			std::swap(table, _src.table);
 			return *this;
 
@@ -1321,7 +1316,7 @@ namespace corona
 			return *this;
 		}
 
-		virtual std::shared_ptr<json_table> get_table(file_block* _fb) override
+		virtual std::shared_ptr<xtable> get_table(file_block* _fb) override
 		{
 			if (table)
 			{
@@ -1329,16 +1324,15 @@ namespace corona
 			}
 			else if (table_location)
 			{
-				table_header = std::make_shared<json_table_header>();
-				table_header->open(_fb, table_location);
-				table = std::make_shared<json_table>(table_header, index_id, _fb, index_keys);
+				table = std::make_shared<xtable>(_fb, table_location);
 				return table;
 			}
 			else {
-				table_header = std::make_shared<json_table_header>();
-				table_header->create(_fb);
-				table_location = table_header->get_location();
-				table = std::make_shared<json_table>(table_header, index_id, _fb, index_keys);
+				auto table_header = std::make_shared<xtable_header>();
+				table_header->key_members = get_index_keys();
+				table_header->object_members = { object_id_field };
+				table = std::make_shared<xtable>(_fb, table_header);
+				table_location = table->get_location();
 				return table;
 			}
 		}
@@ -1354,6 +1348,7 @@ namespace corona
 		std::string class_description;
 		std::string base_class_name;
 		int64_t		table_location;
+		std::vector<std::string> table_fields;
 		std::map<std::string, std::shared_ptr<field_interface>> fields;
 		std::map<std::string, std::shared_ptr<index_interface>> indexes;
 		std::map<std::string, bool> ancestors;
@@ -1369,6 +1364,7 @@ namespace corona
 			class_description = _src->get_class_description();
 			base_class_name = _src->get_base_class_name();
 			table_location = _src->get_location();
+			table_fields = _src->get_table_fields();
 			auto new_fields = _src->get_fields();
 			for (auto fld : new_fields) {
 				fields.insert_or_assign(fld->get_field_name(), fld);
@@ -1428,7 +1424,12 @@ namespace corona
 			return *this;
 		}
 
-		virtual std::shared_ptr<json_object_table> get_table(file_block *_fb) override
+		virtual std::vector<std::string> get_table_fields() override
+		{
+			return table_fields;
+		}
+
+		virtual std::shared_ptr<xtable> get_table(file_block *_fb) override
 		{
 
 			if (table) 
@@ -1437,16 +1438,15 @@ namespace corona
 			}
 			else if (table_location)
 			{
-				table_header = std::make_shared<json_table_header>();
-				table_header->open(_fb, table_location);
-				table = std::make_shared<json_object_table>(table_header, class_id, _fb);
+				table = std::make_shared<xtable>(_fb, table_location);
 			}
 			else
 			{
-				table_header = std::make_shared<json_table_header>();
-				table_header->create(_fb);
+				auto table_header = std::make_shared<xtable_header>();
+				table_header->object_members = table_fields;
+				table_header->key_members = { object_id_field };
+				table = std::make_shared<xtable>(_fb, table_header);
 				table_location = table_header->get_location();
-				table = std::make_shared<json_object_table>(table_header, class_id, _fb);
 			}
 			return table;
 		}
@@ -1481,6 +1481,14 @@ namespace corona
 			_dest.put_member("class_description", class_description);
 			_dest.put_member("base_class_name", base_class_name);
 			_dest.put_member_i64("table_location", table_location);
+
+			if (table_fields.size() > 0) {
+				json jtable_fields = jp.create_array();
+				for (auto tf : table_fields) {
+					jtable_fields.push_back(tf);
+				}
+				_dest.put_member("table_fields", jtable_fields);
+			}
 
 			if (fields.size() > 0) {
 				json jfield_object = jp.create_object();
@@ -1524,12 +1532,21 @@ namespace corona
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src)
 		{
 
-			json jfields, jindexes, jancestors, jdescendants;
+			json jfields, jindexes, jancestors, jdescendants, jtable_fields;
 
 			class_name = _src[class_name_field];
 			class_description = _src["class_description"];
 			base_class_name = _src["base_class_name"];
 			table_location = (int64_t)_src["table_location"];
+
+			jtable_fields = _src["table_fields"];
+
+			table_fields.clear();
+			if (jtable_fields.array()) {
+				for (auto tf : jtable_fields) {
+					table_fields.push_back((std::string)tf);
+				}
+			}
 
 			ancestors.clear();
 			jancestors = _src["ancestors"];
@@ -1697,9 +1714,9 @@ namespace corona
 			}
 		}
 
-		virtual std::shared_ptr<json_table> find_index(file_block* _fb, json& _object)
+		virtual std::shared_ptr<xtable> find_index(file_block* _fb, json& _object)
 		{
-			std::shared_ptr<json_table> index_table;
+			std::shared_ptr<xtable> index_table;
 			std::shared_ptr<index_interface> matched_index;
 			int max_matched_key_count = 0;
 
@@ -1780,6 +1797,14 @@ namespace corona
 			class_name = changed_class.class_name;
 			base_class_name = changed_class.base_class_name;
 			class_description = changed_class.class_description;
+
+			for (auto field : changed_class.fields) 
+			{
+				if (not fields.contains(field.first) and field.first != object_id_field) {
+					table_fields.push_back(field.first);
+				}
+			}
+
 			fields = changed_class.fields;
 
 			ancestors.clear();
@@ -1904,15 +1929,15 @@ namespace corona
 				class_id = _db->get_next_object_id();
 			}
 
+			json empty_key;
 			auto class_data = get_table(_db);
 			// and populate the new indexes with any data that might exist
 			for (auto idc : indexes) {
 				auto my_index = idc.second;
 				auto table = my_index->get_table(_db);
 				auto& keys = my_index->get_index_keys();
-				class_data->for_each([&keys, &my_index, this, table](int _idx, json& _item) -> relative_ptr_type {
-					json index_item = _item.extract(keys);
-					table->put(index_item);
+				class_data->for_each(empty_key, [table](json& _item) -> relative_ptr_type {
+					table->put(_item);
 					return 1;
 				});
 			}
@@ -2089,7 +2114,7 @@ namespace corona
 				{
 					json object_key = jp.create_object();
 
-					obj = index_table->select(_key, [&object_key, &class_data](int _idx, json& _item) -> json {
+					obj = index_table->select(_key, [&object_key, &class_data](json& _item) -> json {
 						int64_t object_id = (int64_t)_item[object_id_field];
 						json objfound = class_data->get(object_id);
 						return objfound;
@@ -2097,7 +2122,7 @@ namespace corona
 				}
 				else
 				{
-					obj = class_data->select([&_key](int _index, json& _j)
+					obj = class_data->select(_key, [&_key](json& _j)
 						{
 							json result;
 							if (_key.compare(_j) == 0)

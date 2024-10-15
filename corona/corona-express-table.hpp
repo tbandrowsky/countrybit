@@ -54,11 +54,18 @@ namespace corona
 	{
 	public:
 
+		virtual relative_ptr_type get_location() = 0;
 		virtual json get(json _object) = 0;
-		virtual void put(json _object) = 0;
-		virtual void erase(json _object) = 0;
+		virtual json get(int64_t _object_id) = 0;
+		virtual void put(json _object, bool _save) = 0;
+		virtual void put_array(json _object) = 0;
+		virtual void erase(json _object, bool _save) = 0;
+		virtual void erase(int64_t _object_id, bool _save) = 0;
+		virtual void erase_array(json _object) = 0;
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) = 0;
 		virtual json select(json _object, std::function<json(json& _item)> _process) = 0;
+		virtual void clear() = 0;
+		virtual void save() = 0;
 
 	};
 
@@ -664,6 +671,11 @@ namespace corona
 			std::swap(key, _src.key);
 			return *this;
 		}
+
+		bool empty()
+		{
+			return key.size() == 0;
+		}
 		
 		void put_json(std::vector<std::string>& _keys, json _j)
 		{
@@ -924,9 +936,19 @@ namespace corona
 				{
 					return true;
 				}
+				else if (this_key > other_key) // this is necessary to ensure a < b and b < a are properly transitive.
+				{
+					return false;
+				}
 				other_key = _other.get_field(other_offset, &other_offset);
 				this_key = get_field(this_offset, &this_offset);
 			}
+
+			if (this_key and not other_key)
+				return false;
+
+			if (not this_key and other_key)
+				return true;
 
 			return false;
 		}
@@ -986,11 +1008,11 @@ namespace corona
 
 		comp3.clear();
 		comp3.add(4.0);
-		result = not (comp3 < comp1);
+		result = comp3 < comp1;
 		_tests->test({ "xr < key 2.1", result, __FILE__, __LINE__ });
 
 		comp3.add("hello");
-		result = not(comp3 < comp1);
+		result = comp3 < comp1;
 		_tests->test({ "xr < key 2.2", result, __FILE__, __LINE__ });
 
 		comp3.add(43i64);
@@ -1001,7 +1023,7 @@ namespace corona
 		comp3.add(4.0);
 		comp3.add("ahello");
 		result = comp3 < comp1;
-		_tests->test({ "xr < key 3", result, __FILE__, __LINE__ });
+		_tests->test({ "xr < key 3.1", result, __FILE__, __LINE__ });
 
 		// keys, more partial tests
 
@@ -1229,7 +1251,7 @@ namespace corona
 
 		virtual xrecord_block_change put(int _indent, const xrecord& key, xrecord& value)
 		{
-			if (debug_xblock) {
+			if constexpr (debug_xblock) {
 				std::string indent(_indent * 4, ' ');
 				std::string message = std::format("{2} block:{0}, key:{1}", get_reference().location, key.to_string(), indent);
 				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
@@ -1252,9 +1274,23 @@ namespace corona
 			return temp;
 		}
 
-		virtual void erase(const xrecord& key)
+		virtual xrecord_block_change erase(const xrecord& key) 
 		{
+			xrecord_block_change changes;
+
+			xrecord this_old_key = get_end_key();
+
 			records.erase(key);
+
+			changes.key_change.original_key = this_old_key;
+			changes.key_change.modified = this;
+
+			return changes;
+		}
+
+		virtual void release()
+		{
+			data_block::erase(fb);
 		}
 
 		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(int _index, xrecord& _key, xrecord& _value)> _process)
@@ -1297,6 +1333,11 @@ namespace corona
 		bool is_full()
 		{
 			return xrecords_per_block <= records.size() + 1;
+		}
+
+		virtual void clear()
+		{
+			records.clear();
 		}
 
 	protected:
@@ -1400,7 +1441,7 @@ Block A - Full [ 0........n ]
 
 to this
 
-Block A - [ 0...n/2 ]        Block B - [ n/2...n ]
+Block A - [ 0...3/4n ]        Block B - [ 3/4n...n ]
 
 In this case, the parent of A is not involved, 
 and only needs to know that A may changed its key contents
@@ -1411,12 +1452,12 @@ as is the case in all puts
 
 			auto new_xb = create_block(xheader);
 
-			int rsz = records.size() / 2;
+			int64_t rsz = records.size() * 3 / 4;
 
 			// time to split the block
 			std::vector<xrecord> keys_to_delete;
 
-			int count = 0;
+			int64_t count = 0;
 
 			for (auto& kv : records)
 			{
@@ -1434,7 +1475,6 @@ as is the case in all puts
 
 			return new_xb;
 		}
-
 
 	};
 
@@ -1467,7 +1507,7 @@ as is the case in all puts
 				  Block A - [ Block B, Block C ]
 						//                  \\
 					   //                    \\
-			Block B - [ 0...n/2 ]        Block C - [ n/2...n ]
+			Block B - [ 0...3/4n ]        Block C - [ 3/4n...n ]
 
 			Note that the parent of Block A is not changed, 
 			unless it needs to know Block A's key references.
@@ -1479,8 +1519,8 @@ as is the case in all puts
 			auto new_child1 = xrecord_block::create_block(xheader);
 			auto new_child2 = xrecord_block::create_block(xheader);
 
-			int rsz = records.size() / 2;
-			int count = 0;
+			int64_t rsz = records.size() * 3i64 / 4i64;
+			int64_t count = 0;
 
 			for (auto r : records) 
 			{
@@ -1525,7 +1565,7 @@ as is the case in all puts
 		{
 			xrecord_block_change my_changes;
 
-			if (debug_xblock) {
+			if constexpr (debug_xblock) {
 				std::string indent(_indent * 4, ' ');
 				std::string message = std::format("{2} branch:{0}, key:{1}", get_reference().location, key.to_string(), indent);
 				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
@@ -1617,13 +1657,56 @@ as is the case in all puts
 			return record;			
 		}
 
-		virtual void erase(const xrecord& key) override
+		virtual xrecord_block_change erase(const xrecord& key) override
 		{
+			xrecord_block_change changes;
+
+			changes.key_change.original_key = get_end_key();
+
 			xrecord record;
 			std::shared_ptr<xrecord_block> block = find_block(key);
 			if (block) {
-				block->erase(key);
+				auto child_changes = block->erase(key);
+				if (child_changes.key_change.modified)
+				{
+					
+					xrecord& old_key = child_changes.key_change.original_key;
+					xrecord  new_key = child_changes.key_change.modified->get_end_key();
+
+					if (new_key.empty())
+					{
+						xblock_ref	location = child_changes.key_change.modified->get_reference();
+						xrecord		new_location;
+						new_location.put_xblock_ref(location);
+
+						records.erase(old_key);
+						child_changes.key_change.modified->release();
+					}
+					else if (not new_key.all_equal(old_key))
+					{
+						xblock_ref	location = child_changes.key_change.modified->get_reference();
+						xrecord		new_location;
+						new_location.put_xblock_ref(location);
+
+						records.erase(old_key);
+						records.insert_or_assign(new_key, new_location);
+					}
+				}
+				block->save();
 			}
+			changes.key_change.modified = this;
+			return changes;
+		}
+
+		virtual void clear()
+		{
+			for (auto item : records) {
+				xblock_ref ref = item.second.get_xblock_ref();
+				auto block = get_block(ref);
+				block->clear();				
+				block->release();
+			}
+			records.clear();
 		}
 
 		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(int _index, xrecord& _key, xrecord& _value)> _process) override
@@ -1681,7 +1764,7 @@ as is the case in all puts
 		{
 			xrecord_block_change changes;
 
-			if (debug_xblock) {
+			if constexpr (debug_xblock) {
 				std::string indent(_indent * 4, ' ');
 				std::string message = std::format("{2} leaf:{0}, key:{1}", get_reference().location, key.to_string(), indent);
 				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
@@ -1714,6 +1797,11 @@ as is the case in all puts
 		std::shared_ptr<xrecord_block> root;
 		std::vector<std::string> key_members;
 		std::vector<std::string> object_members;
+
+		relative_ptr_type get_location()
+		{
+			return header.block_location;
+		}
 
 		virtual void get_json(json& _dest)
 		{
@@ -1808,17 +1896,34 @@ as is the case in all puts
 			table_header->root = std::make_shared<xbranch_block>(fb, table_header->root_block.location);
 		}
 
-		relative_ptr_type get_location()
+		relative_ptr_type get_location() override
 		{
-
+			return table_header->get_location();
 		}
 
-		void save()
+		void save() override
 		{
 			table_header->root->save();
+			table_header->write(fb);
 		}
 
-		virtual json get(json _object)
+		virtual json get(int64_t _key) override
+		{
+			json_parser jp;
+			json jresult;
+			xrecord key;
+			key.add(_key);
+			xrecord result = table_header->root->get(key);
+			if (not result.is_empty()) {
+				jresult = jp.create_object();
+				key.get_json(jresult, table_header->key_members);
+				result.get_json(jresult, table_header->object_members);
+				return jresult;
+			}
+			return jresult;
+		}
+
+		virtual json get(json _object) override
 		{
 			json_parser jp;
 			json jresult;
@@ -1833,7 +1938,7 @@ as is the case in all puts
 			return jresult;
 		}
 
-		virtual void put(json _object)
+		virtual void put(json _object, bool _save = true) override
 		{
 			xrecord key(table_header->key_members, _object);
 			xrecord data(table_header->object_members, _object);			 
@@ -1844,13 +1949,47 @@ as is the case in all puts
 			if (changes.new_block) {
 				changes.new_block->save();
 			}
-			table_header->root->save();
+			if (_save) {
+				save();
+			}
 		}
 
-		virtual void erase(json _object)
+		virtual void put_array(json _array) override
+		{
+			if (_array.array()) {
+				for (auto item : _array) {
+					put(item, false);
+				}
+			}
+			save();
+		}
+
+		virtual void erase(int64_t _id, bool _save = true) override
+		{
+			xrecord key;
+			key.add(_id);
+			table_header->root->erase(key);
+			if (_save) {
+				save();
+			}
+		}
+
+		virtual void erase(json _object, bool _save = true) override
 		{
 			xrecord key(table_header->key_members, _object);
 			table_header->root->erase(key);
+			if (_save) {
+				save();
+			}
+		}
+
+		virtual void erase_array(json _array) override
+		{
+			if (_array.array()) {
+				for (auto item : _array) {
+					erase(item);
+				}
+			}
 			save();
 		}
 
@@ -1887,6 +2026,11 @@ as is the case in all puts
 			return target;
 		}
 
+		virtual void clear() override
+		{
+			table_header->root->clear();
+			save();
+		}
 	};
 
 	std::shared_ptr<xrecord_block> xrecord_block::create_block(xrecord_block_header& _header)
@@ -1989,7 +2133,7 @@ as is the case in all puts
 			value.add(100 + (i % 4) * 50);
 			valueread = pleaf->get(key);
 			
-			if (debug_xblock) {
+			if constexpr (debug_xblock) {
 				std::string message;
 				message = key.to_string();
 				message += " correct:";
@@ -2052,7 +2196,7 @@ as is the case in all puts
 			value.add(100 + (i % 4) * 50);
 			valueread = pleaf->get(key);
 
-			if (debug_xblock) {
+			if constexpr (debug_xblock) {
 				std::string message;
 				message = key.to_string();
 				message += " correct:";
@@ -2131,6 +2275,53 @@ as is the case in all puts
 			}
 		}
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
+
+		std::map<int, bool> erased_keys;
+		bool erase_success = true;
+		for (int i = 1; i <= 2000; i+=10)
+		{
+			erased_keys.insert_or_assign(i, true);
+			ptable->erase(i);
+		}
+
+		for (int i = 1; i <= 2000; i++)
+		{
+			json result = ptable->get(i);
+			if (result.object() and erased_keys.contains(i)) {
+				erase_success = false;
+				break;
+			}
+			if (result.empty() and not erased_keys.contains(i)) {
+				erase_success = false;
+				break;
+			}
+		}
+		_tests->test({ "erase", erase_success, __FILE__, __LINE__ });
+
+		ptable->clear();
+		ptable->save();
+
+		bool clear_success = true;
+
+		for (int i = 1; i <= 2000; i++)
+		{
+			json key = jp.create_object();
+			key.put_member_i64(object_id_field, i);
+			json obj = jp.create_object();
+			obj.put_member_i64(object_id_field, i);
+			obj.put_member("age", 10 + i % 50);
+			obj.put_member("weight", 100 + (i % 4) * 50);
+			obj.set_compare_order(keys);
+			json objd;
+			objd = ptable->get(key);
+			if (not objd.empty())
+			{
+				clear_success = false;
+				break;
+			}
+		}
+
+		_tests->test({ "clear", clear_success, __FILE__, __LINE__ });
 
 		system_monitoring_interface::global_mon->log_function_stop("xtable", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
