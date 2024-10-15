@@ -48,7 +48,7 @@ namespace corona
 		bool is_all;
 		int64_t count;
 	};
-	
+
 
 	class xtable_interface
 	{
@@ -70,7 +70,7 @@ namespace corona
 		virtual char* before_write(int32_t* _size) = 0;
 	};
 
-	template <typename T> 
+	template <typename T>
 	class poco_xblock
 	{
 	public:
@@ -103,77 +103,25 @@ namespace corona
 
 	using object_id_key = poco_xblock<int64_t>;
 
-	class xfield
+	struct xstring 
 	{
-	public:
-		field_types data_type;
-		char		data[8];
+		int length;
+		char data[1];
+	};
 
-		xfield()
-		{
-			;
-		}
+	struct xdouble 
+	{
+		double data;
+	};
 
-		std::string get_string() const
-		{
-			std::string t;
-			if (data_type == field_types::ft_string)
-			{
-				t = &data[sizeof(int32_t)];
-			}
-			return t;
-		}
+	struct xdatetime 
+	{
+		date_time data;
+	};
 
-		double get_double() const
-		{
-			double t;
-			if (data_type == field_types::ft_double)
-			{
-				t = *((double *) &data[0]);
-			}
-			return t;
-		}
-
-		int64_t get_int64() const
-		{
-			int64_t t;
-			if (data_type == field_types::ft_int64)
-			{
-				t = *((int64_t*)&data[0]);
-			}
-			return t;
-		}
-
-		date_time get_datetime() const
-		{
-			date_time t;
-			if (data_type == field_types::ft_datetime)
-			{
-				t = *((date_time*)&data[0]);
-			}
-			return t;
-		}
-
-		int32_t get_data_length()
-		{
-			int32_t data_length = 0;
-			switch (data_type) {
-			case field_types::ft_string:
-				data_length = *((int32_t*)(&data[0]));
-				break;
-			case field_types::ft_datetime:
-				data_length = sizeof(date_time);
-				break;
-			case field_types::ft_double:
-				data_length = sizeof(double);
-				break;
-			case field_types::ft_int64:
-				data_length = sizeof(int64_t);
-				break;
-			}
-			return data_length;
-		}
-	
+	struct xint64_t
+	{
+		int64_t data;
 	};
 
 	class xfield_holder
@@ -184,9 +132,44 @@ namespace corona
 		// that means key came from bytes someone else knows.  So we leave bytes null so the destructor
 		// won't try and free them.
 
-		char* bytes;
-		xfield* key;
-		int total_size;
+		char		*bytes;
+		int			total_size;
+		field_types data_type;
+		bool		free_bytes;
+
+		union
+		{
+			xstring* str;
+			xdouble* dbl;
+			xdatetime* dtm;
+			xint64_t* i64;
+		} data;
+	
+		void from_bytes(char *_bytes)
+		{
+			total_size = 1;
+			char* t = bytes;
+			data_type = (field_types)*t;
+			t++;
+			switch (data_type) {
+			case field_types::ft_string:
+				data.str = (xstring*)t;
+				total_size += sizeof(xstring) + data.str->length + 1;
+				break;
+			case field_types::ft_double:
+				data.dbl = (xdouble*)t;
+				total_size += sizeof(xdouble);
+				break;
+			case field_types::ft_datetime:
+				data.dtm = (xdatetime*)t;
+				total_size += sizeof(xdatetime);
+				break;
+			case field_types::ft_int64:
+				data.i64 = (xint64_t*)t;
+				total_size += sizeof(xint64_t);
+				break;
+			}
+		}
 
 	public:
 
@@ -194,7 +177,6 @@ namespace corona
 		{
 			total_size = 0;
 			bytes = nullptr;
-			key = nullptr;
 		}
 
 		xfield_holder(const xfield_holder& _src)
@@ -202,12 +184,13 @@ namespace corona
 			total_size = _src.total_size;
 			if (_src.bytes) {
 				bytes = new char[total_size];
+				free_bytes = true;
 				std::copy(_src.bytes, _src.bytes + total_size, bytes);
-				key = new (bytes) xfield();
+				from_bytes(bytes);
 			}
 			else {
 				bytes = nullptr;
-				key = _src.key;
+				data = _src.data;
 			}
 		}
 
@@ -215,15 +198,18 @@ namespace corona
 		{
 			std::swap(total_size, _src.total_size);
 			std::swap(bytes, _src.bytes);
-			std::swap(key, _src.key);
+			std::swap(data, _src.data);
+			std::swap(free_bytes, _src.free_bytes);
+			std::swap(data_type, _src.data_type);
 		}
 
 		xfield_holder& operator =(const xfield_holder& _src)
 		{
 			total_size = _src.total_size;
 			bytes = new char[total_size];
+			free_bytes = true;
 			std::copy(_src.bytes, _src.bytes + total_size, bytes);
-			key = new (bytes) xfield();
+			from_bytes(bytes);
 			return *this;
 		}
 
@@ -231,66 +217,80 @@ namespace corona
 		{
 			std::swap(total_size, _src.total_size);
 			std::swap(bytes, _src.bytes);
-			std::swap(key, _src.key);
+			std::swap(data, _src.data);
+			std::swap(free_bytes, _src.free_bytes);
+			std::swap(data_type, _src.data_type);
 			return *this;
 		}
 
 		xfield_holder(char *_bytes, int _offset)
 		{
-			char *sb = &_bytes[_offset];
-			key = new (sb) xfield();
-			total_size = key->get_data_length() + sizeof(xfield);
-			bytes = nullptr;
+			free_bytes = false;
+			bytes = &_bytes[_offset];
+			from_bytes(bytes);
 		}
 
 		xfield_holder(const std::string& _data)
 		{
-			total_size = _data.size() + sizeof(int32_t) + sizeof(xfield) + 1;
+			free_bytes = true;
+			total_size = 1 + _data.size() + sizeof(xstring) + 1;
 			bytes = new char[total_size];
-			key = new (bytes) xfield();
-			int length = _data.size() + 1;
-			key->data_type = field_types::ft_string;
-			int32_t* data_length = (int32_t*)&(key->data[0]);
-			*data_length = length;
-			std::copy(_data.c_str(), _data.c_str() + _data.size() + 1, &(key->data[0]) + sizeof(int32_t));
+			char* t = bytes;
+			*t = (char)field_types::ft_string;
+			t++;
+			data.str = (xstring*)t;
+			data.str->length = _data.size() + 1;
+			std::copy(_data.c_str(), _data.c_str() + data.str->length, data.str->data);
 		}
 
 		xfield_holder(int64_t _data)
 		{
-			total_size = sizeof(_data) + sizeof(xfield);
+			free_bytes = true;
+			total_size = 1 + sizeof(xint64_t);
 			bytes = new char[total_size];
-			key = new (bytes) xfield();
-			key->data_type = field_types::ft_int64;
-			int64_t* dest = (int64_t *)&(key->data[0]);
-			*dest = _data;
+			char* t = bytes;
+			*t = (char)field_types::ft_int64;
+			t++;
+			data.i64 = (xint64_t*)t;
+			data.i64->data = _data;
 		}
 
 		xfield_holder(double _data)
 		{
-			total_size = sizeof(_data) + sizeof(xfield);
+			free_bytes = true;
+			total_size = 1 + sizeof(xdouble);
 			bytes = new char[total_size];
-			key = new (bytes) xfield();
-			key->data_type = field_types::ft_double;
-			double* dest = (double*)&(key->data[0]);
-			*dest = _data;
+			char* t = bytes;
+			*t = (char)field_types::ft_double;
+			t++;
+			data.dbl = (xdouble*)t;
+			data.dbl->data = _data;
 		}
 
 		xfield_holder(date_time _data)
 		{
-			total_size = sizeof(_data) + sizeof(xfield);
+			free_bytes = true;
+			total_size = 1 + sizeof(date_time);
 			bytes = new char[total_size];
-			key = new (bytes) xfield();
-			key->data_type = field_types::ft_datetime;
-			date_time* dest = (date_time*)&(key->data[0]);
-			*dest = _data;
+			char* t = bytes;
+			*t = (char)field_types::ft_int64;
+			t++;
+			data.dtm = (xdatetime*)t;
+			data.dtm->data = _data;
 		}
 
 		xfield_holder(void* _dummy)
 		{
-			total_size = sizeof(xfield);
+			free_bytes = true;
+			total_size = 1;
 			bytes = new char[total_size];
-			key = new (bytes) xfield();
-			key->data_type = field_types::ft_none;
+			data = {};
+			*bytes = (char)field_types::ft_none;
+		}
+
+		field_types get_data_type()
+		{
+			return data_type;
 		}
 
 		int get_total_size() const
@@ -298,145 +298,126 @@ namespace corona
 			return total_size;
 		}
 
-		xfield* get_field() const
+		inline double get_double() const
 		{
-			return key;
+			return data.dbl->data;
+		}
+
+		inline int64_t get_int64() const
+		{
+			return data.i64->data;
+		}
+
+		inline date_time get_datetime() const
+		{
+			return data.dtm->data;
+		}
+
+		char *get_string() const
+		{
+			return data.str->data;
 		}
 
 		char* get_bytes() const
 		{
-			return (char*)key;
+			return (char*)bytes;
 		}
 
 		operator bool() const
 		{
-			return key != nullptr;
+			return data_type != field_types::ft_none;
 		}
 
 		bool operator < (const xfield_holder& _other) const
 		{
-			xfield* this_key = get_field();
-			xfield* other_key = _other.get_field();
-			if (this_key and other_key) {
-				if (this_key->data_type != other_key->data_type)
-					return this_key->data_type < other_key->data_type;
+			if (data_type != _other.data_type) {
+				return data_type < _other.data_type;
+			}
 
-				switch (this_key->data_type)
-				{
-				case field_types::ft_string:
-					return this_key->get_string() < other_key->get_string();
-				case field_types::ft_double:
-					return this_key->get_double() < other_key->get_double();
-				case field_types::ft_datetime:
-					return this_key->get_datetime() < other_key->get_datetime();
-				case field_types::ft_int64:
-					return this_key->get_int64() < other_key->get_int64();
-				case field_types::ft_none:
-					return false;
-				}
-			} 
-			else if (this_key and not other_key)
+			switch (data_type)
 			{
+			case field_types::ft_string:
+				return strcmp(data.str->data, _other.data.str->data)< 0;
+			case field_types::ft_double:
+				return get_double() < _other.get_double();
+			case field_types::ft_datetime:
+				return get_datetime() < _other.get_datetime();
+			case field_types::ft_int64:
+				return get_int64() < _other.get_int64();
+			default:
 				return false;
 			}
-			else if (other_key and not this_key)
-			{
-				return true;
-			}
-			else
-				return false;
 		}
 
 		bool operator == (const xfield_holder& _other) const
 		{
-			xfield* this_key = get_field();
-			xfield* other_key = _other.get_field();
-
-			if (this_key and other_key) {
-				if (this_key->data_type != other_key->data_type)
-					return this_key->data_type < other_key->data_type;
-
-				switch (get_field()->data_type)
-				{
-				case field_types::ft_string:
-					return this_key->get_string() == other_key->get_string();
-				case field_types::ft_double:
-					return this_key->get_double() == other_key->get_double();
-				case field_types::ft_datetime:
-					return this_key->get_datetime() == other_key->get_datetime();
-				case field_types::ft_int64:
-					return this_key->get_int64() == other_key->get_int64();
-				case field_types::ft_none:
-					return true;
-				}
+			if (data_type != _other.data_type) {
+				return false;
 			}
 
+			switch (data_type)
+			{
+			case field_types::ft_string:
+				return strcmp(data.str->data, _other.data.str->data) == 0;
+			case field_types::ft_double:
+				return get_double() == _other.get_double();
+			case field_types::ft_datetime:
+				return get_datetime() == _other.get_datetime();
+			case field_types::ft_int64:
+				return get_int64() == _other.get_int64();
+			default:
+				return false;
+			}
 			return false;
 		}
 
 		bool operator > (const xfield_holder& _other) const
 		{
-			if (*this and _other) {
-				xfield* this_key = get_field();
-				xfield* other_key = _other.get_field();
-				if (this_key->data_type != other_key->data_type)
-					return this_key->data_type < other_key->data_type;
-
-				switch (get_field()->data_type)
-				{
-				case field_types::ft_string:
-					return this_key->get_string() > other_key->get_string();
-				case field_types::ft_double:
-					return this_key->get_double() > other_key->get_double();
-				case field_types::ft_datetime:
-					return this_key->get_datetime() > other_key->get_datetime();
-				case field_types::ft_int64:
-					return this_key->get_int64() > other_key->get_int64();
-				case field_types::ft_none:
-					return false;
-				}
+			if (data_type != _other.data_type) {
+				return data_type > _other.data_type;
 			}
-			else if (*this and not _other)
+
+			switch (data_type)
 			{
-				return true;
+			case field_types::ft_string:
+				return strcmp(data.str->data, _other.data.str->data) > 0;
+			case field_types::ft_double:
+				return get_double() > _other.get_double();
+			case field_types::ft_datetime:
+				return get_datetime() > _other.get_datetime();
+			case field_types::ft_int64:
+				return get_int64() > _other.get_int64();
+			default:
+				return false;
 			}
-
 			return false;
 		}
 
 		bool operator != (const xfield_holder& _other) const
 		{
-			if (*this and _other) {
-				xfield* this_key = get_field();
-				xfield* other_key = _other.get_field();
-				if (this_key->data_type != other_key->data_type)
-					return this_key->data_type < other_key->data_type;
-
-				switch (get_field()->data_type)
-				{
-				case field_types::ft_string:
-					return this_key->get_string() != other_key->get_string();
-				case field_types::ft_double:
-					return this_key->get_double() != other_key->get_double();
-				case field_types::ft_datetime:
-					return this_key->get_datetime() != other_key->get_datetime();
-				case field_types::ft_int64:
-					return this_key->get_int64() != other_key->get_int64();
-				case field_types::ft_none:
-					return false;
-				}
-			}
-			else if (*this and not _other)
-			{
+			if (data_type != _other.data_type) {
 				return true;
 			}
 
+			switch (data_type)
+			{
+			case field_types::ft_string:
+				return strcmp(data.str->data, _other.data.str->data) != 0;
+			case field_types::ft_double:
+				return get_double() != _other.get_double();
+			case field_types::ft_datetime:
+				return get_datetime() != _other.get_datetime();
+			case field_types::ft_int64:
+				return get_int64() != _other.get_int64();
+			default:
+				return false;
+			}
 			return false;
 		}
 
 		~xfield_holder()
 		{
-			if (bytes) 
+			if (bytes and free_bytes) 
 			{
 				delete[] bytes;
 				bytes = nullptr;
@@ -469,28 +450,28 @@ namespace corona
 
 		// check values
 
-		result = test_datetimea.get_field()->get_datetime() == testa;
+		result = test_datetimea.get_datetime() == testa;
 		_tests->test({ "data dt", result, __FILE__, __LINE__ });
 
-		result = test_doublea.get_field()->get_double() == 42.0;
+		result = test_doublea.get_double() == 42.0;
 		_tests->test({ "data dble", result, __FILE__, __LINE__ });
 
-		result = test_int64a.get_field()->get_int64() == 12;
+		result = test_int64a.get_int64() == 12;
 		_tests->test({ "data i64", result, __FILE__, __LINE__ });
 
-		result = test_stringa.get_field()->get_string() == "testa";
+		result = test_stringa.get_string() == "testa";
 		_tests->test({ "data i64", result, __FILE__, __LINE__ });
 
-		result = test_datetimeb.get_field()->get_datetime() == testb;
+		result = test_datetimeb.get_datetime() == testb;
 		_tests->test({ "data dt 2", result, __FILE__, __LINE__ });
 
-		result = test_doubleb.get_field()->get_double() == 52.0;
+		result = test_doubleb.get_double() == 52.0;
 		_tests->test({ "data dble 2", result, __FILE__, __LINE__ });
 
-		result = test_int64b.get_field()->get_int64() == 22;
+		result = test_int64b.get_int64() == 22;
 		_tests->test({ "data i64 2", result, __FILE__, __LINE__ });
 
-		result = test_stringb.get_field()->get_string() == "testb";
+		result = test_stringb.get_string() == "testb";
 		_tests->test({ "data i64 2", result, __FILE__, __LINE__ });
 
 		int l;
@@ -501,12 +482,12 @@ namespace corona
 
 		//datetime
 		l = test_datetimeb.get_total_size();
-		c = (char*)test_datetimeb.get_field();
+		c = (char*)test_datetimeb.get_bytes();
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
 		xfield_holder copydt(c, l);
-		result = copydt.get_field()->get_string() == test_int64b.get_field()->get_string();
+		result = copydt.get_string() == test_int64b.get_string();
 		_tests->test({ "copy dt", result, __FILE__, __LINE__ });
 		delete test_copy;
 
@@ -517,7 +498,7 @@ namespace corona
 		std::copy(c, c + l, test_copy);
 
 		xfield_holder copydb(c, 0);
-		result = copydb.get_field()->get_double() == test_doubleb.get_field()->get_double();
+		result = copydb.get_double() == test_doubleb.get_double();
 		_tests->test({ "copy dbl", result, __FILE__, __LINE__ });
 		delete test_copy;
 
@@ -528,7 +509,7 @@ namespace corona
 		std::copy(c, c + l, test_copy);
 
 		xfield_holder copyi(c, 0);
-		result = copyi.get_field()->get_int64() == test_int64b.get_field()->get_int64();
+		result = copyi.get_int64() == test_int64b.get_int64();
 		_tests->test({ "copy i64", result, __FILE__, __LINE__ });
 		delete test_copy;
 
@@ -539,7 +520,7 @@ namespace corona
 		std::copy(c, c + l, test_copy);
 
 		xfield_holder copys(c, l);
-		result = copys.get_field()->get_string() == test_int64b.get_field()->get_string();
+		result = copys.get_string() == test_int64b.get_string();
 		_tests->test({ "copy str", result, __FILE__, __LINE__ });
 		delete test_copy;
 
@@ -702,7 +683,7 @@ namespace corona
 					new_key = xfield_holder(nullptr);
 					break;
 				}
-				key.insert(key.end(), (char *)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
+				key.insert(key.end(), (char *)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
 			}
 		}
 
@@ -717,19 +698,19 @@ namespace corona
 			while (this_key)
 			{
 				output << separator;
-				switch (this_key.get_field()->data_type)
+				switch (this_key.get_data_type())
 				{
 				case field_types::ft_string:
-					output << this_key.get_field()->get_string();
+					output << this_key.get_string();
 					break;
 				case field_types::ft_double:
-					output << this_key.get_field()->get_double();
+					output << this_key.get_double();
 					break;
 				case field_types::ft_datetime:
-					output << (std::string)this_key.get_field()->get_datetime();
+					output << (std::string)this_key.get_datetime();
 					break;
 				case field_types::ft_int64:
-					output << this_key.get_field()->get_int64();
+					output << this_key.get_int64();
 					break;
 				default:
 					break;
@@ -753,19 +734,19 @@ namespace corona
 			while (this_key and index < _keys.size())
 			{
 				std::string field_name = _keys[index];
-				switch (this_key.get_field()->data_type)
+				switch (this_key.get_data_type())
 				{
 				case field_types::ft_string:
-					_dest.put_member(field_name, this_key.get_field()->get_string());
+					_dest.put_member(field_name, this_key.get_string());
 					break;
 				case field_types::ft_double:
-					_dest.put_member(field_name, this_key.get_field()->get_double());
+					_dest.put_member(field_name, this_key.get_double());
 					break;
 				case field_types::ft_datetime:
-					_dest.put_member(field_name, this_key.get_field()->get_datetime());
+					_dest.put_member(field_name, this_key.get_datetime());
 					break;
 				case field_types::ft_int64:
-					_dest.put_member_i64(field_name, this_key.get_field()->get_int64());
+					_dest.put_member_i64(field_name, this_key.get_int64());
 					break;
 				default:
 					break;
@@ -781,12 +762,12 @@ namespace corona
 			int next_offset;
 			xfield_holder xfkey;
 			xfkey = get_field(0, &next_offset);
-			if (xfkey and xfkey.get_field()->data_type == field_types::ft_int64) {
-				result.location = xfkey.get_field()->get_int64();
+			if (xfkey and xfkey.get_data_type() == field_types::ft_int64) {
+				result.location = xfkey.get_int64();
 			}
 			xfkey = get_field(next_offset, &next_offset);
-			if (xfkey and xfkey.get_field()->data_type == field_types::ft_int64) {
-				result.block_type = (xblock_types)xfkey.get_field()->get_int64();
+			if (xfkey and xfkey.get_data_type() == field_types::ft_int64) {
+				result.block_type = (xblock_types)xfkey.get_int64();
 			}
 			return result;
 		}
@@ -806,28 +787,28 @@ namespace corona
 		xrecord& add(double _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char *)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
+			key.insert(key.end(), (char *)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
 			return *this;
 		}
 
 		xrecord& add(std::string _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char*)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
 			return *this;
 		}
 
 		xrecord& add(date_time _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char*)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
 			return *this;
 		}
 
 		xrecord& add(int64_t _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char*)new_key.get_field(), (char*)new_key.get_field() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
 			return *this;
 		}
 		
