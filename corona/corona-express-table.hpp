@@ -232,11 +232,12 @@ namespace corona
 
 		xfield_holder(const std::string& _data)
 		{
+			data_type = field_types::ft_string;
 			free_bytes = true;
 			total_size = 1 + _data.size() + sizeof(xstring) + 1;
 			bytes = new char[total_size];
 			char* t = bytes;
-			*t = (char)field_types::ft_string;
+			*t = (char)data_type;
 			t++;
 			data.str = (xstring*)t;
 			data.str->length = _data.size() + 1;
@@ -245,11 +246,12 @@ namespace corona
 
 		xfield_holder(int64_t _data)
 		{
+			data_type = field_types::ft_int64;
 			free_bytes = true;
 			total_size = 1 + sizeof(xint64_t);
 			bytes = new char[total_size];
 			char* t = bytes;
-			*t = (char)field_types::ft_int64;
+			*t = (char)data_type;
 			t++;
 			data.i64 = (xint64_t*)t;
 			data.i64->data = _data;
@@ -257,11 +259,12 @@ namespace corona
 
 		xfield_holder(double _data)
 		{
+			data_type = field_types::ft_double;
 			free_bytes = true;
 			total_size = 1 + sizeof(xdouble);
 			bytes = new char[total_size];
 			char* t = bytes;
-			*t = (char)field_types::ft_double;
+			*t = (char)data_type;
 			t++;
 			data.dbl = (xdouble*)t;
 			data.dbl->data = _data;
@@ -269,11 +272,12 @@ namespace corona
 
 		xfield_holder(date_time _data)
 		{
+			data_type = field_types::ft_datetime;
 			free_bytes = true;
-			total_size = 1 + sizeof(date_time);
+			total_size = 1 + sizeof(xdatetime);
 			bytes = new char[total_size];
 			char* t = bytes;
-			*t = (char)field_types::ft_int64;
+			*t = (char)data_type;
 			t++;
 			data.dtm = (xdatetime*)t;
 			data.dtm->data = _data;
@@ -281,11 +285,12 @@ namespace corona
 
 		xfield_holder(void* _dummy)
 		{
+			data_type = field_types::ft_none;
 			free_bytes = true;
 			total_size = 1;
 			bytes = new char[total_size];
 			data = {};
-			*bytes = (char)field_types::ft_none;
+			*bytes = (char)data_type;
 		}
 
 		field_types get_data_type()
@@ -313,7 +318,12 @@ namespace corona
 			return data.dtm->data;
 		}
 
-		char *get_string() const
+		std::string get_string() const
+		{
+			return std::string(data.str->data);
+		}
+
+		char *get_cstring() const
 		{
 			return data.str->data;
 		}
@@ -460,7 +470,7 @@ namespace corona
 		_tests->test({ "data i64", result, __FILE__, __LINE__ });
 
 		result = test_stringa.get_string() == "testa";
-		_tests->test({ "data i64", result, __FILE__, __LINE__ });
+		_tests->test({ "data str", result, __FILE__, __LINE__ });
 
 		result = test_datetimeb.get_datetime() == testb;
 		_tests->test({ "data dt 2", result, __FILE__, __LINE__ });
@@ -486,8 +496,8 @@ namespace corona
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
-		xfield_holder copydt(c, l);
-		result = copydt.get_string() == test_int64b.get_string();
+		xfield_holder copydt(test_copy, 0);
+		result = copydt.get_datetime() == test_datetimeb.get_datetime();
 		_tests->test({ "copy dt", result, __FILE__, __LINE__ });
 		delete test_copy;
 
@@ -497,7 +507,7 @@ namespace corona
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
-		xfield_holder copydb(c, 0);
+		xfield_holder copydb(test_copy, 0);
 		result = copydb.get_double() == test_doubleb.get_double();
 		_tests->test({ "copy dbl", result, __FILE__, __LINE__ });
 		delete test_copy;
@@ -508,7 +518,7 @@ namespace corona
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
-		xfield_holder copyi(c, 0);
+		xfield_holder copyi(test_copy, 0);
 		result = copyi.get_int64() == test_int64b.get_int64();
 		_tests->test({ "copy i64", result, __FILE__, __LINE__ });
 		delete test_copy;
@@ -519,8 +529,8 @@ namespace corona
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
-		xfield_holder copys(c, l);
-		result = copys.get_string() == test_int64b.get_string();
+		xfield_holder copys(test_copy, 0);
+		result = copys.get_string() == test_stringb.get_string();
 		_tests->test({ "copy str", result, __FILE__, __LINE__ });
 		delete test_copy;
 
