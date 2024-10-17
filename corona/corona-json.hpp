@@ -646,7 +646,7 @@ namespace corona
 	class json_object : public json_value
 	{
 	public:
-		std::map<std::string, std::shared_ptr<json_value>> members;
+		std::unordered_map<std::string, std::shared_ptr<json_value>> members;
 
 		virtual std::string to_key()
 		{
@@ -1934,7 +1934,7 @@ namespace corona
 			return jn;
 		}
 
-		std::map<std::string, std::shared_ptr<json_value>> get_members_raw()
+		std::unordered_map<std::string, std::shared_ptr<json_value>> get_members_raw()
 		{
 			if (not object_impl) {
 				throw std::logic_error("Not an object");

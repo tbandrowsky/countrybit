@@ -112,23 +112,257 @@ namespace corona
 
 	struct xstring 
 	{
+		field_types ft;
 		int length;
 		char data[1];
+
+		int total_size()
+		{
+			return sizeof(xstring) + length;
+		}
+		static char* from(std::string _src)
+		{
+			int sz = sizeof(xstring) + _src.size() + 1;
+			char* t = new char[sz];
+			xstring* xt = (xstring*)t;
+			xt->ft = field_types::ft_string;
+			xt->length = _src.size() + 1;
+			std::copy(_src.c_str(), _src.c_str() + xt->length, xt->data);
+			return t;
+		}
 	};
 
 	struct xdouble 
 	{
+		field_types ft;
 		double data;
+
+		int total_size()
+		{
+			return sizeof(xdouble);
+		}
+		static char* from(double _src)
+		{
+			int sz = sizeof(xdouble);
+			char* t = new char[sz];
+			xdouble* xt = (xdouble*)t;
+			xt->ft = field_types::ft_double;
+			xt->data = _src;
+			return t;
+		}
 	};
 
 	struct xdatetime 
 	{
+		field_types ft;
 		date_time data;
+
+		int total_size()
+		{
+			return sizeof(xdatetime);
+		}
+		static char* from(date_time _src)
+		{
+			int sz = sizeof(xdatetime);
+			char* t = new char[sz];
+			xdatetime* xt = (xdatetime*)t;
+			xt->ft = field_types::ft_datetime;
+			xt->data = _src;
+			return t;
+		}
 	};
 
 	struct xint64_t
 	{
+		field_types ft;
 		int64_t data;
+
+		int total_size()
+		{
+			return sizeof(xint64_t);
+		}
+		static char* from(int64_t _src)
+		{
+			int sz = sizeof(xint64_t);
+			char* t = new char[sz];
+			xint64_t* xt = (xint64_t*)t;
+			xt->ft = field_types::ft_int64;
+			xt->data = _src;
+			return t;
+		}
+	};
+
+	struct xplaceholder
+	{
+		field_types ft;
+
+		int total_size()
+		{
+			return sizeof(xplaceholder);
+		}
+		static char* from()
+		{
+			int sz = sizeof(xplaceholder);
+			char* t = new char[sz];
+			xplaceholder* xt = (xplaceholder*)t;
+			xt->ft = field_types::ft_placeholder;
+			return t;
+		}
+	};
+
+	template <typename typea, typename typeb> 
+	bool xfn_lt(void *_itema, void *_itemb)
+	{
+		return ((typea *)(_itema))->data < ((typea*)(_itemb))->data;
+	}
+
+	template <typename typea, typename typeb>
+	bool xfn_eq(void* _itema, void* _itemb)
+	{
+		return ((typea*)(_itema))->data == ((typea*)(_itemb))->data;
+	}
+
+	template <typename typea, typename typeb>
+	bool xfn_neq(void* _itema, void* _itemb)
+	{
+		return ((typea*)(_itema))->data != ((typea*)(_itemb))->data;
+	}
+
+	template <typename typea, typename typeb>
+	bool xfn_gt(void* _itema, void* _itemb)
+	{
+		return ((typea*)(_itema))->data > ((typea*)(_itemb))->data;
+	}
+
+	template <>
+	bool xfn_lt<xstring, xstring>(void* _itema, void* _itemb)
+	{
+		return strcmp( ((xstring *)(_itema))->data, ((xstring*)(_itemb))->data) < 0;
+	}
+
+	template <>
+	bool xfn_eq<xstring, xstring>(void* _itema, void* _itemb)
+	{
+		return strcmp(((xstring*)(_itema))->data, ((xstring*)(_itemb))->data) == 0;
+	}
+
+	template <>
+	bool xfn_neq<xstring, xstring>(void* _itema, void* _itemb)
+	{
+		return strcmp(((xstring*)(_itema))->data, ((xstring*)(_itemb))->data) != 0;
+	}
+
+	template <>
+	bool xfn_gt<xstring, xstring>(void* _itema, void* _itemb)
+	{
+		return strcmp(((xstring*)(_itema))->data, ((xstring*)(_itemb))->data) > 0;
+	}
+
+	template <bool value>
+	bool xfn_fixed(void* _itema, void* _itemb)
+	{
+		return value;
+	}
+
+	using xbinary_fn = std::function<bool(void* _a, void* _b)>;
+
+	class xoperation_table
+	{
+	public:
+		xbinary_fn eq[field_type_size][field_type_size];
+		xbinary_fn lt[field_type_size][field_type_size];
+		xbinary_fn gt[field_type_size][field_type_size];
+		xbinary_fn neq[field_type_size][field_type_size];
+
+		xoperation_table()
+		{
+			// eq
+			for (int i = 0; i < field_type_size; i++)
+			{
+				for (int j = 0; j < field_type_size; j++)
+				{
+					eq[i][j] = [](void* a, void* b)-> bool { return xfn_fixed<false>(a, b); };
+				}
+			}
+			for (int i = 0; i < field_type_size; i++)
+			{
+				eq[to_underlying(field_types::ft_placeholder)][i] = [](void* a, void* b)-> bool { return xfn_fixed<true>(a, b); };
+				eq[i][to_underlying(field_types::ft_placeholder)] = [](void* a, void* b)-> bool { return xfn_fixed<true>(a, b); };
+			}
+			eq[to_underlying(field_types::ft_double)][to_underlying(field_types::ft_double)] = [](void* a, void* b)-> bool { return xfn_eq<xdouble, xdouble>(a, b); };
+			eq[to_underlying(field_types::ft_int64)][to_underlying(field_types::ft_int64)] = [](void* a, void* b)-> bool { return xfn_eq<xint64_t, xint64_t>(a, b); };
+			eq[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_eq<date_time, date_time>(a, b); };
+			eq[to_underlying(field_types::ft_string)][to_underlying(field_types::ft_string)] = [](void* a, void* b)-> bool { return xfn_eq<xstring, xstring>(a, b); };
+
+
+			// neq
+			for (int i = 0; i < field_type_size; i++)
+			{
+				for (int j = 0; j < field_type_size; j++)
+				{
+					neq[i][j] = [](void* a, void* b)-> bool { return xfn_fixed<true>(a, b); };
+				}
+			}
+			for (int i = 0; i < field_type_size; i++)
+			{
+				neq[to_underlying(field_types::ft_placeholder)][i] = [](void* a, void* b)-> bool { return xfn_fixed<false>(a, b); };
+				neq[i][to_underlying(field_types::ft_placeholder)] = [](void* a, void* b)-> bool { return xfn_fixed<false>(a, b); };
+			}
+			neq[to_underlying(field_types::ft_double)][to_underlying(field_types::ft_double)] = [](void* a, void* b)-> bool { return xfn_neq<xdouble, xdouble>(a, b); };
+			neq[to_underlying(field_types::ft_int64)][to_underlying(field_types::ft_int64)] = [](void* a, void* b)-> bool { return xfn_neq<xint64_t, xint64_t>(a, b); };
+			neq[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_neq<date_time, date_time>(a, b); };
+			neq[to_underlying(field_types::ft_string)][to_underlying(field_types::ft_string)] = [](void* a, void* b)-> bool { return xfn_neq<xstring, xstring>(a, b); };
+
+			// lt
+			for (int i = 0; i < field_type_size; i++)
+			{
+				for (int j = 0; j < field_type_size; j++)
+				{
+					if (i < j) {
+						lt[i][j] = [](void* a, void* b)-> bool { return xfn_fixed<true>(a, b); };
+					}
+					else if (j > i)
+					{
+						lt[i][j] = [](void* a, void* b)-> bool { return xfn_fixed<false>(a, b); };
+					}
+				}
+			}
+
+			for (int i = 0; i < field_type_size; i++)
+			{
+				lt[to_underlying(field_types::ft_placeholder)][i] = [](void* a, void* b)-> bool { return xfn_fixed<false>(a, b); };
+				lt[i] [to_underlying(field_types::ft_placeholder)] = [](void* a, void* b)-> bool { return xfn_fixed<false>(a, b); };
+			}
+			lt[to_underlying(field_types::ft_double)][to_underlying(field_types::ft_double)] = [](void* a, void* b)-> bool { return xfn_lt<xdouble, xdouble>(a, b); };
+			lt[to_underlying(field_types::ft_int64)][to_underlying(field_types::ft_int64)] = [](void* a, void* b)-> bool { return xfn_lt<xint64_t, xint64_t>(a, b); };
+			lt[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_lt<date_time, date_time>(a, b); };
+			lt[to_underlying(field_types::ft_string)][to_underlying(field_types::ft_string)] = [](void* a, void* b)-> bool { return xfn_lt<xstring, xstring>(a, b); };
+
+			// gt
+			for (int i = 0; i < field_type_size; i++)
+			{
+				for (int j = 0; j < field_type_size; j++)
+				{
+					if (i < j) {
+						gt[i][j] = [](void* a, void* b)-> bool { return xfn_fixed<false>(a, b); };
+					}
+					else if (j > i)
+					{
+						gt[i][j] = [](void* a, void* b)-> bool { return xfn_fixed<true>(a, b); };
+					}
+				}
+			}
+
+			for (int i = 0; i < field_type_size; i++)
+			{
+				gt[to_underlying(field_types::ft_placeholder)][i] = [](void* a, void* b)-> bool { return xfn_fixed<false>(a, b); };
+				gt[i][to_underlying(field_types::ft_placeholder)] = [](void* a, void* b)-> bool { return xfn_fixed<false>(a, b); };
+			}
+			gt[to_underlying(field_types::ft_double)][to_underlying(field_types::ft_double)] = [](void* a, void* b)-> bool { return xfn_gt<xdouble, xdouble>(a, b); };
+			gt[to_underlying(field_types::ft_int64)][to_underlying(field_types::ft_int64)] = [](void* a, void* b)-> bool { return xfn_gt<xint64_t, xint64_t>(a, b); };
+			gt[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_gt<date_time, date_time>(a, b); };
+			gt[to_underlying(field_types::ft_string)][to_underlying(field_types::ft_string)] = [](void* a, void* b)-> bool { return xfn_gt<xstring, xstring>(a, b); };
+		}
 	};
 
 	class xfield_holder
@@ -140,199 +374,170 @@ namespace corona
 		// won't try and free them.
 
 		char		*bytes;
-		int			total_size;
-		field_types data_type;
 		bool		free_bytes;
+		int			size_bytes;
 
-		union
-		{
-			xstring* str;
-			xdouble* dbl;
-			xdatetime* dtm;
-			xint64_t* i64;
-		} data;
+		field_types get_field_type() { return (field_types)(*bytes); }
+		xstring* as_string() const { return (xstring*)bytes; }
+		xdouble* as_double() const { return (xdouble*)bytes; }
+		xint64_t* as_int64_t() const { return (xint64_t*)bytes; }
+		xdatetime* as_datetime() const { return (xdatetime*)bytes; }
+		xplaceholder* as_placeholder() const { return (xplaceholder*)bytes; }
 	
-		void from_bytes(char *_bytes)
+		void from_bytes()
 		{
-			total_size = 1;
-			char* t = bytes;
-			data_type = (field_types)*t;
-			t++;
-			switch (data_type) {
+			switch (get_field_type()) {
 			case field_types::ft_string:
-				data.str = (xstring*)t;
-				total_size += sizeof(xstring) + data.str->length;
+				size_bytes = as_string()->total_size();
 				break;
 			case field_types::ft_double:
-				data.dbl = (xdouble*)t;
-				total_size += sizeof(xdouble);
+				size_bytes = as_double()->total_size();
 				break;
 			case field_types::ft_datetime:
-				data.dtm = (xdatetime*)t;
-				total_size += sizeof(xdatetime);
+				size_bytes = as_datetime()->total_size();
 				break;
 			case field_types::ft_int64:
-				data.i64 = (xint64_t*)t;
-				total_size += sizeof(xint64_t);
+				size_bytes = as_int64_t()->total_size();
+				break;
+			case field_types::ft_placeholder:
+				size_bytes = as_placeholder()->total_size();
 				break;
 			}
 		}
+
+		static xoperation_table* xops;
 
 	public:
 
 		xfield_holder()
 		{
-			total_size = 0;
+			size_bytes = 0;
 			bytes = nullptr;
+			free_bytes = false;
+			if (xops == nullptr) {
+				xops = new xoperation_table();
+			}
 		}
 
 		xfield_holder(const xfield_holder& _src)
 		{
-			total_size = _src.total_size;
 			if (_src.bytes) {
-				bytes = new char[total_size];
+				size_bytes = _src.size_bytes;
+				bytes = new char[size_bytes];
 				free_bytes = true;
-				std::copy(_src.bytes, _src.bytes + total_size, bytes);
-				from_bytes(bytes);
+				std::copy(_src.bytes, _src.bytes + size_bytes, bytes);
 			}
-			else {
+			else 
+			{
 				bytes = nullptr;
-				data = _src.data;
 			}
 		}
 
 		xfield_holder(xfield_holder&& _src)
 		{
-			std::swap(total_size, _src.total_size);
-			std::swap(bytes, _src.bytes);
-			std::swap(data, _src.data);
-			std::swap(free_bytes, _src.free_bytes);
-			std::swap(data_type, _src.data_type);
+			bytes = _src.bytes;
+			size_bytes = _src.size_bytes;
+			free_bytes = _src.free_bytes;
+			_src.free_bytes = false;
 		}
 
 		xfield_holder& operator =(const xfield_holder& _src)
 		{
-			total_size = _src.total_size;
-			bytes = new char[total_size];
-			free_bytes = true;
-			std::copy(_src.bytes, _src.bytes + total_size, bytes);
-			from_bytes(bytes);
+			if (free_bytes)
+				delete[] bytes;
+			bytes = nullptr;
+
+			if (_src.bytes) {
+				size_bytes = _src.size_bytes;
+				bytes = new char[size_bytes];
+				free_bytes = true;
+				std::copy(_src.bytes, _src.bytes + size_bytes, bytes);
+			}
+			else
+			{
+				bytes = nullptr;
+			}
 			return *this;
 		}
 
 		xfield_holder& operator =(xfield_holder&& _src)
 		{
-			std::swap(total_size, _src.total_size);
-			std::swap(bytes, _src.bytes);
-			std::swap(data, _src.data);
-			std::swap(free_bytes, _src.free_bytes);
-			std::swap(data_type, _src.data_type);
+			bytes = _src.bytes;
+			size_bytes = _src.size_bytes;
+			free_bytes = _src.free_bytes;
+			_src.free_bytes = false;
 			return *this;
 		}
 
-		xfield_holder(char *_bytes, int _offset)
+		xfield_holder(const char *_bytes, int _offset)
 		{
 			free_bytes = false;
-			bytes = &_bytes[_offset];
-			from_bytes(bytes);
+			bytes = (char *) &_bytes[_offset];
 		}
 
 		xfield_holder(const std::string& _data)
 		{
-			data_type = field_types::ft_string;
-			free_bytes = true;
-			total_size = 1 + _data.size() + sizeof(xstring) + 1;
-			bytes = new char[total_size];
-			char* t = bytes;
-			*t = (char)data_type;
-			t++;
-			data.str = (xstring*)t;
-			data.str->length = _data.size() + 1;
-			std::copy(_data.c_str(), _data.c_str() + data.str->length, data.str->data);
+			bytes = xstring::from(_data);
+			size_bytes = as_string()->total_size();
 		}
 
 		xfield_holder(int64_t _data)
 		{
-			data_type = field_types::ft_int64;
-			free_bytes = true;
-			total_size = 1 + sizeof(xint64_t);
-			bytes = new char[total_size];
-			char* t = bytes;
-			*t = (char)data_type;
-			t++;
-			data.i64 = (xint64_t*)t;
-			data.i64->data = _data;
+			bytes = xint64_t::from(_data);
+			size_bytes = as_int64_t()->total_size();
 		}
 
 		xfield_holder(double _data)
 		{
-			data_type = field_types::ft_double;
-			free_bytes = true;
-			total_size = 1 + sizeof(xdouble);
-			bytes = new char[total_size];
-			char* t = bytes;
-			*t = (char)data_type;
-			t++;
-			data.dbl = (xdouble*)t;
-			data.dbl->data = _data;
+			bytes = xdouble::from(_data);
+			size_bytes = as_double()->total_size();
 		}
 
 		xfield_holder(date_time _data)
 		{
-			data_type = field_types::ft_datetime;
-			free_bytes = true;
-			total_size = 1 + sizeof(xdatetime);
-			bytes = new char[total_size];
-			char* t = bytes;
-			*t = (char)data_type;
-			t++;
-			data.dtm = (xdatetime*)t;
-			data.dtm->data = _data;
+			bytes = xdatetime::from(_data);
+			size_bytes = as_double()->total_size();
 		}
 
 		xfield_holder(void* _dummy)
 		{
-			data_type = field_types::ft_none;
-			free_bytes = true;
-			total_size = 1;
-			bytes = new char[total_size];
-			data = {};
-			*bytes = (char)data_type;
+			bytes = xplaceholder::from();
+			size_bytes = as_double()->total_size();
 		}
 
-		field_types get_data_type()
+		field_types get_data_type() const
 		{
-			return data_type;
+			return (field_types)*bytes;
 		}
 
 		int get_total_size() const
 		{
-			return total_size;
+			return size_bytes;
 		}
 
 		inline double get_double() const
 		{
-			return data.dbl->data;
+			return as_double()->data;
 		}
 
 		inline int64_t get_int64() const
 		{
-			return data.i64->data;
+			return as_int64_t()->data;
 		}
 
 		inline date_time get_datetime() const
 		{
-			return data.dtm->data;
+			return as_datetime()->data;
 		}
 
 		std::string get_string() const
 		{
-			return std::string(data.str->data);
+			return as_string()->data;
 		}
 
 		char *get_cstring() const
 		{
-			return data.str->data;
+			return as_string()->data;
 		}
 
 		char* get_bytes() const
@@ -342,94 +547,31 @@ namespace corona
 
 		operator bool() const
 		{
-			return data_type != field_types::ft_none;
+			return bytes != nullptr;
 		}
 
 		bool operator < (const xfield_holder& _other) const
 		{
-			if (data_type != _other.data_type) {
-				return data_type < _other.data_type;
-			}
-
-			switch (data_type)
-			{
-			case field_types::ft_string:
-				return strcmp(data.str->data, _other.data.str->data)< 0;
-			case field_types::ft_double:
-				return get_double() < _other.get_double();
-			case field_types::ft_datetime:
-				return get_datetime() < _other.get_datetime();
-			case field_types::ft_int64:
-				return get_int64() < _other.get_int64();
-			default:
-				return false;
-			}
+			auto fn = xops->lt[to_underlying(get_data_type())][to_underlying(get_data_type())];
+			return fn(bytes, _other.bytes);
 		}
 
 		bool operator == (const xfield_holder& _other) const
 		{
-			if (data_type != _other.data_type) {
-				return false;
-			}
-
-			switch (data_type)
-			{
-			case field_types::ft_string:
-				return strcmp(data.str->data, _other.data.str->data) == 0;
-			case field_types::ft_double:
-				return get_double() == _other.get_double();
-			case field_types::ft_datetime:
-				return get_datetime() == _other.get_datetime();
-			case field_types::ft_int64:
-				return get_int64() == _other.get_int64();
-			default:
-				return false;
-			}
-			return false;
+			auto fn = xops->eq[to_underlying(get_data_type())][to_underlying(get_data_type())];
+			return fn(bytes, _other.bytes);
 		}
 
 		bool operator > (const xfield_holder& _other) const
 		{
-			if (data_type != _other.data_type) {
-				return data_type > _other.data_type;
-			}
-
-			switch (data_type)
-			{
-			case field_types::ft_string:
-				return strcmp(data.str->data, _other.data.str->data) > 0;
-			case field_types::ft_double:
-				return get_double() > _other.get_double();
-			case field_types::ft_datetime:
-				return get_datetime() > _other.get_datetime();
-			case field_types::ft_int64:
-				return get_int64() > _other.get_int64();
-			default:
-				return false;
-			}
-			return false;
+			auto fn = xops->gt[to_underlying(get_data_type())][to_underlying(get_data_type())];
+			return fn(bytes, _other.bytes);
 		}
 
 		bool operator != (const xfield_holder& _other) const
 		{
-			if (data_type != _other.data_type) {
-				return true;
-			}
-
-			switch (data_type)
-			{
-			case field_types::ft_string:
-				return strcmp(data.str->data, _other.data.str->data) != 0;
-			case field_types::ft_double:
-				return get_double() != _other.get_double();
-			case field_types::ft_datetime:
-				return get_datetime() != _other.get_datetime();
-			case field_types::ft_int64:
-				return get_int64() != _other.get_int64();
-			default:
-				return false;
-			}
-			return false;
+			auto fn = xops->neq[to_underlying(get_data_type())][to_underlying(get_data_type())];
+			return fn(bytes, _other.bytes);
 		}
 
 		~xfield_holder()
@@ -734,6 +876,8 @@ namespace corona
 				case field_types::ft_int64:
 					output << this_key.get_int64();
 					break;
+				case field_types::ft_placeholder:
+					output << "[null]";
 				default:
 					break;
 				}
@@ -865,7 +1009,8 @@ namespace corona
 		{
 			xfield_holder t = {};
 			if (_offset < key.size()) {
-				t = xfield_holder((char *)key.data(), _offset);
+				const char* f = key.data();
+				t = xfield_holder(f, _offset);
 				*_next_offset = t.get_total_size() + _offset;
 			}
 			return t;

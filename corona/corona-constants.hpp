@@ -588,19 +588,37 @@ namespace corona
 	const std::string sys_default_team_field = "new_user_default_team";
 	const std::string parse_error_class = "sys_parse_error";
 
-	enum class field_types {
+	enum class field_types : std::int8_t {
 		ft_none = 0,
-		ft_object = 1,
-		ft_array = 2,
-		ft_double = 3,
-		ft_int64 = 4,
-		ft_string = 5,
-		ft_bool = 6,
-		ft_datetime = 7,
-		ft_function = 8,
-		ft_query = 9,
-		ft_blob = 10
+		ft_placeholder = 1,
+		ft_double = 2,
+		ft_int64 = 3,
+		ft_string = 4,
+		ft_bool = 5,
+		ft_datetime = 6,
+		ft_object = 7,
+		ft_array = 8,
+		ft_function = 9,
+		ft_query = 10,
+		ft_blob = 11
 	};
+	
+	const int field_type_size = 12;
+
+	enum class ft_operations : std::int8_t {
+		fto_lt = 0,
+		fto_eq = 1,
+		fto_neq = 2,
+		fto_gt = 3
+	};
+
+	const int field_type_operation_size = 4;
+
+	template <typename E>
+	constexpr auto to_underlying(E e) noexcept
+	{
+		return static_cast<std::underlying_type_t<E>>(e);
+	}
 
 	std::map<std::string, field_types> allowed_field_types = {
 { "object", field_types::ft_object },
