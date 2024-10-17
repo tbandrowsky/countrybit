@@ -1511,7 +1511,7 @@ namespace corona
 			xfor_each_result result;
 			auto it = records.lower_bound(_key);
 			int index = 0;
-			while (it != records.end() and _key == it->first) {
+			while (it != records.end()) {
 				xrecord it_temp = it->first;
 				relative_ptr_type t = _process(index, it_temp, it->second);
 				if (t != null_row) {
@@ -1530,13 +1530,15 @@ namespace corona
 			std::vector<xrecord> results;
 			auto it = records.lower_bound(_key);
 			int index = 0;
-			while (it != records.end() and _key == it->first) {
+			while (it != records.end()) {
 				xrecord it_temp = it->first;
-				xrecord t = _process(index, it_temp, it->second);
-				if (not t.is_empty())
-				{
-					results.push_back(t);
-					index++;
+				if (it_temp == _key) {
+					xrecord t = _process(index, it_temp, it->second);
+					if (not t.is_empty())
+					{
+						results.push_back(t);
+						index++;
+					}
 				}
 				it++;
 			}
@@ -1945,13 +1947,14 @@ as is the case in all puts
 		virtual std::vector<xrecord> select(xrecord _key, std::function<xrecord(int _index, xrecord& _key, xrecord& _value)> _process) override
 		{
 			std::vector<xrecord> result = {};
-			for (auto item : records) {
-				if (item.first == _key) {
-					xblock_ref ref = item.second.get_xblock_ref();
-					auto block = get_block(ref);
-					std::vector<xrecord> temp = block->select(_key, _process);
-					result.insert(result.end(), temp.begin(), temp.end());
-				}
+			auto it = records.lower_bound(_key);
+			int index = 0;
+			while (it != records.end()) {
+				xblock_ref ref = it->second.get_xblock_ref();
+				auto block = get_block(ref);
+				std::vector<xrecord> temp = block->select(_key, _process);
+				result.insert(result.end(), temp.begin(), temp.end());
+				it++;
 			}
 			return result;
 		}
