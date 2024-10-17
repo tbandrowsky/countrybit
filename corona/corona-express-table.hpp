@@ -483,9 +483,13 @@ namespace corona
 
 			free_bytes = false;
 			bytes = (char *) &_bytes[_offset];
-			switch (get_data_type())
+
+			field_types ft_data_type = get_data_type();
+
+			switch (ft_data_type)
 			{
 			case field_types::ft_datetime:
+				size_bytes = as_datetime()->total_size();
 				break;
 			case field_types::ft_int64:
 				size_bytes = as_int64_t()->total_size();
@@ -494,9 +498,13 @@ namespace corona
 				size_bytes = as_double()->total_size();
 				break;
 			case field_types::ft_placeholder:
+				size_bytes = as_placeholder()->total_size();
 				break;
 			case field_types::ft_string:
 				size_bytes = as_string()->total_size();
+				break;
+			default:
+				size_bytes = 1;
 				break;
 			}
 		}
@@ -598,25 +606,37 @@ namespace corona
 
 		bool operator < (const xfield_holder& _other) const
 		{
-			auto fn = xops->lt[to_underlying(get_data_type())][to_underlying(get_data_type())];
+			field_types ft_this, ft_other;
+			ft_this = get_data_type();
+			ft_other = _other.get_data_type();
+			auto fn = xops->lt[to_underlying(ft_this)][to_underlying(ft_other)];
 			return fn(bytes, _other.bytes);
 		}
 
 		bool operator == (const xfield_holder& _other) const
 		{
-			auto fn = xops->eq[to_underlying(get_data_type())][to_underlying(get_data_type())];
+			field_types ft_this, ft_other;
+			ft_this = get_data_type();
+			ft_other = _other.get_data_type();
+			auto fn = xops->eq[to_underlying(ft_this)][to_underlying(ft_other)];
 			return fn(bytes, _other.bytes);
 		}
 
 		bool operator > (const xfield_holder& _other) const
 		{
-			auto fn = xops->gt[to_underlying(get_data_type())][to_underlying(get_data_type())];
+			field_types ft_this, ft_other;
+			ft_this = get_data_type();
+			ft_other = _other.get_data_type();
+			auto fn = xops->gt[to_underlying(ft_this)][to_underlying(ft_other)];
 			return fn(bytes, _other.bytes);
 		}
 
 		bool operator != (const xfield_holder& _other) const
 		{
-			auto fn = xops->neq[to_underlying(get_data_type())][to_underlying(get_data_type())];
+			field_types ft_this, ft_other;
+			ft_this = get_data_type();
+			ft_other = _other.get_data_type();
+			auto fn = xops->neq[to_underlying(ft_this)][to_underlying(ft_other)];
 			return fn(bytes, _other.bytes);
 		}
 
