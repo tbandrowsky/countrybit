@@ -4278,6 +4278,8 @@ private:
 						}
 					}
 				}
+				int64_t new_id = get_next_object_id();
+				new_object.put_member_i64("object_id", new_id);
 				response = create_response(create_object_request, true, "Object created", new_object, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
