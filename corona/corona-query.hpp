@@ -236,10 +236,10 @@ namespace corona
 		}
 	};
 
-	class query_predicate
+	class query_condition
 	{
 	public:
-		virtual std::string term_name() { return "predicate"; }
+		virtual std::string term_name() { return "condition"; }
 		virtual bool accepts(query_context_base *_qcb, json _src) { return true; }
 
 		virtual void get_json(json& _dest)
@@ -252,7 +252,7 @@ namespace corona
 
 	};
 
-	void put_json(std::shared_ptr<query_predicate>& _dest, json _src);
+	void put_json(std::shared_ptr<query_condition>& _dest, json _src);
 
 	class query_filter : public query_stage
 	{
@@ -260,7 +260,7 @@ namespace corona
 
 		std::string stage_input_name;
 
-		std::shared_ptr<query_predicate> predicate;
+		std::shared_ptr<query_condition> condition;
 		virtual std::string term_name() { return "filter"; }
 
 		virtual json process(query_context_base* _src) {
@@ -269,8 +269,8 @@ namespace corona
 			json stage_input = _src->get_data(stage_input_name);
 			if (stage_input.object()) {
 				json result = jp.create_array();
-				if (predicate) {
-					if (predicate->accepts(_src, stage_input)) {
+				if (condition) {
+					if (condition->accepts(_src, stage_input)) {
 						result.push_back(stage_input);
 						stage_output = result;
 						return stage_output;
@@ -284,9 +284,9 @@ namespace corona
 			}
 			else if (stage_input.array()) {
 				json result = jp.create_array();
-				if (predicate) {
+				if (condition) {
 					for (auto item : stage_input) {
-						if (predicate->accepts(_src, item)) {
+						if (condition->accepts(_src, item)) {
 							result.push_back(item);
 						}
 					}
@@ -306,10 +306,10 @@ namespace corona
 		{
 			json_parser jp;
 			query_stage::get_json(_dest);
-			json jpredicate = jp.create_object();
-			if (predicate) {
-				predicate->get_json(jpredicate);
-				_dest.put_member("predicate", jpredicate);
+			json jcondition = jp.create_object();
+			if (condition) {
+				condition->get_json(jcondition);
+				_dest.put_member("condition", jcondition);
 			}
 			_dest.put_member("class_name", "filter");
 			_dest.put_member("stage_input_name", stage_input_name);
@@ -330,9 +330,9 @@ namespace corona
 			}
 
 			query_stage::put_json(_src);
-			json jpredicate = _src["predicate"];
-			if (not jpredicate.empty()) {
-				corona::put_json(predicate, jpredicate);
+			json jcondition = _src["condition"];
+			if (not jcondition.empty()) {
+				corona::put_json(condition, jcondition);
 			}
 			stage_input_name = _src["stage_input_name"];
 		}
@@ -432,7 +432,7 @@ namespace corona
 
 	};
 
-	class filter_contains : public query_predicate
+	class filter_contains : public query_condition
 	{
 	public:
 
@@ -448,7 +448,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 			_dest.put_member("class_name", "contains");
 			_dest.put_member("textsrc", textsrc);
 		}
@@ -466,12 +466,12 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 			textsrc = _src["textsrc"];
 		}
 	};
 
-	class filter_gt : public query_predicate
+	class filter_gt : public query_condition
 	{
 	public:
 
@@ -488,7 +488,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 			_dest.put_member("class_name", "gt");
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
@@ -507,14 +507,14 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 			valuepath = _src["valuepath"];
 			value = _src["value"];
 		}
 
 	};
 
-	class filter_lt : public query_predicate
+	class filter_lt : public query_condition
 	{
 	public:
 
@@ -531,7 +531,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 			_dest.put_member("class_name", "lt");
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
@@ -550,14 +550,14 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 			valuepath = _src["valuepath"];
 			value = _src["value"];
 		}
 
 	};
 
-	class filter_eq : public query_predicate
+	class filter_eq : public query_condition
 	{
 	public:
 
@@ -574,7 +574,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 			_dest.put_member("class_name", "eq");
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
@@ -593,13 +593,13 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 			valuepath = _src["valuepath"];
 			value = _src["value"];
 		}
 	};
 
-	class filter_gte : public query_predicate
+	class filter_gte : public query_condition
 	{
 	public:
 
@@ -616,7 +616,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 			_dest.put_member("class_name", "gte");
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
@@ -635,13 +635,13 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 			valuepath = _src["valuepath"];
 			value = _src["value"];
 		}
 	};
 
-	class filter_lte: public query_predicate
+	class filter_lte: public query_condition
 	{
 	public:
 
@@ -658,7 +658,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 			_dest.put_member("class_name", "lte");
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
@@ -677,13 +677,13 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 			valuepath = _src["valuepath"];
 			value = _src["value"];
 		}
 	};
 
-	class filter_between : public query_predicate
+	class filter_between : public query_condition
 	{
 	public:
 
@@ -700,7 +700,7 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 
 			_dest.put_member("class_name", "between");
 
@@ -730,7 +730,7 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 
 			json jstart = _src["start"];
 			start = std::make_shared<filter_gte>();
@@ -744,7 +744,7 @@ namespace corona
 
 	};
 
-	class filter_in : public query_predicate
+	class filter_in : public query_condition
 	{
 	public:
 
@@ -768,7 +768,7 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 
 			_dest.put_member("class_name", "in");
 			_dest.put_member("src_path", src_path);
@@ -788,21 +788,21 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 		}
 
 	};
 
-	class filter_all : public query_predicate
+	class filter_all : public query_condition
 	{
 	public:
 
 		virtual std::string term_name() { return "all"; }
-		std::vector<std::shared_ptr<query_predicate>> conditions;
+		std::vector<std::shared_ptr<query_condition>> conditions;
 
 		virtual bool accepts(query_context_base* _qcb, json _src)
 		{
-			return std::all_of(conditions.begin(), conditions.end(), [_qcb, _src](std::shared_ptr<query_predicate>& _condition)-> bool
+			return std::all_of(conditions.begin(), conditions.end(), [_qcb, _src](std::shared_ptr<query_condition>& _condition)-> bool
 				{
 					return _condition->accepts(_qcb, _src);
 				});
@@ -811,7 +811,7 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 
 			_dest.put_member("class_name", "in");
 			json jconditions = jp.create_array();
@@ -835,7 +835,7 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 
 			json_parser jp;
 			json jconditions = _src["conditions"];
@@ -843,23 +843,23 @@ namespace corona
 
 			for (auto jcondition : jconditions)
 			{
-				std::shared_ptr<query_predicate> new_condition;
+				std::shared_ptr<query_condition> new_condition;
 				corona::put_json(new_condition, jcondition);
 				conditions.push_back(new_condition);
 			}
 		}
 	};
 
-	class filter_any : public query_predicate
+	class filter_any : public query_condition
 	{
 	public:
 		virtual std::string term_name() { return "any"; }
 
-		std::vector<std::shared_ptr<query_predicate>> conditions;
+		std::vector<std::shared_ptr<query_condition>> conditions;
 
 		virtual bool accepts(query_context_base* _qcb, json _src)
 		{
-			return std::any_of(conditions.begin(), conditions.end(), [_qcb, _src](std::shared_ptr<query_predicate>& _condition) -> bool
+			return std::any_of(conditions.begin(), conditions.end(), [_qcb, _src](std::shared_ptr<query_condition>& _condition) -> bool
 				{
 					return _condition->accepts(_qcb, _src);
 				});
@@ -868,9 +868,9 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
-			query_predicate::get_json(_dest);
+			query_condition::get_json(_dest);
 
-			_dest.put_member("class_name", "in");
+			_dest.put_member("class_name", "any");
 			json jconditions = jp.create_array();
 			for (auto cond : conditions) {
 				if (cond) {
@@ -895,7 +895,7 @@ namespace corona
 				return;
 			}
 
-			query_predicate::put_json(_src);
+			query_condition::put_json(_src);
 
 			json_parser jp;
 			json jconditions = _src["conditions"];
@@ -903,7 +903,7 @@ namespace corona
 
 			for (auto jcondition : jconditions)
 			{
-				std::shared_ptr<query_predicate> new_condition;
+				std::shared_ptr<query_condition> new_condition;
 				corona::put_json(new_condition, jcondition);
 				if (new_condition) {
 					conditions.push_back(new_condition);
@@ -1079,7 +1079,7 @@ namespace corona
 			_src->get_json(_dest);
 	}
 
-	void put_json(std::shared_ptr<query_predicate>& _dest, json _src)
+	void put_json(std::shared_ptr<query_condition>& _dest, json _src)
 	{
 		std::vector<std::string> missing;
 
