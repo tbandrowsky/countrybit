@@ -618,7 +618,7 @@ namespace corona
 	constexpr auto to_underlying(E e) noexcept
 	{
 		return static_cast<std::underlying_type_t<E>>(e);
-	}
+	};
 
 	std::map<std::string, field_types> allowed_field_types = {
 { "object", field_types::ft_object },

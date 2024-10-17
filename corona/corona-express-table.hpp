@@ -291,7 +291,7 @@ namespace corona
 			}
 			eq[to_underlying(field_types::ft_double)][to_underlying(field_types::ft_double)] = [](void* a, void* b)-> bool { return xfn_eq<xdouble, xdouble>(a, b); };
 			eq[to_underlying(field_types::ft_int64)][to_underlying(field_types::ft_int64)] = [](void* a, void* b)-> bool { return xfn_eq<xint64_t, xint64_t>(a, b); };
-			eq[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_eq<date_time, date_time>(a, b); };
+			eq[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_eq<xdatetime, xdatetime>(a, b); };
 			eq[to_underlying(field_types::ft_string)][to_underlying(field_types::ft_string)] = [](void* a, void* b)-> bool { return xfn_eq<xstring, xstring>(a, b); };
 
 
@@ -310,7 +310,7 @@ namespace corona
 			}
 			neq[to_underlying(field_types::ft_double)][to_underlying(field_types::ft_double)] = [](void* a, void* b)-> bool { return xfn_neq<xdouble, xdouble>(a, b); };
 			neq[to_underlying(field_types::ft_int64)][to_underlying(field_types::ft_int64)] = [](void* a, void* b)-> bool { return xfn_neq<xint64_t, xint64_t>(a, b); };
-			neq[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_neq<date_time, date_time>(a, b); };
+			neq[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_neq<xdatetime, xdatetime>(a, b); };
 			neq[to_underlying(field_types::ft_string)][to_underlying(field_types::ft_string)] = [](void* a, void* b)-> bool { return xfn_neq<xstring, xstring>(a, b); };
 
 			// lt
@@ -335,7 +335,7 @@ namespace corona
 			}
 			lt[to_underlying(field_types::ft_double)][to_underlying(field_types::ft_double)] = [](void* a, void* b)-> bool { return xfn_lt<xdouble, xdouble>(a, b); };
 			lt[to_underlying(field_types::ft_int64)][to_underlying(field_types::ft_int64)] = [](void* a, void* b)-> bool { return xfn_lt<xint64_t, xint64_t>(a, b); };
-			lt[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_lt<date_time, date_time>(a, b); };
+			lt[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_lt<xdatetime, xdatetime>(a, b); };
 			lt[to_underlying(field_types::ft_string)][to_underlying(field_types::ft_string)] = [](void* a, void* b)-> bool { return xfn_lt<xstring, xstring>(a, b); };
 
 			// gt
@@ -360,7 +360,7 @@ namespace corona
 			}
 			gt[to_underlying(field_types::ft_double)][to_underlying(field_types::ft_double)] = [](void* a, void* b)-> bool { return xfn_gt<xdouble, xdouble>(a, b); };
 			gt[to_underlying(field_types::ft_int64)][to_underlying(field_types::ft_int64)] = [](void* a, void* b)-> bool { return xfn_gt<xint64_t, xint64_t>(a, b); };
-			gt[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_gt<date_time, date_time>(a, b); };
+			gt[to_underlying(field_types::ft_datetime)][to_underlying(field_types::ft_datetime)] = [](void* a, void* b)-> bool { return xfn_gt<xdatetime, xdatetime>(a, b); };
 			gt[to_underlying(field_types::ft_string)][to_underlying(field_types::ft_string)] = [](void* a, void* b)-> bool { return xfn_gt<xstring, xstring>(a, b); };
 		}
 	};
@@ -473,6 +473,22 @@ namespace corona
 		{
 			free_bytes = false;
 			bytes = (char *) &_bytes[_offset];
+			switch (get_data_type())
+			{
+			case field_types::ft_datetime:
+				break;
+			case field_types::ft_int64:
+				size_bytes = as_int64_t()->total_size();
+				break;
+			case field_types::ft_double:
+				size_bytes = as_double()->total_size();
+				break;
+			case field_types::ft_placeholder:
+				break;
+			case field_types::ft_string:
+				size_bytes = as_string()->total_size();
+				break;
+			}
 		}
 
 		xfield_holder(const std::string& _data)
@@ -496,13 +512,13 @@ namespace corona
 		xfield_holder(date_time _data)
 		{
 			bytes = xdatetime::from(_data);
-			size_bytes = as_double()->total_size();
+			size_bytes = as_datetime()->total_size();
 		}
 
 		xfield_holder(void* _dummy)
 		{
 			bytes = xplaceholder::from();
-			size_bytes = as_double()->total_size();
+			size_bytes = as_placeholder()->total_size();
 		}
 
 		field_types get_data_type() const
