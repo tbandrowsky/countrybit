@@ -2153,8 +2153,15 @@ as is the case in all puts
 
 		virtual void put(json _object, bool _save = true) override
 		{
-			xrecord key(table_header->key_members, _object);
-			xrecord data(table_header->object_members, _object);			 
+			json existing = get(_object);
+			if (existing.object()) {
+				existing.merge(_object);
+			}
+			else {
+				existing = _object;
+			}
+			xrecord key(table_header->key_members, existing);
+			xrecord data(table_header->object_members, existing);			 
 			auto changes = table_header->root->put(0, key, data);
 			if (changes.key_change.modified) {
 				changes.key_change.modified->save();
