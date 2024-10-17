@@ -436,27 +436,30 @@ namespace corona
 	{
 	public:
 
-		std::string textsrc;
-
+		std::string value;
+		std::string valuepath;
 		virtual std::string term_name() { return "contains"; }
 
 		virtual bool accepts(query_context_base* _qcb, json _src)
-		{
-			std::string search_text = _qcb->get_data(textsrc);
-			return _src.contains_text(search_text);
+		{			
+			json s = _src.query(valuepath);
+			std::string v = (std::string)s["value"];
+			bool result = v.find(value) != std::string::npos;
+			return result;
 		}
 
 		virtual void get_json(json& _dest)
 		{
 			query_condition::get_json(_dest);
 			_dest.put_member("class_name", "contains");
-			_dest.put_member("textsrc", textsrc);
+			_dest.put_member("valuepath", valuepath);
+			_dest.put_member("value", value);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (not _src.has_members(missing, { "class_name", "textsrc" })) {
+			if (not _src.has_members(missing, { "class_name", "valuepath", "value" })) {
 				system_monitoring_interface::global_mon->log_warning("filter missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -467,7 +470,8 @@ namespace corona
 			}
 
 			query_condition::put_json(_src);
-			textsrc = _src["textsrc"];
+			valuepath = _src["valuepath"];
+			value = _src["value"];
 		}
 	};
 

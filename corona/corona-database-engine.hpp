@@ -2004,16 +2004,31 @@ namespace corona
 
 			auto tb = get_table(_db);
 
+			json put_list = jp.create_array();
+
 			for (auto _src_obj : _src_list)
 			{
 				int64_t parent_object_id = (int64_t)_src_obj[object_id_field];
 
+				json old_object = tb->get(parent_object_id);
+				json write_object;
+
+				if (old_object.object()) {
+					write_object = old_object.clone();
+					write_object.merge(_src_obj);
+				}
+				else 
+				{
+					write_object = _src_obj;
+				}			
+
+				put_list.push_back(write_object);
 				auto these_fields = get_fields();
 
 				for (auto& fld : these_fields) {
 					if (fld->get_field_type() == field_types::ft_array)
 					{
-						json array_field = _src_obj[fld->get_field_name()];
+						json array_field = write_object[fld->get_field_name()];
 						if (array_field.array()) {
 							auto bridges = fld->get_bridges();
 							if (bridges) {
@@ -2026,39 +2041,38 @@ namespace corona
 									_child_objects.push_back(obj);
 								}
 								json empty_array = jp.create_array();
-								_src_obj.put_member(fld->get_field_name(), empty_array);
+								write_object.put_member(fld->get_field_name(), empty_array);
 							}
 						}
 					}
 					else if (fld->get_field_type() == field_types::ft_object)
 					{
-						json obj = _src_obj[fld->get_field_name()];
+						json obj = write_object[fld->get_field_name()];
 						if (obj.object()) {
 							std::string obj_class_name = obj[class_name_field];
 							auto bridges = fld->get_bridges();
 							if (bridges) {
 								auto bridge = bridges->get_bridge(obj_class_name);
 								if (bridge) {
-									bridge->copy(obj, _src_obj);
+									bridge->copy(obj, write_object);
 								}
 								json empty;
-								_src_obj.put_member(fld->get_field_name(), empty);
+								write_object.put_member(fld->get_field_name(), empty);
 								_child_objects.push_back(obj);
 							}
 						}
 					}
 				}
-
+				
 				if (index_updates.size() > 0)
 				{
-					int64_t object_id = (int64_t)_src_obj[object_id_field];
-					json old_obj = tb->get(object_id);
-					if (old_obj)
+					int64_t object_id = (int64_t)write_object[object_id_field];
+					if (old_object.object())
 					{
 						for (auto& iop : index_updates)
 						{
 							auto& idx_keys = iop.index->get_index_keys();
-							json obj_to_delete = old_obj.extract(idx_keys);
+							json obj_to_delete = old_object.extract(idx_keys);
 							json obj_to_add = _src_obj.extract(idx_keys);
 							if (obj_to_delete.compare(obj_to_add) != 0) {
 								iop.objects_to_delete.push_back(obj_to_delete);
@@ -2079,14 +2093,33 @@ namespace corona
 
 			}
 
-			tb->put_array(_src_list);
-			for (auto& iop : index_updates)
+			std::vector<HANDLE> wait_handles;
+
+			wait_handles.resize(1 + index_updates.size());
+
+			for (int i = 0; i < wait_handles.size(); i++)
 			{
-				auto idx_table = iop.index->get_table(_db);
-				idx_table->erase_array(iop.objects_to_delete);
-				idx_table->put_array(iop.objects_to_add);
+				wait_handles[i] = CreateEventA(NULL, NULL, NULL, NULL);
 			}
 
+			global_job_queue->add_job([&tb, &put_list]() {
+				tb->put_array(put_list);
+				},
+				wait_handles[0]);
+
+			int wait_idx = 1;
+			for (auto& iop : index_updates)
+			{
+				global_job_queue->add_job([&iop, _db]() {
+					auto idx_table = iop.index->get_table(_db);
+					idx_table->erase_array(iop.objects_to_delete);
+					idx_table->put_array(iop.objects_to_add);
+				},
+				wait_handles[wait_idx]
+				);
+				wait_idx++;
+			}
+			WaitForMultipleObjects(wait_handles.size(), &wait_handles[0], TRUE, INFINITE);
 		}
 
 		virtual json get_objects(corona_database_interface* _db, json _key, bool _include_children)
