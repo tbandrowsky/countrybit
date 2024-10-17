@@ -421,6 +421,9 @@ namespace corona
 
 		xfield_holder(const xfield_holder& _src)
 		{
+			if (xops == nullptr) {
+				xops = new xoperation_table();
+			}
 			if (_src.bytes) {
 				size_bytes = _src.size_bytes;
 				bytes = new char[size_bytes];
@@ -435,6 +438,9 @@ namespace corona
 
 		xfield_holder(xfield_holder&& _src)
 		{
+			if (xops == nullptr) {
+				xops = new xoperation_table();
+			}
 			bytes = _src.bytes;
 			size_bytes = _src.size_bytes;
 			free_bytes = _src.free_bytes;
@@ -471,6 +477,10 @@ namespace corona
 
 		xfield_holder(const char *_bytes, int _offset)
 		{
+			if (xops == nullptr) {
+				xops = new xoperation_table();
+			}
+
 			free_bytes = false;
 			bytes = (char *) &_bytes[_offset];
 			switch (get_data_type())
@@ -493,30 +503,50 @@ namespace corona
 
 		xfield_holder(const std::string& _data)
 		{
+			if (xops == nullptr) {
+				xops = new xoperation_table();
+			}
+
 			bytes = xstring::from(_data);
 			size_bytes = as_string()->total_size();
 		}
 
 		xfield_holder(int64_t _data)
 		{
+			if (xops == nullptr) {
+				xops = new xoperation_table();
+			}
+
 			bytes = xint64_t::from(_data);
 			size_bytes = as_int64_t()->total_size();
 		}
 
 		xfield_holder(double _data)
 		{
+			if (xops == nullptr) {
+				xops = new xoperation_table();
+			}
+
 			bytes = xdouble::from(_data);
 			size_bytes = as_double()->total_size();
 		}
 
 		xfield_holder(date_time _data)
 		{
+			if (xops == nullptr) {
+				xops = new xoperation_table();
+			}
+
 			bytes = xdatetime::from(_data);
 			size_bytes = as_datetime()->total_size();
 		}
 
 		xfield_holder(void* _dummy)
 		{
+			if (xops == nullptr) {
+				xops = new xoperation_table();
+			}
+
 			bytes = xplaceholder::from();
 			size_bytes = as_placeholder()->total_size();
 		}
@@ -600,6 +630,8 @@ namespace corona
 		}
 	
 	};
+
+	xoperation_table *xfield_holder::xops;
 
 	void test_xfield(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
 	{
