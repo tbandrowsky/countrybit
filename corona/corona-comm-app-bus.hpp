@@ -519,7 +519,7 @@ namespace corona
 				}
 				log_function_stop("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-				json jcommands = _pages.get_member("startup");
+				json jcommands = _pages["startup"];
 
 				log_function_start("startup commands", "", dt);
 				log_json<json>(jcommands);

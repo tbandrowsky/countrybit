@@ -2468,6 +2468,7 @@ as is the case in all puts
 		ptable->save();
 		_tests->test({ "save_survived", true, __FILE__, __LINE__ });
 
+		int count52 = 0;
 		std::vector<std::string> keys = { object_id_field, "age", "weight"};
 		bool round_trip_success = true;
 		for (int i = 1; i <= 2000; i++)
@@ -2476,6 +2477,9 @@ as is the case in all puts
 			key.put_member_i64(object_id_field, i);
 			json obj = jp.create_object();
 			obj.put_member_i64(object_id_field, i);
+			int age = 10 + i % 50;
+			if (age == 52)
+				count52++;
 			obj.put_member("age", 10 + i % 50);
 			obj.put_member("weight", 100 + (i % 4) * 50);
 			obj.set_compare_order(keys);
@@ -2493,6 +2497,25 @@ as is the case in all puts
 			}
 		}
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
+
+		json object_key = jp.create_object();
+		object_key.put_member_i64(object_id_field, 42);
+		json select_key_results = ptable->select(object_key, [&object_key](json& _target)-> json {
+			if (object_key.compare(_target) == 0) {
+				return _target;
+			}
+			});
+
+		object_key = jp.create_object();
+		object_key.put_member("age", 52);
+		json select_match_results = ptable->select(object_key, [&object_key](json& _target)-> json {
+			if (object_key.compare(_target) == 0) {
+				return _target;
+			}
+			});
+
+		bool range_key_success = select_match_results.size() == count52;
+		_tests->test({ "range_key_success", range_key_success, __FILE__, __LINE__ });
 
 		std::map<int, bool> erased_keys;
 		bool erase_success = true;

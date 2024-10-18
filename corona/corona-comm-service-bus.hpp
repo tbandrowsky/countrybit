@@ -531,7 +531,7 @@ namespace corona
 
 			if (_request.is_member("ClassName", parse_error_class)) {
 				response.http_status_code = 504;
-				response.response_body = (buffer)_request;
+				response.response_body = _request.to_buffer();
 				response.content_length = response.response_body.get_size();
 				return response;
 			}
@@ -545,7 +545,7 @@ namespace corona
 
 			response.http_status_code = _http_status_code;
 			response.content_type = "application/json";
-			response.response_body = (buffer)_source;
+			response.response_body = _source.to_buffer();
 			response.content_length = response.response_body.get_size();
 			response.server = "Corona 1.0";
 			response.system_result = os_result(0);

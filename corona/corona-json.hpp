@@ -96,6 +96,24 @@ namespace corona
 			jv->comparison_index = comparison_index;
 			return jv;
 		}
+
+		virtual int64_t to_int64()
+		{
+			return 0;
+		}
+		virtual date_time to_datetime()
+		{
+			date_time dt;
+			return dt;
+		}
+		virtual bool to_bool()
+		{
+			return false;
+		}
+		virtual double to_double()
+		{
+			return 0.0;
+		}
 	};
 
 	enum base_scales {
@@ -322,6 +340,25 @@ namespace corona
 			t->comparison_index = comparison_index;
 			return t;
 		}
+
+		virtual int64_t to_int64()
+		{
+			return value;
+		}
+		virtual date_time to_datetime()
+		{
+			date_time dt((time_t)value);
+			return dt;
+		}
+		virtual bool to_bool()
+		{
+			return value != 0.0;
+		}
+		virtual double to_double()
+		{
+			return value;
+		}
+
 	};
 
 	class json_datetime : public json_value
@@ -375,6 +412,24 @@ namespace corona
 			t->comparison_index = comparison_index;
 			return t;
 		}
+
+		virtual int64_t to_int64()
+		{
+			return value.get_time_t();
+		}
+		virtual date_time to_datetime()
+		{
+			return value;
+		}
+		virtual bool to_bool()
+		{
+			return true;
+		}
+		virtual double to_double()
+		{
+			return value.get_time_t();
+		}
+
 	};
 
 	class json_blob : public json_value
@@ -434,6 +489,26 @@ namespace corona
 			t->comparison_index = comparison_index;
 			return t;
 		}
+
+
+		virtual int64_t to_int64()
+		{
+			return 0;
+		}
+		virtual date_time to_datetime()
+		{
+			date_time dt;
+			return dt;
+		}
+		virtual bool to_bool()
+		{
+			return true;
+		}
+		virtual double to_double()
+		{
+			return 0.0;
+		}
+
 	};
 
 	class json_int64 : public json_value
@@ -495,6 +570,25 @@ namespace corona
 			t->comparison_index = comparison_index;
 			return t;
 		}
+
+		virtual int64_t to_int64()
+		{
+			return value;
+		}
+		virtual date_time to_datetime()
+		{
+			date_time dt(value);
+			return dt;
+		}
+		virtual bool to_bool()
+		{
+			return value != 0;
+		}
+		virtual double to_double()
+		{
+			return value;
+		}
+
 	};
 
 	class json_string : public json_value
@@ -562,6 +656,26 @@ namespace corona
 			t->comparison_index = comparison_index;
 			return t;
 		}
+
+		virtual int64_t to_int64()
+		{
+			return std::strtoll(value.c_str(), nullptr, 10);
+		}
+		virtual date_time to_datetime()
+		{
+			date_time dt;
+			dt.parse(value);
+			return dt;
+		}
+		virtual bool to_bool()
+		{
+			return not value.empty();
+		}
+		virtual double to_double()
+		{
+			return std::strtod(value.c_str(), nullptr);
+		}
+
 	};
 
 	class json_array : public json_value
@@ -641,6 +755,26 @@ namespace corona
 			t->comparison_index = comparison_index;
 			return t;
 		}
+
+		virtual int64_t to_int64()
+		{
+			return 0;
+		}
+		virtual date_time to_datetime()
+		{
+			date_time dt;
+			return dt;
+		}
+		virtual bool to_bool()
+		{
+			return true;
+		}
+		virtual double to_double()
+		{
+			return 0.0;
+		}
+
+
 	};
 
 	class json_object : public json_value
@@ -748,6 +882,26 @@ namespace corona
 			t->comparison_index = comparison_index;
 			return t;
 		}
+
+		virtual int64_t to_int64()
+		{
+			return 0;
+		}
+		virtual date_time to_datetime()
+		{
+			date_time dt;
+			return dt;
+		}
+		virtual bool to_bool()
+		{
+			return true;
+		}
+		virtual double to_double()
+		{
+			return 0.0;
+		}
+
+
 	};
 
 	class json;
@@ -785,14 +939,6 @@ namespace corona
 		std::vector<compared_item> comparison_fields;
 
 		std::shared_ptr<json_value> value_base;
-		std::shared_ptr<json_double> double_impl;
-		std::shared_ptr<json_string> string_impl;
-		std::shared_ptr<json_array> array_impl;
-		std::shared_ptr<json_int64> int64_impl;
-		std::shared_ptr<json_datetime> datetime_impl;
-		std::shared_ptr<json_blob> blob_impl;
-		std::shared_ptr<json_object> object_impl;
-		std::shared_ptr<json_function> function_impl;
 
 	public:
 
@@ -808,15 +954,38 @@ namespace corona
 		void set(std::shared_ptr<json_value> _value)
 		{
 			value_base = _value;
-			double_impl = std::dynamic_pointer_cast<json_double>(_value);
-			string_impl = std::dynamic_pointer_cast<json_string>(_value);
-			array_impl = std::dynamic_pointer_cast<json_array>(_value);
-			object_impl = std::dynamic_pointer_cast<json_object>(_value);
-			int64_impl = std::dynamic_pointer_cast<json_int64>(_value);
-			datetime_impl = std::dynamic_pointer_cast<json_datetime>(_value);
-			blob_impl = std::dynamic_pointer_cast<json_blob>(_value);
-			object_impl = std::dynamic_pointer_cast<json_object>(_value);
-			function_impl = std::dynamic_pointer_cast<json_function>(_value);
+		}
+
+		std::shared_ptr<json_double> double_impl() const {
+			return std::dynamic_pointer_cast<json_double>(value_base);
+		} 
+
+		std::shared_ptr<json_string> string_impl() const {
+			return std::dynamic_pointer_cast<json_string>(value_base);
+		}
+
+		std::shared_ptr<json_array> array_impl() const {
+			return std::dynamic_pointer_cast<json_array>(value_base);
+		}
+
+		std::shared_ptr<json_object> object_impl()   const {
+			return std::dynamic_pointer_cast<json_object>(value_base);
+		}
+
+		std::shared_ptr<json_int64> int64_impl() const {
+			return std::dynamic_pointer_cast<json_int64>(value_base);
+		}
+
+		std::shared_ptr<json_datetime> datetime_impl()  const {
+			return std::dynamic_pointer_cast<json_datetime>(value_base);
+		}
+
+		std::shared_ptr<json_blob> blob_impl() const {
+			return std::dynamic_pointer_cast<json_blob>(value_base);
+		}
+
+		std::shared_ptr<json_function> function_impl() const {
+			return std::dynamic_pointer_cast<json_function>(value_base);
 		}
 
 		virtual field_types get_field_type()
@@ -1130,45 +1299,45 @@ namespace corona
 
 		bool is_int64() const
 		{
-			return (bool)int64_impl;
+			return int64_impl() != nullptr;
 		}
 
-		bool is_datetime() const
+		bool is_datetime()  const
 		{
-			return (bool)datetime_impl;
+			return datetime_impl() != nullptr;
 		}
 
-		bool is_blob() const
+		bool is_blob()  const
 		{
-			return (bool)blob_impl;
+			return blob_impl() != nullptr;
 		}
 
-		bool is_double() const
+		bool is_double()  const
 		{
-			return (bool)double_impl;
+			return double_impl() != nullptr;
 		}
 
-		bool is_string() const
+		bool is_string()  const
 		{
-			return (bool)string_impl;
+			return string_impl() != nullptr;
 		}
 
-		bool array() const
+		bool array()  const
 		{
-			return (bool)array_impl;
+			return array_impl() != nullptr;
 		}
 
-		bool object() const
+		bool object()  const
 		{
-			return (bool)object_impl;
+			return object_impl() != nullptr;
 		}
 
-		bool function() const
+		bool function()  const
 		{
-			return (bool)function_impl;
+			return function_impl() != nullptr;
 		}
 
-		bool scalar() const
+		bool scalar()  const
 		{
 			return not array() and not object() and not empty();
 		}
@@ -1183,54 +1352,48 @@ namespace corona
 			return has_member("ClassName") and (std::string)get_member("ClassName") == parse_error_class;
 		}
 
-		int64_t get_int64s()  const
+		int64_t get_int64s()   const
 		{
-			if (double_impl)
-				return double_impl->value;
-			else if (int64_impl)
-				return int64_impl->value;
-			else if (datetime_impl)
-				return datetime_impl->value.get_time_t();
-			else if (string_impl)
-				return std::stod(string_impl->value);
-			else
+			return value_base->to_int64();
+		}
+
+		int64_t& get_int64()   const
+		{
+			return int64_impl()->value;
+		}
+
+		date_time& get_datetime()   const
+		{
+			return datetime_impl()->value;
+		}
+
+		double& get_double() const
+		{
+			return double_impl()->value;
+		}
+
+		std::string& get_string()  const
+		{
+			return string_impl()->value;
+		}
+
+		operator int() const
+		{
+			try
+			{
+				return value_base->to_int64();
+			}
+			catch (std::exception)
+			{
 				return 0;
-		}
-
-		int64_t& get_int64()  const
-		{
-			return int64_impl->value;
-		}
-
-		date_time& get_datetime()  const
-		{
-			return datetime_impl->value;
-		}
-
-		double& get_double()  const
-		{
-			return double_impl->value;
-		}
-
-		std::string& get_string() const
-		{
-			return string_impl->value;
+			}
 		}
 
 		operator double() const
 		{
 			try
 			{
-				if (double_impl)
-					return double_impl->value;
-				else if (int64_impl)
-					return int64_impl->value;
-				else if (string_impl)
-					return std::strtod(string_impl->value.c_str(), nullptr);
-				else if (datetime_impl)
-					return datetime_impl->value.get_time_t();
-				else
-					return 0.0;
+				return value_base->to_double();
 			}
 			catch (std::exception)
 			{
@@ -1238,26 +1401,11 @@ namespace corona
 			}
 		}
 
-		operator int() const
+		operator int64_t() const
 		{
 			try
 			{
-
-				if (double_impl)
-					return double_impl->value;
-				else if (int64_impl)
-					return int64_impl->value;
-				else if (string_impl)
-				{
-					if (string_impl->value == "true")
-						return 1;
-					else
-						return std::strtod(string_impl->value.c_str(), nullptr);
-				}
-				else if (datetime_impl)
-					return 0;
-				else
-					return 0;
+				return value_base->to_int64();				
 			}
 			catch (std::exception)
 			{
@@ -1267,51 +1415,17 @@ namespace corona
 
 		operator date_time() const
 		{
-			if (datetime_impl)
-			{
-				return datetime_impl->value;
-			}
-			else if (string_impl)
-			{
-				date_time temp;
-				temp.parse( string_impl->value );
-				return temp;
-			}
-			else
-			{
-				date_time temp;
-				return temp;
-			}
-		}
-
-		operator int64_t() const
-		{
-			if (double_impl)
-				return double_impl->value;
-			else if (int64_impl)
-				return int64_impl->value;
-			else if (datetime_impl)
-				return datetime_impl->value.get_time_t();
-			else if (string_impl)
-				return std::stod(string_impl->value);
-			else
-				return 0;
+			return value_base->to_datetime();
 		}
 
 		operator std::string() const
 		{
-			if (double_impl)
-				return std::format("{0}", double_impl->value);
-			else if (int64_impl)
-				return int64_impl->to_string();
-			else if (datetime_impl)
-				return datetime_impl->to_string();
-			else if (string_impl)
-				return string_impl->value;
-			else if (blob_impl)
-				return blob_impl->to_string();
-			else
-				return "";
+			return value_base->to_string();
+		}
+
+		explicit operator bool() const
+		{
+			return value_base->to_bool();
 		}
 
 		std::string format_string(std::string _format)
@@ -1330,51 +1444,18 @@ namespace corona
 		bool import_member(std::string _member, std::string _value_to_import)
 		{
 			bool stuffed = false;
-			if (object_impl and object_impl->members.contains(_member)) {
-				object_impl->members[_member]->from_string(_value_to_import);
+			if (object_impl() and object_impl()->members.contains(_member)) {
+				object_impl()->members[_member]->from_string(_value_to_import);
 				stuffed = true;
 			}
 			return stuffed;
 		}
 
-		explicit operator bool() const
-		{
-			bool value = false;
-			if (is_double()) {
-				value = double_impl->value != 0.0;
-			}
-			else if (is_int64()) {
-				value = int64_impl->value != 0.0;
-			}
-			else if (is_string()) {
-				value = string_impl->value == "true";
-			}
-			return value;
-		}
 
 		bool contains_text(std::string _text);
 
-		operator std::shared_ptr<json_array>& ()
-		{
-			return array_impl;
-		}
 
-		operator std::shared_ptr<json_object>& ()
-		{
-			return object_impl;
-		}
-
-		operator std::shared_ptr<json_blob>& ()
-		{
-			return blob_impl;
-		}
-
-		operator std::shared_ptr<json_function>& ()
-		{
-			return function_impl;
-		}
-		
-		operator buffer()
+		buffer to_buffer()
 		{
 			if (not empty()) 
 			{
@@ -1398,9 +1479,9 @@ namespace corona
 
 		std::shared_ptr<json_value> get_member_value(const std::string& _key)
 		{
-			if (object_impl) {
-				auto vlist = object_impl->members.find(_key);
-				if (vlist != std::end(object_impl->members)) {
+			if (object_impl()) {
+				auto vlist = object_impl()->members.find(_key);
+				if (vlist != std::end(object_impl()->members)) {
 					return vlist->second;
 				}
 			}
@@ -1409,18 +1490,18 @@ namespace corona
 
 		json operator[](const std::string& _key) const
 		{
-			if (object_impl and object_impl->members.contains(_key)) {
-				json jn(object_impl->members[_key]);
+			if (object_impl() and object_impl()->members.contains(_key)) {
+				json jn(object_impl()->members[_key]);
 				return jn;
 			}
 			json empty;
 			return empty;
 		}
 
-		json operator[](const char *_key) const
+		json operator[](const char *_key)  const
 		{
-			if (object_impl and object_impl->members.contains(_key)) {
-				json jn(object_impl->members[_key]);
+			if (object_impl() and object_impl()->members.contains(_key)) {
+				json jn(object_impl()->members[_key]);
 				return jn;
 			}
 			json empty;
@@ -1458,15 +1539,15 @@ namespace corona
 
 		void append_array(json _src)
 		{
-			if (array_impl) {
+			if (array_impl()) {
 				if (_src.array()) {
 					for (json item : _src) {
-						array_impl->elements.push_back(item.value_base->clone());
+						array_impl()->elements.push_back(item.value_base->clone());
 					}
 				}
 				else 
 				{
-					array_impl->elements.push_back(_src.value_base->clone());
+					array_impl()->elements.push_back(_src.value_base->clone());
 				}
 			}
 		}
@@ -1476,36 +1557,36 @@ namespace corona
 			set(_member.value_base);
 		}
 
-		bool has_member(std::string _key) const
+		bool has_member(std::string _key) 
 		{
-			bool has_value = !_key.empty() and object_impl and object_impl->members.contains(_key);
+			bool has_value = !_key.empty() and object_impl() and object_impl()->members.contains(_key);
 			return has_value;
 		}
 
-		bool is_member(std::string _key, const char *_value) const
+		bool is_member(std::string _key, const char *_value) 
 		{
-			bool has_value = object_impl and object_impl->members.contains(_key);
+			bool has_value = object_impl() and object_impl()->members.contains(_key);
 			if (has_value) {
-				std::string svalue = object_impl->members[_key]->to_string();
+				std::string svalue = object_impl()->members[_key]->to_string();
 				std::string xvalue = _value;
 				has_value = svalue == xvalue;
 			}
 			return has_value;
 		}
 
-		bool is_member(std::string _key, std::string _value) const
+		bool is_member(std::string _key, std::string _value) 
 		{
-			bool has_value = object_impl and object_impl->members.contains(_key);
+			bool has_value = object_impl() and object_impl()->members.contains(_key);
 			if (has_value) {
-				std::string svalue = object_impl->members[_key]->to_string();
+				std::string svalue = object_impl()->members[_key]->to_string();
 				has_value = svalue == _value;
 			}
 			return has_value;
 		}
 
-		bool is_member(std::string _key, int64_t _value) const
+		bool is_member(std::string _key, int64_t _value) 
 		{
-			bool has_value = object_impl and object_impl->members.contains(_key);
+			bool has_value = object_impl() and object_impl()->members.contains(_key);
 			if (has_value) {
 				int64_t svalue = get_member(_key);
 				has_value = svalue == _value;
@@ -1513,9 +1594,9 @@ namespace corona
 			return has_value;
 		}
 
-		bool is_member(std::string _key, bool _value) const
+		bool is_member(std::string _key, bool _value) 
 		{
-			bool has_value = object_impl and object_impl->members.contains(_key);
+			bool has_value = object_impl() and object_impl()->members.contains(_key);
 			if (has_value) {
 				bool svalue = (bool)get_member(_key);
 				has_value = svalue == _value;
@@ -1523,51 +1604,51 @@ namespace corona
 			return has_value;
 		}
 
-		json get_first_element() const
+		json get_first_element() 
 		{
 			json result;
-			if (array_impl and array_impl->elements.size() > 0) {
+			if (array_impl() and array_impl()->elements.size() > 0) {
 				result = get_element(0);
 			}
 			return result;
 		}
 
-		json get_last_element() const
+		json get_last_element() 
 		{
-			return get_element(array_impl->elements.size() - 1);
+			return get_element(array_impl()->elements.size() - 1);
 		}
 
-		json get_element(int _index) const
+		json get_element(int _index) 
 		{
-			json jn(array_impl->elements[_index]);
+			json jn(array_impl()->elements[_index]);
 			return jn;
 		}
 
-		json get_member(std::string _key) const
+		json get_member(std::string _key) 
 		{
 			json jn, jx;
 
-			if (not object_impl) {
+			if (not object_impl()) {
 				return jn;
 			}
 
-			jn = json(object_impl->members[_key]);
+			jn = json(object_impl()->members[_key]);
 			return jn;
 		}
 
-		int get_member_int(std::string _key) const
+		int get_member_int(std::string _key) 
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
-			json jn(object_impl->members[_key]);
+			json jn(object_impl()->members[_key]);
 			double jnd = (double)jn;
 			return jnd;
 		}
 
 		json copy_member(std::string _key, json& _source)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			std::string search_key = _key;
@@ -1580,11 +1661,11 @@ namespace corona
 
 		void put_members(json& _member)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Target is not an object");
 			}
 
-			if (not _member.object_impl) {
+			if (not _member.object_impl()) {
 				throw std::logic_error("Source is not an object");
 			}
 
@@ -1598,7 +1679,7 @@ namespace corona
 
 		void change_member_type(std::string _key, field_types _new_type)
 		{
-			if (not object_impl) 
+			if (not object_impl())
 			{
 				throw std::logic_error("Not an object");
 			}
@@ -1638,7 +1719,7 @@ namespace corona
 
 		json put_member(std::string _key, json& _member)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			if (_member.array()) {
@@ -1679,34 +1760,34 @@ namespace corona
 
 		json put_member(std::string _key, std::string _value)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			auto new_member = std::make_shared<json_string>();
 			new_member->value = _value;
-			object_impl->members[_key] = new_member;
+			object_impl()->members[_key] = new_member;
 			return *this;
 		}
 
 		json put_member_i64(std::string _key,  int64_t _value)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			auto new_member = std::make_shared<json_int64>();
 			new_member->value = _value;
-			object_impl->members[_key] = new_member;
+			object_impl()->members[_key] = new_member;
 			return *this;
 		}
 
 		json put_member_double(std::string _key, double _value)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			auto new_member = std::make_shared<json_double>();
 			new_member->value = _value;
-			object_impl->members[_key] = new_member;
+			object_impl()->members[_key] = new_member;
 			return *this;
 		}
 
@@ -1717,76 +1798,76 @@ namespace corona
 
 		json put_member(std::string _key, date_time _value)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			auto new_member = std::make_shared<json_datetime>();
 			new_member->value = _value;
-			object_impl->members[_key] = new_member;
+			object_impl()->members[_key] = new_member;
 			return *this;
 		}
 
 		json put_member_array(std::string _key)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			auto new_member = std::make_shared<json_array>();
-			object_impl->members[_key] = new_member;
+			object_impl()->members[_key] = new_member;
 			return *this;
 		}
 
 		json put_member_object(std::string _key, json& _object)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
-			std::shared_ptr<json_object> existing_object = _object.object_impl;
+			std::shared_ptr<json_object> existing_object = _object.object_impl();
 			if (existing_object) {
 				auto new_object = existing_object->clone();
-				object_impl->members[_key] = new_object;
+				object_impl()->members[_key] = new_object;
 			}
 			return *this;
 		}
 
 		json put_member_object(std::string _key)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			auto new_member = std::make_shared<json_object>();
-			object_impl->members[_key] = new_member;
+			object_impl()->members[_key] = new_member;
 			return *this;
 		}
 
 		json put_member_blob(std::string _key)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			auto new_member = std::make_shared<json_object>();
-			object_impl->members[_key] = new_member;
+			object_impl()->members[_key] = new_member;
 			return *this;
 		}
 
 		json put_member_array(std::string _key, json& _array)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
-			std::shared_ptr<json_array> existing_array = _array;
+			std::shared_ptr<json_array> existing_array = _array.array_impl();
 			auto new_array = existing_array->clone();
-			object_impl->members[_key] = new_array;
+			object_impl()->members[_key] = new_array;
 			return *this;
 		}
 
 		json put_member_value(std::string _key, std::shared_ptr<json_value> _obj)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			auto new_object = _obj->clone();
-			object_impl->members[_key] = new_object;
+			object_impl()->members[_key] = new_object;
 			return *this;
 		}
 
@@ -1794,40 +1875,40 @@ namespace corona
 
 		json put_member_function(std::string _key, json& _object)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
-			std::shared_ptr<json_function> existing_object = _object;
+			std::shared_ptr<json_function> existing_object = _object.function_impl();
 			auto new_object = existing_object->clone();
-			object_impl->members[_key] = new_object;
+			object_impl()->members[_key] = new_object;
 			return *this;
 		}
 
 		json put_member_function(std::string _key, json_function_function fn)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
 			std::shared_ptr<json_function> new_object = std::make_shared<json_function>();
-			object_impl->members[_key] = new_object;
+			object_impl()->members[_key] = new_object;
 			return *this;
 		}
 
 		json erase_member(std::string _key)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
-			object_impl->members.erase(_key);
+			object_impl()->members.erase(_key);
 			return *this;
 		}
 
 		json operator()(json _params)
 		{
-			if (not function_impl) {
+			if (not function_impl()) {
 				throw std::logic_error("Not a function");
 			}
-			return function_impl->fn(*function_impl->function_this, _params);
+			return function_impl()->fn(*function_impl()->function_this, _params);
 		}
 
 		json set_natural_order()
@@ -1835,7 +1916,7 @@ namespace corona
 			comparison_fields.clear();
 
 			int comparison_index = 1;
-			for (auto m : object_impl->members) {
+			for (auto m : object_impl()->members) {
 				if (m.second) {
 					m.second->comparison_index = comparison_index++;
 					compared_item sort_tuple = std::make_tuple(m.second->comparison_index, m.first);
@@ -1858,18 +1939,18 @@ namespace corona
 			comparison_fields.clear();
 
 			int comparison_index = 1;
-			for (auto m : object_impl->members) {
+			for (auto m : object_impl()->members) {
 				if (m.second) m.second->comparison_index = 0;
 			}
 			for (auto f : _fields)
 			{
-				if (object_impl->members.contains(f)) {
-					auto fn = object_impl->members[f];
+				if (object_impl()->members.contains(f)) {
+					auto fn = object_impl()->members[f];
 					fn->comparison_index = ++comparison_index;
 				}
 			}
 
-			for (auto m : object_impl->members)
+			for (auto m : object_impl()->members)
 			{
 				if (m.second->comparison_index) {
 					compared_item sort_tuple = std::make_tuple(m.second->comparison_index, m.first);
@@ -1884,7 +1965,7 @@ namespace corona
 
 		bool keys_compatible(std::vector<std::string> keys)
 		{
-			if (not object_impl)
+			if (not object_impl())
 			{
 				throw std::logic_error("Not an object");
 			}
@@ -1912,7 +1993,7 @@ namespace corona
 
 		json extract(std::vector<std::string> _fields)
 		{
-			if (not object_impl)
+			if (not object_impl())
 			{
 				throw std::logic_error("Not an object");
 			}
@@ -1922,8 +2003,8 @@ namespace corona
 			int comparison_index = 1;
 			for (auto f : _fields)
 			{
-				if (object_impl->members.contains(f)) {
-					auto fn = object_impl->members[f];
+				if (object_impl()->members.contains(f)) {
+					auto fn = object_impl()->members[f];
 					fn->comparison_index = ++comparison_index;
 					jn.put_member_value(f, fn);
 				}
@@ -1936,10 +2017,10 @@ namespace corona
 
 		std::map<std::string, std::shared_ptr<json_value>> get_members_raw()
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
-			return object_impl->members;
+			return object_impl()->members;
 		}
 
 		std::map<std::string, json> get_members();
@@ -1976,7 +2057,7 @@ namespace corona
 
 		json put_element(int _index, json &_element)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 
@@ -2007,132 +2088,132 @@ namespace corona
 
 		json put_element(int _index, std::string _value)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			auto new_member = std::make_shared<json_string>();
 			new_member->value = _value;
 
-			if (_index < 0 or _index >= array_impl->elements.size()) {
-				array_impl->elements.push_back(new_member);
+			if (_index < 0 or _index >= array_impl()->elements.size()) {
+				array_impl()->elements.push_back(new_member);
 			}
 			else {
-				array_impl->elements[_index] = new_member;
+				array_impl()->elements[_index] = new_member;
 			}
 			return *this;
 		}
 
 		json put_element(int _index, int64_t _value)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			auto new_member = std::make_shared<json_int64>();
 			new_member->value = _value;
-			if (_index < 0 or _index >= array_impl->elements.size()) {
-				array_impl->elements.push_back(new_member);
+			if (_index < 0 or _index >= array_impl()->elements.size()) {
+				array_impl()->elements.push_back(new_member);
 			}
 			else {
-				array_impl->elements[_index] = new_member;
+				array_impl()->elements[_index] = new_member;
 			}
 			return *this;
 		}
 
 		json put_element(int _index, date_time _value)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			auto new_member = std::make_shared<json_datetime>();
 			new_member->value = _value;
-			if (_index < 0 or _index >= array_impl->elements.size()) {
-				array_impl->elements.push_back(new_member);
+			if (_index < 0 or _index >= array_impl()->elements.size()) {
+				array_impl()->elements.push_back(new_member);
 			}
 			else {
-				array_impl->elements[_index] = new_member;
+				array_impl()->elements[_index] = new_member;
 			}
 			return *this;
 		}
 
 		json put_element(int _index, double _value)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			auto new_member = std::make_shared<json_double>();
 			new_member->value = _value;
-			if (_index < 0 or _index >= array_impl->elements.size()) {
-				array_impl->elements.push_back(new_member);
+			if (_index < 0 or _index >= array_impl()->elements.size()) {
+				array_impl()->elements.push_back(new_member);
 			}
 			else {
-				array_impl->elements[_index] = new_member;
+				array_impl()->elements[_index] = new_member;
 			}
 			return *this;
 		}
 
 		json put_element_array(int _index)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			auto new_member = std::make_shared<json_array>();
-			if (_index < 0 or _index >= array_impl->elements.size()) {
-				array_impl->elements.push_back(new_member);
+			if (_index < 0 or _index >= array_impl()->elements.size()) {
+				array_impl()->elements.push_back(new_member);
 			}
 			else {
-				array_impl->elements[_index] = new_member;
+				array_impl()->elements[_index] = new_member;
 			}
 			return *this;
 		}
 
 		json put_element_object(int _index)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			auto new_member = std::make_shared<json_object>();
-			if (_index < 0 or _index >= array_impl->elements.size()) {
-				array_impl->elements.push_back(new_member);
+			if (_index < 0 or _index >= array_impl()->elements.size()) {
+				array_impl()->elements.push_back(new_member);
 			}
 			else {
-				array_impl->elements[_index] = new_member;
+				array_impl()->elements[_index] = new_member;
 			}
 			return *this;
 		}
 
 		json put_element_array(int _index, json& _array)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
-			std::shared_ptr<json_array> existing_array = _array;
+			std::shared_ptr<json_array> existing_array = _array.array_impl();
 			auto new_array = existing_array->clone();
 
-			if (_index < 0 or _index >= array_impl->elements.size()) 
+			if (_index < 0 or _index >= array_impl()->elements.size())
 			{
-				array_impl->elements.push_back(new_array);
+				array_impl()->elements.push_back(new_array);
 			}
 			else 
 			{
-				array_impl->elements[_index] = new_array;
+				array_impl()->elements[_index] = new_array;
 			}
 			return *this;
 		}
 
 		json put_element_object(int _index, json& _object)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
-			std::shared_ptr<json_object> existing_object = _object;
+			std::shared_ptr<json_object> existing_object = _object.object_impl();
 			auto new_object = existing_object->clone();
 
-			if (_index < 0 or _index >= array_impl->elements.size()) {
-				array_impl->elements.push_back(new_object);
+			if (_index < 0 or _index >= array_impl()->elements.size()) {
+				array_impl()->elements.push_back(new_object);
 			}
 			else 
 			{
-				array_impl->elements[_index] = new_object;
+				array_impl()->elements[_index] = new_object;
 			}
 			return *this;
 		}
@@ -2140,9 +2221,9 @@ namespace corona
 		std::vector<std::string> to_string_array()
 		{
 			std::vector<std::string> temp;
-			if (array_impl) 
+			if (array_impl())
 			{
-				for (auto& array_item : array_impl->elements)
+				for (auto& array_item : array_impl()->elements)
 				{
 					std::string sitem = array_item->to_string();
 					temp.push_back(sitem);
@@ -2306,10 +2387,10 @@ namespace corona
 
 		json for_each_member(std::function<void(const std::string& _key_name)> _transform)
 		{
-			if (not object_impl) {
+			if (not object_impl()) {
 				throw std::logic_error("Not an array");
 			}
-			for (auto m : object_impl->members)
+			for (auto m : object_impl()->members)
 			{
 				_transform(m.first);
 			}
@@ -2318,7 +2399,7 @@ namespace corona
 
 		json for_each_element(std::function<void(json& _item)> _transform)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			for (int i = 0; i < size(); i++)
@@ -2331,7 +2412,7 @@ namespace corona
 
 		bool any(std::function<bool(json& _item)> _where_clause)
 		{
-			if (object_impl) {
+			if (object_impl()) {
 				auto members = get_members();
 				for (auto m : members)
 				{
@@ -2340,7 +2421,7 @@ namespace corona
 					}
 				}
 			}
-			else if (array_impl) 
+			else if (array_impl())
 			{
 				for (int i = 0; i < size(); i++)
 				{
@@ -2359,7 +2440,7 @@ namespace corona
 
 		bool all(std::function<bool(json& _item)> _where_clause)
 		{
-			if (object_impl) {
+			if (object_impl()) {
 				auto members = get_members();
 				for (auto m : members)
 				{
@@ -2368,7 +2449,7 @@ namespace corona
 					}
 				}
 			}
-			else if (array_impl)
+			else if (array_impl())
 			{
 				for (int i = 0; i < size(); i++)
 				{
@@ -2389,7 +2470,7 @@ namespace corona
 		{
 			json result_item;
 
-			if (object_impl) {
+			if (object_impl()) {
 				result_item = json(std::make_shared<json_object>());
 				auto members = get_members();
 				for (auto m : members)
@@ -2400,7 +2481,7 @@ namespace corona
 					}
 				}
 			}
-			else if (array_impl)
+			else if (array_impl())
 			{
 				result_item = json(std::make_shared<json_array>());
 				for (int i = 0; i < size(); i++)
@@ -2426,7 +2507,7 @@ namespace corona
 			json result_item;
 			result_item = json(std::make_shared<json_object>());
 
-			if (array_impl)
+			if (array_impl())
 			{
 				for (int i = 0; i < size(); i++)
 				{
@@ -2457,7 +2538,7 @@ namespace corona
 			json result_item;
 			result_item = json(std::make_shared<json_array>());
 
-			if (object_impl)
+			if (object_impl())
 			{
 				auto members = get_members();
 				for (auto member: members)
@@ -2477,7 +2558,7 @@ namespace corona
 		json slice(int _start_index, int _length)
 		{
 			json result_item;
-			if (array_impl) {
+			if (array_impl()) {
 				result_item = json(std::make_shared<json_array>());
 				int start = _start_index;
 				int stop = _start_index + _length;
@@ -2500,7 +2581,7 @@ namespace corona
 		{
 			json result_item;
 
-			if (array_impl) 
+			if (array_impl())
 			{
 				result_item = json(std::make_shared<json_array>());
 				for (int i = 0; i < size(); i++)
@@ -2519,7 +2600,7 @@ namespace corona
 					}
 				}
 			}
-			else if (object_impl)
+			else if (object_impl())
 			{
 				result_item = json(std::make_shared<json_object>());
 				auto members = get_members();
@@ -2547,7 +2628,7 @@ namespace corona
 
 		json update(std::function<json&(json& _item)> _transform)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			for (int i = 0; i < size(); i++)
@@ -2559,52 +2640,13 @@ namespace corona
 			return *this;
 		}
 
-		bool prove_member(std::string _member)
-		{
-			std::vector<std::string> evidences;
-			auto members = get_members();
-			for (auto m : members) {
-				if (m.first != _member) {
-					evidences.push_back(m.first);
-				}
-			}
-			return prove_member(_member, evidences);
-		}
-
-		bool prove_member(std::string _member, std::vector<std::string> _evidences)
-		{
-			bool is_true = true;
-			for (auto ev : _evidences)
-			{
-				json& me = *this;
-				json memb = me[ev];
-				if (ev == "test_name" || ev == "dependencies") {
-					continue;
-				}
-				else if (memb.object()) 
-				{
-					is_true = (bool)memb[_member];
-				}
-				else
-				{
-					is_true = (bool)me[ev];
-				}
-				if (not is_true) {
-					put_member(_member, false);
-					return false;
-				}
-			}
-			put_member(_member, true);
-			return true;
-		}
-
 
 		json join(json& _right, 
 			std::function<bool(json&_item1, json&_item2)> _compare,
 			std::function<json(json& _item1, json& _item2)> _compose
 			)
 		{
-			if (not array_impl) {
+			if (not array_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			json new_array(std::make_shared<json_array>());
@@ -2627,7 +2669,7 @@ namespace corona
 
 		json group(std::function<std::string(json& _item)> _get_group)
 		{
-			if (not array_impl) 
+			if (not array_impl())
 			{
 				throw std::logic_error("Not an array");
 			}
@@ -2647,12 +2689,12 @@ namespace corona
 			return new_object;
 		}
 
-		int size() const
+		int size() 
 		{
-			if (object_impl)
-				return object_impl->members.size();
-			else if (array_impl)
-				return array_impl->elements.size();
+			if (object_impl())
+				return object_impl()->members.size();
+			else if (array_impl())
+				return array_impl()->elements.size();
 			else
 				return 1;
 		}
@@ -2756,11 +2798,11 @@ namespace corona
 
 	std::map<std::string, json> json::get_members()
 	{
-		if (not object_impl) {
+		if (not object_impl()) {
 			throw std::logic_error("Not an object");
 		}
 		std::map<std::string, json> mp;
-		for (auto m : object_impl->members)
+		for (auto m : object_impl()->members)
 		{
 			json jx(m.second);
 			mp.insert_or_assign(m.first, jx);
@@ -3589,7 +3631,7 @@ namespace corona
 	{
 		if (empty())
 			return false;
-		if (object_impl)
+		if (object_impl())
 		{
 			auto members = get_members();
 			for (auto m : members)
@@ -3600,7 +3642,7 @@ namespace corona
 				}
 			}
 		}
-		else if (array_impl)
+		else if (array_impl())
 		{
 			for (auto e : *this)
 			{
@@ -3628,28 +3670,28 @@ namespace corona
 		if (empty() or _value.empty())
 			return false;
 		if (is_datetime() and _value.is_datetime()) {
-			date_time dtme = datetime_impl->value;
-			date_time dtv = _value.datetime_impl->value;
+			date_time dtme = datetime_impl()->value;
+			date_time dtv = _value.datetime_impl()->value;
 			return dtme > dtv;
 		}
 		else if (is_double() and _value.is_double()) {
-			double dme = double_impl->value;
-			double dv = _value.double_impl->value;
+			double dme = double_impl()->value;
+			double dv = _value.double_impl()->value;
 			return dme > dv;
 		}
 		else if (is_int64() and _value.is_int64()) {
-			int64_t ime = int64_impl->value;
-			int64_t iv = _value.int64_impl->value;
+			int64_t ime = int64_impl()->value;
+			int64_t iv = _value.int64_impl()->value;
 			return ime > iv;
 		}
 		else if (_value.is_int64()) {
 			int64_t ime = (int64_t)*this;
-			int64_t iv = _value.int64_impl->value;
+			int64_t iv = _value.int64_impl()->value;
 			return ime > iv;
 		}
 		else if (_value.is_double()) {
 			double dme = (double)*this;
-			double dv = _value.double_impl->value;
+			double dv = _value.double_impl()->value;
 			return dme > dv;
 		}
 		else 
@@ -3665,28 +3707,28 @@ namespace corona
 		if (empty() or _value.empty())
 			return false;
 		if (is_datetime() and _value.is_datetime()) {
-			date_time dtme = datetime_impl->value;
-			date_time dtv = _value.datetime_impl->value;
+			date_time dtme = datetime_impl()->value;
+			date_time dtv = _value.datetime_impl()->value;
 			return dtme < dtv;
 		}
 		else if (is_double() and _value.is_double()) {
-			double dme = double_impl->value;
-			double dv = _value.double_impl->value;
+			double dme = double_impl()->value;
+			double dv = _value.double_impl()->value;
 			return dme < dv;
 		}
 		else if (is_int64() and _value.is_int64()) {
-			int64_t ime = int64_impl->value;
-			int64_t iv = _value.int64_impl->value;
+			int64_t ime = int64_impl()->value;
+			int64_t iv = _value.int64_impl()->value;
 			return ime < iv;
 		}
 		else if (_value.is_int64()) {
 			int64_t ime = (int64_t)*this;
-			int64_t iv = _value.int64_impl->value;
+			int64_t iv = _value.int64_impl()->value;
 			return ime < iv;
 		}
 		else if (_value.is_double()) {
 			double dme = (double)*this;
-			double dv = _value.double_impl->value;
+			double dv = _value.double_impl()->value;
 			return dme < dv;
 		}
 		else
@@ -3702,28 +3744,28 @@ namespace corona
 		if (empty() or _value.empty())
 			return false;
 		if (is_datetime() and _value.is_datetime()) {
-			date_time dtme = datetime_impl->value;
-			date_time dtv = _value.datetime_impl->value;
+			date_time dtme = datetime_impl()->value;
+			date_time dtv = _value.datetime_impl()->value;
 			return dtme == dtv;
 		}
 		else if (is_double() and _value.is_double()) {
-			double dme = double_impl->value;
-			double dv = _value.double_impl->value;
+			double dme = double_impl()->value;
+			double dv = _value.double_impl()->value;
 			return dme == dv;
 		}
 		else if (is_int64() and _value.is_int64()) {
-			int64_t ime = int64_impl->value;
-			int64_t iv = _value.int64_impl->value;
+			int64_t ime = int64_impl()->value;
+			int64_t iv = _value.int64_impl()->value;
 			return ime == iv;
 		}
 		else if (_value.is_int64()) {
 			int64_t ime = (int64_t)*this;
-			int64_t iv = _value.int64_impl->value;
+			int64_t iv = _value.int64_impl()->value;
 			return ime == iv;
 		}
 		else if (_value.is_double()) {
 			double dme = (double)*this;
-			double dv = _value.double_impl->value;
+			double dv = _value.double_impl()->value;
 			return dme == dv;
 		}
 		else
@@ -3738,7 +3780,7 @@ namespace corona
 	{
 		json_parser jp;
 
-		if (not object_impl)
+		if (not object_impl())
 		{
 			throw std::logic_error("Not an object");
 		}
