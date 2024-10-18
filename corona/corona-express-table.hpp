@@ -1474,7 +1474,7 @@ namespace corona
 			changes.key_change.original_key = get_end_key();
 			changes.key_change.modified = this;
 			records.insert_or_assign(key, value);
-		return changes;
+			return changes;
 		}
 
 		virtual xrecord get(const xrecord& key)

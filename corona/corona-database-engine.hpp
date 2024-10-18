@@ -2073,7 +2073,7 @@ namespace corona
 						{
 							auto& idx_keys = iop.index->get_index_keys();
 							json obj_to_delete = old_object.extract(idx_keys);
-							json obj_to_add = _src_obj.extract(idx_keys);
+							json obj_to_add = write_object.extract(idx_keys);
 							if (obj_to_delete.compare(obj_to_add) != 0) {
 								iop.objects_to_delete.push_back(obj_to_delete);
 							}
@@ -2085,7 +2085,7 @@ namespace corona
 						for (auto& iop : index_updates)
 						{
 							auto& idx_keys = iop.index->get_index_keys();
-							json obj_to_add = _src_obj.extract(idx_keys);
+							json obj_to_add = write_object.extract(idx_keys);
 							iop.objects_to_add.push_back(obj_to_add);
 						}
 					}
