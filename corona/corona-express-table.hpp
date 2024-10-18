@@ -1474,7 +1474,7 @@ namespace corona
 			changes.key_change.original_key = get_end_key();
 			changes.key_change.modified = this;
 			records.insert_or_assign(key, value);
-			return changes;
+		return changes;
 		}
 
 		virtual xrecord get(const xrecord& key)
@@ -2231,13 +2231,15 @@ as is the case in all puts
 			table_header->root->select(key, [_process, this, &target](int _index, xrecord& _key, xrecord& _data)->xrecord {
 				json_parser jp;
 				json obj = jp.create_object();
+				xrecord empty;
 				_key.get_json(obj, table_header->key_members);
 				_data.get_json(obj, table_header->object_members);
 				json jresult = _process(obj);
 				if (jresult.object()) {
 					target.push_back(jresult);
+					return _key;
 				}
-				return _key;
+				return empty;
 				});
 			return target;
 		}

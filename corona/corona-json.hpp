@@ -2151,6 +2151,114 @@ namespace corona
 			return temp;
 		}
 
+		int compare_field(const std::string& key, json& _item)
+		{
+			int comparison_result = 0;
+			auto source_value = get_member_value(key);
+			auto dest_value = _item.get_member_value(key);
+
+			if (not dest_value or dest_value->get_field_type() != source_value->get_field_type())
+			{
+				comparison_result = 1;
+			}
+			else if (not source_value)
+			{
+				comparison_result = -1;
+			}
+			else switch (source_value->get_field_type())
+			{
+			case field_types::ft_none:
+			{
+				comparison_result = 0;
+			}
+			break;
+
+			case field_types::ft_object:
+			{
+				comparison_result = 0;
+			}
+			break;
+
+			case field_types::ft_array:
+			{
+				comparison_result = 0;
+			}
+			break;
+
+			case field_types::ft_double:
+			{
+				auto vsource = std::dynamic_pointer_cast<json_double>(source_value);
+				auto vdest = std::dynamic_pointer_cast<json_double>(dest_value);
+				if (vsource->value < vdest->value) {
+					comparison_result = -1;
+				}
+				else if (vsource->value > vdest->value) {
+					comparison_result = 1;
+				}
+			}
+			break;
+
+			case field_types::ft_int64:
+			{
+				auto vsource = std::dynamic_pointer_cast<json_int64>(source_value);
+				auto vdest = std::dynamic_pointer_cast<json_int64>(dest_value);
+				if (vsource->value < vdest->value) {
+					comparison_result = -1;
+				}
+				else if (vsource->value > vdest->value) {
+					comparison_result = 1;
+				}
+
+			}
+			break;
+
+			case field_types::ft_string:
+			{
+				auto vsource = std::dynamic_pointer_cast<json_string>(source_value);
+				auto vdest = std::dynamic_pointer_cast<json_string>(dest_value);
+				if (vsource->value < vdest->value) {
+					comparison_result = -1;
+				}
+				else if (vsource->value > vdest->value) {
+					comparison_result = 1;
+				}
+			}
+			break;
+
+			case field_types::ft_bool:
+				break;
+
+			case field_types::ft_datetime:
+			{
+				auto vsource = std::dynamic_pointer_cast<json_datetime>(source_value);
+				auto vdest = std::dynamic_pointer_cast<json_datetime>(dest_value);
+				if (vsource->value < vdest->value) {
+					comparison_result = -1;
+				}
+				else if (vsource->value > vdest->value) {
+					comparison_result = 1;
+				}
+			}
+			break;
+
+			case field_types::ft_query:
+			{
+
+				return 0;
+
+			}
+			break;
+
+			case field_types::ft_blob:
+			{
+				return 0;
+
+			}
+			break;
+			}
+			return comparison_result;
+		}
+
 		int compare(json& _item)
 		{
 			if (object() and !_item.object())
@@ -2170,115 +2278,27 @@ namespace corona
 
 			int comparison_result = 0;
 
-			for (auto m : comparison_fields)
+			if (comparison_fields.size() > 0)
 			{
-				std::string key = std::get<1>(m);
-				auto source_value = get_member_value(key);
-				auto dest_value = _item.get_member_value(key);
-
-				if (not dest_value or dest_value->get_field_type() != source_value->get_field_type()) 
+				for (auto m : comparison_fields)
 				{
-					comparison_result = 1;
+					std::string key = std::get<1>(m);
+
+					comparison_result = compare_field(key, _item);
+
+					if (comparison_result)
+						return comparison_result;
 				}
-				else if (not source_value)
+			}
+			else 
+			{
+				auto members = get_members();
+				for (auto member : members)
 				{
-					comparison_result = -1;
+					comparison_result = compare_field(member.first, _item);
+					if (comparison_result)
+						return comparison_result;
 				}
-				else switch (source_value->get_field_type())
-				{
-					case field_types::ft_none:
-					{
-						comparison_result = 0;
-					}
-					break;
-
-					case field_types::ft_object:
-					{
-						comparison_result = 0;
-					}
-					break;
-
-					case field_types::ft_array:
-					{
-						comparison_result = 0;
-					}
-					break;
-
-					case field_types::ft_double:
-					{
-						auto vsource = std::dynamic_pointer_cast<json_double>( source_value );
-						auto vdest = std::dynamic_pointer_cast<json_double>(dest_value);
-						if (vsource->value < vdest->value) {
-							comparison_result = -1;
-						} 
-						else if (vsource->value > vdest->value) {
-							comparison_result = 1;
-						}
-					}
-					break;
-
-					case field_types::ft_int64:
-					{
-						auto vsource = std::dynamic_pointer_cast<json_int64>(source_value);
-						auto vdest = std::dynamic_pointer_cast<json_int64>(dest_value);
-						if (vsource->value < vdest->value) {
-							comparison_result = -1;
-						}
-						else if (vsource->value > vdest->value) {
-							comparison_result = 1;
-						}
-
-					}
-					break;
-
-					case field_types::ft_string:
-					{
-						auto vsource = std::dynamic_pointer_cast<json_string>(source_value);
-						auto vdest = std::dynamic_pointer_cast<json_string>(dest_value);
-						if (vsource->value < vdest->value) {
-							comparison_result = -1;
-						}
-						else if (vsource->value > vdest->value) {
-							comparison_result = 1;
-						}
-					}
-					break;
-
-					case field_types::ft_bool:
-					break;
-
-					case field_types::ft_datetime:
-					{
-						auto vsource = std::dynamic_pointer_cast<json_datetime>(source_value);
-						auto vdest = std::dynamic_pointer_cast<json_datetime>(dest_value);
-						if (vsource->value < vdest->value) {
-							comparison_result = -1;
-						}
-						else if (vsource->value > vdest->value) {
-							comparison_result = 1;
-						}
-					}
-					break;
-
-					case field_types::ft_query:
-					{
-
-						return 0;
-
-					}
-					break;
-
-					case field_types::ft_blob:
-					{
-						return 0;
-
-					}
-					break;
-				}
-
-				if (comparison_result)
-					return comparison_result;
-
 			}
 
 			return comparison_result;

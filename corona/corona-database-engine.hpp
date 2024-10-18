@@ -2093,33 +2093,14 @@ namespace corona
 
 			}
 
-			std::vector<HANDLE> wait_handles;
+			tb->put_array(put_list);
 
-			wait_handles.resize(1 + index_updates.size());
-
-			for (int i = 0; i < wait_handles.size(); i++)
-			{
-				wait_handles[i] = CreateEventA(NULL, NULL, NULL, NULL);
-			}
-
-			global_job_queue->add_job([&tb, &put_list]() {
-				tb->put_array(put_list);
-				},
-				wait_handles[0]);
-
-			int wait_idx = 1;
 			for (auto& iop : index_updates)
 			{
-				global_job_queue->add_job([&iop, _db]() {
-					auto idx_table = iop.index->get_table(_db);
-					idx_table->erase_array(iop.objects_to_delete);
-					idx_table->put_array(iop.objects_to_add);
-				},
-				wait_handles[wait_idx]
-				);
-				wait_idx++;
+				auto idx_table = iop.index->get_table(_db);
+				idx_table->erase_array(iop.objects_to_delete);
+				idx_table->put_array(iop.objects_to_add);
 			}
-			WaitForMultipleObjects(wait_handles.size(), &wait_handles[0], TRUE, INFINITE);
 		}
 
 		virtual json get_objects(corona_database_interface* _db, json _key, bool _include_children)
