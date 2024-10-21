@@ -588,7 +588,7 @@ namespace corona
 	const std::string sys_default_team_field = "new_user_default_team";
 	const std::string parse_error_class = "sys_parse_error";
 
-	enum class field_types : std::int8_t {
+	enum class field_types {
 		ft_none = 0,
 		ft_placeholder = 1,
 		ft_double = 2,

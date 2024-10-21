@@ -2713,7 +2713,7 @@ private:
 
 				if (object_definition.has_member(object_id_field))
 				{
-					object_id = object_definition[object_id_field].get_int64s();
+					object_id = (int64_t)object_definition[object_id_field];
 					object_definition.put_member("updated", current_date);
 					object_definition.put_member("updated_by", _user_name);
 				}
@@ -4250,6 +4250,9 @@ private:
 				for (auto& field : fields)
 				{
 					std::string field_name = field->get_field_name();
+
+					if (field_name == "created_by" or field_name == "created" or field_name == "updated_by" or field_name == "updated")
+						continue;
 
 					if (field_name == class_name_field) {
 						new_object.put_member(field_name, class_name);

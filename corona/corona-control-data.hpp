@@ -93,7 +93,7 @@ namespace corona
 
 			display_name = _src["label_text"];
 			json_field_name = _src["json_field_name"];
-			width = (int)_src["width"];
+			width = _src["width"];
 			format = _src["format"];
 			corona::put_json(alignment, _src, "alignment");
 		}

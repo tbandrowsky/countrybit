@@ -1352,11 +1352,6 @@ namespace corona
 			return has_member("ClassName") and (std::string)get_member("ClassName") == parse_error_class;
 		}
 
-		int64_t get_int64s()   const
-		{
-			return value_base->to_int64();
-		}
-
 		int64_t& get_int64()   const
 		{
 			return int64_impl()->value;
@@ -1379,53 +1374,50 @@ namespace corona
 
 		operator int() const
 		{
-			try
-			{
+			if (value_base)
 				return value_base->to_int64();
-			}
-			catch (std::exception)
-			{
+			else
 				return 0;
-			}
 		}
 
 		operator double() const
 		{
-			try
-			{
+			if (value_base)
 				return value_base->to_double();
-			}
-			catch (std::exception)
-			{
+			else
 				return 0.0;
-			}
 		}
 
 		operator int64_t() const
 		{
-			try
-			{
-				return value_base->to_int64();				
-			}
-			catch (std::exception)
-			{
+			if (value_base)
+				return value_base->to_int64();
+			else
 				return 0;
-			}
 		}
 
 		operator date_time() const
 		{
-			return value_base->to_datetime();
+			if (value_base)
+				return value_base->to_datetime();
+			else
+				return 0;
 		}
 
 		operator std::string() const
 		{
-			return value_base->to_string();
+			if (value_base)
+				return value_base->to_string();
+			else
+				return "";
 		}
 
 		explicit operator bool() const
 		{
-			return value_base->to_bool();
+			if (value_base)
+				return value_base->to_bool();
+			else
+				return false;
 		}
 
 		std::string format_string(std::string _format)
@@ -1696,15 +1688,15 @@ namespace corona
 				put_member_array(_key);
 			}
 			else if (_new_type == field_types::ft_string) {
-				std::string s = get_member(_key);
+				std::string s = (std::string)get_member(_key);
 				put_member(_key, s);
 			}
 			else if (_new_type == field_types::ft_int64) {
-				int64_t i64 = get_member(_key).get_int64s();
+				int64_t i64 = (int64_t)get_member(_key);
 				put_member_i64(_key, i64);
 			}
 			else if (_new_type == field_types::ft_double) {
-				double d = get_member(_key);
+				double d = (double)get_member(_key);
 				put_member(_key, d);
 			}
 			else if (_new_type == field_types::ft_datetime) {
