@@ -1679,8 +1679,16 @@ namespace corona
 		{
 			json_parser jp;
 			json result = jp.create_object();
-			auto start_key = get_start_key_nl();
-
+			auto start_key = get_start_key();
+			auto end_key = get_end_key();
+			result.put_member("type", "leaf");
+			result.put_member_i64("location", get_reference().location);
+			result.put_member_i64("count", records.size());
+			std::string starts = start_key.to_string();
+			std::string ends = end_key.to_string();
+			result.put_member("start", starts);
+			result.put_member("end", ends);
+			return result;
 		}
 
 	};
@@ -2050,6 +2058,50 @@ namespace corona
 			return result;
 		}
 
+		json get_info()
+		{
+			read_scope_lock lockit(locker);
+
+			json_parser jp;
+			json result = jp.create_object();
+			auto start_key = get_start_key();
+			auto end_key = get_end_key();
+			result.put_member("type", "branch");
+			switch (xheader.content_type) {
+			case xblock_types::xb_branch:
+				result.put_member("content", "branch");
+				break;
+			case xblock_types::xb_leaf:
+				result.put_member("content", "leaf");
+				break;
+			}
+			result.put_member_i64("location", get_reference().location);
+			result.put_member_i64("count", records.size());
+			std::string starts = start_key.to_string();
+			std::string ends = end_key.to_string();
+			result.put_member("start", starts);
+			result.put_member("end", ends);
+
+			json children = jp.create_array();
+			for (auto r : records) 
+			{
+				if (r.second.block_type == xblock_types::xb_leaf)
+				{
+					auto block = open_leaf_block(r.second);
+					json info = block->get_info();
+					children.push_back(info);
+				}
+				else if (r.second.block_type == xblock_types::xb_branch)
+				{
+					auto block = open_branch_block(r.second);
+					json info = block->get_info();
+					children.push_back(info);
+				}
+			}
+
+			return result;
+		}
+
 	};
 
 
@@ -2271,6 +2323,11 @@ namespace corona
 		{
 			return table_header->count;
 		}
+		
+		json get_info()
+		{
+			return table_header->root->get_info();
+		}
 
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) override
 		{
@@ -2417,6 +2474,9 @@ namespace corona
 		}
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
 
+		json info = pleaf->get_info();
+		system_monitoring_interface::global_mon->log_json(info);
+
 		system_monitoring_interface::global_mon->log_function_stop("xleaf", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
@@ -2479,6 +2539,9 @@ namespace corona
 			}
 		}
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
+
+		json info = pleaf->get_info();
+		system_monitoring_interface::global_mon->log_json(info);
 
 		system_monitoring_interface::global_mon->log_function_stop("xbranch", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
@@ -2612,6 +2675,9 @@ namespace corona
 		}
 
 		_tests->test({ "clear", clear_success, __FILE__, __LINE__ });
+
+		json info = ptable->get_info();
+		system_monitoring_interface::global_mon->log_json(info);
 
 		system_monitoring_interface::global_mon->log_function_stop("xtable", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}

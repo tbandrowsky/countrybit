@@ -201,6 +201,8 @@ namespace corona
 
 		virtual void	run_queries(corona_database_interface* _db, std::string& _token, json& _target) = 0;
 		virtual void	clear_queries(json& _target) = 0;
+
+		virtual json	get_info(corona_database_interface* _db) = 0;
 	};
 
 	using read_class_sp = read_locked_sp<class_interface>;
@@ -1380,6 +1382,13 @@ namespace corona
 		class_implementation(class_implementation&& _src) = default;
 		class_implementation& operator = (const class_implementation& _src) = default;
 		class_implementation& operator = (class_implementation&& _src) = default;
+
+		virtual json get_info(corona_database_interface* _db) override
+		{
+			auto tbl = get_table(_db);
+			json info = tbl->get_info();
+			return info;
+		}
 
 		virtual int64_t	get_class_id() override
 		{
@@ -3938,7 +3947,13 @@ private:
 			json key = jp.create_object(class_name_field, class_name);
 			key.set_natural_order();
 
-			result =  classes->get(key);
+			json class_definition = classes->get(key);
+			
+			auto classd = read_lock_class(class_name);
+			json class_info = classd->get_info(this);
+
+			result.put_member("definition", class_definition);
+			result.put_member("info", class_info);
 
 			result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());
 			system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
