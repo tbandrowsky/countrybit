@@ -954,7 +954,7 @@ namespace corona
 			return results;
 		}
 		
-		void get_json(json& _dest, std::vector<std::string>& _keys)
+		void get_json(json& _dest, std::vector<std::string>& _keys) const
 		{
 			int index = 0;
 
@@ -1675,6 +1675,14 @@ namespace corona
 			return result;
 		}
 
+		json get_info()
+		{
+			json_parser jp;
+			json result = jp.create_object();
+			auto start_key = get_start_key_nl();
+
+		}
+
 	};
 
 	class xbranch_block : public xrecord_block<xblock_ref>
@@ -1726,6 +1734,8 @@ namespace corona
 				_block->records.erase(kv);
 			}
 
+			new_xb->save();
+
 			return new_xb;
 		}
 
@@ -1769,6 +1779,8 @@ namespace corona
 				_block->records.erase(kv);
 			}
 
+			new_xb->save();
+
 			return new_xb;
 		}
 
@@ -1787,7 +1799,7 @@ namespace corona
 
 		void split_root(int _indent)
 		{
-
+			write_scope_lock lock_me(locker);
 			/************************************************
 
 			split into children from this:
@@ -1838,8 +1850,8 @@ namespace corona
 
 			// we find the keys for the new children so that we can insert
 			// then right things into our map
-			xrecord child1_key = new_child1->get_end_key();
-			xrecord child2_key = new_child2->get_end_key();
+			xrecord child1_key = new_child1->get_end_key_nl();
+			xrecord child2_key = new_child2->get_end_key_nl();
 
 			xheader.content_type = xblock_types::xb_branch;
 
@@ -1850,6 +1862,8 @@ namespace corona
 
 		virtual void put(int _indent, const xrecord& _key, const xrecord& _value) 
 		{
+			write_scope_lock lock_me(locker);
+
 			if constexpr (debug_xblock) {
 				std::string indent(_indent * 4, ' ');
 				std::string message = std::format("{2} branch:{0}, key:{1}", get_reference().location, _key.to_string(), indent);
@@ -1915,6 +1929,8 @@ namespace corona
 
 		virtual xrecord get(const xrecord& _key)
 		{
+			read_scope_lock lock_me(locker);
+
 			xrecord result;
 			xblock_ref found_block = find_block(_key);
 
@@ -1933,6 +1949,8 @@ namespace corona
 
 		virtual void erase(const xrecord& _key)
 		{
+			write_scope_lock lock_me(locker);
+
 			xblock_ref found_block = find_block(_key);
 
 			if (found_block.block_type == xblock_types::xb_branch)
@@ -1949,6 +1967,8 @@ namespace corona
 
 		virtual void clear()
 		{
+			write_scope_lock lock_me(locker);
+
 			for (auto item : records) {
 				auto found_block = item.second;
 				if (found_block.block_type == xblock_types::xb_branch)
@@ -1970,6 +1990,8 @@ namespace corona
 
 		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(const xrecord& _key, const xrecord& _value)> _process)
 		{
+			read_scope_lock lock_me(locker);
+
 			xfor_each_result result;
 			result.is_all = false;
 			result.is_any = false;
@@ -2000,8 +2022,10 @@ namespace corona
 			return result;
 		}
 
-		virtual std::vector<xrecord> select(xrecord _key, std::function<xrecord(xrecord& _key, xrecord& _value)> _process)
+		virtual std::vector<xrecord> select(xrecord _key, std::function<xrecord(const xrecord& _key, const xrecord& _value)> _process)
 		{
+			read_scope_lock lock_me(locker);
+
 			std::vector<xrecord> result = {};
 			for (auto item : records) {
 				if (item.first == _key) {
@@ -2040,6 +2064,7 @@ namespace corona
 		std::shared_ptr<xbranch_block> root;
 		std::vector<std::string> key_members;
 		std::vector<std::string> object_members;
+		int64_t count;
 
 		relative_ptr_type get_location()
 		{
@@ -2055,6 +2080,7 @@ namespace corona
 			_dest.put_member("key_members", kms);
 			json oms = jp.create_array(object_members);
 			_dest.put_member("object_members", oms); 
+			_dest.put_member_i64("count", count);
 		}
 
 		virtual void put_json(json& _src)
@@ -2066,6 +2092,7 @@ namespace corona
 			key_members = kms.to_string_array();
 			json oms = _src["object_members"];
 			object_members = oms.to_string_array();
+			count = (int64_t)_src["count"];
 		}
 
 		virtual char* before_read(int32_t _size)  override
@@ -2186,15 +2213,13 @@ namespace corona
 
 		virtual void put(json _object, bool _save = true) override
 		{
-
 			xrecord key(table_header->key_members, _object);
 			xrecord data(table_header->object_members, _object);			 
-			auto changes = table_header->root->put(0, key, data);
-			if (changes.key_change.modified) {
-				changes.key_change.modified->save();
-			}
-			if (changes.new_block) {
-				changes.new_block->save();
+			table_header->root->put(0, key, data);
+			::InterlockedIncrement64(&table_header->count);
+
+			if (table_header->root->is_full()) {
+				table_header->root->split_root(0);
 			}
 			if (_save) {
 				save();
@@ -2216,6 +2241,7 @@ namespace corona
 			xrecord key;
 			key.add(_id);
 			table_header->root->erase(key);
+			::InterlockedDecrement64(&table_header->count);
 			if (_save) {
 				save();
 			}
@@ -2224,6 +2250,7 @@ namespace corona
 		virtual void erase(json _object, bool _save = true) override
 		{
 			xrecord key(table_header->key_members, _object);
+			::InterlockedDecrement64(&table_header->count);
 			table_header->root->erase(key);
 			if (_save) {
 				save();
@@ -2240,12 +2267,17 @@ namespace corona
 			save();
 		}
 
+		int64_t get_count()
+		{
+			return table_header->count;
+		}
+
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) override
 		{
 			
 			xrecord key(table_header->key_members, _object);
 			xfor_each_result result;
-			result = table_header->root->for_each(key, [_process, this](int _index, xrecord& _key, xrecord& _data)->relative_ptr_type {
+			result = table_header->root->for_each(key, [_process, this](const xrecord& _key, const xrecord& _data)->relative_ptr_type {
 				json_parser jp;
 				json obj = jp.create_object();
 				_key.get_json(obj, table_header->key_members);
@@ -2260,7 +2292,7 @@ namespace corona
 			xrecord key(table_header->key_members, _object);
 			json_parser jp;
 			json target = jp.create_array();
-			table_header->root->select(key, [_process, this, &target](int _index, xrecord& _key, xrecord& _data)->xrecord {
+			table_header->root->select(key, [_process, this, &target](const xrecord& _key, const xrecord& _data)->xrecord {
 				json_parser jp;
 				json obj = jp.create_object();
 				xrecord empty;
@@ -2291,39 +2323,18 @@ namespace corona
 		header.type = xblock_types::xb_leaf;
 		header.content_type = _content_type;
 
-		result = std::make_shared<xbranch_block>(fb, _header);
+		auto result = std::make_shared<xbranch_block>(fb, header);
 		return result;
 	}
 
 	std::shared_ptr<xleaf_block> xbranch_block::create_leaf_block()
 	{
 		xrecord_block_header header;
-		std::shared_ptr<xrecord_block> result;
-		switch (_header.type) {
-		case xblock_types::xb_branch:
-			result = std::make_shared<xbranch_block>(fb, _header);
-			break;
-		case xblock_types::xb_leaf:
-			result = std::make_shared<xleaf_block>(fb, _header);
-			break;
-		}
-		return result;
-	}
 
-	// you're getting an xblock ref and you have to read an a result.
-	std::shared_ptr<xrecord_block> xrecord_block::get_block(xblock_ref& _ref)
-	{
-		std::shared_ptr<xrecord_block> result;
+		header.type = xblock_types::xb_leaf;
+		header.content_type = xblock_types::xb_record;
 
-		switch (_ref.block_type) {
-		case xblock_types::xb_branch:			
-			result = std::make_shared<xbranch_block>(fb, _ref.location);
-			break;
-		case xblock_types::xb_leaf:
-			result = std::make_shared<xleaf_block>(fb, _ref.location);
-			break;
-		}
-
+		auto result = std::make_shared<xleaf_block>(fb, header);
 		return result;
 	}
 
