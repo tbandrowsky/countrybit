@@ -1280,11 +1280,8 @@ namespace corona
 
 
 		// write the copy back to readin and see if the round trip works
-		const char* src;
-		size_t length;
 
-		src = copy.data();
-		readin = xrecord(src, length);
+		readin = xrecord(copy.data(), copy.size());
 		tst_ref = readin.get_xblock_ref();
 		result = (tst_ref.location == 122);
 		_tests->test({ "rt locs", result, __FILE__, __LINE__ });
@@ -1339,6 +1336,38 @@ namespace corona
 		{
 			count = 0;
 		}
+
+		xrecord_block_header(const char *_src, size_t _length)
+		{
+			set(_src, _length);
+		}
+
+		xrecord_block_header(xrecord_block_header&& _src) = default;
+		xrecord_block_header(const xrecord_block_header& _src) = default;
+		xrecord_block_header& operator = (xrecord_block_header&& _src) = default;
+		xrecord_block_header& operator = (const xrecord_block_header& _src) = default;
+
+		void set(const char* _src, size_t _length)
+		{
+			xrecord_block_header* src = (xrecord_block_header*)(_src);
+			type = src->type;
+			content_type = src->content_type;
+			count = src->count;
+			if (count > xrecords_per_block)
+				throw std::logic_error("bad src count for header");
+			std::copy(&src->records[0], &src->records[count], records);
+		}
+
+		size_t size() const
+		{
+			return sizeof(xrecord_block_header);
+		}
+
+		const char* data() const
+		{
+			return (const char*)this;
+		}
+
 	};
 
 	template <typename data_type>
@@ -1378,13 +1407,24 @@ namespace corona
 			return key;
 		}
 
+		void save_nl()
+		{
+			if (data_block::header.block_location >= 0) {
+				write(fb);
+			}
+			else
+			{
+				append(fb);
+			}
+		}
+
 	public:
 
 		xrecord_block(file_block *_fb, xrecord_block_header& _src)
 		{
 			fb = _fb;
 			xheader = _src;
-			save();
+			save_nl();
 		}
 
 		xrecord_block(file_block* _fb, int64_t _location)
@@ -1410,17 +1450,6 @@ namespace corona
 			return ref;
 		}
 
-		void save()
-		{
-			write_scope_lock lockit(locker);
-			if (data_block::header.block_location >= 0) {
-				write(fb);
-			}
-			else 
-			{
-				append(fb);
-			}
-		}
 
 		xrecord get_start_key()
 		{
@@ -1465,6 +1494,13 @@ namespace corona
 			records.clear();
 		}
 
+		void save()
+		{
+			write_scope_lock lockit(locker);
+			save_nl();
+		}
+
+
 	protected:
 
 		virtual char* before_read(int32_t _size)  override
@@ -1476,7 +1512,7 @@ namespace corona
 		virtual void after_read(char* _bytes) override
 		{
 			records.clear();
-			xheader = *((xrecord_block_header*)_bytes);
+			xheader.set(_bytes, 0);
 			for (int i = 0; i < xheader.count; i++)
 			{
 				auto& rl = xheader.records[i];
@@ -1499,21 +1535,18 @@ namespace corona
 				count++;
 			}
 
-			header_bytes = sizeof(xrecord_block_header);
+			header_bytes = xheader.size();
 			total_bytes += header_bytes;
 			*_size = total_bytes;
 			char *bytes = new char[total_bytes + 10];
-			char* current = bytes + header_bytes;
+			std::copy(xheader.data(), xheader.data() + header_bytes, bytes);
 
-			xrecord_block_header* hdr = (xrecord_block_header*)bytes;
-			hdr->type = xheader.type;
-			hdr->content_type = xheader.content_type;
-			hdr->count = count;
+			char* current = bytes + header_bytes;
 
 			int i = 0;
 			for (auto& r : records)
 			{
-				auto& rl = hdr->records[i];
+				auto& rl = xheader.records[i];
 				int size_actual;
 
 				rl.key_offset = current - bytes;
@@ -1528,12 +1561,6 @@ namespace corona
 				std::copy(vsrc, vsrc + rl.value_size, current);
 				current += rl.value_size;
 
-				i++;
-			}
-
-			while (i < xrecords_per_block) {
-				auto& rl = hdr->records[i];
-				rl = {};
 				i++;
 			}
 
@@ -1563,7 +1590,7 @@ namespace corona
 			;
 		}
 
-		xleaf_block(file_block* _fb, int64_t _location) : xrecord_block(_fb, _location)
+		xleaf_block(file_block* _fb, xblock_ref _ref) : xrecord_block(_fb, _ref.location)
 		{
 			;
 		}
@@ -1579,7 +1606,7 @@ namespace corona
 			}
 
 			records.insert_or_assign(key, value);
-			save();
+			save_nl();
 		}
 
 		xrecord get(const xrecord& key)
@@ -1764,9 +1791,9 @@ namespace corona
 			;
 		}
 
-		xbranch_block(file_block* _fb, relative_ptr_type _location) : xrecord_block(_fb, _location)
+		xbranch_block(file_block* _fb, xblock_ref _ref) : xrecord_block(_fb, _ref.location)
 		{
-			read(_fb, _location);
+			;
 		}
 
 		void split_root(int _indent)
@@ -1812,14 +1839,6 @@ namespace corona
 			xblock_ref child1_ref = new_child1->get_reference();
 			xblock_ref child2_ref = new_child2->get_reference();
 
-			// we turn these reference into xrecords because I am a lazy 
-			// whore and am using xrecord for everything.
-			xrecord xchild1_ref;
-			xchild1_ref.put_xblock_ref(child1_ref);
-
-			xrecord xchild2_ref;
-			xchild2_ref.put_xblock_ref(child2_ref);
-
 			// we find the keys for the new children so that we can insert
 			// then right things into our map
 			xrecord child1_key = new_child1->get_end_key_nl();
@@ -1828,8 +1847,8 @@ namespace corona
 			xheader.content_type = xblock_types::xb_branch;
 
 			records.clear();
-			records.insert_or_assign(child1_key, xchild1_ref);
-			records.insert_or_assign(child2_key, xchild2_ref);
+			records.insert_or_assign(child1_key, child1_ref);
+			records.insert_or_assign(child2_key, child2_ref);
 		}
 
 		virtual void put(int _indent, const xrecord& _key, const xrecord& _value) 
@@ -1896,7 +1915,7 @@ namespace corona
 				records.insert_or_assign(_key, new_ref);
 			}
 
-			save();
+			save_nl();
 		}
 
 		virtual xrecord get(const xrecord& _key)
@@ -1957,7 +1976,7 @@ namespace corona
 				}
 			}
 			records.clear();
-			save();
+			save_nl();
 		}
 
 		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(const xrecord& _key, const xrecord& _value)> _process)
@@ -2180,7 +2199,7 @@ namespace corona
 			table_header = std::make_shared<xtable_header>();
 			table_header->read(fb, _location);
 
-			table_header->root = std::make_shared<xbranch_block>(fb, table_header->root_block.location);
+			table_header->root = std::make_shared<xbranch_block>(fb, table_header->root_block);
 		}
 
 		relative_ptr_type get_location() override
@@ -2336,6 +2355,15 @@ namespace corona
 		}
 	};
 
+	std::shared_ptr<xleaf_block> xbranch_block::open_leaf_block(xblock_ref& _header)
+	{
+		return std::make_shared<xleaf_block>(fb, _header);
+	}
+
+	std::shared_ptr<xbranch_block> xbranch_block::open_branch_block(xblock_ref& _header)
+	{
+		return std::make_shared<xbranch_block>(fb, _header);
+	}
 
 	std::shared_ptr<xbranch_block> xbranch_block::create_branch_block(xblock_types _content_type)
 	{
@@ -2408,7 +2436,7 @@ namespace corona
 		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
 
 		auto ref = pleaf->get_reference();
-		pleaf = std::make_shared<xleaf_block>(&fb, ref.location);
+		pleaf = std::make_shared<xleaf_block>(&fb, ref);
 
 		_tests->test({ "read_survived", true, __FILE__, __LINE__ });
 
@@ -2474,7 +2502,7 @@ namespace corona
 		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
 
 		auto ref = pleaf->get_reference();
-		pleaf = std::make_shared<xbranch_block>(&fb, ref.location);
+		pleaf = std::make_shared<xbranch_block>(&fb, ref);
 
 		_tests->test({ "read_survived", true, __FILE__, __LINE__ });
 
