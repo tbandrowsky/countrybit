@@ -90,7 +90,7 @@ namespace corona
 		int length;
 		char data[1];
 
-		int total_size()
+		int size()
 		{
 			return sizeof(xstring) + length;
 		}
@@ -111,7 +111,7 @@ namespace corona
 		field_types ft;
 		double data;
 
-		int total_size()
+		int size()
 		{
 			return sizeof(xdouble);
 		}
@@ -131,7 +131,7 @@ namespace corona
 		field_types ft;
 		date_time data;
 
-		int total_size()
+		int size()
 		{
 			return sizeof(xdatetime);
 		}
@@ -151,7 +151,7 @@ namespace corona
 		field_types ft;
 		int64_t data;
 
-		int total_size()
+		int size()
 		{
 			return sizeof(xint64_t);
 		}
@@ -170,19 +170,26 @@ namespace corona
 	{
 		field_types ft;
 
-		int total_size()
+		int size()
 		{
 			return sizeof(xplaceholder);
 		}
-		static char* from()
+		static char* from(xplaceholder& _dummy)
 		{
-			int sz = sizeof(xplaceholder);
-			char* t = new char[sz];
-			xplaceholder* xt = (xplaceholder*)t;
+			xplaceholder* xt = (xplaceholder*)&common_placeholder;
 			xt->ft = field_types::ft_placeholder;
-			return t;
+			return (char *)xt;
 		}
+
+		xplaceholder()
+		{
+			ft = field_types::ft_placeholder;
+		}
+
+		static xplaceholder common_placeholder;
 	};
+
+	xplaceholder xplaceholder::common_placeholder;
 
 	template <typename typea, typename typeb> 
 	bool xfn_lt(void *_itema, void *_itemb)
@@ -351,30 +358,42 @@ namespace corona
 		bool		free_bytes;
 		int			size_bytes;
 
-		field_types get_field_type() { return (field_types)(*bytes); }
-		xstring* as_string() const { return (xstring*)bytes; }
-		xdouble* as_double() const { return (xdouble*)bytes; }
-		xint64_t* as_int64_t() const { return (xint64_t*)bytes; }
-		xdatetime* as_datetime() const { return (xdatetime*)bytes; }
-		xplaceholder* as_placeholder() const { return (xplaceholder*)bytes; }
+		field_types get_field_type() { 
+			return (field_types)(*bytes); 
+		}
+		xstring* as_string() const { 
+			return (xstring*)bytes;
+		}
+		xdouble* as_double() const { 
+			return (xdouble*)bytes; 
+		}
+		xint64_t* as_int64_t() const { 
+			return (xint64_t*)bytes; 
+		}
+		xdatetime* as_datetime() const { 
+			return (xdatetime*)bytes; 
+		}
+		xplaceholder* as_placeholder() const { 
+			return (xplaceholder*)bytes; 
+		}
 	
 		void from_bytes()
 		{
 			switch (get_field_type()) {
 			case field_types::ft_string:
-				size_bytes = as_string()->total_size();
+				size_bytes = as_string()->size();
 				break;
 			case field_types::ft_double:
-				size_bytes = as_double()->total_size();
+				size_bytes = as_double()->size();
 				break;
 			case field_types::ft_datetime:
-				size_bytes = as_datetime()->total_size();
+				size_bytes = as_datetime()->size();
 				break;
 			case field_types::ft_int64:
-				size_bytes = as_int64_t()->total_size();
+				size_bytes = as_int64_t()->size();
 				break;
 			case field_types::ft_placeholder:
-				size_bytes = as_placeholder()->total_size();
+				size_bytes = as_placeholder()->size();
 				break;
 			}
 		}
@@ -449,37 +468,42 @@ namespace corona
 			return *this;
 		}
 
-		xfield_holder(const char *_bytes, int _offset)
+		xfield_holder(char *_bytes, int _length)
 		{
 			if (xops == nullptr) {
 				xops = new xoperation_table();
 			}
 
-			free_bytes = false;
-			bytes = (char *) &_bytes[_offset];
+			if (_bytes) {
+				free_bytes = false;
+				bytes = _bytes;
 
-			field_types ft_data_type = get_data_type();
+				field_types ft_data_type = get_data_type();
 
-			switch (ft_data_type)
-			{
-			case field_types::ft_datetime:
-				size_bytes = as_datetime()->total_size();
-				break;
-			case field_types::ft_int64:
-				size_bytes = as_int64_t()->total_size();
-				break;
-			case field_types::ft_double:
-				size_bytes = as_double()->total_size();
-				break;
-			case field_types::ft_placeholder:
-				size_bytes = as_placeholder()->total_size();
-				break;
-			case field_types::ft_string:
-				size_bytes = as_string()->total_size();
-				break;
-			default:
-				size_bytes = 1;
-				break;
+				switch (ft_data_type)
+				{
+				case field_types::ft_datetime:
+					size_bytes = as_datetime()->size();
+					break;
+				case field_types::ft_int64:
+					size_bytes = as_int64_t()->size();
+					break;
+				case field_types::ft_double:
+					size_bytes = as_double()->size();
+					break;
+				case field_types::ft_placeholder:
+					size_bytes = as_placeholder()->size();
+					break;
+				case field_types::ft_string:
+					size_bytes = as_string()->size();
+					break;
+				default:
+					size_bytes = 1;
+					break;
+				}
+			}
+			else {
+				size_bytes = 0;
 			}
 		}
 
@@ -490,7 +514,7 @@ namespace corona
 			}
 
 			bytes = xstring::from(_data);
-			size_bytes = as_string()->total_size();
+			size_bytes = as_string()->size();
 		}
 
 		xfield_holder(int64_t _data)
@@ -500,7 +524,7 @@ namespace corona
 			}
 
 			bytes = xint64_t::from(_data);
-			size_bytes = as_int64_t()->total_size();
+			size_bytes = as_int64_t()->size();
 		}
 
 		xfield_holder(double _data)
@@ -510,7 +534,7 @@ namespace corona
 			}
 
 			bytes = xdouble::from(_data);
-			size_bytes = as_double()->total_size();
+			size_bytes = as_double()->size();
 		}
 
 		xfield_holder(date_time _data)
@@ -520,25 +544,28 @@ namespace corona
 			}
 
 			bytes = xdatetime::from(_data);
-			size_bytes = as_datetime()->total_size();
+			size_bytes = as_datetime()->size();
 		}
 
-		xfield_holder(void* _dummy)
+		xfield_holder(xplaceholder _data)
 		{
 			if (xops == nullptr) {
 				xops = new xoperation_table();
 			}
 
-			bytes = xplaceholder::from();
-			size_bytes = as_placeholder()->total_size();
+			bytes = xplaceholder::from(_data);
+			size_bytes = as_placeholder()->size();
 		}
 
 		field_types get_data_type() const
 		{
-			return (field_types)*bytes;
+			if (bytes)
+				return (field_types)*bytes;
+			else
+				return field_types::ft_placeholder;
 		}
 
-		int get_total_size() const
+		int size() const
 		{
 			return size_bytes;
 		}
@@ -568,7 +595,7 @@ namespace corona
 			return as_string()->data;
 		}
 
-		char* get_bytes() const
+		const char* data() const
 		{
 			return (char*)bytes;
 		}
@@ -676,14 +703,14 @@ namespace corona
 		_tests->test({ "data i64 2", result, __FILE__, __LINE__ });
 
 		int l;
-		char* c;
+		const char* c;
 		char* test_copy;
 
 		// these tests shouldn't leak
 
 		//datetime
-		l = test_datetimeb.get_total_size();
-		c = (char*)test_datetimeb.get_bytes();
+		l = test_datetimeb.size();
+		c = (char*)test_datetimeb.data();
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
@@ -693,8 +720,8 @@ namespace corona
 		delete test_copy;
 
 		//double
-		l = test_doubleb.get_total_size();
-		c = test_doubleb.get_bytes();
+		l = test_doubleb.size();
+		c = test_doubleb.data();
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
@@ -704,8 +731,8 @@ namespace corona
 		delete test_copy;
 
 		//int64
-		l = test_int64b.get_total_size();
-		c = test_int64b.get_bytes();
+		l = test_int64b.size();
+		c = test_int64b.data();
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
@@ -715,8 +742,8 @@ namespace corona
 		delete test_copy;
 
 		// string
-		l = test_stringb.get_total_size();
-		c = test_stringb.get_bytes();
+		l = test_stringb.size();
+		c = test_stringb.data();
 		test_copy = new char[l];
 		std::copy(c, c + l, test_copy);
 
@@ -860,12 +887,12 @@ namespace corona
 
 		xrecord(xrecord&& _src)
 		{
-			std::swap(key, _src.key);
+			key = std::move(_src.key);
 		}
 
 		xrecord& operator = (xrecord&& _src)
 		{
-			std::swap(key, _src.key);
+			key = std::move(_src.key);
 			return *this;
 		}
 
@@ -899,10 +926,10 @@ namespace corona
 					new_key = xfield_holder((int64_t)m);
 					break;
 				default:
-					new_key = xfield_holder(nullptr);
+					new_key = xfield_holder(xplaceholder::common_placeholder);
 					break;
 				}
-				key.insert(key.end(), (char *)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
+				key.insert(key.end(), (char *)new_key.data(), (char*)new_key.data() + new_key.size());
 			}
 		}
 
@@ -1008,28 +1035,28 @@ namespace corona
 		xrecord& add(double _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char *)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
+			key.insert(key.end(), (char *)new_key.data(), (char*)new_key.data() + new_key.size());
 			return *this;
 		}
 
 		xrecord& add(std::string _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char*)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.data(), (char*)new_key.data() + new_key.size());
 			return *this;
 		}
 
 		xrecord& add(date_time _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char*)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.data(), (char*)new_key.data() + new_key.size());
 			return *this;
 		}
 
 		xrecord& add(int64_t _value)
 		{
 			xfield_holder new_key(_value);
-			key.insert(key.end(), (char*)new_key.get_bytes(), (char*)new_key.get_bytes() + new_key.get_total_size());
+			key.insert(key.end(), (char*)new_key.data(), (char*)new_key.data() + new_key.size());
 			return *this;
 		}
 		
@@ -1043,9 +1070,9 @@ namespace corona
 		{
 			xfield_holder t = {};
 			if (_offset < key.size()) {
-				const char* f = key.data();
-				t = xfield_holder(f, _offset);
-				*_next_offset = t.get_total_size() + _offset;
+				char* f = (char *)key.data();
+				t = xfield_holder(f + _offset, 0);
+				*_next_offset = t.size() + _offset;
 			}
 			return t;
 		}
