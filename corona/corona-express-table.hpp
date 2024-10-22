@@ -9,7 +9,6 @@ const bool debug_xblock = false;
 namespace corona
 {
 
-
 	enum xblock_types
 	{
 		xb_none = 0,
@@ -18,9 +17,20 @@ namespace corona
 		xb_record = 3
 	};
 
+	template <typename storable_type>
+	concept xblock_storable = requires(storable_type a, size_t b, const char* src, size_t length)
+	{
+		{ a.size() == b };
+		{ a.data() == src };
+		{ storable_type(src, length) };
+	};
+
 	struct xblock_ref
 	{
 	public:
+
+		xblock_types		block_type;
+		relative_ptr_type	location;
 
 		xblock_ref()
 		{
@@ -34,8 +44,15 @@ namespace corona
 			location = _location;
 		}
 
-		xblock_types		block_type;
-		relative_ptr_type	location;
+		xblock_ref(const char* _src, size_t _length)
+		{
+			xblock_ref* src = (xblock_ref*)_src;
+			block_type = src->block_type;
+			location = src->location;
+		}
+
+		size_t size() { return sizeof(this); }
+		const char* data() { return (const char*)this; }
 	};
 
 	class xfor_each_result
@@ -66,46 +83,6 @@ namespace corona
 
 	};
 
-	class xblock
-	{
-	public:
-		virtual char* before_read(int32_t size) = 0;
-		virtual void after_read(char* _bytes) = 0;
-		virtual char* before_write(int32_t* _size) = 0;
-	};
-
-	template <typename T>
-	class poco_xblock
-	{
-	public:
-
-		T data;
-
-		virtual char* before_read(int32_t size) override
-		{
-			char* io_bytes = (char*)&data;
-			return io_bytes;
-		}
-
-		virtual void after_read(char* _bytes) override
-		{
-
-		}
-
-		virtual char* before_write(int32_t* _size) override
-		{
-			*_size = sizeof(data);
-			char* io_bytes = (char*)&data;
-			return io_bytes;
-		}
-
-		bool operator < (const poco_xblock& _t)
-		{
-			return data < _t.data;
-		}
-	};
-
-	using object_id_key = poco_xblock<int64_t>;
 
 	struct xstring 
 	{
@@ -835,10 +812,9 @@ namespace corona
 		system_monitoring_interface::global_mon->log_function_stop("xfield", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
-	class xrecord : public xblock
+	class xrecord
 	{
 		std::vector<char> key;
-
 
 	public:
 
@@ -852,10 +828,24 @@ namespace corona
 			put_json(_keys, _src);
 		}
 
-		xrecord(const char* _src, int _length)
+		// to satisfy xblock_storable
+
+		xrecord(const char* _src, size_t _length)
 		{
 			key.insert(key.end(), _src, _src + _length);
 		}
+
+		size_t size() const
+		{
+			return key.size();
+		}
+
+		const char* data() const
+		{
+			return key.data();
+		}
+
+		// end implements xblock storable
 
 		xrecord(const xrecord& _src)
 		{
@@ -1043,32 +1033,11 @@ namespace corona
 			return *this;
 		}
 		
-		size_t size() const
-		{
-			return key.size();
-		}
-
 		bool is_empty()
 		{
 			return key.empty();
 		}
 
-		virtual char* before_read(int32_t _size)  override
-		{
-			key.resize(_size);
-			return (char*)key.data();
-		}
-
-		virtual void after_read(char* _bytes)  override
-		{
-
-		}
-
-		virtual char* before_write(int32_t* _size) override
-		{
-			*_size = key.size();
-			return (char*)key.data();
-		}
 
 		xfield_holder get_field(int _offset, int* _next_offset) const
 		{
@@ -1311,13 +1280,11 @@ namespace corona
 
 
 		// write the copy back to readin and see if the round trip works
-		char* src;
-		char* dest;
-		int length;
+		const char* src;
+		size_t length;
 
-		dest = copy.before_write(&length);
-		src = readin.before_read(length);
-		std::copy(dest, dest + length, src);
+		src = copy.data();
+		readin = xrecord(src, length);
 		tst_ref = readin.get_xblock_ref();
 		result = (tst_ref.location == 122);
 		_tests->test({ "rt locs", result, __FILE__, __LINE__ });
@@ -1332,9 +1299,7 @@ namespace corona
 		// and with the json
 		jdst = jp.create_object();
 		xrecord xsrc(keys, jsrc);
-		dest = xsrc.before_write(&length);
-		src = readin.before_read(length);
-		std::copy(dest, dest + length, src);
+		readin = xrecord(xsrc.data(), xsrc.size());
 		readin.get_json(jdst, keys);
 
 		// and finally, checking our matches after the round trip
@@ -1377,6 +1342,7 @@ namespace corona
 	};
 
 	template <typename data_type>
+	requires xblock_storable<data_type>
 	class xrecord_block : protected data_block
 	{
 	protected:
@@ -1515,23 +1481,21 @@ namespace corona
 			{
 				auto& rl = xheader.records[i];
 				xrecord k(_bytes + rl.key_offset, rl.key_size); // just deserializing the records.
-				xrecord v(_bytes + rl.value_offset, rl.value_size); // just deserializing the records.
-				data_type temp = v;
-				records.insert_or_assign(k, temp);
+				data_type v(_bytes + rl.value_offset, rl.value_size); // just deserializing the records.
+				records.insert_or_assign(k, v);
 			}
 		}
 
 		virtual char* before_write(int32_t* _size) override
 		{
-			int32_t total_bytes = 0;
-			int32_t header_bytes = 0;
+			size_t total_bytes = 0;
+			size_t header_bytes = 0;
 			int32_t count = 0;
 
 			for (auto& r : records)
 			{
-				xrecord rec = (xrecord)r.second;
 				total_bytes += r.first.size();
-				total_bytes += rec.size();
+				total_bytes += r.second.size();
 				count++;
 			}
 
@@ -1552,15 +1516,15 @@ namespace corona
 				auto& rl = hdr->records[i];
 				int size_actual;
 
-				xrecord record_key = r.first;
 				rl.key_offset = current - bytes;
-				char *rsrc = record_key.before_write(&rl.key_size);
+				rl.key_size = r.first.size();
+				const char *rsrc = r.first.data();
 				std::copy(rsrc, rsrc + rl.key_size, current);
 				current += rl.key_size;
 
-				xrecord record_value = (xrecord)r.second;
 				rl.value_offset = current - bytes;
-				char *vsrc = record_value.before_write(&rl.value_size);
+				rl.value_size = r.second.size();
+				const char *vsrc = r.second.data();
 				std::copy(vsrc, vsrc + rl.value_size, current);
 				current += rl.value_size;
 
