@@ -920,45 +920,6 @@ namespace corona {
 	bool collection_tests();
 	bool array_tests();
 
-	int compare(const dimensions_type& a, const dimensions_type& b)
-	{
-		corona_size_t t = a.z - b.z;
-		if (t) return t;
-		t = a.y - b.y;
-		if (t) return t;
-		t = a.x - b.x;
-		return t;
-	}
-
-	int operator<(const dimensions_type& a, const dimensions_type& b)
-	{
-		return compare(a, b) < 0;
-	}
-
-	int operator>(const dimensions_type& a, const dimensions_type& b)
-	{
-		return compare(a, b) > 0;
-	}
-
-	int operator>=(const dimensions_type& a, const dimensions_type& b)
-	{
-		return compare(a, b) >= 0;
-	}
-
-	int operator<=(const dimensions_type& a, const dimensions_type& b)
-	{
-		return compare(a, b) <= 0;
-	}
-
-	int operator==(const dimensions_type& a, const dimensions_type& b)
-	{
-		return compare(a, b) == 0;
-	}
-
-	int operator!=(const dimensions_type& a, const dimensions_type& b)
-	{
-		return compare(a, b) != 0;
-	}
 
 	bool init_collection_id(collection_id_type& collection_id)
 	{

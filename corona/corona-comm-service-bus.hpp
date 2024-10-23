@@ -173,12 +173,8 @@ namespace corona
 			dependencies = { "data block" };
 			testo = tm.create_test_set("json node", dependencies);
 			test_json_node(testo, app);
-
+		
 			dependencies = { "data block" };
-			testo = tm.create_test_set("xfield", dependencies);
-			test_xfield(testo, app);
-
-			dependencies = { "xfield" };
 			testo = tm.create_test_set("xrecord", dependencies);
 			test_xrecord(testo, app);
 

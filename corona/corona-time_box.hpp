@@ -758,4 +758,15 @@ namespace corona
 
 }
 
+template <>
+struct std::formatter<corona::date_time> {
+	constexpr auto parse(std::format_parse_context& ctx) {
+		return ctx.begin();
+	}
+
+	auto format(const corona::date_time& dt, std::format_context& ctx) const {
+		return std::format_to(ctx.out(), "({})", dt.short_date());
+	}
+};
+
 #endif

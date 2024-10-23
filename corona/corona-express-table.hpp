@@ -91,20 +91,19 @@ namespace corona
 		const char*	data;
 		size_t size_bytes;
 
+		xstring()
+		{
+			ft = field_types::ft_string;
+			data = nullptr;
+			size_bytes = 0;
+		}
+
 		xstring(const char *_src, size_t _offset)
 		{
 			ft = (field_types)_src[_offset];
 			_offset++;
 			data = &_src[_offset];
 			size_bytes = strlen(data) + 1 + packed_field_type_size;
-		}
-
-		xstring &operator = (const xstring& _src)
-		{
-			ft = _src.ft;
-			data = _src.data;
-			size_bytes = _src.size_bytes;
-			return *this;
 		}
 
 		xstring(const xstring& _src)
@@ -114,7 +113,7 @@ namespace corona
 			size_bytes = _src.size_bytes;
 		}
 
-		xstring &operator = (xstring&& _src)
+		xstring &operator = (const xstring& _src)
 		{
 			ft = _src.ft;
 			data = _src.data;
@@ -127,6 +126,14 @@ namespace corona
 			ft = _src.ft;
 			data = _src.data;
 			size_bytes = _src.size_bytes;
+		}
+
+		xstring &operator = (xstring&& _src)
+		{
+			ft = _src.ft;
+			data = _src.data;
+			size_bytes = _src.size_bytes;
+			return *this;
 		}
 
 		int size() const
@@ -170,7 +177,6 @@ namespace corona
 		xpoco()
 		{
 			ft = field_types::ft_none;
-			data = {};
 			size_bytes = packed_field_type_size + sizeof(data_type);
 		}
 
@@ -180,12 +186,13 @@ namespace corona
 			_offset++;
 			// simply assiging the pointer can be bad due to alignment,
 			// and would be less portable anyway
+			_src = _src + _offset;
 			char* s = (char *)&data;
 			for (int i = 0; i < sizeof(data_type); i++)
 			{
-				s = data[_offset];
+				*s = *_src;
 				s++;
-				_offset++;
+				_src++;
 			}
 			size_bytes = packed_field_type_size + sizeof(data_type) ;
 		}
@@ -249,12 +256,51 @@ namespace corona
 			const char* se = sd + sizeof(data_type);
 			_dest.insert(_dest.end(), sd, se);
 		}
+
+		bool eq(const xpoco& _other) const
+		{
+			return data == _other.data;
+		}
+
+		bool lt(const xpoco& _other) const
+		{
+			return data < _other.data;
+		}
+
+		bool gt(const xpoco& _other) const
+		{
+			return data > _other.data;
+		}
+
+		bool neq(const xpoco& _other) const
+		{
+			return data != _other.data;
+		}
+
+
 	};
 
-	using xint64_t = xpoco<int64_t, field_types::ft_int64>;
-	using xdouble = xpoco<double, field_types::ft_double>;
-	using xdatetime = xpoco<date_time, field_types::ft_datetime>;
-	using xplaceholder = xpoco<char, field_types::ft_placeholder>;
+	class xint64_t : public xpoco<int64_t, field_types::ft_int64>
+	{
+	public:
+
+	};
+
+	class xdouble : public xpoco<double, field_types::ft_double>
+	{
+	public:
+
+	};
+
+	class xdatetime : public xpoco<date_time, field_types::ft_datetime>
+	{
+	public:
+	};
+
+	class xplaceholder : public xpoco<char, field_types::ft_placeholder>
+	{
+
+	};
 
 	// base templates
 
@@ -265,313 +311,744 @@ namespace corona
 		op_gt = 3
 	};
 
-	template <fn_operators op, typename typea, typename typeb>
-	bool xcompare(const typea& _itema, const typeb& _itemb)
-	{
-		return true;
-	}
+	class fn_op_lt {
 
-	template <typename typea, typename typeb> 
-	bool xcompare<fn_operators::op_lt>(const typea& _itema, const typeb& _itemb)
-	{
-		return (_item.data < _itemb.data);
-	}
+	};
 
-	template <typename typea, typename typeb>
-	bool xfn_eq(const typea& _itema, const typeb& _itemb)
-	{
-		return (_item.data == _itemb.data);
-	}
+	class fn_op_eq {
 
-	template <typename typea, typename typeb>
-	bool xfn_neq(const typea& _itema, const typeb& _itemb)
-	{
-		return (_item.data != _itemb.data);
-	}
+	};
 
-	template <typename typea, typename typeb>
-	bool xfn_gt(const typea& _itema, const typeb& _itemb)
-	{
-		return (_item.data > _itemb.data);
-	}
+	class fn_op_neq {
 
-	// string to string
+	};
+
+	class fn_op_gt {
+
+	};
+
+	template <typename fn_op, typename typea, typename typeb>
+	class xcomparer 
+	{
+	public:
+		bool compare(const typea & _itema, const typeb & _itemb) const;
+	};
+
+	template <typename typea>
+	class xcomparer<fn_op_lt, typea, typea>
+	{
+	public:
+		bool compare(const typea& _itema, const typea& _itemb) const
+		{
+			return _itema.lt(_itemb);
+		}
+	};
+
+	template <typename typea>
+	class xcomparer<fn_op_eq, typea, typea>
+	{
+	public:
+		bool compare(const typea& _itema, const typea& _itemb) const
+		{
+			return _itema.eq(_itemb);
+		}
+	};
+
+	template <typename typea>
+	class xcomparer<fn_op_neq, typea, typea>
+	{
+	public:
+		bool compare(const typea& _itema, const typea& _itemb) const
+		{
+			return _itema.neq(_itemb);
+		}
+	};
+
+	template <typename typea>
+	class xcomparer<fn_op_gt, typea, typea>
+	{
+	public:
+		bool compare(const typea& _itema, const typea& _itemb) const
+		{
+			return _itema.gt(_itemb);
+		}
+	};
+
+	// strings 
 
 	template <>
-	bool xcompare<fn_operators::op_lt,xstring, xstring>(const xstring& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_lt, xstring, xstring>
 	{
-		return strcmp( _itema.data, _itemb.data) < 0;
-	}
+	public:
+		bool compare(const xstring& _itema, const xstring& _itemb) const
+		{
+			return strcmp(_itema.data, _itemb.data) < 0;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_eq, xstring, xstring>(const xstring& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_eq, xstring, xstring>
 	{
-		return strcmp(_itema.data, _itemb.data) == 0;
-	}
+	public:
+		bool compare(const xstring& _itema, const xstring& _itemb) const
+		{
+			return strcmp(_itema.data, _itemb.data) == 0;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_neq, xstring, xstring>(const xstring& _itema, const  xstring& _itemb)
+	class xcomparer<fn_op_neq, xstring, xstring>
 	{
-		return strcmp(_itema.data, _itemb.data) != 0;
-	}
+	public:
+		bool compare(const xstring& _itema, const xstring& _itemb) const
+		{
+			return strcmp(_itema.data, _itemb.data) != 0;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_gt, xstring, xstring>(const xstring& _itema, const  xstring& _itemb)
+	class xcomparer<fn_op_gt, xstring, xstring>
 	{
-		return strcmp(_itema.data, _itemb.data) > 0;
-	}
+	public:
+		bool compare(const xstring& _itema, const xstring& _itemb) const
+		{
+			return strcmp(_itema.data, _itemb.data) > 0;
+		}
+	};
 
 	// placeholders are always equal.
 
-	template <typename typeb>
-	bool xcompare<fn_operators::op_lt, xplaceholder, typeb>(xplaceholder& _itema, typeb& _itemb)
+	template <>
+	class xcomparer<fn_op_lt, xplaceholder, xplaceholder>
 	{
-		return false;
-	}
+	public:
+		bool compare(const xplaceholder& _itema, const xplaceholder& _itemb) const
+		{
+			return false;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_eq, xplaceholder, xplaceholder>
+	{
+	public:
+		bool compare(const xplaceholder& _itema, const xplaceholder& _itemb) const
+		{
+			return true;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_neq, xplaceholder, xplaceholder>
+	{
+	public:
+		bool compare(const xplaceholder& _itema, const xplaceholder& _itemb) const
+		{
+			return false;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xplaceholder, xplaceholder>
+	{
+	public:
+		bool compare(const xplaceholder& _itema, const xplaceholder& _itemb) const
+		{
+			return false;
+		}
+	};
+
 
 	template <typename typeb>
-	bool xcompare<fn_operators::op_eq, xplaceholder, typeb>(xplaceholder& _itema, typeb& _itemb)
+	class xcomparer<fn_op_lt, xplaceholder, typeb>
 	{
-		return true;
-	}
+	public:
+		bool compare(const xplaceholder& _itema, const typeb& _itemb) const
+		{
+			return false;
+		}
+	};
 
 	template <typename typeb>
-	bool xcompare<fn_operators::op_neq, xplaceholder, typeb>(xplaceholder& _itema, typeb& _itemb)
+	class xcomparer<fn_op_eq, xplaceholder, typeb>
 	{
-		return false;
-	}
+	public:
+		bool compare(const xplaceholder& _itema, const typeb& _itemb) const
+		{
+			return true;
+		}
+	};
 
 	template <typename typeb>
-	bool xcompare<fn_operators::op_gt, xplaceholder, typeb>(xplaceholder& _itema, typeb& _itemb)
+	class xcomparer<fn_op_neq, xplaceholder, typeb>
 	{
-		return false;
-	}
+	public:
+		bool compare(const xplaceholder& _itema, const typeb& _itemb) const
+		{
+			return false;
+		}
+	};
 
-
-	template <typename typea>
-	bool xcompare<fn_operators::op_lt, typea, xplaceholder>(typea& _itema, xplaceholder& _itemb)
+	template <typename typeb>
+	class xcomparer<fn_op_gt, xplaceholder, typeb>
 	{
-		return false;
-	}
-
-	template <typename typea>
-	bool xcompare<fn_operators::op_eq, typea, xplaceholder>(typea& _itema, xplaceholder& _itemb)
-	{
-		return true;
-	}
-
-	template <typename typea>
-	bool xcompare<fn_operators::op_neq, typea, xplaceholder>(typea& _itema, xplaceholder& _itemb)
-	{
-		return false;
-	}
-
-	template <typename typea>
-	bool xcompare<fn_operators::op_gt, typea, xplaceholder>(typea& _itema, xplaceholder& _itemb)
-	{
-		return false;
-	}
+	public:
+		bool compare(const xplaceholder& _itema, const typeb& _itemb) const
+		{
+			return false;
+		}
+	};
 
 	// conversions for strings and datetimes
 
 	template <>
-	bool xcompare<fn_operators::op_lt, xstring, xdatetime>(const xstring& _itema, const xdatetime& _itemb)
+	class xcomparer<fn_op_lt, xstring, xdatetime>
 	{
-		date_time dp;
-		dp.parse(_itema.data);
-		return dp < _itemb.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xdatetime& _itemb) const
+		{
+			date_time dp;
+			dp.parse(_itema.data);
+			return dp < _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_eq, xstring, xdatetime>(const xstring& _itema, const xdatetime& _itemb)
+	class xcomparer<fn_op_eq, xstring, xdatetime>
 	{
-		date_time dp;
-		dp.parse(_itema.data);
-		return dp == _itemb.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xdatetime& _itemb) const
+		{
+			date_time dp;
+			dp.parse(_itema.data);
+			return dp == _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_neq, xstring, xdatetime>(const xstring& _itema, const  xdatetime& _itemb)
+	class xcomparer<fn_op_neq, xstring, xdatetime>
 	{
-		date_time dp;
-		dp.parse(_itema.data);
-		return dp != _itemb.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xdatetime& _itemb) const
+		{
+			date_time dp;
+			dp.parse(_itema.data);
+			return dp != _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_gt, xstring, xdatetime>(const xstring& _itema, const  xdatetime& _itemb)
+	class xcomparer<fn_op_gt, xstring, xdatetime>
 	{
-		date_time dp;
-		dp.parse(_itema.data);
-		return dp != _itemb.data;
-	}
-
-
-	template <>
-	bool xcompare<fn_operators::op_lt, xdatetime, xstring>(const xdatetime& _itema, const xstring& _itemb)
-	{
-		date_time dp;
-		dp.parse(_itemb.data);
-		return dp < _itema.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xdatetime& _itemb) const
+		{
+			date_time dp;
+			dp.parse(_itema.data);
+			return dp > _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_eq, xdatetime, xstring>(const xdatetime& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_lt, xdatetime, xstring>
 	{
-		date_time dp;
-		dp.parse(_itemb.data);
-		return dp == _itema.data;
-	}
+	public:
+		bool compare(const xdatetime& _itema, const xstring& _itemb) const
+		{
+			date_time dp;
+			dp.parse(_itemb.data);
+			return _itema.data < dp;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_neq, xdatetime, xstring>(const xdatetime& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_eq, xdatetime, xstring>
 	{
-		date_time dp;
-		dp.parse(_itemb.data);
-		return dp != _itema.data;
-	}
+	public:
+		bool compare(const xdatetime& _itema, const xstring& _itemb) const
+		{
+			date_time dp;
+			dp.parse(_itemb.data);
+			return _itema.data == dp;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_gt, xdatetime, xstring>(const xdatetime& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_neq, xdatetime, xstring>
 	{
-		date_time dp;
-		dp.parse(_itemb.data);
-		return dp > _itema.data;
-	}
+	public:
+		bool compare(const xdatetime& _itema, const xstring& _itemb) const
+		{
+			date_time dp;
+			dp.parse(_itemb.data);
+			return _itema.data != dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xdatetime, xstring>
+	{
+	public:
+		bool compare(const xdatetime& _itema, const xstring& _itemb) const
+		{
+			date_time dp;
+			dp.parse(_itemb.data);
+			return _itema.data > dp;
+		}
+	};
 
 	// conversions for strings and doubles
 
 	template <>
-	bool xcompare<fn_operators::op_lt, xstring, xdouble>(const xstring& _itema, const xdouble& _itemb)
+	class xcomparer<fn_op_lt, xstring, xdouble>
 	{
-		double dp;
-		dp = strtod(_itema.data, nullptr);
-		return dp < _itemb.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xdouble& _itemb) const
+		{
+			double dp = strtod(_itema.data, nullptr);
+			return dp < _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_eq, xstring, xdouble>(const xstring& _itema, const xdouble& _itemb)
+	class xcomparer<fn_op_eq, xstring, xdouble>
 	{
-		double dp;
-		dp = strtod(_itema.data, nullptr);
-		return dp == _itemb.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xdouble& _itemb) const
+		{
+			double dp = strtod(_itema.data, nullptr);
+			return dp == _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_neq, xstring, xdouble>(const xstring& _itema, const  xdouble& _itemb)
+	class xcomparer<fn_op_neq, xstring, xdouble>
 	{
-		double dp;
-		dp = strtod(_itema.data, nullptr);
-		return dp != _itemb.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xdouble& _itemb) const
+		{
+			double dp = strtod(_itema.data, nullptr);
+			return dp != _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_gt, xstring, xdouble>(const xstring& _itema, const  xdouble& _itemb)
+	class xcomparer<fn_op_gt, xstring, xdouble>
 	{
-		double dp;
-		dp = strtod(_itema.data, nullptr);
-		return dp > _itemb.data;
-	}
-
-
-	template <>
-	bool xcompare<fn_operators::op_lt, xdouble, xstring>(const xdouble& _itema, const xstring& _itemb)
-	{
-		double dp;
-		dp = strtod(_itemb.data, nullptr);
-		return dp < _itema.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xdouble& _itemb) const
+		{
+			double dp = strtod(_itema.data, nullptr);
+			return dp > _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_eq, xdouble, xstring>(const xdouble& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_lt, xdouble, xstring>
 	{
-		double dp;
-		dp = strtod(_itemb.data, nullptr);
-		return dp == _itema.data;
-	}
+	public:
+		bool compare(const xdouble& _itema, const xstring& _itemb) const
+		{
+			double dp = strtod(_itemb.data, nullptr);
+			return _itema.data < dp;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_neq, xdouble, xstring>(const xdouble& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_eq, xdouble, xstring>
 	{
-		double dp;
-		dp = strtod(_itemb.data, nullptr);
-		return dp != _itema.data;
-	}
+	public:
+		bool compare(const xdouble& _itema, const xstring& _itemb) const
+		{
+			double dp = strtod(_itemb.data, nullptr);
+			return _itema.data == dp;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_gt, xdouble, xstring>(const xdouble& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_neq, xdouble, xstring>
 	{
-		double dp;
-		dp = strtod(_itemb.data, nullptr);
-		return dp > _itema.data;
-	}
+	public:
+		bool compare(const xdouble& _itema, const xstring& _itemb) const
+		{
+			double dp = strtod(_itemb.data, nullptr);
+			return _itema.data != dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xdouble, xstring>
+	{
+	public:
+		bool compare(const xdouble& _itema, const xstring& _itemb) const
+		{
+			double dp = strtod(_itemb.data, nullptr);
+			return _itema.data > dp;
+		}
+	};
 
 	// conversions for strings and int64_t
 
 	template <>
-	bool xcompare<fn_operators::op_lt, xstring, xint64_t>(const xstring& _itema, const xint64_t& _itemb)
+	class xcomparer<fn_op_lt, xstring, xint64_t>
 	{
-		int64_t dp;
-		dp = strtoll(_itema.data, nullptr, 10);
-		return dp < _itemb.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = strtoll(_itema.data, nullptr, 10);
+			return dp < _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_eq, xstring, xint64_t>(const xstring& _itema, const xint64_t& _itemb)
+	class xcomparer<fn_op_eq, xstring, xint64_t>
 	{
-		int64_t dp;
-		dp = strtoll(_itema.data, nullptr, 10);
-		return dp == _itemb.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = strtoll(_itema.data, nullptr, 10);
+			return dp == _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_neq, xstring, xint64_t>(const xstring& _itema, const  xint64_t& _itemb)
+	class xcomparer<fn_op_neq, xstring, xint64_t>
 	{
-		int64_t dp;
-		dp = strtoll(_itema.data, nullptr, 10);
-		return dp != _itemb.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = strtoll(_itema.data, nullptr, 10);
+			return dp != _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_gt, xstring, xint64_t>(const xstring& _itema, const  xint64_t& _itemb)
+	class xcomparer<fn_op_gt, xstring, xint64_t>
 	{
-		int64_t dp;
-		dp = strtoll(_itema.data, nullptr, 10);
-		return dp > _itemb.data;
-	}
-
-
-	template <>
-	bool xcompare<fn_operators::op_lt, xint64_t, xstring>(const xint64_t& _itema, const xstring& _itemb)
-	{
-		int64_t dp;
-		dp = strtoll(_itemb.data, nullptr, 10);
-		return dp < _itema.data;
-	}
+	public:
+		bool compare(const xstring& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = strtoll(_itema.data, nullptr, 10);
+			return dp > _itemb.data;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_eq, xint64_t, xstring>(const xint64_t& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_lt, xint64_t, xstring>
 	{
-		int64_t dp;
-		dp = strtoll(_itemb.data, nullptr, 10);
-		return dp == _itema.data;
-	}
+	public:
+		bool compare(const xint64_t& _itema, const xstring& _itemb) const
+		{
+			int64_t dp = strtoll(_itemb.data, nullptr, 10);
+			return _itema.data < dp;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_neq, xint64_t, xstring>(const xint64_t& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_eq, xint64_t, xstring>
 	{
-		int64_t dp;
-		dp = strtoll(_itemb.data, nullptr, 10);
-		return dp != _itema.data;
-	}
+	public:
+		bool compare(const xint64_t& _itema, const xstring& _itemb) const
+		{
+			int64_t dp = strtoll(_itemb.data, nullptr, 10);
+			return _itema.data == dp;
+		}
+	};
 
 	template <>
-	bool xcompare<fn_operators::op_gt, xint64_t, xstring>(const xint64_t& _itema, const xstring& _itemb)
+	class xcomparer<fn_op_neq, xint64_t, xstring>
 	{
-		int64_t dp;
-		dp = strtoll(_itemb.data, nullptr, 10);
-		return dp > _itema.data;
-	}
+	public:
+		bool compare(const xint64_t& _itema, const xstring& _itemb) const
+		{
+			int64_t dp = strtoll(_itemb.data, nullptr, 10);
+			return _itema.data != dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xint64_t, xstring>
+	{
+	public:
+		bool compare(const xint64_t& _itema, const xstring& _itemb) const
+		{
+			int64_t dp = strtoll(_itemb.data, nullptr, 10);
+			return _itema.data > dp;
+		}
+	};
+
+	// int64_t and double
+
+	template <>
+	class xcomparer<fn_op_lt, xdouble, xint64_t>
+	{
+	public:
+		bool compare(const xdouble& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = _itema.data;
+			return dp < _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_eq, xdouble, xint64_t>
+	{
+	public:
+		bool compare(const xdouble& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = _itema.data;
+			return dp == _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_neq, xdouble, xint64_t>
+	{
+	public:
+		bool compare(const xdouble& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = _itema.data;
+			return dp != _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xdouble, xint64_t>
+	{
+	public:
+		bool compare(const xdouble& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = _itema.data;
+			return dp > _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_lt, xint64_t, xdouble>
+	{
+	public:
+		bool compare(const xint64_t& _itema, const xdouble& _itemb) const
+		{
+			int64_t dp = _itemb.data;
+			return _itema.data < dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_eq, xint64_t, xdouble>
+	{
+	public:
+		bool compare(const xint64_t& _itema, const xdouble& _itemb) const
+		{
+			int64_t dp = _itemb.data;
+			return _itema.data == dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_neq, xint64_t, xdouble>
+	{
+	public:
+		bool compare(const xint64_t& _itema, const xdouble& _itemb) const
+		{
+			int64_t dp = _itemb.data;
+			return _itema.data != dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xint64_t, xdouble>
+	{
+	public:
+		bool compare(const xint64_t& _itema, const xdouble& _itemb) const
+		{
+			int64_t dp = _itemb.data;
+			return _itema.data > dp;
+		}
+	};
+
+	// datetime and doubles
+
+	template <>
+	class xcomparer<fn_op_lt, xdatetime, xdouble>
+	{
+	public:
+		bool compare(const xdatetime& _itema, const xdouble& _itemb) const
+		{
+			int64_t dp = _itema.data.get_time_t();
+			return dp < _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_eq, xdatetime, xdouble>
+	{
+	public:
+		bool compare(const xdatetime& _itema, const xdouble& _itemb) const
+		{
+			int64_t dp = _itema.data.get_time_t();
+			return dp == _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_neq, xdatetime, xdouble>
+	{
+	public:
+		bool compare(const xdatetime& _itema, const xdouble& _itemb) const
+		{
+			int64_t dp = _itema.data.get_time_t();
+			return dp != _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xdatetime, xdouble>
+	{
+	public:
+		bool compare(const xdatetime& _itema, const xdouble& _itemb) const
+		{
+			int64_t dp = _itema.data.get_time_t();
+			return dp > _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_lt, xdouble, xdatetime>
+	{
+	public:
+		bool compare(const xdouble& _itema, const xdatetime& _itemb) const
+		{
+			int64_t dp = _itemb.data.get_time_t();
+			return _itema.data < dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_eq, xdouble, xdatetime>
+	{
+	public:
+		bool compare(const xdouble& _itema, const xdatetime& _itemb) const
+		{
+			int64_t dp = _itemb.data.get_time_t();
+			return _itema.data == dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_neq, xdouble, xdatetime>
+	{
+	public:
+		bool compare(const xdouble& _itema, const xdatetime& _itemb) const
+		{
+			int64_t dp = _itemb.data.get_time_t();
+			return _itema.data != dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xdouble, xdatetime>
+	{
+	public:
+		bool compare(const xdouble& _itema, const xdatetime& _itemb) const
+		{
+			int64_t dp = _itemb.data.get_time_t();
+			return _itema.data > dp;
+		}
+	};
+
+	// datetime and int64
+
+	template <>
+	class xcomparer<fn_op_lt, xdatetime, xint64_t>
+	{
+	public:
+		bool compare(const xdatetime& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = _itema.data.get_time_t();
+			return dp < _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_eq, xdatetime, xint64_t>
+	{
+	public:
+		bool compare(const xdatetime& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = _itema.data.get_time_t();
+			return dp == _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_neq, xdatetime, xint64_t>
+	{
+	public:
+		bool compare(const xdatetime& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = _itema.data.get_time_t();
+			return dp != _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xdatetime, xint64_t>
+	{
+	public:
+		bool compare(const xdatetime& _itema, const xint64_t& _itemb) const
+		{
+			int64_t dp = _itema.data.get_time_t();
+			return dp > _itemb.data;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_lt, xint64_t, xdatetime>
+	{
+	public:
+		bool compare(const xint64_t& _itema, const xdatetime& _itemb) const
+		{
+			int64_t dp = _itemb.data.get_time_t();
+			return _itema.data < dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_eq, xint64_t, xdatetime>
+	{
+	public:
+		bool compare(const xint64_t& _itema, const xdatetime& _itemb) const
+		{
+			int64_t dp = _itemb.data.get_time_t();
+			return _itema.data == dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_neq, xint64_t, xdatetime>
+	{
+	public:
+		bool compare(const xint64_t& _itema, const xdatetime& _itemb) const
+		{
+			int64_t dp = _itemb.data.get_time_t();
+			return _itema.data != dp;
+		}
+	};
+
+	template <>
+	class xcomparer<fn_op_gt, xint64_t, xdatetime>
+	{
+	public:
+		bool compare(const xint64_t& _itema, const xdatetime& _itemb) const
+		{
+			int64_t dp = _itemb.data.get_time_t();
+			return _itema.data > dp;
+		}
+	};
+
+	// same types
+
 
 	// thus armed, we can directly implement xrecord
 
@@ -629,22 +1106,210 @@ namespace corona
 			xplaceholder::emplace(0, record_bytes);
 		}
 
-		template <fn_operators op, typename xtype1, typename xtype2> bool compare_field(size_t* _src_offset, const xrecord& _other, size_t* _other_offset) const
+		template <typename comparefn, typename xtype1, typename xtype2>
+		class field_comparer
 		{
-			bool truth = false;
-			xtype1 temp1;
-			bool success1 = xtype1::get(record_bytes, _offset, temp1);
-
-			xtype1 temp2;
-			bool success2 = xtype2::get(_other.record_bytes, _other_offset, temp2);
-
-			if (success1 and success2) 
+		public:
+			bool compare_field(const std::vector<char>& _src, size_t* _src_offset, const xrecord& _other, size_t* _other_offset) const
 			{
-				truth = xcompare<op>(&temp1, &temp2);
+				bool truth = false;
+				xtype1 temp1;
+				bool success1 = xtype1::get(_src, _src_offset, temp1);
+
+				xtype2 temp2;
+				bool success2 = xtype2::get(_other.record_bytes, _other_offset, temp2);
+
+				if (success1 and success2)
+				{
+					xcomparer<comparefn, xtype1, xtype2> comparer;
+					truth = comparer.compare(temp1, temp2);
+				}
+
+				return truth;
+			}
+		};
+
+		template <typename compare_fn>
+		bool compare_record(const xrecord& _other) const
+		{
+			bool comp_result;
+			size_t this_offset = 0;
+			size_t other_offset = 0;
+			field_types this_ft;
+			field_types other_ft;
+			bool this_remaining = this_offset < size();
+			bool other_remaining = other_offset < _other.size();
+
+			while (this_remaining and other_remaining)
+			{
+				this_ft = (field_types)record_bytes[this_offset];
+				other_ft = (field_types)_other.record_bytes[other_offset];
+
+				if (this_ft == field_types::ft_int64)
+				{
+					if (other_ft == field_types::ft_int64)
+					{
+						field_comparer<compare_fn, xint64_t, xint64_t> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_string)
+					{
+						field_comparer<compare_fn, xint64_t, xstring> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_double)
+					{
+						field_comparer<compare_fn, xint64_t, xdouble> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_datetime)
+					{
+						field_comparer<compare_fn, xint64_t, xdatetime> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_placeholder)
+					{
+						field_comparer<compare_fn, xint64_t, xplaceholder> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+				}
+				else if (this_ft == field_types::ft_string)
+				{
+					if (other_ft == field_types::ft_int64)
+					{
+						field_comparer<compare_fn, xstring, xint64_t> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_string)
+					{
+						field_comparer<compare_fn, xstring, xstring> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_double)
+					{
+						field_comparer<compare_fn, xstring, xdouble> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_datetime)
+					{
+						field_comparer<compare_fn, xstring, xdatetime> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_placeholder)
+					{
+						field_comparer<compare_fn, xstring, xplaceholder> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+				}
+				else if (this_ft == field_types::ft_double)
+				{
+					if (other_ft == field_types::ft_int64)
+					{
+						field_comparer<compare_fn, xdouble, xint64_t> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_string)
+					{
+						field_comparer<compare_fn, xdouble, xstring> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_double)
+					{
+						field_comparer<compare_fn, xdouble, xdouble> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_datetime)
+					{
+						field_comparer<compare_fn, xdouble, xdatetime> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_placeholder)
+					{
+						field_comparer<compare_fn, xdouble, xplaceholder> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+				}
+				else if (this_ft == field_types::ft_datetime)
+				{
+					if (other_ft == field_types::ft_int64)
+					{
+						field_comparer<compare_fn, xdatetime, xint64_t> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_string)
+					{
+						field_comparer<compare_fn, xdatetime, xstring> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_double)
+					{
+						field_comparer<compare_fn, xdatetime, xdouble> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_datetime)
+					{
+						field_comparer<compare_fn, xdatetime, xdatetime> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_placeholder)
+					{
+						field_comparer<compare_fn, xdatetime, xplaceholder> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+				}
+				else if (this_ft == field_types::ft_placeholder)
+				{
+					if (other_ft == field_types::ft_int64)
+					{
+						field_comparer<compare_fn, xplaceholder, xint64_t> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_string)
+					{
+						field_comparer<compare_fn, xplaceholder, xstring> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_double)
+					{
+						field_comparer<compare_fn, xplaceholder, xdouble> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_datetime)
+					{
+						field_comparer<compare_fn, xplaceholder, xdatetime> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_placeholder)
+					{
+						field_comparer<compare_fn, xplaceholder, xplaceholder> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+				}
+
+				if constexpr (std::is_same<compare_fn,fn_op_eq>::value)
+				{
+					if (not comp_result) return false;
+				}
+				if constexpr (std::is_same<compare_fn, fn_op_neq>::value)
+				{
+					if (comp_result) return true;
+				}
+				if constexpr (std::is_same<compare_fn, fn_op_lt>::value)
+				{
+					if (comp_result) return true;
+				}
+				if constexpr (std::is_same<compare_fn, fn_op_gt>::value)
+				{
+					if (comp_result) return true;
+				}
+
+				this_remaining = this_offset < record_bytes.size();
+				other_remaining = other_offset < _other.record_bytes.size();
 			}
 
-			return truth;
+			return comp_result;
 		}
+
 
 	public:
 
@@ -846,159 +1511,6 @@ namespace corona
 			return record_bytes.empty();
 		}
 
-		template <fn_operators compare_op> bool compare(const xrecord& _other) const
-		{
-			bool comp_result;
-			size_t this_offset = 0;
-			size_t other_offset = 0;
-			field_types this_ft;
-			field_types other_ft;
-			bool this_remaining = this_offset < size();
-			bool other_remaining = other_offset < _other.size();
-
-			while (this_remaining and other_remaining)
-			{
-				this_ft = (field_types)record_bytes[this_offset];
-				other_ft = (field_types)_other.record_bytes[other_offset];
-
-				if (this_ft == field_types::ft_int64)
-				{
-					if (other_ft == field_types::ft_int64)
-					{
-						comp_result = compare_field<compare_op, xint64_t, xint64_t>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_string)
-					{
-						comp_result = compare_field<compare_op, xint64_t, xstring>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_double)
-					{
-						comp_result = compare_field<compare_op, xint64_t, xdouble>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_datetime)
-					{
-						comp_result = compare_field<compare_op, xint64_t, xdatetime>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_placeholder)
-					{
-						comp_result = compare_field<compare_op, xint64_t, xplaceholder> (compare_function, &this_offset, _other, &other_offset);
-					}
-				}
-				else if (this_ft == field_types::ft_string)
-				{ 
-					if (other_ft == field_types::ft_int64)
-					{
-						comp_result = compare_field<compare_op, xstring, xint64_t>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_string)
-					{
-						comp_result = compare_field<compare_op, xstring, xstring>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_double)
-					{
-						comp_result = compare_field<compare_op, xstring, xdouble>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_datetime)
-					{
-						comp_result = compare_field<compare_op, xstring, xdatetime>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_placeholder)
-					{
-						comp_result = compare_field<compare_op, xstring, xplaceholder>(compare_function, &this_offset, _other, &other_offset);
-					}
-				}
-				else if (this_ft == field_types::ft_double)
-				{
-					if (other_ft == field_types::ft_int64)
-					{
-						comp_result = compare_field<compare_op, xdouble, xint64_t>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_string)
-					{
-						comp_result = compare_field<compare_op, xdouble, xstring>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_double)
-					{
-						comp_result = compare_field<compare_op, xdouble, xdouble>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_datetime)
-					{
-						comp_result = compare_field<compare_op, xdouble, xdatetime>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_placeholder)
-					{
-						comp_result = compare_field<compare_op, xdouble, xplaceholder>(compare_function, &this_offset, _other, &other_offset);
-					}
-				}
-				else if (this_ft == field_types::ft_datetime)
-				{
-					if (other_ft == field_types::ft_int64)
-					{
-						comp_result = compare_field<compare_op, xdatetime, xint64_t>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_string)
-					{
-						comp_result = compare_field<compare_op, xdatetime, xstring>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_double)
-					{
-						comp_result = compare_field<compare_op, xdatetime, xdouble>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_datetime)
-					{
-						comp_result = compare_field<compare_op, xdatetime, xdatetime>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_placeholder)
-					{
-						comp_result = compare_field<compare_op, xdatetime, xplaceholder>(compare_function, &this_offset, _other, &other_offset);
-					}
-				}
-				else if (this_ft == field_types::ft_placeholder)
-				{
-					if (other_ft == field_types::ft_int64)
-					{
-						comp_result = compare_field<compare_op, xplaceholder, xint64_t>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_string)
-					{
-						comp_result = compare_field<compare_op, xplaceholder, xstring>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_double)
-					{
-						comp_result = compare_field<compare_op, xplaceholder, xdouble>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_datetime)
-					{
-						comp_result = compare_fieldcompare_op, <xplaceholder, xdatetime>(compare_function, &this_offset, _other, &other_offset);
-					}
-					else if (other_ft == field_types::ft_placeholder)
-					{
-						comp_result = compare_field<compare_op, xplaceholder, xplaceholder>(compare_function, &this_offset, _other, &other_offset);
-					}
-				}
-
-				if (constexpr compare_op == fn_operators::op_eq)
-				{
-					if (not comp_result) return false;
-				}
-				else if (constexpr compare_op == fn_operators::op_neq)
-				{
-					if (comp_result) return true;
-				}
-				else if (constexpr compare_op == fn_operators::op_lt)
-				{
-					if (comp_result) return true;
-				}
-				else if (constexpr compare_op == fn_operators::op_gt)
-				{
-					if (comp_result) return true;
-				}
-
-				this_remaining = not comp_result.end_this;
-				other_remaining = not comp_result.end_other;
-			}
-		}
-
 		bool all_equal(const xrecord& _other) const
 		{
 
@@ -1007,22 +1519,27 @@ namespace corona
 
 		bool operator == (const xrecord& _other) const
 		{
-			return compare<fn_operators::op_eq>( _other );
+			return compare_record<fn_op_eq>( _other );
 		}
 		bool operator < (const xrecord& _other) const
 		{
-			return compare<fn_operators::op_lt> (_other);
-			return false;
+			return compare_record<fn_op_lt> (_other);
+		}
+		bool operator <= (const xrecord& _other) const
+		{
+			return compare_record<fn_op_lt>(_other) or compare_record<fn_op_eq>(_other);
 		}
 		bool operator != (const xrecord& _other) const
 		{
-			return compare<fn_operators::op_neq>(_other);
-			return false;
+			return compare_record<fn_op_neq>(_other);
 		}
 		bool operator > (const xrecord & _other) const
 		{
-			return compare<fn_operators::op_gt>(_other);
-			return false;
+			return compare_record<fn_op_gt>(_other);
+		}
+		bool operator >= (const xrecord& _other) const
+		{
+			return compare_record<fn_op_gt>(_other) or compare_record<fn_op_eq>(_other);
 		}
 
 	};
@@ -1153,44 +1670,10 @@ namespace corona
 		result = (date_time)jsrc["Today"] == (date_time)jdst["Today"];
 		_tests->test({ "rt today", result, __FILE__, __LINE__ });
 
-		xblock_ref tst_ref( xblock_types::xb_none, null_row );
-		xrecord copy, readin;
-		compj.clear();
-		xblock_ref ref;
-		ref.location = 122;
-		ref.block_type = xblock_types::xb_branch;
-		compj.put_xblock_ref(ref);
-		copy = compj;
-		tst_ref = compj.get_xblock_ref();
-		result = (tst_ref.location == 122);
-		_tests->test({ "rt loc", result, __FILE__, __LINE__ });
-		result = (tst_ref.block_type == xblock_types::xb_branch);
-		_tests->test({ "rt type", result, __FILE__, __LINE__ });
-		tst_ref = copy.get_xblock_ref();
-		result = (tst_ref.location == 122);
-		_tests->test({ "rt loc cp", result, __FILE__, __LINE__ });
-		result = (tst_ref.block_type == xblock_types::xb_branch);
-		_tests->test({ "rt type cp", result, __FILE__, __LINE__ });
-
-
-		// write the copy back to readin and see if the round trip works
-
-		readin = xrecord(copy.data(), copy.size());
-		tst_ref = readin.get_xblock_ref();
-		result = (tst_ref.location == 122);
-		_tests->test({ "rt locs", result, __FILE__, __LINE__ });
-		result = (tst_ref.block_type == xblock_types::xb_branch);
-		_tests->test({ "rt types", result, __FILE__, __LINE__ });
-		tst_ref = copy.get_xblock_ref();
-		result = (tst_ref.location == 122);
-		_tests->test({ "rt locs cp", result, __FILE__, __LINE__ });
-		result = (tst_ref.block_type == xblock_types::xb_branch);
-		_tests->test({ "rt types cp", result, __FILE__, __LINE__ });
-
 		// and with the json
 		jdst = jp.create_object();
 		xrecord xsrc(keys, jsrc);
-		readin = xrecord(xsrc.data(), xsrc.size());
+		xrecord readin = xrecord(xsrc.data(), xsrc.size());
 		readin.get_json(jdst, keys);
 
 		// and finally, checking our matches after the round trip

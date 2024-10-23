@@ -129,15 +129,49 @@ namespace corona {
 		dimensions_type(corona_size_t _x, corona_size_t _y, corona_size_t _z) : x(_x), y(_y), z(_z) { ; }
 		dimensions_type() : x(0), y(0), z(0) { ; }
 		bool increment(dimensions_type& _constraint);
+
+		int compare(const dimensions_type& b) const
+		{
+			corona_size_t t = z - b.z;
+			if (t) return t;
+			t = y - b.y;
+			if (t) return t;
+			t = x - b.x;
+			return t;
+		}
+
+		bool operator<(const dimensions_type& b) const
+		{
+			return compare(b) < 0;
+		}
+
+		bool operator>(const dimensions_type& b) const
+		{
+			return compare(b) > 0;
+		}
+
+		bool operator>=(const dimensions_type& b) const
+		{
+			return compare(b) >= 0;
+		}
+
+		bool operator<=(const dimensions_type& b) const
+		{
+			return compare(b) <= 0;
+		}
+
+		bool operator==(const dimensions_type& b) const
+		{
+			return compare(b) == 0;
+		}
+
+		bool operator!=(const dimensions_type& b) const
+		{
+			return compare(b) != 0;
+		}
+
 	};
 
-	int compare(const dimensions_type& a, const dimensions_type& b);
-	int operator<(const dimensions_type& a, const dimensions_type& b);
-	int operator>(const dimensions_type& a, const dimensions_type& b);
-	int operator>=(const dimensions_type& a, const dimensions_type& b);
-	int operator<=(const dimensions_type& a, const dimensions_type& b);
-	int operator==(const dimensions_type& a, const dimensions_type& b);
-	int operator!=(const dimensions_type& a, const dimensions_type& b);
 
 
 	class jfield

@@ -36,17 +36,14 @@ For Future Consideration
 #include <exception>
 #include <stdexcept>
 #include <format>
-#include <compare>
 #include <map>
 #include <vector>
 #include <random>
 #include <stack>
 #include <concepts>
 #include <functional>
-#include <memory>
 #include <algorithm>
 #include <list>
-#include <cstring>
 #include <coroutine>
 #include <initializer_list>
 #include <filesystem>
