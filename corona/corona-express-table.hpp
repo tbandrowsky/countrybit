@@ -629,17 +629,9 @@ namespace corona
 			xplaceholder::emplace(0, record_bytes);
 		}
 
-		struct xop_result
+		template <fn_operators op, typename xtype1, typename xtype2> bool compare_field(size_t* _src_offset, const xrecord& _other, size_t* _other_offset) const
 		{
-			bool end_this;
-			bool end_other;
-			bool compare_result;
-		};
-
-		template <fn_operators op, typename xtype1, typename xtype2> xop_result compare_field(size_t* _src_offset, const xrecord& _other, size_t* _other_offset) const
-		{
-			xop_result result = {};
-
+			bool truth = false;
 			xtype1 temp1;
 			bool success1 = xtype1::get(record_bytes, _offset, temp1);
 
@@ -648,28 +640,10 @@ namespace corona
 
 			if (success1 and success2) 
 			{
-				bool truth = xcompare<op>(&temp1, &temp2);
-				if (truth) 
-				{
-					result.compare_result = xop_result_true;
-				}
-				else 
-				{
-					result.compare_result = xop_result_false;
-				}
-				result.end_other = false;
-				result.end_this = false;
-			}
-			else if (success1)
-			{
-				result.end_other = true;
-			}
-			else if (success2)
-			{
-				result.end_this = true;
+				truth = xcompare<op>(&temp1, &temp2);
 			}
 
-			return success;
+			return truth;
 		}
 
 	public:
@@ -874,7 +848,7 @@ namespace corona
 
 		template <fn_operators compare_op> bool compare(const xrecord& _other) const
 		{
-			xop_result comp_result;
+			bool comp_result;
 			size_t this_offset = 0;
 			size_t other_offset = 0;
 			field_types this_ft;
@@ -1003,8 +977,25 @@ namespace corona
 					}
 				}
 
-				bool this_remaining = this_offset < size();
-				bool other_remaining = other_offset < _other.size();
+				if (constexpr compare_op == fn_operators::op_eq)
+				{
+					if (not comp_result) return false;
+				}
+				else if (constexpr compare_op == fn_operators::op_neq)
+				{
+					if (comp_result) return true;
+				}
+				else if (constexpr compare_op == fn_operators::op_lt)
+				{
+					if (comp_result) return true;
+				}
+				else if (constexpr compare_op == fn_operators::op_gt)
+				{
+					if (comp_result) return true;
+				}
+
+				this_remaining = not comp_result.end_this;
+				other_remaining = not comp_result.end_other;
 			}
 		}
 
@@ -1016,57 +1007,24 @@ namespace corona
 
 		bool operator == (const xrecord& _other) const
 		{
-			int this_offset = 0;
-			int other_offset = 0;
-			xfield_holder this_key;
-			xfield_holder other_key;
-
-			other_key = _other.get_field(other_offset, &other_offset);
-			this_key = get_field(this_offset, &this_offset);
-			while (this_key and other_key)
-			{
-				if (this_key != other_key)
-				{
-					return false;
-				}
-				other_key = _other.get_field(other_offset, &other_offset);
-				this_key = get_field(this_offset, &this_offset);
-			}
-
-			return true;
+			return compare<fn_operators::op_eq>( _other );
 		}
-
 		bool operator < (const xrecord& _other) const
 		{
-			int this_offset = 0;
-			int other_offset = 0;
-			xfield_holder this_key;
-			xfield_holder other_key;
-			other_key = _other.get_field(other_offset, &other_offset);
-			this_key = get_field(this_offset, &this_offset);
-
-			while (this_key and other_key)
-			{
-				if (this_key < other_key)
-				{
-					return true;
-				}
-				else if (this_key > other_key) // this is necessary to ensure a < b and b < a are properly transitive.
-				{
-					return false;
-				}
-				other_key = _other.get_field(other_offset, &other_offset);
-				this_key = get_field(this_offset, &this_offset);
-			}
-
-			if (this_key and not other_key)
-				return false;
-
-			if (not this_key and other_key)
-				return true;
-
+			return compare<fn_operators::op_lt> (_other);
 			return false;
 		}
+		bool operator != (const xrecord& _other) const
+		{
+			return compare<fn_operators::op_neq>(_other);
+			return false;
+		}
+		bool operator > (const xrecord & _other) const
+		{
+			return compare<fn_operators::op_gt>(_other);
+			return false;
+		}
+
 	};
 
 	void test_xrecord(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
