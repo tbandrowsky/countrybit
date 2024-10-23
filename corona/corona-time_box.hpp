@@ -462,6 +462,99 @@ namespace corona
 			else
 				return 0;
 		}
+
+		bool operator<(const date_time& b) const
+		{
+			return compare(b) < 0;
+		}
+
+		bool operator>(const date_time& b) const
+		{
+			return compare(b) > 0;
+		}
+
+		bool operator>=(const date_time& b) const
+		{
+			return compare(b) == 0;
+		}
+
+		bool operator<=(const date_time& b) const
+		{
+			return compare(b) <= 0;
+		}
+
+		bool operator==(const date_time& b) const
+		{
+			return compare(b) == 0;
+		}
+
+		bool operator!=(const date_time& b) const
+		{
+			return compare(b) != 0;
+		}
+
+
+		bool operator<(const double& b) const
+		{
+			return get_time_t() < b;
+		}
+
+		bool operator>(const double& b) const
+		{
+			return get_time_t() > b;
+		}
+
+		bool operator>=(const double& b) const
+		{
+			return get_time_t() >= b;
+		}
+
+		bool operator<=(const double& b) const
+		{
+			return get_time_t() <= b;
+		}
+
+		bool operator==(const double& b) const
+		{
+			return get_time_t() == b;
+		}
+
+		bool operator!=(const double& b) const
+		{
+			return get_time_t() >= b;
+		}
+
+		bool operator<(const int64_t& b) const
+		{
+			return get_time_t() < b;
+		}
+
+		bool operator>(const int64_t& b) const
+		{
+			return get_time_t() > b;
+		}
+
+		bool operator>=(const int64_t& b) const
+		{
+			return get_time_t() >= b;
+		}
+
+		bool operator<=(const int64_t& b) const
+		{
+			return get_time_t() <= b;
+		}
+
+		bool operator==(const int64_t& b) const
+		{
+			return get_time_t() == b;
+		}
+
+		bool operator!=(const int64_t& b) const
+		{
+			return get_time_t() >= b;
+		}
+
+
 	};
 
 	std::ostream& operator <<(std::ostream& output, date_time& _src)
@@ -481,35 +574,6 @@ namespace corona
 		return result;
 	}
 
-	int operator<(const date_time& a, const date_time& b)
-	{
-		return a.compare(b) < 0;
-	}
-
-	int operator>(const date_time& a, const date_time& b)
-	{
-		return a.compare(b) > 0;
-	}
-
-	int operator>=(const date_time& a, const date_time& b)
-	{
-		return a.compare(b) == 0;
-	}
-
-	int operator<=(const date_time& a, const date_time& b)
-	{
-		return a.compare(b) <= 0;
-	}
-
-	int operator==(const date_time& a, const date_time& b)
-	{
-		return a.compare(b) == 0;
-	}
-
-	int operator!=(const date_time& a, const date_time& b)
-	{
-		return a.compare(b) != 0;
-	}
 
 	class time_box : public basic_time_box
 	{
