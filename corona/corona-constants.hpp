@@ -587,6 +587,7 @@ namespace corona
 	const std::string sys_user_email_field = "sys_user_email";
 	const std::string sys_default_team_field = "new_user_default_team";
 	const std::string parse_error_class = "sys_parse_error";
+	const std::string sys_record_cache_field = "sys_record_cache_bytes";
 
 	enum class field_types {
 		ft_none = 0,

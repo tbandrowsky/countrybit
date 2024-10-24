@@ -210,6 +210,8 @@ namespace corona
 
 	class corona_database_interface : public file_block
 	{
+	protected:
+
 		std::unique_ptr<xblock_cache> cache;
 
 	public:
@@ -217,7 +219,7 @@ namespace corona
 		corona_database_interface(std::shared_ptr<file> _fb) :
 			file_block(_fb)
 		{
-			cache = std::make_unique<xblock_cache>(this);
+			
 		}
 
 		xblock_cache* get_cache()
@@ -1334,14 +1336,14 @@ namespace corona
 			}
 			else if (table_location)
 			{
-				table = std::make_shared<xtable>(_db, table_location);
+				table = std::make_shared<xtable>(_db->get_cache(), table_location);
 				return table;
 			}
 			else {
 				auto table_header = std::make_shared<xtable_header>();
 				table_header->key_members = get_index_keys();
 				table_header->object_members = { object_id_field };
-				table = std::make_shared<xtable>(_db, table_header);
+				table = std::make_shared<xtable>(_db->get_cache(), table_header);
 				table_location = table->get_location();
 				return table;
 			}
@@ -1455,14 +1457,14 @@ namespace corona
 			}
 			else if (table_location)
 			{
-				table = std::make_shared<xtable>(_db, table_location);
+				table = std::make_shared<xtable>(_db->get_cache(), table_location);
 			}
 			else
 			{
 				auto table_header = std::make_shared<xtable_header>();
 				table_header->object_members = table_fields;
 				table_header->key_members = { object_id_field };
-				table = std::make_shared<xtable>(_db, table_header);
+				table = std::make_shared<xtable>(_db->get_cache(), table_header);
 				table_location = table_header->get_location();
 			}
 			return table;
@@ -2457,7 +2459,6 @@ namespace corona
 			created_classes = jp.create_object();
 
 			header.write(this);
-			commit_check();
 	
 			json response =  create_class(R"(
 {	
@@ -2666,21 +2667,16 @@ namespace corona
 			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
 			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
 
-			commit_check();
-
 			system_monitoring_interface::global_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
 private:
 
-		virtual void commit_check()
+		virtual void save()
 		{
-			time_t current;
-			time(&current);
-			if ((current - last_commit) > 1) {
-				commit();
-			}
+			cache->save();
+			commit();
 		}
 
 		json create_class(std::string _text)
@@ -3184,7 +3180,7 @@ private:
 			return cd;
 		}
 
-		time_t last_commit;
+		int64_t maximum_record_cache_size_bytes = 1 << 32;
 
 	public:
 
@@ -3199,7 +3195,6 @@ private:
 		corona_database(std::shared_ptr<file> _database_file) :
 			corona_database_interface(_database_file)
 		{
-			time(&last_commit);
 			token_life = time_span(1, time_models::hours);	
 		}
 
@@ -3228,6 +3223,13 @@ private:
 				default_password = server[sys_user_password_field];
 				default_email_address = server[sys_user_email_field];
 				default_guest_team = server[sys_default_team_field];
+				if (server.has_member(sys_record_cache_field)) {
+					maximum_record_cache_size_bytes = (int64_t)server[sys_record_cache_field];
+					if (cache) {
+						cache->save();
+					}
+					cache = std::make_unique<xblock_cache>(this, maximum_record_cache_size_bytes);
+				}
 			}
 
 			system_monitoring_interface::global_mon->log_job_stop("apply_config", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -3679,6 +3681,7 @@ private:
 			timer tx;
 			system_monitoring_interface::global_mon->log_job_start("open_database", "Open database", start_schema, __FILE__, __LINE__);
 
+			cache = std::make_unique<xblock_cache>(static_cast<file_block*>(this), maximum_record_cache_size_bytes );
 			relative_ptr_type header_location =  header.read(this, _header_location);
 
 			classes_header = std::make_shared<json_table_header>();
@@ -3766,7 +3769,7 @@ private:
 				response = create_response(create_user_request, false, "User not created", data, method_timer.get_elapsed_seconds());
 			}
 
-			commit_check();
+			save();
 
 			system_monitoring_interface::global_mon->log_function_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -3812,7 +3815,7 @@ private:
 			}
 			system_monitoring_interface::global_mon->log_function_stop("login_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			commit_check();
+			save();
 
 			return response;
 		}
@@ -4054,7 +4057,7 @@ private:
 				result = create_response(put_class_request, success, "errors", results_array, method_timer.get_elapsed_seconds());
 			}
 
-			commit_check();
+			save();
 			system_monitoring_interface::global_mon->log_function_stop("put_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return result;
 		}
@@ -4334,7 +4337,7 @@ private:
 				response = create_response(create_object_request, false, "Couldn't find class", create_object_request, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-			commit_check();
+			save();
 
 			return response;
 			
@@ -4391,7 +4394,7 @@ private:
 				header.write(this);
 
 				if (child_objects.size() == 0) {
-					commit_check();
+					;
 				}
 				else 
 				{
@@ -4500,7 +4503,7 @@ private:
 
 			system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			commit_check();
+			save();
 
 			return response;
 		}
@@ -4639,6 +4642,7 @@ private:
 			}
 
 			system_monitoring_interface::global_mon->log_function_stop("copy_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			save();
 			return response;
 		}
 

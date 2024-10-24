@@ -82,8 +82,6 @@ namespace corona
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) = 0;
 		virtual json select(json _object, std::function<json(json& _item)> _process) = 0;
 		virtual void clear() = 0;
-		virtual void save() = 0;
-
 	};
 
 	const int packed_field_type_size = 1;
@@ -2524,29 +2522,33 @@ namespace corona
 		}
 	};
 
-	std::shared_ptr<xleaf_block> xblock_cache::open_leaf_block(xblock_ref& _header)
+	std::shared_ptr<xleaf_block> xblock_cache::open_leaf_block(xblock_ref& _ref)
 	{
 		write_scope_lock lockit(locker);
-		auto foundit = leaf_blocks.find(_header.location);
+		auto foundit = leaf_blocks.find(_ref.location);
 		if (foundit != std::end(leaf_blocks)) {
 			foundit->second.access();
 			return foundit->second.block;
 		}
-		auto new_block = std::make_shared<xleaf_block>(this, _header);
-		leaf_blocks.insert_or_assign(_header.location, new_block);
+		auto new_block = std::make_shared<xleaf_block>(this, _ref);
+		cached_leaf cl;
+		cl.block = new_block;
+		leaf_blocks.insert_or_assign(_ref.location, cl);
 		return new_block;
 	}
 
-	std::shared_ptr<xbranch_block> xblock_cache::open_branch_block(xblock_ref& _header)
+	std::shared_ptr<xbranch_block> xblock_cache::open_branch_block(xblock_ref& _ref)
 	{
 		write_scope_lock lockit(locker);
-		auto foundit = branch_blocks.find(_header.location);
+		auto foundit = branch_blocks.find(_ref.location);
 		if (foundit != std::end(branch_blocks)) {
 			foundit->second.access();
 			return foundit->second.block;
 		}
-		auto new_block = std::make_shared<xbranch_block>(this, _header);
-		branch_blocks.insert_or_assign(_header.location, new_block);
+		auto new_block = std::make_shared<xbranch_block>(this, _ref);
+		cached_branch cb;
+		cb.block = new_block;
+		branch_blocks.insert_or_assign(_ref.location, cb);
 		return new_block;
 	}
 
@@ -2688,13 +2690,10 @@ namespace corona
 		cache.save();
 		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
 
-		auto leaf_ref = pleaf->get_reference();
-		pleaf = cache.open_leaf_block(leaf_ref);
-
 		json saved_info = pleaf->get_info();
 
-		auto ref = pleaf->get_reference();
-		pleaf = std::make_shared<xleaf_block>(&fb, ref);
+		auto leaf_ref = pleaf->get_reference();
+		pleaf = cache.open_leaf_block(leaf_ref);
 
 		json loaded_info = pleaf->get_info();
 
@@ -2770,7 +2769,7 @@ namespace corona
 		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
 
 		auto ref = pbranch->get_reference();
-		pbranch = std::make_shared<xbranch_block>(&fb, ref);
+		pbranch = cache.open_branch_block(ref);
 
 		json loaded_info = pbranch->get_info();
 
