@@ -1611,8 +1611,6 @@ namespace corona
 			total_bytes += header_bytes;
 			*_size = total_bytes;
 			char *bytes = new char[total_bytes + 10];
-			std::copy(xheader.data(), xheader.data() + header_bytes, bytes);
-
 			char* current = bytes + header_bytes;
 
 			int i = 0;
@@ -1635,6 +1633,7 @@ namespace corona
 
 				i++;
 			}
+			std::copy(xheader.data(), xheader.data() + header_bytes, bytes);
 
 			return bytes;
 		}
@@ -2337,7 +2336,7 @@ namespace corona
 			json temp = jp.create_object();
 			get_json(temp);
 			data = temp.to_json_typed();
-			if (data.size() > (1 << 30))
+			if (data.size() > giga_to_bytes(1))
 				throw std::logic_error("Block too big");
 			*_size = (int32_t)data.size();
 			char *r = data.data();
@@ -2584,9 +2583,13 @@ namespace corona
 
 	void xblock_cache::save()
 	{
+		write_scope_lock lockit(locker);
+
 		date_time current = date_time::now();
 		int64_t total_memory;
 		bool block_lifetime_set = false;
+
+		bool test_io = true;
 
 		// save enforces a total_memory policy 
 		// by examining the bytes of blocks as they are saved,
@@ -2610,7 +2613,7 @@ namespace corona
 		for (auto& sv : branches)
 		{
 			total_memory += sv.block->save();
-			if (total_memory > this->maximum_memory_bytes)
+			if (test_io or total_memory > this->maximum_memory_bytes)
 			{
 				if (not block_lifetime_set) {
 					block_lifetime = current.get_time_t() - sv.get_last_access().get_time_t();
@@ -2631,7 +2634,7 @@ namespace corona
 		for (auto& sv : leaves)
 		{
 			total_memory += sv.block->save();
-			if (total_memory > this->maximum_memory_bytes)
+			if (test_io or total_memory > this->maximum_memory_bytes)
 			{
 				if (not block_lifetime_set) {
 					block_lifetime = current.get_time_t() - sv.get_last_access().get_time_t();
@@ -2670,7 +2673,7 @@ namespace corona
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
 
-		xblock_cache cache(&fb, 1 << 32);
+		xblock_cache cache(&fb, giga_to_bytes(1));
 
 		auto pleaf = cache.create_leaf_block();
 
@@ -2746,7 +2749,7 @@ namespace corona
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
 
-		xblock_cache cache(&fb, 1 << 32);
+		xblock_cache cache(&fb, giga_to_bytes(1));
 
 		auto pbranch = cache.create_branch_block(xblock_types::xb_leaf);
 
@@ -2825,7 +2828,7 @@ namespace corona
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
 
-		xblock_cache cache(&fb, 1 << 32);
+		xblock_cache cache(&fb, giga_to_bytes(1));
 
 		std::shared_ptr<xtable_header> header = std::make_shared<xtable_header>();
 		header->key_members = { object_id_field };

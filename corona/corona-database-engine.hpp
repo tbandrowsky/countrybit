@@ -3180,7 +3180,7 @@ private:
 			return cd;
 		}
 
-		int64_t maximum_record_cache_size_bytes = 1 << 32;
+		int64_t maximum_record_cache_size_bytes = giga_to_bytes(1);
 
 	public:
 

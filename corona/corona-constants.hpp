@@ -72,6 +72,13 @@ namespace corona
 		relative_ptr_type	  row_id;
 	};
 
+	int64_t giga_to_bytes(int _ct)
+	{
+		int64_t t = _ct;
+		t <<= 30;
+		return t;
+	}
+
 	struct block_id
 	{
 	public:
