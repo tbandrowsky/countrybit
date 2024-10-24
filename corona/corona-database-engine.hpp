@@ -161,7 +161,7 @@ namespace corona
 		virtual int64_t									get_index_id() = 0;
 		virtual std::string								get_index_name() = 0;
 		virtual std::vector<std::string>				&get_index_keys() = 0;
-		virtual std::shared_ptr<xtable>				get_table(file_block* _fb) = 0;
+		virtual std::shared_ptr<xtable>					get_table(corona_database_interface* _db) = 0;
 		virtual std::string								get_index_key_string() = 0;
 
 	};
@@ -181,8 +181,8 @@ namespace corona
 		virtual std::string								get_base_class_name() = 0;
 		virtual std::map<std::string, bool>&			get_descendants() = 0;
 		virtual std::map<std::string, bool>&			get_ancestors() = 0;
-		virtual std::shared_ptr<xtable>					get_table(file_block* _fb) = 0;
-		virtual std::shared_ptr<xtable>					find_index(file_block* _fb, json& _keys) = 0;
+		virtual std::shared_ptr<xtable>					get_table(corona_database_interface* _db) = 0;
+		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) = 0;
 		virtual	bool									update(std::vector<validation_error> &_errors, corona_database_interface* _db, json _changed_class) = 0;
 		virtual std::vector<std::string>				get_table_fields() = 0;
 
@@ -210,11 +210,19 @@ namespace corona
 
 	class corona_database_interface : public file_block
 	{
+		std::unique_ptr<xblock_cache> cache;
+
 	public:
 
-		corona_database_interface(std::shared_ptr<file> _fb) : file_block(_fb)
+		corona_database_interface(std::shared_ptr<file> _fb) :
+			file_block(_fb)
 		{
-			;
+			cache = std::make_unique<xblock_cache>(this);
+		}
+
+		xblock_cache* get_cache()
+		{
+			return cache.get();
 		}
 
 		virtual json create_database() = 0;
@@ -1195,7 +1203,7 @@ namespace corona
 			table_location = 0;
 		}
 
-		index_implementation(std::shared_ptr<index_interface> _ii_index, file_block* _fb)
+		index_implementation(std::shared_ptr<index_interface> _ii_index, corona_database_interface* _db)
 		{
 			index_id = _ii_index->get_index_id();
 			index_name = _ii_index->get_index_name();
@@ -1203,7 +1211,7 @@ namespace corona
 
 			table_location = 0;
 
-			auto temp = _ii_index->get_table(_fb);
+			auto temp = _ii_index->get_table(_db);
 			table = temp;
 
 			if (table) {
@@ -1318,7 +1326,7 @@ namespace corona
 			return *this;
 		}
 
-		virtual std::shared_ptr<xtable> get_table(file_block* _fb) override
+		virtual std::shared_ptr<xtable> get_table(corona_database_interface* _db) override
 		{
 			if (table)
 			{
@@ -1326,14 +1334,14 @@ namespace corona
 			}
 			else if (table_location)
 			{
-				table = std::make_shared<xtable>(_fb, table_location);
+				table = std::make_shared<xtable>(_db, table_location);
 				return table;
 			}
 			else {
 				auto table_header = std::make_shared<xtable_header>();
 				table_header->key_members = get_index_keys();
 				table_header->object_members = { object_id_field };
-				table = std::make_shared<xtable>(_fb, table_header);
+				table = std::make_shared<xtable>(_db, table_header);
 				table_location = table->get_location();
 				return table;
 			}
@@ -1438,7 +1446,7 @@ namespace corona
 			return table_fields;
 		}
 
-		virtual std::shared_ptr<xtable> get_table(file_block *_fb) override
+		virtual std::shared_ptr<xtable> get_table(corona_database_interface *_db) override
 		{
 
 			if (table) 
@@ -1447,14 +1455,14 @@ namespace corona
 			}
 			else if (table_location)
 			{
-				table = std::make_shared<xtable>(_fb, table_location);
+				table = std::make_shared<xtable>(_db, table_location);
 			}
 			else
 			{
 				auto table_header = std::make_shared<xtable_header>();
 				table_header->object_members = table_fields;
 				table_header->key_members = { object_id_field };
-				table = std::make_shared<xtable>(_fb, table_header);
+				table = std::make_shared<xtable>(_db, table_header);
 				table_location = table_header->get_location();
 			}
 			return table;
@@ -1723,7 +1731,7 @@ namespace corona
 			}
 		}
 
-		virtual std::shared_ptr<xtable> find_index(file_block* _fb, json& _object)
+		virtual std::shared_ptr<xtable> find_index(corona_database_interface* _db, json& _object)
 		{
 			std::shared_ptr<xtable> index_table;
 			std::shared_ptr<index_interface> matched_index;
@@ -1755,7 +1763,7 @@ namespace corona
 			}
 
 			if (matched_index) {
-				index_table = matched_index->get_table(_fb);
+				index_table = matched_index->get_table(_db);
 			}
 
 			return index_table;
@@ -2304,6 +2312,11 @@ namespace corona
 		}
 
 	public:
+
+		virtual bool is_free_capable()
+		{
+			return true;
+		}
 
 		virtual relative_ptr_type allocate_space(int64_t _size, int64_t *_actual_size) override
 		{

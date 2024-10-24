@@ -231,6 +231,11 @@ namespace corona
 			_fb->free_space(header.data_location);
 			_fb->free_space(header.block_location);
 		}
+
+		int64_t size()
+		{
+			return sizeof(header) + header.data_size;
+		}
 	};
 
 	class string_block : public data_block

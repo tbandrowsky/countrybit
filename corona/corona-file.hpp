@@ -453,6 +453,23 @@ namespace corona
 			return position.QuadPart;
 		}
 
+		int64_t trim(int64_t _location) // trims the file size to _location
+		{
+			if (hfile == INVALID_HANDLE_VALUE)
+				return -1;
+
+			::WaitForSingleObject(resize_event, INFINITE);
+			::ResetEvent(resize_event);
+
+			LARGE_INTEGER new_position;
+			new_position.QuadPart = _location;
+			::SetFilePointerEx(hfile, new_position, nullptr, FILE_BEGIN);
+			::SetEndOfFile(hfile);
+			::SetEvent(resize_event);
+
+			return _location;
+		}
+
 		file_command_result append(void* _buffer, int _buffer_length)
 		{
 			int64_t file_position = add(_buffer_length);

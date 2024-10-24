@@ -139,6 +139,7 @@ namespace corona
 		virtual relative_ptr_type allocate_space(int64_t _size, int64_t* _actual_size) = 0;
 		virtual void free_space(int64_t _location) = 0;
 		virtual int64_t add(int _bytes_to_add) = 0;
+		virtual bool is_free_capable() = 0;
 
 		virtual file* get_fp() = 0;
 
@@ -525,6 +526,11 @@ namespace corona
 			auto fc = write(file_position, _buffer, _buffer_length);
 
 			return fc;
+		}
+
+		virtual bool is_free_capable()
+		{
+			return false;
 		}
 
 		virtual void commit() override

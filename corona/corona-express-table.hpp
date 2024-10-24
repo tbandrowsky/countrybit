@@ -9,6 +9,9 @@ const bool debug_xblock = false;
 namespace corona
 {
 
+	class xleaf_block;
+	class xbranch_block;
+
 	enum xblock_types
 	{
 		xb_none = 0,
@@ -1121,7 +1124,7 @@ namespace corona
 			field_types ft;
 			auto ki = _keys.begin();
 
-			while (remaining)
+			while (remaining and ki != _keys.end())
 			{
 				ft = (field_types)record_bytes[this_offset];
 				switch (ft) {
@@ -1142,6 +1145,7 @@ namespace corona
 					break;
 				}
 				remaining = this_offset < size();
+				ki++;
 			}
 		}
 		
@@ -1187,6 +1191,14 @@ namespace corona
 
 		bool all_equal(const xrecord& _other) const
 		{
+			if (_other.size() != size())
+				return false;
+
+			for (int i = 0; i < size(); i++)
+			{
+				if (_other.record_bytes[i] != record_bytes[i])
+					return false;
+			}
 
 			return true;
 		}
@@ -1425,6 +1437,7 @@ namespace corona
 	requires xblock_storable<data_type>
 	class xrecord_block : protected data_block
 	{
+		bool dirty;
 	protected:
 
 		shared_lockable locker;
@@ -1473,6 +1486,7 @@ namespace corona
 
 		xrecord_block(file_block *_fb, xrecord_block_header& _src)
 		{
+			dirty = false;
 			fb = _fb;
 			xheader = _src;
 			save_nl();
@@ -1480,6 +1494,7 @@ namespace corona
 
 		xrecord_block(file_block* _fb, int64_t _location)
 		{
+			dirty = false;
 			if (_location == null_row) {
 				throw std::invalid_argument("Invalid location");
 			}
@@ -1501,6 +1516,10 @@ namespace corona
 			return ref;
 		}
 
+		void dirtied()
+		{
+			dirty = true;
+		}
 
 		xrecord get_start_key()
 		{
@@ -1545,12 +1564,15 @@ namespace corona
 			records.clear();
 		}
 
-		void save()
+		int64_t save()
 		{
 			write_scope_lock lockit(locker);
-			save_nl();
+			if (dirty) {
+				save_nl();
+				dirty = false;
+			}
+			return size();
 		}
-
 
 	protected:
 
@@ -1586,6 +1608,7 @@ namespace corona
 				count++;
 			}
 
+			xheader.count = count;
 			header_bytes = xheader.size();
 			total_bytes += header_bytes;
 			*_size = total_bytes;
@@ -1631,17 +1654,123 @@ namespace corona
 
 	};
 
+	template <typename xblock_type>
+	class cached_block
+	{
+	public:
+		std::shared_ptr<xblock_type> block;
+		date_time					 last_access;
+
+		cached_block()
+		{
+			access();
+		}
+
+		cached_block(const cached_block& _src)
+		{
+			block = _src.block;
+			last_access = _src.last_access;
+		}
+
+		cached_block& operator = (const cached_block& _src)
+		{
+			block = _src.block;
+			last_access = _src.last_access;
+			return *this;
+		}
+
+		cached_block(cached_block&& _src)
+		{
+			std::swap(block,_src.block);
+			std::swap(last_access,_src.last_access);
+		}
+
+		cached_block& operator = (cached_block&& _src)
+		{
+			std::swap(block, _src.block);
+			std::swap(last_access, _src.last_access);
+			return *this;
+		}
+
+		void access()
+		{
+			last_access = date_time::now();
+		}
+
+		date_time get_last_access()
+		{
+			return last_access;
+		}
+
+		bool operator < (const cached_block& _other) // descending order for sort
+		{
+			return last_access > _other.last_access;
+		}
+
+	};
+
+	class cached_leaf : public cached_block<xleaf_block>
+	{
+		;
+	};
+
+	class cached_branch : public cached_block<xbranch_block>
+	{
+		;
+	};
+
+	class xblock_cache
+	{
+		std::map<int64_t, cached_leaf> leaf_blocks;
+		std::map<int64_t, cached_branch> branch_blocks;
+		file_block* fb;
+		shared_lockable locker;
+		int64_t maximum_memory_bytes;
+		time_t block_lifetime;
+
+	public:
+
+		xblock_cache(file_block *_fb, int64_t _maximum_memory_bytes)
+		{
+			fb = _fb;
+			maximum_memory_bytes = _maximum_memory_bytes;
+			block_lifetime = 0;
+		}
+
+		file_block* get_fb() const
+		{
+			return fb;
+		}
+
+		std::shared_ptr<xleaf_block> create_leaf_block();
+		std::shared_ptr<xbranch_block> create_branch_block(xblock_types _content_type);
+		std::shared_ptr<xleaf_block> open_leaf_block(xblock_ref& _header);
+		std::shared_ptr<xbranch_block> open_branch_block(xblock_ref& _header);
+
+		time_t get_block_lifetime()
+		{
+			return block_lifetime;
+		}
+
+		void save();
+	};
+
 	class xleaf_block : public xrecord_block<xrecord>
 	{
 	public:
 
-		xleaf_block(file_block* _fb, xrecord_block_header& _header)
-			: xrecord_block(_fb, _header)
+		xblock_cache* cache;
+
+		xleaf_block(xblock_cache *_cache, xrecord_block_header& _header) : 
+			xrecord_block(_cache->get_fb(), _header),
+			cache(_cache)
 		{
-			;
+			
 		}
 
-		xleaf_block(file_block* _fb, xblock_ref _ref) : xrecord_block(_fb, _ref.location)
+		xleaf_block(xblock_cache* _cache, xblock_ref _ref) : 
+			xrecord_block(_cache->get_fb(), _ref.location),
+			cache(_cache)
 		{
 			;
 		}
@@ -1653,6 +1782,8 @@ namespace corona
 			if (records.size() >= xrecords_per_block)
 				return;
 
+			dirtied();
+
 			if constexpr (debug_xblock) {
 				std::string indent(_indent * 4, ' ');
 				std::string message = std::format("{2} leaf:{0}, key:{1}", get_reference().location, key.to_string(), indent);
@@ -1660,7 +1791,6 @@ namespace corona
 			}
 
 			records.insert_or_assign(key, value);
-			save_nl();
 		}
 
 		xrecord get(const xrecord& key)
@@ -1679,9 +1809,10 @@ namespace corona
 		{
 			write_scope_lock lockit(locker);
 
+			dirtied();
 			records.erase(key);
 		}
-
+		
 		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(const xrecord& _key, const xrecord& _value)> _process)
 		{
 			xfor_each_result result;
@@ -1741,12 +1872,7 @@ namespace corona
 	class xbranch_block : public xrecord_block<xblock_ref>
 	{
 	private:
-		std::shared_ptr<xleaf_block> create_leaf_block();
-		std::shared_ptr<xbranch_block> create_branch_block(xblock_types _content_type);
-		std::shared_ptr<xleaf_block> open_leaf_block(xblock_ref& _header);
-		std::shared_ptr<xbranch_block> open_branch_block(xblock_ref& _header);
 		xblock_ref find_block(const xrecord& key);
-
 
 		virtual std::shared_ptr<xbranch_block> split_branch(std::shared_ptr<xbranch_block> _block, int _indent)
 		{
@@ -1764,7 +1890,7 @@ namespace corona
 			***********************************************/
 
 
-			auto new_xb = create_branch_block(_block->xheader.content_type);
+			auto new_xb = cache->create_branch_block(_block->xheader.content_type);
 
 			int64_t rsz = records.size() / 2;
 
@@ -1787,8 +1913,6 @@ namespace corona
 				_block->records.erase(kv);
 			}
 
-			new_xb->save();
-
 			return new_xb;
 		}
 
@@ -1809,7 +1933,7 @@ namespace corona
 			***********************************************/
 
 
-			auto new_xb = create_leaf_block();
+			auto new_xb = cache->create_leaf_block();
 
 			int64_t rsz = records.size() / 2;
 
@@ -1837,15 +1961,20 @@ namespace corona
 			return new_xb;
 		}
 
+		xblock_cache* cache;
+
 	public:
 
-		xbranch_block(file_block *_fb, xrecord_block_header& _header) :
-			xrecord_block(_fb, _header)
+		xbranch_block(xblock_cache *_cache, xrecord_block_header& _header) :
+			xrecord_block(_cache->get_fb(), _header),
+			cache(_cache)
 		{
 			;
 		}
 
-		xbranch_block(file_block* _fb, xblock_ref _ref) : xrecord_block(_fb, _ref.location)
+		xbranch_block(xblock_cache *_cache, xblock_ref _ref) : 
+			xrecord_block(_cache->get_fb(), _ref.location),
+			cache(_cache)
 		{
 			;
 		}
@@ -1868,8 +1997,8 @@ namespace corona
 
 			***********************************************/
 
-			auto new_child1 = create_branch_block(xheader.content_type);
-			auto new_child2 = create_branch_block(xheader.content_type);
+			auto new_child1 = cache->create_branch_block(xheader.content_type);
+			auto new_child2 = cache->create_branch_block(xheader.content_type);
 
 			int64_t rsz = records.size() / 2i64;
 			int64_t count = 0;
@@ -1915,11 +2044,13 @@ namespace corona
 				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 			}
 
+			dirtied();
+
 			xblock_ref found_block = find_block(_key);
 
 			if (found_block.block_type == xblock_types::xb_branch)
 			{
-				auto branch_block = open_branch_block(found_block);
+				auto branch_block = cache->open_branch_block(found_block);
 				auto old_key = branch_block->get_end_key();
 				branch_block->put(_indent, _key, _value);
 				if (branch_block->is_full()) {
@@ -1936,7 +2067,7 @@ namespace corona
 			}
 			else if (found_block.block_type == xblock_types::xb_leaf)
 			{
-				auto leaf_block = open_leaf_block(found_block);
+				auto leaf_block = cache->open_leaf_block(found_block);
 				auto old_key = leaf_block->get_end_key();
 				leaf_block->put(_indent, _key, _value);
 				if (leaf_block->is_full()) {
@@ -1956,20 +2087,18 @@ namespace corona
 				xblock_ref new_ref;
 				if (xheader.content_type == xblock_types::xb_leaf)
 				{
-					auto new_leaf = create_leaf_block();
+					auto new_leaf = cache->create_leaf_block();
 					new_leaf->put(_indent + 1, _key, _value);
 					new_ref = new_leaf->get_reference();
 				}
 				else if (xheader.content_type == xblock_types::xb_branch)
 				{
-					auto new_branch = create_branch_block(xblock_types::xb_branch);
+					auto new_branch = cache->create_branch_block(xblock_types::xb_branch);
 					new_branch->put(_indent + 1, _key, _value);
 					new_ref = new_branch->get_reference();
 				}
 				records.insert_or_assign(_key, new_ref);
 			}
-
-			save_nl();
 		}
 
 		virtual xrecord get(const xrecord& _key)
@@ -1981,12 +2110,12 @@ namespace corona
 
 			if (found_block.block_type == xblock_types::xb_branch)
 			{
-				auto branch_block = open_branch_block(found_block);
+				auto branch_block = cache->open_branch_block(found_block);
 				result = branch_block->get(_key);
 			}
 			else if (found_block.block_type == xblock_types::xb_leaf)
 			{
-				auto leaf_block = open_leaf_block(found_block);
+				auto leaf_block = cache->open_leaf_block(found_block);
 				result = leaf_block->get(_key);
 			}
 			return result;
@@ -1996,16 +2125,18 @@ namespace corona
 		{
 			write_scope_lock lock_me(locker);
 
+			dirtied();
+
 			xblock_ref found_block = find_block(_key);
 
 			if (found_block.block_type == xblock_types::xb_branch)
 			{
-				auto branch_block = open_branch_block(found_block);
+				auto branch_block = cache->open_branch_block(found_block);
 				branch_block->erase(_key);
 			}
 			else if (found_block.block_type == xblock_types::xb_leaf)
 			{
-				auto leaf_block = open_leaf_block(found_block);
+				auto leaf_block = cache->open_leaf_block(found_block);
 				leaf_block->erase(_key);
 			}
 		}
@@ -2013,24 +2144,24 @@ namespace corona
 		virtual void clear()
 		{
 			write_scope_lock lock_me(locker);
+			dirtied();
 
 			for (auto item : records) {
 				auto found_block = item.second;
 				if (found_block.block_type == xblock_types::xb_branch)
 				{
-					auto branch_block = open_branch_block(found_block);
+					auto branch_block = cache->open_branch_block(found_block);
 					branch_block->clear();
 					branch_block->release();
 				}
 				else if (found_block.block_type == xblock_types::xb_leaf)
 				{
-					auto leaf_block = open_leaf_block(found_block);
+					auto leaf_block = cache->open_leaf_block(found_block);
 					leaf_block->clear();
 					leaf_block->release();
 				}
 			}
 			records.clear();
-			save_nl();
 		}
 
 		virtual xfor_each_result for_each(xrecord _key, std::function<relative_ptr_type(const xrecord& _key, const xrecord& _value)> _process)
@@ -2046,12 +2177,12 @@ namespace corona
 					auto& found_block = item.second;
 					if (found_block.block_type == xblock_types::xb_branch)
 					{
-						auto branch_block = open_branch_block(found_block);
+						auto branch_block = cache->open_branch_block(found_block);
 						temp = branch_block->for_each(_key, _process);
 					}
 					else if (found_block.block_type == xblock_types::xb_leaf)
 					{
-						auto leaf_block = open_leaf_block(found_block);
+						auto leaf_block = cache->open_leaf_block(found_block);
 						temp = leaf_block->for_each(_key, _process);
 					}
 					else
@@ -2078,12 +2209,12 @@ namespace corona
 					auto& found_block = item.second;
 					if (found_block.block_type == xblock_types::xb_branch)
 					{
-						auto branch_block = open_branch_block(found_block);
+						auto branch_block = cache->open_branch_block(found_block);
 						temp = branch_block->select(_key, _process);
 					}
 					else if (found_block.block_type == xblock_types::xb_leaf)
 					{
-						auto leaf_block = open_leaf_block(found_block);
+						auto leaf_block = cache->open_leaf_block(found_block);
 						temp = leaf_block->select(_key, _process);
 					}
 					else
@@ -2124,13 +2255,13 @@ namespace corona
 			{
 				if (r.second.block_type == xblock_types::xb_leaf)
 				{
-					auto block = open_leaf_block(r.second);
+					auto block = cache->open_leaf_block(r.second);
 					json info = block->get_info();
 					children.push_back(info);
 				}
 				else if (r.second.block_type == xblock_types::xb_branch)
 				{
-					auto block = open_branch_block(r.second);
+					auto block = cache->open_branch_block(r.second);
 					json info = block->get_info();
 					children.push_back(info);
 				}
@@ -2226,26 +2357,29 @@ namespace corona
 	{
 
 	public:
+		xblock_cache*							cache;
 		std::string								data;
 		file_block*								fb;
 		std::shared_ptr<xtable_header>			table_header;
 
 		shared_lockable							locker;
 
-		xtable(file_block* _fb, std::shared_ptr<xtable_header> _header) :
-			fb(_fb),
+		xtable(xblock_cache* _cache, std::shared_ptr<xtable_header> _header) :
+			fb(_cache->get_fb()),
+			cache(_cache),
 			table_header(_header)
 		{
 			xrecord_block_header new_header;
 			new_header.content_type = xblock_types::xb_leaf;
 			new_header.type = xblock_types::xb_branch;
-			table_header->root = std::make_shared<xbranch_block>(fb, new_header);
+			table_header->root = cache->create_branch_block(xblock_types::xb_leaf);
 			table_header->root_block = table_header->root->get_reference();
 			table_header->append(fb);
 		}
 
-		xtable(file_block* _fb, int64_t _location) :
-			fb(_fb)
+		xtable(xblock_cache* _cache, int64_t _location) :
+			fb(_cache->get_fb()),
+			cache(_cache)
 		{
 			if (_location == null_row) {
 				throw std::invalid_argument("Invalid location");
@@ -2253,20 +2387,13 @@ namespace corona
 			table_header = std::make_shared<xtable_header>();
 			table_header->read(fb, _location);
 
-			table_header->root = std::make_shared<xbranch_block>(fb, table_header->root_block);
+			table_header->root = cache->open_branch_block(table_header->root_block);
 		}
 
 		relative_ptr_type get_location() override
 		{
 			read_scope_lock lockme(locker);
 			return table_header->get_location();
-		}
-
-		void save() override
-		{
-			write_scope_lock lockit(locker);
-			table_header->root->save();
-			table_header->write(fb);
 		}
 
 		virtual json get(int64_t _key) override
@@ -2310,9 +2437,6 @@ namespace corona
 			if (table_header->root->is_full()) {
 				table_header->root->split_root(0);
 			}
-			if (_save) {
-				save();
-			}
 		}
 
 		virtual void put_array(json _array) override
@@ -2322,7 +2446,6 @@ namespace corona
 					put(item, false);
 				}
 			}
-			save();
 		}
 
 		virtual void erase(int64_t _id, bool _save = true) override
@@ -2331,9 +2454,6 @@ namespace corona
 			key.add(_id);
 			table_header->root->erase(key);
 			::InterlockedDecrement64(&table_header->count);
-			if (_save) {
-				save();
-			}
 		}
 
 		virtual void erase(json _object, bool _save = true) override
@@ -2341,9 +2461,6 @@ namespace corona
 			xrecord key(table_header->key_members, _object);
 			::InterlockedDecrement64(&table_header->count);
 			table_header->root->erase(key);
-			if (_save) {
-				save();
-			}
 		}
 
 		virtual void erase_array(json _array) override
@@ -2353,7 +2470,6 @@ namespace corona
 					erase(item);
 				}
 			}
-			save();
 		}
 
 		int64_t get_count()
@@ -2405,46 +2521,128 @@ namespace corona
 		virtual void clear() override
 		{
 			table_header->root->clear();
-			save();
 		}
 	};
 
-	std::shared_ptr<xleaf_block> xbranch_block::open_leaf_block(xblock_ref& _header)
+	std::shared_ptr<xleaf_block> xblock_cache::open_leaf_block(xblock_ref& _header)
 	{
-		return std::make_shared<xleaf_block>(fb, _header);
+		write_scope_lock lockit(locker);
+		auto foundit = leaf_blocks.find(_header.location);
+		if (foundit != std::end(leaf_blocks)) {
+			foundit->second.access();
+			return foundit->second.block;
+		}
+		auto new_block = std::make_shared<xleaf_block>(this, _header);
+		leaf_blocks.insert_or_assign(_header.location, new_block);
+		return new_block;
 	}
 
-	std::shared_ptr<xbranch_block> xbranch_block::open_branch_block(xblock_ref& _header)
+	std::shared_ptr<xbranch_block> xblock_cache::open_branch_block(xblock_ref& _header)
 	{
-		return std::make_shared<xbranch_block>(fb, _header);
+		write_scope_lock lockit(locker);
+		auto foundit = branch_blocks.find(_header.location);
+		if (foundit != std::end(branch_blocks)) {
+			foundit->second.access();
+			return foundit->second.block;
+		}
+		auto new_block = std::make_shared<xbranch_block>(this, _header);
+		branch_blocks.insert_or_assign(_header.location, new_block);
+		return new_block;
 	}
 
-	std::shared_ptr<xbranch_block> xbranch_block::create_branch_block(xblock_types _content_type)
+	std::shared_ptr<xleaf_block> xblock_cache::create_leaf_block()
 	{
-		xrecord_block_header header;
-
-		header.type = xblock_types::xb_leaf;
-		header.content_type = _content_type;
-
-		auto result = std::make_shared<xbranch_block>(fb, header);
-		return result;
-	}
-
-	std::shared_ptr<xleaf_block> xbranch_block::create_leaf_block()
-	{
+		write_scope_lock lockit(locker);
 		xrecord_block_header header;
 
 		header.type = xblock_types::xb_leaf;
 		header.content_type = xblock_types::xb_record;
 
-		auto result = std::make_shared<xleaf_block>(fb, header);
+		auto result = std::make_shared<xleaf_block>(this, header);
+		cached_leaf cl;
+		cl.block = result;
+		leaf_blocks.insert_or_assign(result->get_reference().location, cl);
 		return result;
+	}
+
+	std::shared_ptr<xbranch_block> xblock_cache::create_branch_block(xblock_types _content_type)
+	{
+		write_scope_lock lockit(locker);
+		xrecord_block_header header;
+
+		header.type = xblock_types::xb_leaf;
+		header.content_type = _content_type;
+
+		auto result = std::make_shared<xbranch_block>(this, header);
+		cached_branch cb;
+		cb.block = result;
+		branch_blocks.insert_or_assign(result->get_reference().location, cb);
+		return result;
+	}
+
+	void xblock_cache::save()
+	{
+		date_time current = date_time::now();
+		int64_t total_memory;
+		bool block_lifetime_set = false;
+
+		// save enforces a total_memory policy 
+		// by examining the bytes of blocks as they are saved,
+		// prioritizing to keep more recently used blocks around.
+		// based on this, the maximum block_lifetime is set
+		// as an indicator of quality of service.
+		// when the block_lifetime is less than the time of a user query
+		// that indicates the system is overcapacity, from the perspective of,
+		// you want to have all the concurrent users in memory.
+
+		// branches are taken first, 
+		// as they tend to be more critical path
+
+		total_memory = 0;
+		std::vector<cached_branch> branches;
+		for (auto& sv : branch_blocks)
+		{
+			branches.push_back(sv.second);
+		}
+		std::sort(branches.begin(), branches.end());
+		for (auto& sv : branches)
+		{
+			total_memory += sv.block->save();
+			if (total_memory > this->maximum_memory_bytes)
+			{
+				if (not block_lifetime_set) {
+					block_lifetime = current.get_time_t() - sv.get_last_access().get_time_t();
+					block_lifetime_set = true;
+				}
+				branch_blocks.erase(sv.block->get_reference().location);
+			}
+		}
+
+		// then leaves are taken
+
+		std::vector<cached_leaf> leaves;
+		for (auto& sv : leaf_blocks)
+		{
+			leaves.push_back(sv.second);
+		}
+		std::sort(leaves.begin(), leaves.end());
+		for (auto& sv : leaves)
+		{
+			total_memory += sv.block->save();
+			if (total_memory > this->maximum_memory_bytes)
+			{
+				if (not block_lifetime_set) {
+					block_lifetime = current.get_time_t() - sv.get_last_access().get_time_t();
+					block_lifetime_set = true;
+				}
+				leaf_blocks.erase(sv.block->get_reference().location);
+			}
+		}
+
 	}
 
 	xblock_ref xbranch_block::find_block(const xrecord& key)
 	{
-		read_scope_lock lockit(locker);
-
 		xblock_ref found_block;
 		found_block.block_type == xblock_types::xb_none;
 
@@ -2470,10 +2668,9 @@ namespace corona
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
 
-		xrecord_block_header xheader;
-		xheader.type = xblock_types::xb_leaf;
-		xheader.content_type = xblock_types::xb_record;
-		std::shared_ptr<xleaf_block> pleaf = std::make_shared<xleaf_block>(&fb, xheader);
+		xblock_cache cache(&fb, 1 << 32);
+
+		auto pleaf = cache.create_leaf_block();
 
 		json_parser jp;
 
@@ -2488,19 +2685,28 @@ namespace corona
 			id++;
 		}
 
-		pleaf->save();
+		cache.save();
 		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
 
-		json info = pleaf->get_info();
-		system_monitoring_interface::global_mon->log_json(info);
+		auto leaf_ref = pleaf->get_reference();
+		pleaf = cache.open_leaf_block(leaf_ref);
+
+		json saved_info = pleaf->get_info();
 
 		auto ref = pleaf->get_reference();
 		pleaf = std::make_shared<xleaf_block>(&fb, ref);
 
-		info = pleaf->get_info();
-		system_monitoring_interface::global_mon->log_json(info);
+		json loaded_info = pleaf->get_info();
 
 		_tests->test({ "read_survived", true, __FILE__, __LINE__ });
+
+		std::string s_saved, s_loaded;
+		s_saved = saved_info.to_json_typed();
+		s_loaded = loaded_info.to_json_typed();
+
+		bool data_correct = s_saved == s_loaded;
+
+		_tests->test({ "summary_correct", data_correct, __FILE__, __LINE__ });
 
 		bool round_trip_success = true;
 		for (int64_t i = 1; i < id; i++)
@@ -2528,9 +2734,6 @@ namespace corona
 		}
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
 
-		info = pleaf->get_info();
-		system_monitoring_interface::global_mon->log_json(info);
-
 		system_monitoring_interface::global_mon->log_function_stop("xleaf", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
@@ -2544,38 +2747,51 @@ namespace corona
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
 
-		xrecord_block_header xheader;
-		xheader.type = xblock_types::xb_branch;
-		xheader.content_type = xblock_types::xb_leaf;
-		std::shared_ptr<xbranch_block> pleaf = std::make_shared<xbranch_block>(&fb, xheader);
+		xblock_cache cache(&fb, 1 << 32);
+
+		auto pbranch = cache.create_branch_block(xblock_types::xb_leaf);
 
 		json_parser jp;
 
-		for (int64_t i = 1; i <= 50; i++)
+		int test_record_count = 1000;
+
+		for (int64_t i = 1; i < test_record_count; i++)
 		{
 			xrecord key, value;
 			key.add(i);
 			value.add(10 + i % 50);
 			value.add(100 + (i % 4) * 50);
-			pleaf->put(0, key, value);
+			pbranch->put(0, key, value);
 		}
 
-		pleaf->save();
+		cache.save();
+
+		json saved_info = pbranch->get_info();
 		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
 
-		auto ref = pleaf->get_reference();
-		pleaf = std::make_shared<xbranch_block>(&fb, ref);
+		auto ref = pbranch->get_reference();
+		pbranch = std::make_shared<xbranch_block>(&fb, ref);
+
+		json loaded_info = pbranch->get_info();
 
 		_tests->test({ "read_survived", true, __FILE__, __LINE__ });
 
+		std::string s_saved, s_loaded;
+		s_saved = saved_info.to_json_typed();
+		s_loaded = loaded_info.to_json_typed();
+
+		bool data_correct = s_saved == s_loaded;
+
+		_tests->test({ "summary_correct", data_correct, __FILE__, __LINE__ });
+
 		bool round_trip_success = true;
-		for (int64_t i = 1; i <= 50; i++)
+		for (int64_t i = 1; i < test_record_count; i++)
 		{
 			xrecord key, value, valueread;
 			key.add(i);
 			value.add(10 + i % 50);
 			value.add(100 + (i % 4) * 50);
-			valueread = pleaf->get(key);
+			valueread = pbranch->get(key);
 
 			if constexpr (debug_xblock) {
 				std::string message;
@@ -2594,7 +2810,7 @@ namespace corona
 		}
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
 
-		json info = pleaf->get_info();
+		json info = pbranch->get_info();
 		system_monitoring_interface::global_mon->log_json(info);
 
 		system_monitoring_interface::global_mon->log_function_stop("xbranch", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -2607,16 +2823,17 @@ namespace corona
 
 		system_monitoring_interface::global_mon->log_function_start("xtable", "start", start, __FILE__, __LINE__);
 
-
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
+
+		xblock_cache cache(&fb, 1 << 32);
 
 		std::shared_ptr<xtable_header> header = std::make_shared<xtable_header>();
 		header->key_members = { object_id_field };
 		header->object_members = { "name", "age", "weight" };
 
 		std::shared_ptr<xtable> ptable;
-		ptable = std::make_shared<xtable>(&fb, header);
+		ptable = std::make_shared<xtable>(&cache, header);
 
 		json_parser jp;
 
@@ -2631,7 +2848,7 @@ namespace corona
 
 		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
 
-		ptable->save();
+		cache.save();
 		_tests->test({ "save_survived", true, __FILE__, __LINE__ });
 
 		int count52 = 0;
@@ -2705,8 +2922,7 @@ namespace corona
 		}
 		_tests->test({ "erase", erase_success, __FILE__, __LINE__ });
 
-		ptable->clear();
-		ptable->save();
+		cache.save();
 
 		bool clear_success = true;
 
