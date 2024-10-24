@@ -1398,26 +1398,10 @@ namespace corona
 			count = 0;
 		}
 
-		xrecord_block_header(const char *_src, size_t _length)
-		{
-			set(_src, _length);
-		}
-
 		xrecord_block_header(xrecord_block_header&& _src) = default;
 		xrecord_block_header(const xrecord_block_header& _src) = default;
 		xrecord_block_header& operator = (xrecord_block_header&& _src) = default;
 		xrecord_block_header& operator = (const xrecord_block_header& _src) = default;
-
-		void set(const char* _src, size_t _length)
-		{
-			xrecord_block_header* src = (xrecord_block_header*)(_src);
-			type = src->type;
-			content_type = src->content_type;
-			count = src->count;
-			if (count > xrecords_per_block)
-				throw std::logic_error("bad src count for header");
-			std::copy(&src->records[0], &src->records[count], records);
-		}
 
 		size_t size() const
 		{
@@ -1583,7 +1567,7 @@ namespace corona
 		virtual void after_read(char* _bytes) override
 		{
 			records.clear();
-			xheader.set(_bytes, 0);
+			xheader = *((xrecord_block_header *)_bytes);
 			for (int i = 0; i < xheader.count; i++)
 			{
 				auto& rl = xheader.records[i];
@@ -1606,7 +1590,6 @@ namespace corona
 				count++;
 			}
 
-			xheader.count = count;
 			header_bytes = xheader.size();
 			total_bytes += header_bytes;
 			*_size = total_bytes;
@@ -1633,7 +1616,10 @@ namespace corona
 
 				i++;
 			}
+			xheader.count = count;
 			std::copy(xheader.data(), xheader.data() + header_bytes, bytes);
+
+			xrecord_block_header* check_it = (xrecord_block_header*)bytes;
 
 			return bytes;
 		}
@@ -2604,45 +2590,57 @@ namespace corona
 		// as they tend to be more critical path
 
 		total_memory = 0;
-		std::vector<cached_branch> branches;
+		std::vector<cached_branch *> branches;
+		std::vector<int64_t> deletes;
 		for (auto& sv : branch_blocks)
 		{
-			branches.push_back(sv.second);
+			branches.push_back(&sv.second);
 		}
 		std::sort(branches.begin(), branches.end());
 		for (auto& sv : branches)
 		{
-			total_memory += sv.block->save();
+			total_memory += sv->block->save();
 			if (test_io or total_memory > this->maximum_memory_bytes)
 			{
 				if (not block_lifetime_set) {
-					block_lifetime = current.get_time_t() - sv.get_last_access().get_time_t();
+					block_lifetime = current.get_time_t() - sv->get_last_access().get_time_t();
 					block_lifetime_set = true;
 				}
-				branch_blocks.erase(sv.block->get_reference().location);
+				deletes.push_back(sv->block->get_reference().location);
 			}
 		}
 
+		for (auto del : deletes)
+		{
+			branch_blocks.erase(del);
+		}
+		deletes.clear();
+
 		// then leaves are taken
 
-		std::vector<cached_leaf> leaves;
+		std::vector<cached_leaf *> leaves;
 		for (auto& sv : leaf_blocks)
 		{
-			leaves.push_back(sv.second);
+			leaves.push_back(&sv.second);
 		}
 		std::sort(leaves.begin(), leaves.end());
 		for (auto& sv : leaves)
 		{
-			total_memory += sv.block->save();
+			total_memory += sv->block->save();
 			if (test_io or total_memory > this->maximum_memory_bytes)
 			{
 				if (not block_lifetime_set) {
-					block_lifetime = current.get_time_t() - sv.get_last_access().get_time_t();
+					block_lifetime = current.get_time_t() - sv->get_last_access().get_time_t();
 					block_lifetime_set = true;
 				}
-				leaf_blocks.erase(sv.block->get_reference().location);
+				deletes.push_back(sv->block->get_reference().location);
 			}
 		}
+		for (auto del : deletes)
+		{
+			leaf_blocks.erase(del);
+		}
+
 
 	}
 
