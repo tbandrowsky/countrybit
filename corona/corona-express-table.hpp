@@ -2491,8 +2491,14 @@ namespace corona
 		pleaf->save();
 		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
 
+		json info = pleaf->get_info();
+		system_monitoring_interface::global_mon->log_json(info);
+
 		auto ref = pleaf->get_reference();
 		pleaf = std::make_shared<xleaf_block>(&fb, ref);
+
+		info = pleaf->get_info();
+		system_monitoring_interface::global_mon->log_json(info);
 
 		_tests->test({ "read_survived", true, __FILE__, __LINE__ });
 
@@ -2522,7 +2528,7 @@ namespace corona
 		}
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
 
-		json info = pleaf->get_info();
+		info = pleaf->get_info();
 		system_monitoring_interface::global_mon->log_json(info);
 
 		system_monitoring_interface::global_mon->log_function_stop("xleaf", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
