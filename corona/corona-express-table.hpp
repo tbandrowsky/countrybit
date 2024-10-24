@@ -327,735 +327,409 @@ namespace corona
 
 	};
 
-	template <typename fn_op, typename typea, typename typeb>
-	class xcomparer 
-	{
-	public:
-		bool compare(const typea & _itema, const typeb & _itemb) const;
-	};
-
-	template <typename typea>
-	class xcomparer<fn_op_lt, typea, typea>
-	{
-	public:
-		bool compare(const typea& _itema, const typea& _itemb) const
-		{
-			return _itema.lt(_itemb);
-		}
-	};
-
-	template <typename typea>
-	class xcomparer<fn_op_eq, typea, typea>
-	{
-	public:
-		bool compare(const typea& _itema, const typea& _itemb) const
-		{
-			return _itema.eq(_itemb);
-		}
-	};
-
-	template <typename typea>
-	class xcomparer<fn_op_neq, typea, typea>
-	{
-	public:
-		bool compare(const typea& _itema, const typea& _itemb) const
-		{
-			return _itema.neq(_itemb);
-		}
-	};
-
-	template <typename typea>
-	class xcomparer<fn_op_gt, typea, typea>
-	{
-	public:
-		bool compare(const typea& _itema, const typea& _itemb) const
-		{
-			return _itema.gt(_itemb);
-		}
-	};
-
 	// strings 
 
-	template <>
-	class xcomparer<fn_op_lt, xstring, xstring>
+	bool xcompare(fn_op_lt _dummy, const xstring& _itema, const xstring& _itemb) 
 	{
-	public:
-		bool compare(const xstring& _itema, const xstring& _itemb) const
-		{
-			return strcmp(_itema.data, _itemb.data) < 0;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xstring, xstring>
+		return strcmp(_itema.data, _itemb.data) < 0;
+	}
+	bool xcompare(fn_op_eq _dummy, const xstring& _itema, const xstring& _itemb) 
 	{
-	public:
-		bool compare(const xstring& _itema, const xstring& _itemb) const
-		{
-			return strcmp(_itema.data, _itemb.data) == 0;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xstring, xstring>
+		return strcmp(_itema.data, _itemb.data) == 0;
+	}
+	bool xcompare(fn_op_neq _dummy, const xstring& _itema, const xstring& _itemb) 
 	{
-	public:
-		bool compare(const xstring& _itema, const xstring& _itemb) const
-		{
-			return strcmp(_itema.data, _itemb.data) != 0;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xstring, xstring>
+		return strcmp(_itema.data, _itemb.data) != 0;
+	}
+	bool xcompare(fn_op_gt _dummy, const xstring& _itema, const xstring& _itemb) 
 	{
-	public:
-		bool compare(const xstring& _itema, const xstring& _itemb) const
-		{
-			return strcmp(_itema.data, _itemb.data) > 0;
-		}
-	};
+		return strcmp(_itema.data, _itemb.data) != 0;
+	}
 
-	// placeholders are always equal.
-
-	template <>
-	class xcomparer<fn_op_lt, xplaceholder, xplaceholder>
+	bool xcompare(fn_op_lt _dummy, const xstring& _itema, const xdatetime& _itemb) 
 	{
-	public:
-		bool compare(const xplaceholder& _itema, const xplaceholder& _itemb) const
-		{
-			return false;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xplaceholder, xplaceholder>
+		date_time dp;
+		dp.parse(_itema.data);
+		return dp < _itemb.data;
+	}
+	bool xcompare(fn_op_eq _dummy, const xstring& _itema, const xdatetime& _itemb) 
 	{
-	public:
-		bool compare(const xplaceholder& _itema, const xplaceholder& _itemb) const
-		{
-			return true;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xplaceholder, xplaceholder>
+		date_time dp;
+		dp.parse(_itema.data);
+		return dp == _itemb.data;
+	}
+	bool xcompare(fn_op_neq _dummy, const xstring& _itema, const xdatetime& _itemb) 
 	{
-	public:
-		bool compare(const xplaceholder& _itema, const xplaceholder& _itemb) const
-		{
-			return false;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xplaceholder, xplaceholder>
+		date_time dp;
+		dp.parse(_itema.data);
+		return dp != _itemb.data;
+	}
+	bool xcompare(fn_op_gt _dummy, const xstring& _itema, const xdatetime& _itemb) 
 	{
-	public:
-		bool compare(const xplaceholder& _itema, const xplaceholder& _itemb) const
-		{
-			return false;
-		}
-	};
+		date_time dp;
+		dp.parse(_itema.data);
+		return dp > _itemb.data;
+	}
 
-
-	template <typename typeb>
-	class xcomparer<fn_op_lt, xplaceholder, typeb>
+	bool xcompare(fn_op_lt _dummy, const xstring& _itema, const xdouble& _itemb) 
 	{
-	public:
-		bool compare(const xplaceholder& _itema, const typeb& _itemb) const
-		{
-			return false;
-		}
-	};
-
-	template <typename typeb>
-	class xcomparer<fn_op_eq, xplaceholder, typeb>
+		double dp = strtod(_itema.data, nullptr);
+		return dp < _itemb.data;
+	}
+	bool xcompare(fn_op_eq _dummy, const xstring& _itema, const xdouble& _itemb) 
 	{
-	public:
-		bool compare(const xplaceholder& _itema, const typeb& _itemb) const
-		{
-			return true;
-		}
-	};
-
-	template <typename typeb>
-	class xcomparer<fn_op_neq, xplaceholder, typeb>
+		double dp = strtod(_itema.data, nullptr);
+		return dp == _itemb.data;
+	}
+	bool xcompare(fn_op_neq _dummy, const xstring& _itema, const xdouble& _itemb) 
 	{
-	public:
-		bool compare(const xplaceholder& _itema, const typeb& _itemb) const
-		{
-			return false;
-		}
-	};
-
-	template <typename typeb>
-	class xcomparer<fn_op_gt, xplaceholder, typeb>
+		double dp = strtod(_itema.data, nullptr);
+		return dp != _itemb.data;
+	}
+	bool xcompare(fn_op_gt _dummy, const xstring& _itema, const xdouble& _itemb) 
 	{
-	public:
-		bool compare(const xplaceholder& _itema, const typeb& _itemb) const
-		{
-			return false;
-		}
-	};
+		double dp = strtod(_itema.data, nullptr);
+		return dp > _itemb.data;
+	}
 
-	// conversions for strings and datetimes
-
-	template <>
-	class xcomparer<fn_op_lt, xstring, xdatetime>
-	{
-	public:
-		bool compare(const xstring& _itema, const xdatetime& _itemb) const
-		{
-			date_time dp;
-			dp.parse(_itema.data);
-			return dp < _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xstring, xdatetime>
-	{
-	public:
-		bool compare(const xstring& _itema, const xdatetime& _itemb) const
-		{
-			date_time dp;
-			dp.parse(_itema.data);
-			return dp == _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xstring, xdatetime>
-	{
-	public:
-		bool compare(const xstring& _itema, const xdatetime& _itemb) const
-		{
-			date_time dp;
-			dp.parse(_itema.data);
-			return dp != _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xstring, xdatetime>
-	{
-	public:
-		bool compare(const xstring& _itema, const xdatetime& _itemb) const
-		{
-			date_time dp;
-			dp.parse(_itema.data);
-			return dp > _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_lt, xdatetime, xstring>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xstring& _itemb) const
-		{
-			date_time dp;
-			dp.parse(_itemb.data);
-			return _itema.data < dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xdatetime, xstring>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xstring& _itemb) const
-		{
-			date_time dp;
-			dp.parse(_itemb.data);
-			return _itema.data == dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xdatetime, xstring>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xstring& _itemb) const
-		{
-			date_time dp;
-			dp.parse(_itemb.data);
-			return _itema.data != dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xdatetime, xstring>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xstring& _itemb) const
-		{
-			date_time dp;
-			dp.parse(_itemb.data);
-			return _itema.data > dp;
-		}
-	};
-
-	// conversions for strings and doubles
-
-	template <>
-	class xcomparer<fn_op_lt, xstring, xdouble>
-	{
-	public:
-		bool compare(const xstring& _itema, const xdouble& _itemb) const
-		{
-			double dp = strtod(_itema.data, nullptr);
-			return dp < _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xstring, xdouble>
-	{
-	public:
-		bool compare(const xstring& _itema, const xdouble& _itemb) const
-		{
-			double dp = strtod(_itema.data, nullptr);
-			return dp == _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xstring, xdouble>
-	{
-	public:
-		bool compare(const xstring& _itema, const xdouble& _itemb) const
-		{
-			double dp = strtod(_itema.data, nullptr);
-			return dp != _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xstring, xdouble>
-	{
-	public:
-		bool compare(const xstring& _itema, const xdouble& _itemb) const
-		{
-			double dp = strtod(_itema.data, nullptr);
-			return dp > _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_lt, xdouble, xstring>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xstring& _itemb) const
-		{
-			double dp = strtod(_itemb.data, nullptr);
-			return _itema.data < dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xdouble, xstring>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xstring& _itemb) const
-		{
-			double dp = strtod(_itemb.data, nullptr);
-			return _itema.data == dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xdouble, xstring>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xstring& _itemb) const
-		{
-			double dp = strtod(_itemb.data, nullptr);
-			return _itema.data != dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xdouble, xstring>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xstring& _itemb) const
-		{
-			double dp = strtod(_itemb.data, nullptr);
-			return _itema.data > dp;
-		}
-	};
 
 	// conversions for strings and int64_t
 
-	template <>
-	class xcomparer<fn_op_lt, xstring, xint64_t>
+	bool xcompare(fn_op_lt _dummy, const xstring& _itema, const xint64_t& _itemb) 
 	{
-	public:
-		bool compare(const xstring& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = strtoll(_itema.data, nullptr, 10);
-			return dp < _itemb.data;
-		}
+		int64_t dp = strtoll(_itema.data, nullptr, 10);
+		return dp < _itemb.data;
+	}
+	bool xcompare(fn_op_eq _dummy, const xstring& _itema, const xint64_t& _itemb) 
+	{
+		int64_t dp = strtoll(_itema.data, nullptr, 10);
+		return dp == _itemb.data;
+	}
+	bool xcompare(fn_op_neq _dummy, const xstring& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = strtoll(_itema.data, nullptr, 10);
+		return dp != _itemb.data;
+	}
+	bool xcompare(fn_op_gt _dummy, const xstring& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = strtoll(_itema.data, nullptr, 10);
+		return dp > _itemb.data;
+	}
+
+
+	// xint64_t
+	bool xcompare(fn_op_lt _dummy, const xint64_t& _itema, const xint64_t& _itemb)
+	{
+		return _itema.data < _itemb.data;
+	}
+	bool xcompare(fn_op_eq _dummy, const xint64_t& _itema, const xint64_t& _itemb)
+	{
+		return _itema.data == _itemb.data;
+	}
+	bool xcompare(fn_op_neq _dummy, const xint64_t& _itema, const xint64_t& _itemb)
+	{
+		return _itema.data != _itemb.data;
+	}
+	bool xcompare(fn_op_gt _dummy, const xint64_t& _itema, const xint64_t& _itemb)
+	{
+		return _itema.data > _itemb.data;
+	}
+
+	bool xcompare(fn_op_lt _dummy, const xint64_t& _itema, const xstring& _itemb)
+	{
+		int64_t dp = strtoll(_itemb.data, nullptr, 10);
+		return _itema.data < dp;
+	}
+	bool xcompare(fn_op_eq _dummy, const xint64_t& _itema, const xstring& _itemb)
+	{
+		int64_t dp = strtoll(_itemb.data, nullptr, 10);
+		return _itema.data == dp;
+	}
+	bool xcompare(fn_op_neq _dummy, const xint64_t& _itema, const xstring& _itemb)
+	{
+		int64_t dp = strtoll(_itemb.data, nullptr, 10);
+		return _itema.data != dp;
+	}
+	bool xcompare(fn_op_gt _dummy, const xint64_t& _itema, const xstring& _itemb)
+	{
+		int64_t dp = strtoll(_itemb.data, nullptr, 10);
+		return _itema.data > dp;
+	}
+
+	bool xcompare(fn_op_lt _dummy, const xint64_t& _itema, const xdouble& _itemb)
+	{
+		int64_t dp = _itemb.data;
+		return _itema.data < dp;
+	}
+	bool xcompare(fn_op_eq _dummy, const xint64_t& _itema, const xdouble& _itemb)
+	{
+		int64_t dp = _itemb.data;
+		return _itema.data == dp;
+	}
+	bool xcompare(fn_op_neq _dummy, const xint64_t& _itema, const xdouble& _itemb)
+	{
+		int64_t dp = _itemb.data;
+		return _itema.data != dp;
+	}
+	bool xcompare(fn_op_gt _dummy, const xint64_t& _itema, const xdouble& _itemb)
+	{
+		int64_t dp = _itemb.data;
+		return _itema.data > dp;
+	}
+
+	bool xcompare(fn_op_lt _dummy, const xint64_t& _itema, const xdatetime& _itemb)
+	{
+		int64_t dp = _itemb.data.get_time_t();
+		return _itema.data < dp;
+	}
+	bool xcompare(fn_op_eq _dummy, const xint64_t& _itema, const xdatetime& _itemb)
+	{
+		int64_t dp = _itemb.data.get_time_t();
+		return _itema.data == dp;
+	}
+	bool xcompare(fn_op_neq _dummy, const xint64_t& _itema, const xdatetime& _itemb)
+	{
+		int64_t dp = _itemb.data.get_time_t();
+		return _itema.data != dp;
+	}
+	bool xcompare(fn_op_gt _dummy, const xint64_t& _itema, const xdatetime& _itemb)
+	{
+		int64_t dp = _itemb.data.get_time_t();
+		return _itema.data > dp;
+	}
+
+
+
+	// xdouble
+	bool xcompare(fn_op_lt _dummy, const xdouble& _itema, const xdouble& _itemb)
+	{
+		return _itema.data < _itemb.data;
+	}
+	bool xcompare(fn_op_eq _dummy, const xdouble& _itema, const xdouble& _itemb)
+	{
+		return _itema.data == _itemb.data;
+	}
+	bool xcompare(fn_op_neq _dummy, const xdouble& _itema, const xdouble& _itemb)
+	{
+		return _itema.data != _itemb.data;
+	}
+	bool xcompare(fn_op_gt _dummy, const xdouble& _itema, const xdouble& _itemb)
+	{
+		return _itema.data > _itemb.data;
+	}
+
+	bool xcompare(fn_op_lt _dummy, const xdouble& _itema, const xstring& _itemb)
+	{
+		double dp = strtod(_itemb.data, nullptr);
+		return _itema.data < dp;
+	}
+	bool xcompare(fn_op_eq _dummy, const xdouble& _itema, const xstring& _itemb)
+	{
+		double dp = strtod(_itemb.data, nullptr);
+		return _itema.data == dp;
+	}
+	bool xcompare(fn_op_neq _dummy, const xdouble& _itema, const xstring& _itemb)
+	{
+		double dp = strtod(_itemb.data, nullptr);
+		return _itema.data != dp;
+	}
+	bool xcompare(fn_op_gt _dummy, const xdouble& _itema, const xstring& _itemb)
+	{
+		double dp = strtod(_itemb.data, nullptr);
+		return _itema.data > dp;
+	}
+
+	bool xcompare(fn_op_lt _dummy, const xdouble& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = _itema.data;
+		return dp < _itemb.data;
+	}
+	bool xcompare(fn_op_eq _dummy, const xdouble& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = _itema.data;
+		return dp == _itemb.data;
+	}
+	bool xcompare(fn_op_neq _dummy, const xdouble& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = _itema.data;
+		return dp != _itemb.data;
+	}
+	bool xcompare(fn_op_gt _dummy, const xdouble& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = _itema.data;
+		return dp > _itemb.data;
+	}
+	bool xcompare(fn_op_lt _dummy, const xdouble& _itema, const xdatetime& _itemb)
+	{
+		int64_t dp = _itemb.data.get_time_t();
+		return _itema.data < dp;
+	}
+	bool xcompare(fn_op_eq _dummy, const xdouble& _itema, const xdatetime& _itemb)
+	{
+		int64_t dp = _itemb.data.get_time_t();
+		return _itema.data == dp;
+	}
+	bool xcompare(fn_op_neq _dummy, const xdouble& _itema, const xdatetime& _itemb)
+	{
+		int64_t dp = _itemb.data.get_time_t();
+		return _itema.data != dp;
+	}
+	bool xcompare(fn_op_gt _dummy, const xdouble& _itema, const xdatetime& _itemb)
+	{
+		int64_t dp = _itemb.data.get_time_t();
+		return _itema.data > dp;
+	}
+
+	// xdatetime
+	bool xcompare(fn_op_lt _dummy, const xdatetime& _itema, const xdatetime& _itemb)
+	{
+		return _itema.data < _itemb.data;
+	}
+	bool xcompare(fn_op_eq _dummy, const xdatetime& _itema, const xdatetime& _itemb)
+	{
+		return _itema.data == _itemb.data;
+	}
+	bool xcompare(fn_op_neq _dummy, const xdatetime& _itema, const xdatetime& _itemb)
+	{
+		return _itema.data != _itemb.data;
+	}
+	bool xcompare(fn_op_gt _dummy, const xdatetime& _itema, const xdatetime& _itemb)
+	{
+		return _itema.data > _itemb.data;
+	}
+
+	bool xcompare(fn_op_lt _dummy, const xdatetime& _itema, const xstring& _itemb)
+	{
+		date_time dp;
+		dp.parse(_itemb.data);
+		return _itema.data < dp;
+	}
+	bool xcompare(fn_op_eq _dummy, const xdatetime& _itema, const xstring& _itemb)
+	{
+		date_time dp;
+		dp.parse(_itemb.data);
+		return _itema.data == dp;
+	}
+	bool xcompare(fn_op_neq _dummy, const xdatetime& _itema, const xstring& _itemb)
+	{
+		date_time dp;
+		dp.parse(_itemb.data);
+		return _itema.data != dp;
+	}
+	bool xcompare(fn_op_gt _dummy, const xdatetime& _itema, const xstring& _itemb)
+	{
+		date_time dp;
+		dp.parse(_itemb.data);
+		return _itema.data > dp;
+	}
+
+	bool xcompare(fn_op_lt _dummy, const xdatetime& _itema, const xdouble& _itemb)
+	{
+		int64_t dp = _itema.data.get_time_t();
+		return dp < _itemb.data;
+	}
+	bool xcompare(fn_op_eq _dummy, const xdatetime& _itema, const xdouble& _itemb)
+	{
+		int64_t dp = _itema.data.get_time_t();
+		return dp == _itemb.data;
+	}
+	bool xcompare(fn_op_neq _dummy, const xdatetime& _itema, const xdouble& _itemb)
+	{
+		int64_t dp = _itema.data.get_time_t();
+		return dp != _itemb.data;
+	}
+	bool xcompare(fn_op_gt _dummy, const xdatetime& _itema, const xdouble& _itemb)
+	{
+		int64_t dp = _itema.data.get_time_t();
+		return dp > _itemb.data;
+	}
+
+	bool xcompare(fn_op_lt _dummy, const xdatetime& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = _itema.data.get_time_t();
+		return dp < _itemb.data;
+	}
+	bool xcompare(fn_op_eq _dummy, const xdatetime& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = _itema.data.get_time_t();
+		return dp == _itemb.data;
+	}
+	bool xcompare(fn_op_neq _dummy, const xdatetime& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = _itema.data.get_time_t();
+		return dp != _itemb.data;
+	}
+	bool xcompare(fn_op_gt _dummy, const xdatetime& _itema, const xint64_t& _itemb)
+	{
+		int64_t dp = _itema.data.get_time_t();
+		return dp > _itemb.data;
+	}
+
+	// placeholders are always equal.
+
+	bool xcompare(fn_op_lt _dummy, const xplaceholder& _itema, const xplaceholder& _itemb)
+	{
+		return false;
+	}
+	bool xcompare(fn_op_eq _dummy, const xplaceholder& _itema, const xplaceholder& _itemb)
+	{
+		return true;
+	};
+	bool xcompare(fn_op_neq _dummy, const xplaceholder& _itema, const xplaceholder& _itemb)
+	{
+		return false;
+	}
+	bool xcompare(fn_op_gt _dummy, const xplaceholder& _itema, const xplaceholder& _itemb)
+	{
+		return false;
 	};
 
-	template <>
-	class xcomparer<fn_op_eq, xstring, xint64_t>
+	template <typename typeb>
+	bool xcompare(fn_op_lt _dummy, const xplaceholder& _itema, const typeb& _itemb)
 	{
-	public:
-		bool compare(const xstring& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = strtoll(_itema.data, nullptr, 10);
-			return dp == _itemb.data;
-		}
+		return false;
+	}
+	template <typename typeb>
+	bool xcompare(fn_op_eq _dummy, const xplaceholder& _itema, const typeb& _itemb)
+	{
+		return true;
+	};
+	template <typename typeb>
+	bool xcompare(fn_op_neq _dummy, const xplaceholder& _itema, const typeb& _itemb)
+	{
+		return false;
+	}
+	template <typename typeb>
+	bool xcompare(fn_op_gt _dummy, const xplaceholder& _itema, const typeb& _itemb)
+	{
+		return false;
 	};
 
-	template <>
-	class xcomparer<fn_op_neq, xstring, xint64_t>
+	template <typename typea>
+	bool xcompare(fn_op_lt _dummy, const typea& _itema, const xplaceholder& _itemb)
 	{
-	public:
-		bool compare(const xstring& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = strtoll(_itema.data, nullptr, 10);
-			return dp != _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xstring, xint64_t>
+		return false;
+	}
+	template <typename typea>
+	bool xcompare(fn_op_eq _dummy, const typea& _itema, const xplaceholder& _itemb)
 	{
-	public:
-		bool compare(const xstring& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = strtoll(_itema.data, nullptr, 10);
-			return dp > _itemb.data;
-		}
+		return true;
 	};
-
-	template <>
-	class xcomparer<fn_op_lt, xint64_t, xstring>
+	template <typename typea>
+	bool xcompare(fn_op_neq _dummy, const typea& _itema, const xplaceholder& _itemb)
 	{
-	public:
-		bool compare(const xint64_t& _itema, const xstring& _itemb) const
-		{
-			int64_t dp = strtoll(_itemb.data, nullptr, 10);
-			return _itema.data < dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xint64_t, xstring>
+		return false;
+	}
+	template <typename typea>
+	bool xcompare(fn_op_gt _dummy, const typea& _itema, const xplaceholder& _itemb)
 	{
-	public:
-		bool compare(const xint64_t& _itema, const xstring& _itemb) const
-		{
-			int64_t dp = strtoll(_itemb.data, nullptr, 10);
-			return _itema.data == dp;
-		}
+		return false;
 	};
-
-	template <>
-	class xcomparer<fn_op_neq, xint64_t, xstring>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xstring& _itemb) const
-		{
-			int64_t dp = strtoll(_itemb.data, nullptr, 10);
-			return _itema.data != dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xint64_t, xstring>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xstring& _itemb) const
-		{
-			int64_t dp = strtoll(_itemb.data, nullptr, 10);
-			return _itema.data > dp;
-		}
-	};
-
-	// int64_t and double
-
-	template <>
-	class xcomparer<fn_op_lt, xdouble, xint64_t>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = _itema.data;
-			return dp < _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xdouble, xint64_t>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = _itema.data;
-			return dp == _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xdouble, xint64_t>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = _itema.data;
-			return dp != _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xdouble, xint64_t>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = _itema.data;
-			return dp > _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_lt, xint64_t, xdouble>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xdouble& _itemb) const
-		{
-			int64_t dp = _itemb.data;
-			return _itema.data < dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xint64_t, xdouble>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xdouble& _itemb) const
-		{
-			int64_t dp = _itemb.data;
-			return _itema.data == dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xint64_t, xdouble>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xdouble& _itemb) const
-		{
-			int64_t dp = _itemb.data;
-			return _itema.data != dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xint64_t, xdouble>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xdouble& _itemb) const
-		{
-			int64_t dp = _itemb.data;
-			return _itema.data > dp;
-		}
-	};
-
-	// datetime and doubles
-
-	template <>
-	class xcomparer<fn_op_lt, xdatetime, xdouble>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xdouble& _itemb) const
-		{
-			int64_t dp = _itema.data.get_time_t();
-			return dp < _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xdatetime, xdouble>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xdouble& _itemb) const
-		{
-			int64_t dp = _itema.data.get_time_t();
-			return dp == _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xdatetime, xdouble>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xdouble& _itemb) const
-		{
-			int64_t dp = _itema.data.get_time_t();
-			return dp != _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xdatetime, xdouble>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xdouble& _itemb) const
-		{
-			int64_t dp = _itema.data.get_time_t();
-			return dp > _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_lt, xdouble, xdatetime>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xdatetime& _itemb) const
-		{
-			int64_t dp = _itemb.data.get_time_t();
-			return _itema.data < dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xdouble, xdatetime>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xdatetime& _itemb) const
-		{
-			int64_t dp = _itemb.data.get_time_t();
-			return _itema.data == dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xdouble, xdatetime>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xdatetime& _itemb) const
-		{
-			int64_t dp = _itemb.data.get_time_t();
-			return _itema.data != dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xdouble, xdatetime>
-	{
-	public:
-		bool compare(const xdouble& _itema, const xdatetime& _itemb) const
-		{
-			int64_t dp = _itemb.data.get_time_t();
-			return _itema.data > dp;
-		}
-	};
-
-	// datetime and int64
-
-	template <>
-	class xcomparer<fn_op_lt, xdatetime, xint64_t>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = _itema.data.get_time_t();
-			return dp < _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xdatetime, xint64_t>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = _itema.data.get_time_t();
-			return dp == _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xdatetime, xint64_t>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = _itema.data.get_time_t();
-			return dp != _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xdatetime, xint64_t>
-	{
-	public:
-		bool compare(const xdatetime& _itema, const xint64_t& _itemb) const
-		{
-			int64_t dp = _itema.data.get_time_t();
-			return dp > _itemb.data;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_lt, xint64_t, xdatetime>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xdatetime& _itemb) const
-		{
-			int64_t dp = _itemb.data.get_time_t();
-			return _itema.data < dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_eq, xint64_t, xdatetime>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xdatetime& _itemb) const
-		{
-			int64_t dp = _itemb.data.get_time_t();
-			return _itema.data == dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_neq, xint64_t, xdatetime>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xdatetime& _itemb) const
-		{
-			int64_t dp = _itemb.data.get_time_t();
-			return _itema.data != dp;
-		}
-	};
-
-	template <>
-	class xcomparer<fn_op_gt, xint64_t, xdatetime>
-	{
-	public:
-		bool compare(const xint64_t& _itema, const xdatetime& _itemb) const
-		{
-			int64_t dp = _itemb.data.get_time_t();
-			return _itema.data > dp;
-		}
-	};
-
-	// same types
-
-
-	// thus armed, we can directly implement xrecord
-
 
 	class xrecord
 	{
 		std::vector<char> record_bytes;
+
 
 		template <typename xtype> bool on_to_string(std::string& _dest, size_t* _offset) const
 		{
@@ -1121,8 +795,8 @@ namespace corona
 
 				if (success1 and success2)
 				{
-					xcomparer<comparefn, xtype1, xtype2> comparer;
-					truth = comparer.compare(temp1, temp2);
+					comparefn dummy;
+					truth = xcompare(dummy, temp1, temp2);
 				}
 
 				return truth;
