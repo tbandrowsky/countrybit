@@ -1272,11 +1272,11 @@ namespace corona
 
 		comp3.clear();
 		comp3.add(4.0);
-		result = comp3 < comp1;
+		result = not( comp3 < comp1);
 		_tests->test({ "xr < key 2.1", result, __FILE__, __LINE__ });
 
 		comp3.add("hello");
-		result = comp3 < comp1;
+		result = not(comp3 < comp1);
 		_tests->test({ "xr < key 2.2", result, __FILE__, __LINE__ });
 
 		comp3.add(43i64);
@@ -1649,6 +1649,9 @@ namespace corona
 		void put(int _indent, const xrecord& key, const xrecord& value)
 		{
 			write_scope_lock lockit(locker);
+
+			if (records.size() >= xrecords_per_block)
+				return;
 
 			if constexpr (debug_xblock) {
 				std::string indent(_indent * 4, ' ');
@@ -2474,13 +2477,15 @@ namespace corona
 
 		json_parser jp;
 
-		for (int64_t i = 1; i <= 250; i++)
+		int64_t id = 1;
+		while (not pleaf->is_full())
 		{
 			xrecord key, value;
-			key.add(i);
-			value.add(10 + i % 50);
-			value.add(100 + (i % 4) * 50);
+			key.add(id);
+			value.add(10 + id % 50);
+			value.add(100 + (id % 4) * 50);
 			pleaf->put(0, key, value);
+			id++;
 		}
 
 		pleaf->save();
@@ -2492,7 +2497,7 @@ namespace corona
 		_tests->test({ "read_survived", true, __FILE__, __LINE__ });
 
 		bool round_trip_success = true;
-		for (int64_t i = 1; i <= 50; i++)
+		for (int64_t i = 1; i < id; i++)
 		{
 			xrecord key, value, valueread;
 			key.add(i);
