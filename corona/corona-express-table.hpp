@@ -808,7 +808,7 @@ namespace corona
 		template <typename compare_fn>
 		bool compare_record(const xrecord& _other) const
 		{
-			bool comp_result = true;
+			bool comp_result = false;
 			size_t this_offset = 0;
 			size_t other_offset = 0;
 			field_types this_ft;
