@@ -345,7 +345,7 @@ namespace corona
 	}
 	bool xcompare(fn_op_gt _dummy, const xstring& _itema, const xstring& _itemb) 
 	{
-		return strcmp(_itema.data, _itemb.data) != 0;
+		return strcmp(_itema.data, _itemb.data) > 0;
 	}
 
 	bool xcompare(fn_op_lt _dummy, const xstring& _itema, const xdatetime& _itemb) 
@@ -808,7 +808,7 @@ namespace corona
 		template <typename compare_fn>
 		bool compare_record(const xrecord& _other) const
 		{
-			bool comp_result;
+			bool comp_result = true;
 			size_t this_offset = 0;
 			size_t other_offset = 0;
 			field_types this_ft;
@@ -1188,7 +1188,7 @@ namespace corona
 			return record_bytes.empty();
 		}
 
-		bool all_equal(const xrecord& _other) const
+		bool exact_equal(const xrecord& _other) const
 		{
 			if (_other.size() != size())
 				return false;
@@ -2045,7 +2045,7 @@ namespace corona
 					records.insert_or_assign(new_branch_key, new_branch_ref);
 				}
 				auto new_key = branch_block->get_start_key();
-				if (old_key != new_key) {
+				if ((not old_key.empty()) and (not old_key.exact_equal(new_key))) {
 					records.erase(old_key);
 					records.insert_or_assign(new_key, found_block);
 				}
@@ -2068,7 +2068,7 @@ namespace corona
 				if constexpr (debug_branch) {
 					std::string debug_render = new_key.to_string();
 				}
-				if (old_key != new_key) {
+				if ((not old_key.empty()) and (not old_key.exact_equal(new_key))) {
 					records.erase(old_key);
 					records.insert_or_assign(new_key, found_block);
 				}
@@ -2748,7 +2748,7 @@ namespace corona
 				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 			}
 
-			if (not valueread.all_equal(value)) {
+			if (not valueread.exact_equal(value)) {
 				round_trip_success = false;
 				break;
 			}
@@ -2828,7 +2828,7 @@ namespace corona
 				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 			}
 
-			if (not valueread.all_equal(value)) {
+			if (not valueread.exact_equal(value)) {
 				round_trip_success = false;
 				break;
 			}
@@ -2862,7 +2862,9 @@ namespace corona
 
 		json_parser jp;
 
-		for (int i = 1; i <= 2000; i++)
+		const int max_fill_records = 5000;
+
+		for (int i = 1; i < max_fill_records; i++)
 		{
 			json obj = jp.create_object();
 			obj.put_member_i64(object_id_field, i);
@@ -2879,7 +2881,7 @@ namespace corona
 		int count52 = 0;
 		std::vector<std::string> keys = { object_id_field, "age", "weight"};
 		bool round_trip_success = true;
-		for (int i = 1; i <= 2000; i++)
+		for (int i = 1; i < max_fill_records; i++)
 		{
 			json key = jp.create_object();
 			key.put_member_i64(object_id_field, i);
@@ -2927,13 +2929,13 @@ namespace corona
 
 		std::map<int, bool> erased_keys;
 		bool erase_success = true;
-		for (int i = 1; i <= 2000; i+=10)
+		for (int i = 1; i < max_fill_records; i+=10)
 		{
 			erased_keys.insert_or_assign(i, true);
 			ptable->erase(i);
 		}
 
-		for (int i = 1; i <= 2000; i++)
+		for (int i = 1; i < max_fill_records; i++)
 		{
 			json result = ptable->get(i);
 			if (result.object() and erased_keys.contains(i)) {
@@ -2951,7 +2953,10 @@ namespace corona
 
 		bool clear_success = true;
 
-		for (int i = 1; i <= 2000; i++)
+		// now cleared, make sure the table is empty.
+		ptable->clear();
+
+		for (int i = 1; i < max_fill_records; i++)
 		{
 			json key = jp.create_object();
 			key.put_member_i64(object_id_field, i);
