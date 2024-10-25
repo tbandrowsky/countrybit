@@ -2446,6 +2446,8 @@ namespace corona
 
 			system_monitoring_interface::global_mon->log_job_start("create_database", "start", start_time, __FILE__, __LINE__);
 			
+			cache = std::make_unique<xblock_cache>(static_cast<file_block*>(this), maximum_record_cache_size_bytes);
+
 			header.data.object_id = 1;
 			header_location = header.append(this);
 
@@ -2531,9 +2533,6 @@ namespace corona
 			}
 
 			created_classes.put_member("sys_datasets", true);
-
-
-
 
 			response =  create_class(R"(
 {

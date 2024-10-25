@@ -5,6 +5,7 @@
 #define CORONA_EXPRESS_TABLE_H
 
 const bool debug_xblock = false;
+const bool debug_branch = false;
 
 namespace corona
 {
@@ -1876,7 +1877,7 @@ namespace corona
 
 			auto new_xb = cache->create_branch_block(_block->xheader.content_type);
 
-			int64_t rsz = records.size() / 2;
+			int64_t rsz = _block->records.size() / 2;
 
 			// time to split the block
 			std::vector<xrecord> keys_to_delete;
@@ -1919,7 +1920,7 @@ namespace corona
 
 			auto new_xb = cache->create_leaf_block();
 
-			int64_t rsz = records.size() / 2;
+			int64_t rsz = _block->records.size() / 2;
 
 			// time to split the block
 			std::vector<xrecord> keys_to_delete;
@@ -2058,9 +2059,15 @@ namespace corona
 					auto new_leaf = split_leaf(leaf_block, _indent);
 					auto new_leaf_key = new_leaf->get_start_key();
 					auto new_leaf_ref = new_leaf->get_reference();
+					if constexpr (debug_branch) {
+						std::string debug_render = new_leaf_key.to_string();
+					}
 					records.insert_or_assign(new_leaf_key, new_leaf_ref);
 				}
 				auto new_key = leaf_block->get_start_key();
+				if constexpr (debug_branch) {
+					std::string debug_render = new_key.to_string();
+				}
 				if (old_key != new_key) {
 					records.erase(old_key);
 					records.insert_or_assign(new_key, found_block);
@@ -2251,6 +2258,7 @@ namespace corona
 				}
 			}
 
+			result.put_member("children", children);
 			return result;
 		}
 
@@ -2654,10 +2662,18 @@ namespace corona
 
 		// see https://stackoverflow.com/questions/41455319/get-the-key-equal-if-key-exists-in-the-map-or-strictly-less-than-given-input-i
 
+
+		if constexpr (debug_branch) {
+			std::string key_render = key.to_string();
+		}
+
 		auto ifirst = records.upper_bound(key);
 		if (ifirst != std::begin(records)) {
 			ifirst--;
 			if (ifirst != std::end(records)) {
+				if constexpr (debug_branch) {
+					std::string key_found_render = ifirst->first.to_string();
+				}
 				found_block = ifirst->second;
 			}
 			return found_block;
