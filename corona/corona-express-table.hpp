@@ -54,7 +54,7 @@ namespace corona
 			location = src->location;
 		}
 
-		size_t size() { return sizeof(this); }
+		size_t size() { return sizeof(xblock_ref); }
 		const char* data() { return (const char*)this; }
 	};
 
@@ -1611,6 +1611,7 @@ namespace corona
 				rl.value_offset = current - bytes;
 				rl.value_size = r.second.size();
 				const char *vsrc = r.second.data();
+				data_type* check_src = (data_type*)(vsrc);
 				std::copy(vsrc, vsrc + rl.value_size, current);
 				current += rl.value_size;
 
@@ -2007,8 +2008,8 @@ namespace corona
 
 			// we find the keys for the new children so that we can insert
 			// then right things into our map
-			xrecord child1_key = new_child1->get_end_key_nl();
-			xrecord child2_key = new_child2->get_end_key_nl();
+			xrecord child1_key = new_child1->get_start_key_nl();
+			xrecord child2_key = new_child2->get_start_key_nl();
 
 			xheader.content_type = xblock_types::xb_branch;
 
@@ -2034,15 +2035,15 @@ namespace corona
 			if (found_block.block_type == xblock_types::xb_branch)
 			{
 				auto branch_block = cache->open_branch_block(found_block);
-				auto old_key = branch_block->get_end_key();
+				auto old_key = branch_block->get_start_key();
 				branch_block->put(_indent, _key, _value);
 				if (branch_block->is_full()) {
 					auto new_branch = split_branch(branch_block, _indent);
-					auto new_branch_key = new_branch->get_end_key();
+					auto new_branch_key = new_branch->get_start_key();
 					auto new_branch_ref = new_branch->get_reference();
 					records.insert_or_assign(new_branch_key, new_branch_ref);
 				}
-				auto new_key = branch_block->get_end_key();
+				auto new_key = branch_block->get_start_key();
 				if (old_key != new_key) {
 					records.erase(old_key);
 					records.insert_or_assign(new_key, found_block);
@@ -2051,15 +2052,15 @@ namespace corona
 			else if (found_block.block_type == xblock_types::xb_leaf)
 			{
 				auto leaf_block = cache->open_leaf_block(found_block);
-				auto old_key = leaf_block->get_end_key();
+				auto old_key = leaf_block->get_start_key();
 				leaf_block->put(_indent, _key, _value);
 				if (leaf_block->is_full()) {
 					auto new_leaf = split_leaf(leaf_block, _indent);
-					auto new_leaf_key = new_leaf->get_end_key();
+					auto new_leaf_key = new_leaf->get_start_key();
 					auto new_leaf_ref = new_leaf->get_reference();
 					records.insert_or_assign(new_leaf_key, new_leaf_ref);
 				}
-				auto new_key = leaf_block->get_end_key();
+				auto new_key = leaf_block->get_start_key();
 				if (old_key != new_key) {
 					records.erase(old_key);
 					records.insert_or_assign(new_key, found_block);
@@ -2651,10 +2652,14 @@ namespace corona
 
 		std::shared_ptr<xrecord_block> return_block;
 
-		// taking the left end
+		// see https://stackoverflow.com/questions/41455319/get-the-key-equal-if-key-exists-in-the-map-or-strictly-less-than-given-input-i
+
 		auto ifirst = records.upper_bound(key);
-		if (ifirst != std::end(records)) {
-			found_block = ifirst->second;
+		if (ifirst != std::begin(records)) {
+			ifirst--;
+			if (ifirst != std::end(records)) {
+				found_block = ifirst->second;
+			}
 			return found_block;
 		}
 
@@ -2762,15 +2767,19 @@ namespace corona
 			value.add(10 + i % 50);
 			value.add(100 + (i % 4) * 50);
 			pbranch->put(0, key, value);
+			if (pbranch->is_full()) {
+				pbranch->split_root(0);
+			}
 		}
+
+		auto ref = pbranch->get_reference();
 
 		cache.save();
 
+		pbranch = cache.open_branch_block(ref);
+
 		json saved_info = pbranch->get_info();
 		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
-
-		auto ref = pbranch->get_reference();
-		pbranch = cache.open_branch_block(ref);
 
 		json loaded_info = pbranch->get_info();
 
