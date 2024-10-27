@@ -331,402 +331,188 @@ namespace corona
 
 	// strings 
 
-	bool xcompare(fn_op_lt _dummy, const xstring& _itema, const xstring& _itemb) 
+	std::weak_ordering xcompare(const xstring& _itema, const xstring& _itemb)
 	{
-		return strcmp(_itema.data, _itemb.data) < 0;
-	}
-	bool xcompare(fn_op_eq _dummy, const xstring& _itema, const xstring& _itemb) 
-	{
-		return strcmp(_itema.data, _itemb.data) == 0;
-	}
-	bool xcompare(fn_op_neq _dummy, const xstring& _itema, const xstring& _itemb) 
-	{
-		return strcmp(_itema.data, _itemb.data) != 0;
-	}
-	bool xcompare(fn_op_gt _dummy, const xstring& _itema, const xstring& _itemb) 
-	{
-		return strcmp(_itema.data, _itemb.data) > 0;
+		int k = strcmp(_itema.data, _itemb.data);
+		if (k < 0)
+			return std::weak_ordering::less;
+		else if (k == 0)
+			return std::weak_ordering::equivalent;
+		else if (k > 0)
+			return std::weak_ordering::greater;
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xstring& _itema, const xdatetime& _itemb) 
+	std::weak_ordering xcompare(const xstring& _itema, const xdatetime& _itemb)
 	{
 		date_time dp;
 		dp.parse(_itema.data);
-		return dp < _itemb.data;
-	}
-	bool xcompare(fn_op_eq _dummy, const xstring& _itema, const xdatetime& _itemb) 
-	{
-		date_time dp;
-		dp.parse(_itema.data);
-		return dp == _itemb.data;
-	}
-	bool xcompare(fn_op_neq _dummy, const xstring& _itema, const xdatetime& _itemb) 
-	{
-		date_time dp;
-		dp.parse(_itema.data);
-		return dp != _itemb.data;
-	}
-	bool xcompare(fn_op_gt _dummy, const xstring& _itema, const xdatetime& _itemb) 
-	{
-		date_time dp;
-		dp.parse(_itema.data);
-		return dp > _itemb.data;
+		return dp <=> _itemb.data;
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xstring& _itema, const xdouble& _itemb) 
+	std::weak_ordering xcompare(const xstring& _itema, const xdouble& _itemb)
 	{
 		double dp = strtod(_itema.data, nullptr);
-		return dp < _itemb.data;
+		if (dp < _itemb.data)
+			return std::weak_ordering::less;
+		else if (dp == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
-	bool xcompare(fn_op_eq _dummy, const xstring& _itema, const xdouble& _itemb) 
-	{
-		double dp = strtod(_itema.data, nullptr);
-		return dp == _itemb.data;
-	}
-	bool xcompare(fn_op_neq _dummy, const xstring& _itema, const xdouble& _itemb) 
-	{
-		double dp = strtod(_itema.data, nullptr);
-		return dp != _itemb.data;
-	}
-	bool xcompare(fn_op_gt _dummy, const xstring& _itema, const xdouble& _itemb) 
-	{
-		double dp = strtod(_itema.data, nullptr);
-		return dp > _itemb.data;
-	}
-
 
 	// conversions for strings and int64_t
 
-	bool xcompare(fn_op_lt _dummy, const xstring& _itema, const xint64_t& _itemb) 
+	std::weak_ordering xcompare(const xstring& _itema, const xint64_t& _itemb) 
 	{
 		int64_t dp = strtoll(_itema.data, nullptr, 10);
-		return dp < _itemb.data;
-	}
-	bool xcompare(fn_op_eq _dummy, const xstring& _itema, const xint64_t& _itemb) 
-	{
-		int64_t dp = strtoll(_itema.data, nullptr, 10);
-		return dp == _itemb.data;
-	}
-	bool xcompare(fn_op_neq _dummy, const xstring& _itema, const xint64_t& _itemb)
-	{
-		int64_t dp = strtoll(_itema.data, nullptr, 10);
-		return dp != _itemb.data;
-	}
-	bool xcompare(fn_op_gt _dummy, const xstring& _itema, const xint64_t& _itemb)
-	{
-		int64_t dp = strtoll(_itema.data, nullptr, 10);
-		return dp > _itemb.data;
+		if (dp < _itemb.data)
+			return std::weak_ordering::less;
+		else if (dp == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
 
 
 	// xint64_t
-	bool xcompare(fn_op_lt _dummy, const xint64_t& _itema, const xint64_t& _itemb)
+	std::weak_ordering xcompare(const xint64_t& _itema, const xint64_t& _itemb)
 	{
-		return _itema.data < _itemb.data;
-	}
-	bool xcompare(fn_op_eq _dummy, const xint64_t& _itema, const xint64_t& _itemb)
-	{
-		return _itema.data == _itemb.data;
-	}
-	bool xcompare(fn_op_neq _dummy, const xint64_t& _itema, const xint64_t& _itemb)
-	{
-		return _itema.data != _itemb.data;
-	}
-	bool xcompare(fn_op_gt _dummy, const xint64_t& _itema, const xint64_t& _itemb)
-	{
-		return _itema.data > _itemb.data;
+		if (_itema.data < _itemb.data)
+			return std::weak_ordering::less;
+		else if (_itema.data == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xint64_t& _itema, const xstring& _itemb)
+	std::weak_ordering xcompare(const xint64_t& _itema, const xstring& _itemb)
 	{
 		int64_t dp = strtoll(_itemb.data, nullptr, 10);
-		return _itema.data < dp;
-	}
-	bool xcompare(fn_op_eq _dummy, const xint64_t& _itema, const xstring& _itemb)
-	{
-		int64_t dp = strtoll(_itemb.data, nullptr, 10);
-		return _itema.data == dp;
-	}
-	bool xcompare(fn_op_neq _dummy, const xint64_t& _itema, const xstring& _itemb)
-	{
-		int64_t dp = strtoll(_itemb.data, nullptr, 10);
-		return _itema.data != dp;
-	}
-	bool xcompare(fn_op_gt _dummy, const xint64_t& _itema, const xstring& _itemb)
-	{
-		int64_t dp = strtoll(_itemb.data, nullptr, 10);
-		return _itema.data > dp;
+		if (_itema.data < dp)
+			return std::weak_ordering::less;
+		else if (_itema.data == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xint64_t& _itema, const xdouble& _itemb)
+	std::weak_ordering xcompare(const xint64_t& _itema, const xdouble& _itemb)
 	{
-		int64_t dp = _itemb.data;
-		return _itema.data < dp;
-	}
-	bool xcompare(fn_op_eq _dummy, const xint64_t& _itema, const xdouble& _itemb)
-	{
-		int64_t dp = _itemb.data;
-		return _itema.data == dp;
-	}
-	bool xcompare(fn_op_neq _dummy, const xint64_t& _itema, const xdouble& _itemb)
-	{
-		int64_t dp = _itemb.data;
-		return _itema.data != dp;
-	}
-	bool xcompare(fn_op_gt _dummy, const xint64_t& _itema, const xdouble& _itemb)
-	{
-		int64_t dp = _itemb.data;
-		return _itema.data > dp;
+		if (_itema.data < _itemb.data)
+			return std::weak_ordering::less;
+		else if (_itema.data == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xint64_t& _itema, const xdatetime& _itemb)
+	std::weak_ordering xcompare(const xint64_t& _itema, const xdatetime& _itemb)
 	{
 		int64_t dp = _itemb.data.get_time_t();
-		return _itema.data < dp;
+		if (_itema.data < dp)
+			return std::weak_ordering::less;
+		else if (_itema.data == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
-	bool xcompare(fn_op_eq _dummy, const xint64_t& _itema, const xdatetime& _itemb)
-	{
-		int64_t dp = _itemb.data.get_time_t();
-		return _itema.data == dp;
-	}
-	bool xcompare(fn_op_neq _dummy, const xint64_t& _itema, const xdatetime& _itemb)
-	{
-		int64_t dp = _itemb.data.get_time_t();
-		return _itema.data != dp;
-	}
-	bool xcompare(fn_op_gt _dummy, const xint64_t& _itema, const xdatetime& _itemb)
-	{
-		int64_t dp = _itemb.data.get_time_t();
-		return _itema.data > dp;
-	}
-
 
 
 	// xdouble
-	bool xcompare(fn_op_lt _dummy, const xdouble& _itema, const xdouble& _itemb)
+	std::weak_ordering xcompare(const xdouble& _itema, const xdouble& _itemb)
 	{
-		return _itema.data < _itemb.data;
-	}
-	bool xcompare(fn_op_eq _dummy, const xdouble& _itema, const xdouble& _itemb)
-	{
-		return _itema.data == _itemb.data;
-	}
-	bool xcompare(fn_op_neq _dummy, const xdouble& _itema, const xdouble& _itemb)
-	{
-		return _itema.data != _itemb.data;
-	}
-	bool xcompare(fn_op_gt _dummy, const xdouble& _itema, const xdouble& _itemb)
-	{
-		return _itema.data > _itemb.data;
+		if (_itema.data < _itemb.data)
+			return std::weak_ordering::less;
+		else if (_itema.data == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
+
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xdouble& _itema, const xstring& _itemb)
+	std::weak_ordering xcompare(const xdouble& _itema, const xstring& _itemb)
 	{
 		double dp = strtod(_itemb.data, nullptr);
-		return _itema.data < dp;
-	}
-	bool xcompare(fn_op_eq _dummy, const xdouble& _itema, const xstring& _itemb)
-	{
-		double dp = strtod(_itemb.data, nullptr);
-		return _itema.data == dp;
-	}
-	bool xcompare(fn_op_neq _dummy, const xdouble& _itema, const xstring& _itemb)
-	{
-		double dp = strtod(_itemb.data, nullptr);
-		return _itema.data != dp;
-	}
-	bool xcompare(fn_op_gt _dummy, const xdouble& _itema, const xstring& _itemb)
-	{
-		double dp = strtod(_itemb.data, nullptr);
-		return _itema.data > dp;
+		if (_itema.data < dp)
+			return std::weak_ordering::less;
+		else if (_itema.data == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xdouble& _itema, const xint64_t& _itemb)
+	std::weak_ordering xcompare(const xdouble& _itema, const xint64_t& _itemb)
 	{
-		int64_t dp = _itema.data;
-		return dp < _itemb.data;
+		if (_itema.data < _itemb.data)
+			return std::weak_ordering::less;
+		else if (_itema.data == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
-	bool xcompare(fn_op_eq _dummy, const xdouble& _itema, const xint64_t& _itemb)
-	{
-		int64_t dp = _itema.data;
-		return dp == _itemb.data;
-	}
-	bool xcompare(fn_op_neq _dummy, const xdouble& _itema, const xint64_t& _itemb)
-	{
-		int64_t dp = _itema.data;
-		return dp != _itemb.data;
-	}
-	bool xcompare(fn_op_gt _dummy, const xdouble& _itema, const xint64_t& _itemb)
-	{
-		int64_t dp = _itema.data;
-		return dp > _itemb.data;
-	}
-	bool xcompare(fn_op_lt _dummy, const xdouble& _itema, const xdatetime& _itemb)
+
+	std::weak_ordering xcompare(const xdouble& _itema, const xdatetime& _itemb)
 	{
 		int64_t dp = _itemb.data.get_time_t();
-		return _itema.data < dp;
-	}
-	bool xcompare(fn_op_eq _dummy, const xdouble& _itema, const xdatetime& _itemb)
-	{
-		int64_t dp = _itemb.data.get_time_t();
-		return _itema.data == dp;
-	}
-	bool xcompare(fn_op_neq _dummy, const xdouble& _itema, const xdatetime& _itemb)
-	{
-		int64_t dp = _itemb.data.get_time_t();
-		return _itema.data != dp;
-	}
-	bool xcompare(fn_op_gt _dummy, const xdouble& _itema, const xdatetime& _itemb)
-	{
-		int64_t dp = _itemb.data.get_time_t();
-		return _itema.data > dp;
+		if (_itema.data < dp)
+			return std::weak_ordering::less;
+		else if (_itema.data == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
 
 	// xdatetime
-	bool xcompare(fn_op_lt _dummy, const xdatetime& _itema, const xdatetime& _itemb)
+	std::weak_ordering  xcompare(const xdatetime& _itema, const xdatetime& _itemb)
 	{
-		return _itema.data < _itemb.data;
-	}
-	bool xcompare(fn_op_eq _dummy, const xdatetime& _itema, const xdatetime& _itemb)
-	{
-		return _itema.data == _itemb.data;
-	}
-	bool xcompare(fn_op_neq _dummy, const xdatetime& _itema, const xdatetime& _itemb)
-	{
-		return _itema.data != _itemb.data;
-	}
-	bool xcompare(fn_op_gt _dummy, const xdatetime& _itema, const xdatetime& _itemb)
-	{
-		return _itema.data > _itemb.data;
+		if (_itema.data < _itemb.data)
+			return std::weak_ordering::less;
+		else if (_itema.data == _itemb.data)
+			return std::weak_ordering::equivalent;
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xdatetime& _itema, const xstring& _itemb)
+
+	std::weak_ordering xcompare(const xdatetime& _itema, const xstring& _itemb)
 	{
 		date_time dp;
 		dp.parse(_itemb.data);
-		return _itema.data < dp;
-	}
-	bool xcompare(fn_op_eq _dummy, const xdatetime& _itema, const xstring& _itemb)
-	{
-		date_time dp;
-		dp.parse(_itemb.data);
-		return _itema.data == dp;
-	}
-	bool xcompare(fn_op_neq _dummy, const xdatetime& _itema, const xstring& _itemb)
-	{
-		date_time dp;
-		dp.parse(_itemb.data);
-		return _itema.data != dp;
-	}
-	bool xcompare(fn_op_gt _dummy, const xdatetime& _itema, const xstring& _itemb)
-	{
-		date_time dp;
-		dp.parse(_itemb.data);
-		return _itema.data > dp;
+		if (_itema.data < dp)
+			return std::weak_ordering::less;
+		else if (_itema.data == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xdatetime& _itema, const xdouble& _itemb)
+	std::weak_ordering xcompare(const xdatetime& _itema, const xdouble& _itemb)
 	{
 		int64_t dp = _itema.data.get_time_t();
-		return dp < _itemb.data;
-	}
-	bool xcompare(fn_op_eq _dummy, const xdatetime& _itema, const xdouble& _itemb)
-	{
-		int64_t dp = _itema.data.get_time_t();
-		return dp == _itemb.data;
-	}
-	bool xcompare(fn_op_neq _dummy, const xdatetime& _itema, const xdouble& _itemb)
-	{
-		int64_t dp = _itema.data.get_time_t();
-		return dp != _itemb.data;
-	}
-	bool xcompare(fn_op_gt _dummy, const xdatetime& _itema, const xdouble& _itemb)
-	{
-		int64_t dp = _itema.data.get_time_t();
-		return dp > _itemb.data;
+		if (_itema.data < dp)
+			return std::weak_ordering::less;
+		else if (_itema.data == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
+
 	}
 
-	bool xcompare(fn_op_lt _dummy, const xdatetime& _itema, const xint64_t& _itemb)
+	std::weak_ordering xcompare(const xdatetime& _itema, const xint64_t& _itemb)
 	{
 		int64_t dp = _itema.data.get_time_t();
-		return dp < _itemb.data;
-	}
-	bool xcompare(fn_op_eq _dummy, const xdatetime& _itema, const xint64_t& _itemb)
-	{
-		int64_t dp = _itema.data.get_time_t();
-		return dp == _itemb.data;
-	}
-	bool xcompare(fn_op_neq _dummy, const xdatetime& _itema, const xint64_t& _itemb)
-	{
-		int64_t dp = _itema.data.get_time_t();
-		return dp != _itemb.data;
-	}
-	bool xcompare(fn_op_gt _dummy, const xdatetime& _itema, const xint64_t& _itemb)
-	{
-		int64_t dp = _itema.data.get_time_t();
-		return dp > _itemb.data;
+		if (_itema.data < dp)
+			return std::weak_ordering::less;
+		else if (_itema.data == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
 	}
 
 	// placeholders are always equal.
 
-	bool xcompare(fn_op_lt _dummy, const xplaceholder& _itema, const xplaceholder& _itemb)
+	std::weak_ordering xcompare(const xplaceholder& _itema, const xplaceholder& _itemb)
 	{
-		return false;
+		return std::weak_ordering::equivalent;
 	}
-	bool xcompare(fn_op_eq _dummy, const xplaceholder& _itema, const xplaceholder& _itemb)
-	{
-		return true;
-	};
-	bool xcompare(fn_op_neq _dummy, const xplaceholder& _itema, const xplaceholder& _itemb)
-	{
-		return false;
-	}
-	bool xcompare(fn_op_gt _dummy, const xplaceholder& _itema, const xplaceholder& _itemb)
-	{
-		return false;
-	};
 
 	template <typename typeb>
-	bool xcompare(fn_op_lt _dummy, const xplaceholder& _itema, const typeb& _itemb)
+	std::weak_ordering xcompare(const xplaceholder& _itema, const typeb& _itemb)
 	{
-		return true;
+		return std::weak_ordering::less;
 	}
-	template <typename typeb>
-	bool xcompare(fn_op_eq _dummy, const xplaceholder& _itema, const typeb& _itemb)
-	{
-		return true;
-	};
-	template <typename typeb>
-	bool xcompare(fn_op_neq _dummy, const xplaceholder& _itema, const typeb& _itemb)
-	{
-		return false;
-	}
-	template <typename typeb>
-	bool xcompare(fn_op_gt _dummy, const xplaceholder& _itema, const typeb& _itemb)
-	{
-		return false;
-	};
 
 	template <typename typea>
-	bool xcompare(fn_op_lt _dummy, const typea& _itema, const xplaceholder& _itemb)
+	std::weak_ordering xcompare(const typea& _itema, const xplaceholder& _itemb)
 	{
-		return false;
+		return std::weak_ordering::greater;
 	}
-	template <typename typea>
-	bool xcompare(fn_op_eq _dummy, const typea& _itema, const xplaceholder& _itemb)
-	{
-		return true;
-	};
-	template <typename typea>
-	bool xcompare(fn_op_neq _dummy, const typea& _itema, const xplaceholder& _itemb)
-	{
-		return false;
-	}
-	template <typename typea>
-	bool xcompare(fn_op_gt _dummy, const typea& _itema, const xplaceholder& _itemb)
-	{
-		return true;
-	};
+
 
 	class xrecord
 	{
@@ -786,9 +572,8 @@ namespace corona
 		class field_comparer
 		{
 		public:
-			bool compare_field(const std::vector<char>& _src, size_t* _src_offset, const xrecord& _other, size_t* _other_offset) const
+			std::weak_ordering compare_field(const std::vector<char>& _src, size_t* _src_offset, const xrecord& _other, size_t* _other_offset) const
 			{
-				bool truth = false;
 				xtype1 temp1;
 				bool success1 = xtype1::get(_src, _src_offset, temp1);
 
@@ -797,18 +582,19 @@ namespace corona
 
 				if (success1 and success2)
 				{
-					comparefn dummy;
-					truth = xcompare(dummy, temp1, temp2);
+					std::weak_ordering truth;
+					truth = xcompare(temp1, temp2);
+					return truth;
 				}
 
-				return truth;
+				throw std::logic_error("comparison missing operands");
 			}
 		};
 
 		template <typename compare_fn>
 		bool compare_record(const xrecord& _other) const
 		{
-			bool comp_result = false;
+			std::weak_ordering comp_result;
 			size_t this_offset = 0;
 			size_t other_offset = 0;
 			field_types this_ft;
@@ -964,11 +750,11 @@ namespace corona
 
 				if constexpr (std::is_same<compare_fn,fn_op_eq>::value)
 				{
-					if (not comp_result) return false;
+					if (comp_result != std::weak_ordering::equivalent) return false;
 				}
 				if constexpr (std::is_same<compare_fn, fn_op_neq>::value)
 				{
-					if (comp_result) return true;
+					if (comp_result == std::weak_ordering::equivalent) return true;
 				}
 				if constexpr (std::is_same<compare_fn, fn_op_lt>::value)
 				{
@@ -1002,19 +788,39 @@ namespace corona
 					// A1* < A3*
 					// A1*9 < A*3
 					// A23* < A23*45
-					// everything is ordered like a string gets sorted in a way that makes senese.
-					if (not comp_result) return true;
+					// everything is ordered like a string gets sorted in a way that makes sense.
+					// the star is where you don't know.
+					if (comp_result != std::weak_ordering::less) 
+						return false;
 				}
 				if constexpr (std::is_same<compare_fn, fn_op_gt>::value)
 				{
-					if (not comp_result) return true;
+					if (comp_result != std::weak_ordering::greater)
+						return false;
 				}
 
 				this_remaining = this_offset < record_bytes.size();
 				other_remaining = other_offset < _other.record_bytes.size();
 			}
 
-			return comp_result;
+			if constexpr (std::is_same<compare_fn, fn_op_eq>::value)
+			{
+				return not (this_remaining and other_remaining);
+			}
+			if constexpr (std::is_same<compare_fn, fn_op_neq>::value)
+			{
+				return this_remaining or other_remaining;
+			}
+			if constexpr (std::is_same<compare_fn, fn_op_lt>::value)
+			{
+				return not this_remaining and other_remaining;
+			}
+			if constexpr (std::is_same<compare_fn, fn_op_gt>::value)
+			{
+				return this_remaining and not other_remaining;
+			}
+
+			return false;
 		}
 
 
@@ -1285,7 +1091,10 @@ namespace corona
 		result = comp3 < comp1;
 		_tests->test({ "xr <", result, __FILE__, __LINE__ });
 
-		result = not (comp3 > comp1);
+		result = not (comp1 < comp3);
+		_tests->test({ "xr < swo", result, __FILE__, __LINE__ });
+
+		result = comp1 > comp3;
 		_tests->test({ "xr >", result, __FILE__, __LINE__ });
 
 		// partial keys are equal.
@@ -1311,7 +1120,10 @@ namespace corona
 		result = comp3 < comp1;
 		_tests->test({ "xr < key 2", result, __FILE__, __LINE__ });
 
-		result = not (comp3 > comp1);
+		result = comp1 >= comp3;
+		_tests->test({ "xr >= key 3", result, __FILE__, __LINE__ });
+
+		result = not (comp1 < comp3);
 		_tests->test({ "xr < key 3, swo", result, __FILE__, __LINE__ });
 
 

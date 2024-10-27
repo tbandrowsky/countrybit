@@ -463,6 +463,20 @@ namespace corona
 				return 0;
 		}
 
+		std::weak_ordering operator <=>(const date_time& _src) const
+		{
+			FILETIME fthis, fsrc;
+			SystemTimeToFileTime(&system_time, &fthis);
+			SystemTimeToFileTime(&_src.system_time, &fsrc);
+			LARGE_INTEGER lithis, lisrc;
+			lithis.HighPart = fthis.dwHighDateTime;
+			lithis.LowPart = fthis.dwLowDateTime;
+			lisrc.HighPart = fsrc.dwHighDateTime;
+			lisrc.LowPart = fsrc.dwLowDateTime;
+			auto temp = lithis.QuadPart <=> lisrc.QuadPart;
+			return temp;
+		}
+
 		bool operator<(const date_time& b) const
 		{
 			return compare(b) < 0;
