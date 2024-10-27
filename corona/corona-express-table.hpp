@@ -790,13 +790,17 @@ namespace corona
 					// A23* < A23*45
 					// everything is ordered like a string gets sorted in a way that makes sense.
 					// the star is where you don't know.
-					if (comp_result != std::weak_ordering::less) 
+					if (comp_result == std::weak_ordering::less) 
+						return true;
+					else if (comp_result == std::weak_ordering::greater)
 						return false;
 				}
 				if constexpr (std::is_same<compare_fn, fn_op_gt>::value)
 				{
-					if (comp_result != std::weak_ordering::greater)
+					if (comp_result == std::weak_ordering::less)
 						return false;
+					else if (comp_result == std::weak_ordering::greater)
+						return true;
 				}
 
 				this_remaining = this_offset < record_bytes.size();
@@ -1137,7 +1141,7 @@ namespace corona
 		// implied equality
 		comp3.clear();
 		comp3.add(4.0);
-		result = not( comp3 < comp1);
+		result = comp3 < comp1;
 		_tests->test({ "xr < key 2.1", result, __FILE__, __LINE__ });
 
 		result = not (comp1 < comp3);
@@ -1145,7 +1149,7 @@ namespace corona
 
 
 		comp3.add("hello");
-		result = not(comp3 < comp1);
+		result = comp3 < comp1;
 		_tests->test({ "xr < key 2.2", result, __FILE__, __LINE__ });
 
 		result = not (comp1 < comp3);
