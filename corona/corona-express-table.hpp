@@ -689,7 +689,7 @@ namespace corona
 	template <typename typeb>
 	bool xcompare(fn_op_lt _dummy, const xplaceholder& _itema, const typeb& _itemb)
 	{
-		return false;
+		return true;
 	}
 	template <typename typeb>
 	bool xcompare(fn_op_eq _dummy, const xplaceholder& _itema, const typeb& _itemb)
@@ -725,7 +725,7 @@ namespace corona
 	template <typename typea>
 	bool xcompare(fn_op_gt _dummy, const typea& _itema, const xplaceholder& _itemb)
 	{
-		return false;
+		return true;
 	};
 
 	class xrecord
@@ -1254,6 +1254,9 @@ namespace corona
 		result = comp3 < comp1;
 		_tests->test({ "xr <", result, __FILE__, __LINE__ });
 
+		result = not (comp3 > comp1);
+		_tests->test({ "xr >", result, __FILE__, __LINE__ });
+
 		// partial keys are equal.
 		comp3.clear();
 		comp3.add(4.0);
@@ -1277,28 +1280,50 @@ namespace corona
 		result = comp3 < comp1;
 		_tests->test({ "xr < key 2", result, __FILE__, __LINE__ });
 
+		result = not (comp3 > comp1);
+		_tests->test({ "xr < key 3, swo", result, __FILE__, __LINE__ });
+
+
 		comp3.add(42i64);
 		result = comp3 < comp1;
 		_tests->test({ "xr < key 3", result, __FILE__, __LINE__ });
 
+		result = not (comp1 < comp3);
+		_tests->test({ "xr < key 3, swo", result, __FILE__, __LINE__ });
+
+		// implied equality
 		comp3.clear();
 		comp3.add(4.0);
 		result = not( comp3 < comp1);
 		_tests->test({ "xr < key 2.1", result, __FILE__, __LINE__ });
 
+		result = not (comp1 < comp3);
+		_tests->test({ "xr < key 2.1 swo", result, __FILE__, __LINE__ });
+
+
 		comp3.add("hello");
 		result = not(comp3 < comp1);
 		_tests->test({ "xr < key 2.2", result, __FILE__, __LINE__ });
 
+		result = not (comp1 < comp3);
+		_tests->test({ "xr < key 2.2 swo", result, __FILE__, __LINE__ });
+
+
 		comp3.add(43i64);
 		result = not(comp3 < comp1);
 		_tests->test({ "xr < key 2.3", result, __FILE__, __LINE__ });
+
+		result = (comp1 < comp3);
+		_tests->test({ "xr > key 2.3 swo", result, __FILE__, __LINE__ });
+
 
 		comp3.clear();
 		comp3.add(4.0);
 		comp3.add("ahello");
 		result = comp3 < comp1;
 		_tests->test({ "xr < key 3.1", result, __FILE__, __LINE__ });
+		result = not(comp1 < comp3);
+		_tests->test({ "xr > key 3.1", result, __FILE__, __LINE__ });
 
 		// keys, more partial tests
 
@@ -1373,6 +1398,37 @@ namespace corona
 
 		result = (date_time)jsrc["Today"] == (date_time)jdst["Today"];
 		_tests->test({ "rts today", result, __FILE__, __LINE__ });
+
+		// and now, unit tests that simulate our indexes.
+		comp1.clear();
+		comp1.add("Roger");
+		comp1.add(13i64);
+
+		comp2.clear();
+		comp2.add("Sam");
+		comp2.add(14i64);
+
+		comp3.clear();
+		comp3.add("Xavier");
+		comp3.add(15i64);
+
+		result = comp1 < comp2;
+		_tests->test({ "index <", result, __FILE__, __LINE__ });
+
+		result = not (comp2 < comp1);
+		_tests->test({ "index < swo", result, __FILE__, __LINE__ });
+
+		result = comp2 < comp3;
+		_tests->test({ "index 2 <", result, __FILE__, __LINE__ });
+
+		result = not (comp3 < comp2);
+		_tests->test({ "index 2 < swo", result, __FILE__, __LINE__ });
+
+		result = comp1 < comp3;
+		_tests->test({ "index 3 <", result, __FILE__, __LINE__ });
+
+		result = not (comp3 < comp1);
+		_tests->test({ "index 3 < swo", result, __FILE__, __LINE__ });
 
 		system_monitoring_interface::global_mon->log_function_stop("xrecord", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
@@ -1463,6 +1519,7 @@ namespace corona
 			{
 				append(fb);
 			}
+			dirty = false;
 		}
 
 	public:
@@ -1521,7 +1578,7 @@ namespace corona
 		virtual void release()
 		{
 			write_scope_lock lockit(locker);
-
+			dirty = true;
 			data_block::erase(fb);
 		}
 
@@ -1543,7 +1600,7 @@ namespace corona
 		virtual void clear()
 		{
 			write_scope_lock lockit(locker);
-
+			dirty = true;
 			records.clear();
 		}
 
@@ -1552,7 +1609,6 @@ namespace corona
 			write_scope_lock lockit(locker);
 			if (dirty) {
 				save_nl();
-				dirty = false;
 			}
 			return size();
 		}
@@ -1580,22 +1636,22 @@ namespace corona
 
 		virtual char* before_write(int32_t* _size) override
 		{
-			size_t total_bytes = 0;
-			size_t header_bytes = 0;
-			int32_t count = 0;
+			int header_size_bytes = xheader.size();
+			size_t total_bytes = header_size_bytes;
+
+			// notice that we're also prepping the header as we do this.
+			xheader.count = records.size();
 
 			for (auto& r : records)
 			{
 				total_bytes += r.first.size();
 				total_bytes += r.second.size();
-				count++;
 			}
 
-			header_bytes = xheader.size();
-			total_bytes += header_bytes;
 			*_size = total_bytes;
+
 			char *bytes = new char[total_bytes + 10];
-			char* current = bytes + header_bytes;
+			char* current = bytes + header_size_bytes;
 
 			int i = 0;
 			for (auto& r : records)
@@ -1615,11 +1671,10 @@ namespace corona
 				data_type* check_src = (data_type*)(vsrc);
 				std::copy(vsrc, vsrc + rl.value_size, current);
 				current += rl.value_size;
-
 				i++;
 			}
-			xheader.count = count;
-			std::copy(xheader.data(), xheader.data() + header_bytes, bytes);
+
+			std::copy(xheader.data(), xheader.data() + header_size_bytes, bytes);
 
 			xrecord_block_header* check_it = (xrecord_block_header*)bytes;
 
@@ -1897,6 +1952,9 @@ namespace corona
 			{
 				_block->records.erase(kv);
 			}
+			
+			new_xb->dirtied();
+			dirtied();
 
 			return new_xb;
 		}
@@ -1941,7 +1999,8 @@ namespace corona
 				_block->records.erase(kv);
 			}
 
-			new_xb->save();
+			new_xb->dirtied();
+			dirtied();
 
 			return new_xb;
 		}
@@ -2566,7 +2625,7 @@ namespace corona
 		write_scope_lock lockit(locker);
 		xrecord_block_header header;
 
-		header.type = xblock_types::xb_leaf;
+		header.type = xblock_types::xb_branch;
 		header.content_type = _content_type;
 
 		auto result = std::make_shared<xbranch_block>(this, header);
@@ -2605,7 +2664,9 @@ namespace corona
 		{
 			branches.push_back(&sv.second);
 		}
-		std::sort(branches.begin(), branches.end());
+		std::sort(branches.begin(), branches.end(), [](const cached_branch* _a, const cached_branch* _b) {
+			return _a->last_access > _b->last_access;
+			});
 		for (auto& sv : branches)
 		{
 			total_memory += sv->block->save();
@@ -2632,7 +2693,10 @@ namespace corona
 		{
 			leaves.push_back(&sv.second);
 		}
-		std::sort(leaves.begin(), leaves.end());
+		std::sort(leaves.begin(), leaves.end(), [](const cached_leaf* _a, const cached_leaf* _b) {
+			return _a->last_access > _b->last_access;
+			});
+			
 		for (auto& sv : leaves)
 		{
 			total_memory += sv->block->save();
