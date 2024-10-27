@@ -972,11 +972,42 @@ namespace corona
 				}
 				if constexpr (std::is_same<compare_fn, fn_op_lt>::value)
 				{
-					if (comp_result) return true;
+					// ok, this has to be not comp_result immediate bail
+					// to ensure strict weak ordering.
+					// strict weak ordering is dead simple.
+					// first, if you have a < b is false, then b < a must be false, as b is either equal or > a to be false.
+					// second, if you have a < b, and b < c, then a < c must be true.
+					// do these things, and you can even database records sorted for while in memory stl:maps or maybe even 
+					// a fast implementation.
+					// but here is the twister,
+					// say we are comparing two sets of records, and ours and another, we walk through this in steps, 1..n
+					// discussing using lower case letters for whatever pops into my head such as variables
+					// 1.  ours - get our current key a, or our a, and likewise their key b.
+					// 2.  compare truth = ours < theirs
+					// think about it, each of our numbers and strings are already strict weakly ordered,
+					// our own records strict weak ordering would work like that,
+					// and the special rule is thus. If you are already false, you are done.  It can never be true,
+					// once it is false, otherwise, we're breaking our own strict weak ordering and we'd never 
+					// be ordered at all.  if you are bouncing strict weak ordering off of a map, the map
+					// will throw an exception and it will put you right where the comparison is so you 
+					// back up and step through it and check it.
+					// Instead of letters, think of this string as where the letters are labels for something, 
+					// so that, whatever it is will be strictly weakly ordered, if all our field types are,
+					// as this makes us do this:
+					// A*123 < B*123 < C*123
+					// A1* < A2*
+					// A2* < A3*
+					// NOT A2* < A1*
+					// NOT A3* < A2*
+					// A1* < A3*
+					// A1*9 < A*3
+					// A23* < A23*45
+					// everything is ordered like a string gets sorted in a way that makes senese.
+					if (not comp_result) return true;
 				}
 				if constexpr (std::is_same<compare_fn, fn_op_gt>::value)
 				{
-					if (comp_result) return true;
+					if (not comp_result) return true;
 				}
 
 				this_remaining = this_offset < record_bytes.size();
@@ -1526,10 +1557,11 @@ namespace corona
 
 		xrecord_block(file_block *_fb, xrecord_block_header& _src)
 		{
-			dirty = false;
+			dirty = true;
 			fb = _fb;
 			xheader = _src;
 			save_nl();
+			dirty = true;
 		}
 
 		xrecord_block(file_block* _fb, int64_t _location)
@@ -1953,7 +1985,6 @@ namespace corona
 				_block->records.erase(kv);
 			}
 			
-			new_xb->dirtied();
 			dirtied();
 
 			return new_xb;
@@ -1975,6 +2006,18 @@ namespace corona
 
 			***********************************************/
 
+			// As I might say in Cleveland, I should rename this to soiled, because
+			// were going to soil ourselves in this one as its about to get real.
+			// As a characterization of the data work here, it is, 
+			// although the algorithm is simple.  If this block is full,
+			// we add another one split it into two.  Much will change in all both blocks.		
+
+			dirtied();
+
+			// in this case, createing a new block always makes it dirty,
+			// so we have ourselves and this block both covered. We dirtied ourselves
+			// up above with the dirtied calls, and new blocks are created always 
+			// marked dirty from the start.
 
 			auto new_xb = cache->create_leaf_block();
 
@@ -1998,9 +2041,6 @@ namespace corona
 			{
 				_block->records.erase(kv);
 			}
-
-			new_xb->dirtied();
-			dirtied();
 
 			return new_xb;
 		}
@@ -2041,6 +2081,14 @@ namespace corona
 
 			***********************************************/
 
+			// may as well rename this to soiled for some laughes,
+			// and following along with that bit, I can safely put on my 
+			// programming redneck and say we know this is about to get 
+			// dirty so lets just get this done.
+			dirtied();
+
+			// newly created blocks are always created dirty, as like
+			// think about it, why would you create a block and not use it...
 			auto new_child1 = cache->create_branch_block(xheader.content_type);
 			auto new_child2 = cache->create_branch_block(xheader.content_type);
 
