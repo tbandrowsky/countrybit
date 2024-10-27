@@ -299,7 +299,7 @@ namespace corona
 	public:
 	};
 
-	class xplaceholder : public xpoco<char, field_types::ft_placeholder>
+	class xwildcard : public xpoco<char, field_types::ft_wildcard>
 	{
 
 	};
@@ -494,21 +494,21 @@ namespace corona
 		else return std::weak_ordering::greater;
 	}
 
-	// placeholders are always equal.
+	// wildcards are always equal.
 
-	std::weak_ordering xcompare(const xplaceholder& _itema, const xplaceholder& _itemb)
+	std::weak_ordering xcompare(const xwildcard& _itema, const xwildcard& _itemb)
 	{
 		return std::weak_ordering::equivalent;
 	}
 
 	template <typename typeb>
-	std::weak_ordering xcompare(const xplaceholder& _itema, const typeb& _itemb)
+	std::weak_ordering xcompare(const xwildcard& _itema, const typeb& _itemb)
 	{
 		return std::weak_ordering::equivalent;
 	}
 
 	template <typename typea>
-	std::weak_ordering xcompare(const typea& _itema, const xplaceholder& _itemb)
+	std::weak_ordering xcompare(const typea& _itema, const xwildcard& _itemb)
 	{
 		return std::weak_ordering::equivalent;
 	}
@@ -549,10 +549,10 @@ namespace corona
 			return success;
 		}
 
-		template <> bool on_get_json<xplaceholder>(json& _dest, const std::string& _key, size_t* _offset) const
+		template <> bool on_get_json<xwildcard>(json& _dest, const std::string& _key, size_t* _offset) const
 		{
-			xplaceholder temp;
-			bool success = xplaceholder::get(record_bytes, _offset, temp);
+			xwildcard temp;
+			bool success = xwildcard::get(record_bytes, _offset, temp);
 			return success;
 		}
 
@@ -562,10 +562,10 @@ namespace corona
 			xtype::emplace(temp, record_bytes);
 		}
 
-		template <> void emplace<xplaceholder, int>(json& _src)
+		template <> void emplace<xwildcard, int>(json& _src)
 		{
 			int temp = 0;
-			xplaceholder::emplace(0, record_bytes);
+			xwildcard::emplace(0, record_bytes);
 		}
 
 		template <typename comparefn, typename xtype1, typename xtype2>
@@ -629,9 +629,9 @@ namespace corona
 						field_comparer<compare_fn, xint64_t, xdatetime> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
-					else if (other_ft == field_types::ft_placeholder)
+					else if (other_ft == field_types::ft_wildcard)
 					{
-						field_comparer<compare_fn, xint64_t, xplaceholder> comparer;
+						field_comparer<compare_fn, xint64_t, xwildcard> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 				}
@@ -657,9 +657,9 @@ namespace corona
 						field_comparer<compare_fn, xstring, xdatetime> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
-					else if (other_ft == field_types::ft_placeholder)
+					else if (other_ft == field_types::ft_wildcard)
 					{
-						field_comparer<compare_fn, xstring, xplaceholder> comparer;
+						field_comparer<compare_fn, xstring, xwildcard> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 				}
@@ -685,9 +685,9 @@ namespace corona
 						field_comparer<compare_fn, xdouble, xdatetime> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
-					else if (other_ft == field_types::ft_placeholder)
+					else if (other_ft == field_types::ft_wildcard)
 					{
-						field_comparer<compare_fn, xdouble, xplaceholder> comparer;
+						field_comparer<compare_fn, xdouble, xwildcard> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 				}
@@ -713,37 +713,37 @@ namespace corona
 						field_comparer<compare_fn, xdatetime, xdatetime> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
-					else if (other_ft == field_types::ft_placeholder)
+					else if (other_ft == field_types::ft_wildcard)
 					{
-						field_comparer<compare_fn, xdatetime, xplaceholder> comparer;
+						field_comparer<compare_fn, xdatetime, xwildcard> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 				}
-				else if (this_ft == field_types::ft_placeholder)
+				else if (this_ft == field_types::ft_wildcard)
 				{
 					if (other_ft == field_types::ft_int64)
 					{
-						field_comparer<compare_fn, xplaceholder, xint64_t> comparer;
+						field_comparer<compare_fn, xwildcard, xint64_t> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 					else if (other_ft == field_types::ft_string)
 					{
-						field_comparer<compare_fn, xplaceholder, xstring> comparer;
+						field_comparer<compare_fn, xwildcard, xstring> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 					else if (other_ft == field_types::ft_double)
 					{
-						field_comparer<compare_fn, xplaceholder, xdouble> comparer;
+						field_comparer<compare_fn, xwildcard, xdouble> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 					else if (other_ft == field_types::ft_datetime)
 					{
-						field_comparer<compare_fn, xplaceholder, xdatetime> comparer;
+						field_comparer<compare_fn, xwildcard, xdatetime> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
-					else if (other_ft == field_types::ft_placeholder)
+					else if (other_ft == field_types::ft_wildcard)
 					{
-						field_comparer<compare_fn, xplaceholder, xplaceholder> comparer;
+						field_comparer<compare_fn, xwildcard, xwildcard> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 				}
@@ -911,7 +911,7 @@ namespace corona
 					emplace<xint64_t, int64_t>(m);
 					break;
 				default:
-					emplace<xplaceholder, int>(m);
+					emplace<xwildcard, int>(m);
 					break;
 				} // end switch
 			}
@@ -943,8 +943,8 @@ namespace corona
 				case field_types::ft_datetime:
 					on_to_string<xdatetime>(temp, &this_offset);
 					break;
-				case field_types::ft_placeholder:
-					on_to_string<xplaceholder>(temp, &this_offset);
+				case field_types::ft_wildcard:
+					on_to_string<xwildcard>(temp, &this_offset);
 					break;
 				}
 				output << temp;
@@ -980,8 +980,8 @@ namespace corona
 				case field_types::ft_datetime:
 					on_get_json<xdatetime>(_dest, *ki, &this_offset);
 					break;
-				case field_types::ft_placeholder:
-					on_get_json<xplaceholder>(_dest, *ki, &this_offset);
+				case field_types::ft_wildcard:
+					on_get_json<xwildcard>(_dest, *ki, &this_offset);
 					break;
 				}
 				remaining = this_offset < size();
@@ -1020,7 +1020,7 @@ namespace corona
 
 		xrecord& add()
 		{
-			xplaceholder::emplace(0, record_bytes);
+			xwildcard::emplace(0, record_bytes);
 			return *this;
 		}
 
@@ -1745,13 +1745,13 @@ namespace corona
 			json result = jp.create_object();
 			auto start_key = get_start_key();
 			auto end_key = get_end_key();
-			result.put_member("type", "leaf");
-			result.put_member_i64("location", get_reference().location);
-			result.put_member_i64("count", records.size());
+			result.put_member("block", "leaf");
+			result.put_member_i64("block_count", records.size());
 			std::string starts = start_key.to_string();
 			std::string ends = end_key.to_string();
-			result.put_member("start", starts);
-			result.put_member("end", ends);
+			result.put_member("block_key_start", starts);
+			result.put_member("block_key_stop", ends);
+			result.put_member_i64("block_location", get_reference().location);
 			return result;
 		}
 
@@ -1908,6 +1908,8 @@ namespace corona
 			auto new_child1 = cache->create_branch_block(xheader.content_type);
 			auto new_child2 = cache->create_branch_block(xheader.content_type);
 
+			xheader.content_type = xblock_types::xb_branch;
+
 			int64_t rsz = records.size() / 2i64;
 			int64_t count = 0;
 
@@ -1934,8 +1936,6 @@ namespace corona
 			// then right things into our map
 			xrecord child1_key = new_child1->get_start_key_nl();
 			xrecord child2_key = new_child2->get_start_key_nl();
-
-			xheader.content_type = xblock_types::xb_branch;
 
 			records.clear();
 			records.insert_or_assign(child1_key, child1_ref);
@@ -2085,29 +2085,29 @@ namespace corona
 			xfor_each_result result;
 			result.is_all = false;
 			result.is_any = false;
-			for (auto item : records) {
-				if (item.first == _key) {
-					xfor_each_result temp;
-					auto& found_block = item.second;
-					if (found_block.block_type == xblock_types::xb_branch)
-					{
-						auto branch_block = cache->open_branch_block(found_block);
-						temp = branch_block->for_each(_key, _process);
-					}
-					else if (found_block.block_type == xblock_types::xb_leaf)
-					{
-						auto leaf_block = cache->open_leaf_block(found_block);
-						temp = leaf_block->for_each(_key, _process);
-					}
-					else
-						temp = {};
 
-					result.count += temp.count;
-					if (temp.is_any)
-						result.is_any = true;
-					if (not temp.is_all)
-						result.is_all = false;
+			auto range = records.equal_range(_key);
+			for (auto iter = range.first; iter != range.second; iter++) {
+				xfor_each_result temp;
+				auto& found_block = iter->second;
+				if (found_block.block_type == xblock_types::xb_branch)
+				{
+					auto branch_block = cache->open_branch_block(found_block);
+					temp = branch_block->for_each(_key, _process);
 				}
+				else if (found_block.block_type == xblock_types::xb_leaf)
+				{
+					auto leaf_block = cache->open_leaf_block(found_block);
+					temp = leaf_block->for_each(_key, _process);
+				}
+				else
+					temp = {};
+
+				result.count += temp.count;
+				if (temp.is_any)
+					result.is_any = true;
+				if (not temp.is_all)
+					result.is_all = false;
 			}
 			return result;
 		}
@@ -2117,25 +2117,25 @@ namespace corona
 			read_scope_lock lock_me(locker);
 
 			std::vector<xrecord> result = {};
-			for (auto item : records) {
-				if (item.first == _key) {
-					std::vector<xrecord> temp;
-					auto& found_block = item.second;
-					if (found_block.block_type == xblock_types::xb_branch)
-					{
-						auto branch_block = cache->open_branch_block(found_block);
-						temp = branch_block->select(_key, _process);
-					}
-					else if (found_block.block_type == xblock_types::xb_leaf)
-					{
-						auto leaf_block = cache->open_leaf_block(found_block);
-						temp = leaf_block->select(_key, _process);
-					}
-					else
-						temp = {};
 
-					result.insert(result.end(), temp.begin(), temp.end());
+			auto range = records.equal_range(_key);
+			for (auto iter = range.first; iter != range.second; iter++) {
+				std::vector<xrecord> temp;
+				auto& found_block = iter->second;
+				if (found_block.block_type == xblock_types::xb_branch)
+				{
+					auto branch_block = cache->open_branch_block(found_block);
+					temp = branch_block->select(_key, _process);
 				}
+				else if (found_block.block_type == xblock_types::xb_leaf)
+				{
+					auto leaf_block = cache->open_leaf_block(found_block);
+					temp = leaf_block->select(_key, _process);
+				}
+				else
+					temp = {};
+
+				result.insert(result.end(), temp.begin(), temp.end());
 			}
 			return result;
 		}
@@ -2148,21 +2148,21 @@ namespace corona
 			json result = jp.create_object();
 			auto start_key = get_start_key();
 			auto end_key = get_end_key();
-			result.put_member("type", "branch");
-			switch (xheader.content_type) {
-			case xblock_types::xb_branch:
-				result.put_member("content", "branch");
-				break;
-			case xblock_types::xb_leaf:
-				result.put_member("content", "leaf");
-				break;
-			}
-			result.put_member_i64("location", get_reference().location);
-			result.put_member_i64("count", records.size());
+			result.put_member("block", "branch");
 			std::string starts = start_key.to_string();
 			std::string ends = end_key.to_string();
-			result.put_member("start", starts);
-			result.put_member("end", ends);
+			result.put_member("block_key_start", starts);
+			result.put_member("block_key_stop", ends);
+			result.put_member_i64("block_count", records.size());
+			switch (xheader.content_type) {
+			case xblock_types::xb_branch:
+				result.put_member("block_content", "branch");
+				break;
+			case xblock_types::xb_leaf:
+				result.put_member("block_content", "leaf");
+				break;
+			}
+			result.put_member_i64("block_location", get_reference().location);
 
 			json children = jp.create_array();
 			for (auto r : records) 
@@ -2595,16 +2595,43 @@ namespace corona
 			std::string key_render = key.to_string();
 		}
 
-		auto ifirst = records.upper_bound(key);
-		if (ifirst != std::begin(records)) {
-			ifirst--;
-			if (ifirst != std::end(records)) {
-				if constexpr (debug_branch) {
-					std::string key_found_render = ifirst->first.to_string();
+		if (xheader.content_type = xblock_types::xb_leaf)
+		{
+			auto ifirst = records.upper_bound(key);
+			if (ifirst != std::begin(records)) {
+				ifirst--;
+				if (ifirst != std::end(records)) {
+					if constexpr (debug_branch) {
+						std::string key_found_render = ifirst->first.to_string();
+					}
+					found_block = ifirst->second;
+					return found_block;
 				}
-				found_block = ifirst->second;
 			}
-			return found_block;
+		}
+		else if (xheader.content_type = xblock_types::xb_branch)
+		{
+			if (records.size() == 0)
+			{
+				throw std::logic_error("What in the hell? empty branch branch found");
+			}
+
+			auto ifirst = records.upper_bound(key);
+			if (ifirst != std::begin(records)) {
+				found_block = ifirst->second;
+				ifirst--;
+				if (ifirst != std::end(records)) {
+					if constexpr (debug_branch) {
+						std::string key_found_render = ifirst->first.to_string();
+					}
+					found_block = ifirst->second;
+					return found_block;
+				}
+			}
+			else 
+			{
+				found_block = records.rbegin()->second;
+			}
 		}
 
 		return found_block;

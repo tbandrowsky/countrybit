@@ -153,7 +153,6 @@ namespace corona
 	{
 	protected:
 		relative_ptr_type				table_location;
-		std::shared_ptr<xtable>			table;
 	public:
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
@@ -169,30 +168,32 @@ namespace corona
 	class class_interface : public shared_lockable
 	{
 	protected:
-		std::shared_ptr<xtable> table;
+		relative_ptr_type				table_location;
 	public:
 
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
 
-		virtual int64_t									get_class_id() = 0;
-		virtual std::string								get_class_name() = 0;
-		virtual std::string								get_class_description() = 0;
-		virtual std::string								get_base_class_name() = 0;
-		virtual std::map<std::string, bool>&			get_descendants() = 0;
-		virtual std::map<std::string, bool>&			get_ancestors() = 0;
+		virtual int64_t									get_class_id() const = 0;
+		virtual std::string								get_class_name()  const = 0;
+		virtual std::string								get_class_description()  const = 0;
+		virtual std::string								get_base_class_name()  const = 0;
+		virtual std::map<std::string, bool>  const&		get_descendants()  const = 0;
+		virtual std::map<std::string, bool>  const&		get_ancestors()  const = 0;
+		virtual std::map<std::string, bool>  &			update_descendants() = 0;
+		virtual std::map<std::string, bool>  &			update_ancestors()  = 0;
 		virtual std::shared_ptr<xtable>					get_table(corona_database_interface* _db) = 0;
-		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) = 0;
+		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) const = 0;
 		virtual	bool									update(std::vector<validation_error> &_errors, corona_database_interface* _db, json _changed_class) = 0;
-		virtual std::vector<std::string>				get_table_fields() = 0;
+		virtual std::vector<std::string>				get_table_fields()  const = 0;
 
-		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name) = 0;
-		virtual std::vector<std::shared_ptr<field_interface>> get_fields() = 0;
+		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name)  const = 0;
+		virtual std::vector<std::shared_ptr<field_interface>> get_fields()  const = 0;
 
-		virtual std::shared_ptr<index_interface>		get_index(const std::string& _name) = 0;
-		virtual std::vector<std::shared_ptr<index_interface>> get_indexes() = 0;
+		virtual std::shared_ptr<index_interface>		get_index(const std::string& _name)  const = 0;
+		virtual std::vector<std::shared_ptr<index_interface>> get_indexes()  const = 0;
 
-		virtual int64_t	get_location() = 0;
+		virtual int64_t	get_location()  const = 0;
 		virtual void	init_validation(corona_database_interface* _db) = 0;
 
 		virtual void	put_objects(corona_database_interface* _db, json& _children, json& _src_objects) = 0;
@@ -1195,14 +1196,13 @@ namespace corona
 		int64_t index_id;
 		std::string index_name;
 		std::vector<std::string> index_keys;
-		int64_t table_location;
 
 	public:
 
 		index_implementation()
 		{
 			index_id = 0;
-			table_location = 0;
+			table_location = null_row;
 		}
 
 		index_implementation(std::shared_ptr<index_interface> _ii_index, corona_database_interface* _db)
@@ -1211,13 +1211,12 @@ namespace corona
 			index_name = _ii_index->get_index_name();
 			index_keys = _ii_index->get_index_keys();
 
-			table_location = 0;
+			table_location = null_row;;
 
 			auto temp = _ii_index->get_table(_db);
-			table = temp;
 
-			if (table) {
-				table_location = table->get_location();
+			if (temp) {
+				table_location = temp->get_location();
 			}
 		}
 
@@ -1227,16 +1226,14 @@ namespace corona
 			index_name = _src.index_name;
 			index_keys = _src.index_keys;
 			table_location = _src.table_location;
-			table = _src.table;
 		}
 
 		index_implementation(index_implementation&& _src)
 		{
-			std::swap(index_id,_src.index_id);
-			std::swap(index_name, _src.index_name);
-			std::swap(index_keys, _src.index_keys);
-			std::swap(table_location, _src.table_location);
-			std::swap(table, _src.table);
+			index_id = _src.index_id;
+			index_name = _src.index_name;
+			index_keys = _src.index_keys;
+			table_location = _src.table_location;
 		}
 
 		index_implementation& operator = (const index_implementation& _src)
@@ -1245,17 +1242,15 @@ namespace corona
 			index_name = _src.index_name;
 			index_keys = _src.index_keys;
 			table_location = _src.table_location;
-			table = _src.table;
 			return *this;
 		}
 
 		index_implementation& operator = (index_implementation&& _src)
 		{
-			std::swap(index_id, _src.index_id);
-			std::swap(index_name, _src.index_name);
-			std::swap(index_keys, _src.index_keys);
-			std::swap(table_location, _src.table_location);
-			std::swap(table, _src.table);
+			index_id = _src.index_id;
+			index_name = _src.index_name;
+			index_keys = _src.index_keys;
+			table_location = _src.table_location;
 			return *this;
 
 		}
@@ -1304,6 +1299,9 @@ namespace corona
 				}
 			}
 			table_location = (int64_t)_src["table_location"];
+			if (table_location <= 0) {
+				table_location = null_row;
+			}
 		}
 
 		int64_t get_index_id()  override
@@ -1330,11 +1328,9 @@ namespace corona
 
 		virtual std::shared_ptr<xtable> get_table(corona_database_interface* _db) override
 		{
-			if (table)
-			{
-				return table;
-			}
-			else if (table_location)
+			std::shared_ptr<xtable> table;
+
+			if (table_location != null_row)
 			{
 				table = std::make_shared<xtable>(_db->get_cache(), table_location);
 				return table;
@@ -1354,22 +1350,18 @@ namespace corona
 	class class_implementation : public class_interface
 	{
 
-	private:
+	protected:
 		int64_t		class_id;
 		std::string class_name;
 		std::string class_description;
 		std::string base_class_name;
-		int64_t		table_location;
 		std::vector<std::string> table_fields;
 		std::map<std::string, std::shared_ptr<field_interface>> fields;
 		std::map<std::string, std::shared_ptr<index_interface>> indexes;
 		std::map<std::string, bool> ancestors;
 		std::map<std::string, bool> descendants;
 
-	public:
-
-		class_implementation() = default;
-		class_implementation(class_interface* _src)
+		void copy_from(const class_interface* _src)
 		{
 			class_id = _src->get_class_id();
 			class_name = _src->get_class_name();
@@ -1387,20 +1379,59 @@ namespace corona
 			}
 			ancestors = _src->get_ancestors();
 			descendants = _src->get_descendants();
+
 		}
-		class_implementation(const class_implementation& _src) = default;
-		class_implementation(class_implementation&& _src) = default;
-		class_implementation& operator = (const class_implementation& _src) = default;
-		class_implementation& operator = (class_implementation&& _src) = default;
+
+	public:
+
+		class_implementation()
+		{
+			table_location = null_row;
+			class_id = null_row;
+		} 
+
+		class_implementation(const class_interface* _src)
+		{
+			copy_from(_src);
+		}
+		class_implementation(const class_implementation& _src)
+		{
+			copy_from(&_src);
+		};
+		class_implementation(class_implementation&& _src)
+		{
+			copy_from(&_src);
+		}
+		class_implementation& operator = (const class_implementation& _src)
+		{
+			copy_from(&_src);
+			return *this;
+		}
+		class_implementation& operator = (class_implementation&& _src)
+		{
+			copy_from(&_src);
+			return *this;
+		}
 
 		virtual json get_info(corona_database_interface* _db) override
 		{
+			json_parser jp;
+			json all_info = jp.create_object();
+
 			auto tbl = get_table(_db);
 			json info = tbl->get_info();
-			return info;
+			all_info.put_member(class_name, info);
+
+			for (auto idx : indexes) {
+				auto idx_name = idx.second->get_index_name();
+				auto idx_table = idx.second->get_table(_db);
+				info = idx_table->get_info();
+				all_info.put_member(idx_name, info);
+			}
+			return all_info;
 		}
 
-		virtual int64_t	get_class_id() override
+		virtual int64_t	get_class_id() const override
 		{
 			return class_id;
 		}
@@ -1411,7 +1442,7 @@ namespace corona
 			return *this;
 		}
 
-		virtual std::string get_class_name() override
+		virtual std::string get_class_name() const override
 		{
 			return class_name;
 		}
@@ -1421,7 +1452,7 @@ namespace corona
 			return *this;
 		}
 
-		virtual std::string get_class_description() override
+		virtual std::string get_class_description() const override
 		{
 			return class_description;
 		}
@@ -1432,7 +1463,7 @@ namespace corona
 			return *this;
 		}
 
-		virtual std::string get_base_class_name() override
+		virtual std::string get_base_class_name() const override
 		{
 			return base_class_name;
 		}
@@ -1443,19 +1474,15 @@ namespace corona
 			return *this;
 		}
 
-		virtual std::vector<std::string> get_table_fields() override
+		virtual std::vector<std::string> get_table_fields() const override
 		{
 			return table_fields;
 		}
 
 		virtual std::shared_ptr<xtable> get_table(corona_database_interface *_db) override
 		{
-
-			if (table) 
-			{
-				return table;
-			}
-			else if (table_location)
+			std::shared_ptr<xtable> table;
+			if (table_location > null_row)
 			{
 				table = std::make_shared<xtable>(_db->get_cache(), table_location);
 			}
@@ -1470,12 +1497,22 @@ namespace corona
 			return table;
 		}
 
-		virtual std::map<std::string, bool>& get_descendants() override
+		virtual std::map<std::string, bool>  const& get_descendants() const override
 		{
 			return descendants;
 		}
 
-		virtual std::map<std::string, bool>& get_ancestors() override
+		virtual std::map<std::string, bool>  const& get_ancestors() const override
+		{
+			return ancestors;
+		}
+
+		virtual std::map<std::string, bool>  & update_descendants()  override
+		{
+			return descendants;
+		}
+
+		virtual std::map<std::string, bool>  & update_ancestors()  override
 		{
 			return ancestors;
 		}
@@ -1557,6 +1594,8 @@ namespace corona
 			class_description = _src["class_description"];
 			base_class_name = _src["base_class_name"];
 			table_location = (int64_t)_src["table_location"];
+			if (table_location <= 0)
+				table_location = null_row;
 
 			jtable_fields = _src["table_fields"];
 
@@ -1733,7 +1772,7 @@ namespace corona
 			}
 		}
 
-		virtual std::shared_ptr<xtable> find_index(corona_database_interface* _db, json& _object)
+		virtual std::shared_ptr<xtable> find_index(corona_database_interface* _db, json& _object)  const
 		{
 			std::shared_ptr<xtable> index_table;
 			std::shared_ptr<index_interface> matched_index;
@@ -1771,7 +1810,7 @@ namespace corona
 			return index_table;
 		}
 
-		virtual int64_t get_location() override
+		virtual int64_t get_location()  const override
 		{
 			return table_location;
 		}
@@ -1835,7 +1874,7 @@ namespace corona
 
 					ancestors = base_class->get_ancestors();
 					ancestors.insert_or_assign(base_class_name, true);
-					base_class->get_descendants().insert_or_assign(class_name, true);
+					base_class->update_descendants().insert_or_assign(class_name, true);
 					descendants.insert_or_assign(class_name, true);
 
 					for (auto temp_field : base_class->get_fields())
@@ -1863,7 +1902,7 @@ namespace corona
 			{
 				write_class_sp desc_class = _db->write_lock_class(descendant.first);
 				if (desc_class) {
-					desc_class->get_ancestors().insert_or_assign(class_name, true);
+					desc_class->update_ancestors().insert_or_assign(class_name, true);
 					_db->save_class(desc_class);
 				}
 				else {
@@ -1964,7 +2003,7 @@ namespace corona
 			return true;
 		}
 
-		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name) override
+		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name)  const override
 		{
 			auto found = fields.find(_name);
 			if (found != std::end(fields)) {
@@ -1973,7 +2012,7 @@ namespace corona
 			return nullptr;
 		}
 
-		virtual std::vector<std::shared_ptr<field_interface>> get_fields() override
+		virtual std::vector<std::shared_ptr<field_interface>> get_fields()  const override
 		{
 			std::vector<std::shared_ptr<field_interface>> fields_list;
 			for (auto fld : fields) {
@@ -1982,7 +2021,7 @@ namespace corona
 			return fields_list;
 		}
 
-		virtual std::shared_ptr<index_interface> get_index(const std::string& _name) override
+		virtual std::shared_ptr<index_interface> get_index(const std::string& _name)  const override
 		{
 			auto found = indexes.find(_name);
 			if (found != std::end(indexes)) {
@@ -1991,7 +2030,7 @@ namespace corona
 			return nullptr;
 		}
 
-		virtual std::vector<std::shared_ptr<index_interface>> get_indexes() override
+		virtual std::vector<std::shared_ptr<index_interface>> get_indexes()  const override
 		{
 			std::vector<std::shared_ptr<index_interface>> indexes_list;
 			for (auto fld : indexes) {
@@ -2147,7 +2186,7 @@ namespace corona
 				{
 					json object_key = jp.create_object();
 
-					obj = index_table->select(_key, [&object_key, &class_data](json& _item) -> json {
+ 					obj = index_table->select(_key, [&object_key, &class_data](json& _item) -> json {
 						int64_t object_id = (int64_t)_item[object_id_field];
 						json objfound = class_data->get(object_id);
 						return objfound;
@@ -3199,7 +3238,7 @@ private:
 
 		virtual ~corona_database()
 		{
-			commit();
+			save();
 			wait();
 		}
 
@@ -3967,6 +4006,7 @@ private:
 			auto classd = read_lock_class(class_name);
 			json class_info = classd->get_info(this);
 
+			result = jp.create_object();
 			result.put_member("definition", class_definition);
 			result.put_member("info", class_info);
 
@@ -4393,7 +4433,7 @@ private:
 				header.write(this);
 
 				if (child_objects.size() == 0) {
-					;
+					save();
 				}
 				else 
 				{

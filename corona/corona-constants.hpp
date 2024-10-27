@@ -598,7 +598,7 @@ namespace corona
 
 	enum class field_types {
 		ft_none = 0,
-		ft_placeholder = 1,
+		ft_wildcard = 1,
 		ft_double = 2,
 		ft_int64 = 3,
 		ft_string = 4,

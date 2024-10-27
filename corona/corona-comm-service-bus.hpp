@@ -384,6 +384,19 @@ namespace corona
 			_request.send_response(200, "Ok", fn_response);
 			};
 
+		http_handler_function corona_class_get = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", parse_error_class)) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
+			auto fn_response = local_db->get_class(parsed_request);
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
 		http_handler_function corona_classes_put = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
 			if (parsed_request.is_member("ClassName", parse_error_class)) {
@@ -573,6 +586,10 @@ namespace corona
 			path = _root_path + "classes/get/";
 			api_paths.push_back(path);
 			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
+
+			path = _root_path + "classes/get/details/";
+			api_paths.push_back(path);
+			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_class_get);
 
 			path = _root_path + "classes/put/";
 			api_paths.push_back(path);
