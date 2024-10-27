@@ -504,13 +504,13 @@ namespace corona
 	template <typename typeb>
 	std::weak_ordering xcompare(const xplaceholder& _itema, const typeb& _itemb)
 	{
-		return std::weak_ordering::less;
+		return std::weak_ordering::equivalent;
 	}
 
 	template <typename typea>
 	std::weak_ordering xcompare(const typea& _itema, const xplaceholder& _itemb)
 	{
-		return std::weak_ordering::greater;
+		return std::weak_ordering::equivalent;
 	}
 
 
