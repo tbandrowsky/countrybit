@@ -2774,9 +2774,19 @@ private:
 
 				if (object_definition.has_member(object_id_field))
 				{
+					json object_key = jp.create_object();
 					object_id = (int64_t)object_definition[object_id_field];
+					auto tbl = class_data->get_table(this);
+					auto existing_object = tbl->get(object_id);
+
+					if (existing_object.object()) {
+						existing_object.merge(object_definition);
+						object_definition = existing_object;
+					}
+
 					object_definition.put_member("updated", current_date);
 					object_definition.put_member("updated_by", _user_name);
+
 				}
 				else
 				{
