@@ -37,6 +37,8 @@ the great module disaster.
 
 9/18/2024 - rewrote most of the above because the design was stupid.
 9/25/2024 - factored classes and indexes out to help with concurrency.
+10/28/2024 - now with xtable implementation for faster and more efficient storage,
+			and querying that works increasingly well.
 
 ***********************************************/
 
@@ -45,6 +47,92 @@ namespace corona
 {
 
 	class corona_database_interface;
+
+	class from_join_spec
+	{
+	public:
+		std::string from_data_name;
+		std::map<std::string, std::vector<std::string>> from_fields;
+		json context;
+	};
+
+	using from_join_collection = std::map<std::string, from_join_spec>;
+
+	class from_join
+	{
+		from_join_collection joins;
+		json source_data;
+		json dest_array;
+		json template_object;
+
+		void join_impl(from_join_collection::iterator _it, std::function<void(from_join_spec&_src, json& _dest)> _apply)
+		{
+			if (_it != std::end(joins)) {
+				json data = source_data[_it->second.from_data_name];
+				if (data.array()) {
+					for (auto item : data)
+					{
+						_it->second.context = item;
+						_it++;
+						join_impl(_it, _apply);
+					}
+				}
+			}
+			else 
+			{
+				json_parser jp;
+				json new_object = template_object.clone();
+				for (auto& ct : joins) 
+				{
+					_apply(ct.second, new_object);
+				}
+				dest_array.push_back(new_object);
+			}
+		}
+
+	public:
+	
+		void create_join(std::string _src, std::string _field, std::string _member)
+		{
+			auto it = joins.find(_src);
+			if (it != joins.end()) {
+				auto fit = it->second.from_fields.find(_field);
+				if (fit != it->second.from_fields.end()) {
+					fit->second.push_back(_member);
+				}
+			}
+			else {
+				from_join_spec fj;
+				fj.from_data_name = _src;
+				fj.from_fields.insert_or_assign(_field, _member);
+				joins.insert_or_assign(_src, fj);
+			}
+		}
+
+		json join(json _from_data, json _object_template)
+		{
+			json_parser jp;
+
+			template_object = _object_template;
+			source_data = _from_data;
+			dest_array = jp.create_array();
+
+			from_join_collection::iterator _it = joins.begin();
+			join_impl(_it, 
+				[this](from_join_spec& _src, json& _dest) {
+					for (auto &srcfield : _src.from_fields)
+					{
+						json temp = _src.context[srcfield.first];
+
+						for (auto &fdestfield : srcfield.second)
+						{
+							_dest.copy_member(fdestfield, temp);
+						}
+					}
+				});
+			return dest_array;
+		}
+	};
 
 	class validation_error
 	{
@@ -4273,10 +4361,14 @@ private:
 						return response;
 					}
 				}
+				json from_data = jp.create_object();
 
-				// these will all run in parallel once I get this to work
+				std::map<std::string, from_join> joins;
+
+				// these run in order to allow for dependencies
 				for (auto from_class : from_classes)
 				{
+					from_join fj;
 					std::string class_name = from_class[class_name_field];
 					std::string from_name = from_class["name"];
 					json data = from_class[data_field];
@@ -4293,16 +4385,53 @@ private:
 						objects = data;
 					}
 					else if (data.empty()) {
-						json query_class_response = query_class(user_name, from_class, jx);
-						objects = query_class_response[data_field];
-						if (objects.array()) {
-							bool include_children = (bool)from_class["include_children"];
-							if (include_children)
+						json from_classes = jp.create_array();
+						json class_filter = from_class["filter"];
+						if (class_filter.object()) {
+							auto members = class_filter.get_members();
+							for (auto member : members)
 							{
-								auto edit_class = read_lock_class(class_name);
-								std::string token = query_request[token_field];
-								for (auto obj : objects) {
-									edit_class->run_queries(this, token, obj);
+								if (member.second.is_string())
+								{
+									std::string_view value = (std::string)member.second;
+									if (value.starts_with("$"))
+									{
+										std::string_view path = value.substr(1);
+										std::vector<std::string_view> split_path = split(path, '.');
+										if (split_path.size() == 2) {
+											std::string_view from_name = split_path[0];
+											std::string_view from_member = split_path[1];
+											fj.create_join(std::string(from_name), std::string(from_member), member.second);
+										}
+										else
+										{
+											response = create_response(query_request, false, "really a bad use of the $ in the filter clause", filters, tx.get_elapsed_seconds());
+											system_monitoring_interface::global_mon->log_function_stop("query", "bad query data", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+											return response;
+										}
+									}
+								}
+							}
+						}
+						json filters = fj.join(from_data, class_filter);
+						for (auto from_filter : filters)
+						{
+							from_class.put_member("filter", from_filter);
+							json query_class_response = query_class(user_name, from_class, jx);
+							json temp_objects = query_class_response[data_field];
+							if (temp_objects.array()) {
+								bool include_children = (bool)from_class["include_children"];
+								if (include_children)
+								{
+									auto edit_class = read_lock_class(class_name);
+									std::string token = query_request[token_field];
+									for (auto obj : temp_objects) {
+										edit_class->run_queries(this, token, obj);
+									}
+								}
+								for (auto obj : temp_objects)
+								{
+									objects.push_back(temp_objects);
 								}
 							}
 						}
@@ -4312,6 +4441,7 @@ private:
 						system_monitoring_interface::global_mon->log_function_stop("query", "bad query data", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
+					from_data.put_member(from_name, objects);
 					context.set_data_source(from_name, objects);
 				}
 

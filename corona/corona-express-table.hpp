@@ -2513,7 +2513,7 @@ namespace corona
 		int64_t total_memory;
 		bool block_lifetime_set = false;
 
-		bool test_io = true;
+		bool test_io = false;
 
 		// save enforces a total_memory policy 
 		// by examining the bytes of blocks as they are saved,

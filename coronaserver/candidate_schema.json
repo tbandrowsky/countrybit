@@ -17,7 +17,28 @@
         "street2": "string",
         "city": "string",
         "state": "string",
-        "zip": "string"
+        "zip": "string",
+        "committees": {
+          "field_type": "query",
+          "field_name" : "committees",
+          "query": {
+            "from": [
+              {
+                "class_name": "CommitteeCandidates",
+                "name": "CommitteeCandidates",
+                "filter": {
+                  "candidate_id": "H0NV01219"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "Candidates"
+              }
+            ]
+          }
+        }
       },
       "indexes": {
         "candidate_candidate_id_idx": {

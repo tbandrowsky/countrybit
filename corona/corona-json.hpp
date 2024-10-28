@@ -1033,7 +1033,7 @@ namespace corona
 			return field_types::ft_none;
 		}
 
-		json query(std::string _path);
+		json query(std::string_view _path);
 
 		json clone()
 		{
@@ -1529,6 +1529,17 @@ namespace corona
 			return nullptr;
 		}
 
+		json operator[](const std::string_view& _key) const
+		{
+			std::string temp(_key);
+			if (object_impl() and object_impl()->members.contains(temp)) {
+				json jn(object_impl()->members[temp]);
+				return jn;
+			}
+			json empty;
+			return empty;
+		}
+
 		json operator[](const std::string& _key) const
 		{
 			if (object_impl() and object_impl()->members.contains(_key)) {
@@ -1796,6 +1807,17 @@ namespace corona
 			else if (_member.function()) {
 				put_member_function(_key, _member);
 			}
+			return *this;
+		}
+
+		json put_member(std::string _key, std::string_view _value)
+		{
+			if (not object_impl()) {
+				throw std::logic_error("Not an object");
+			}
+			auto new_member = std::make_shared<json_string>();
+			new_member->value = _value;
+			object_impl()->members[_key] = new_member;
 			return *this;
 		}
 
@@ -4060,11 +4082,11 @@ namespace corona
 		return j;
 	}
 
-	json json::query(std::string _path)
+	json json::query(std::string_view _path)
 	{
 		json_parser jp;
 		json result = jp.create_object();
-		std::vector<std::string> items = split(_path, '.');
+		std::vector<std::string_view> items = split(_path, '.');
 		json start = *this;
 
 		result.put_member("path", _path);
