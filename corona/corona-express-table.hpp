@@ -2441,31 +2441,41 @@ namespace corona
 
 	std::shared_ptr<xleaf_block> xblock_cache::open_leaf_block(xblock_ref& _ref)
 	{
-		write_scope_lock lockit(locker);
-		auto foundit = leaf_blocks.find(_ref.location);
-		if (foundit != std::end(leaf_blocks)) {
-			foundit->second.access();
-			return foundit->second.block;
+		{
+			read_scope_lock lockit(locker);
+			auto foundit = leaf_blocks.find(_ref.location);
+			if (foundit != std::end(leaf_blocks)) {
+				foundit->second.access();
+				return foundit->second.block;
+			}
 		}
 		auto new_block = std::make_shared<xleaf_block>(this, _ref);
 		cached_leaf cl;
 		cl.block = new_block;
-		leaf_blocks.insert_or_assign(_ref.location, cl);
+		{
+			write_scope_lock lockit(locker);
+			leaf_blocks.insert_or_assign(_ref.location, cl);
+		}
 		return new_block;
 	}
 
 	std::shared_ptr<xbranch_block> xblock_cache::open_branch_block(xblock_ref& _ref)
 	{
-		write_scope_lock lockit(locker);
-		auto foundit = branch_blocks.find(_ref.location);
-		if (foundit != std::end(branch_blocks)) {
-			foundit->second.access();
-			return foundit->second.block;
+		{
+			read_scope_lock lockit(locker);
+			auto foundit = branch_blocks.find(_ref.location);
+			if (foundit != std::end(branch_blocks)) {
+				foundit->second.access();
+				return foundit->second.block;
+			}
 		}
 		auto new_block = std::make_shared<xbranch_block>(this, _ref);
 		cached_branch cb;
 		cb.block = new_block;
-		branch_blocks.insert_or_assign(_ref.location, cb);
+		{
+			write_scope_lock lockit(locker);
+			branch_blocks.insert_or_assign(_ref.location, cb);
+		}
 		return new_block;
 	}
 
@@ -2577,8 +2587,6 @@ namespace corona
 		{
 			leaf_blocks.erase(del);
 		}
-
-
 	}
 
 	xblock_ref xbranch_block::find_block(const xrecord& key)
@@ -2595,7 +2603,7 @@ namespace corona
 			std::string key_render = key.to_string();
 		}
 
-		if (xheader.content_type = xblock_types::xb_leaf)
+		if (xheader.content_type == xblock_types::xb_leaf)
 		{
 			auto ifirst = records.upper_bound(key);
 			if (ifirst != std::begin(records)) {
@@ -2609,7 +2617,7 @@ namespace corona
 				}
 			}
 		}
-		else if (xheader.content_type = xblock_types::xb_branch)
+		else if (xheader.content_type == xblock_types::xb_branch)
 		{
 			if (records.size() == 0)
 			{
