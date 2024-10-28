@@ -116,12 +116,12 @@
         "type": "csv",
         "delimiter": "|",
         "filename": "cm.csv",
-        "target_class": "Candidates",
+        "target_class": "Committees",
         "column_map": {
-          "0": "CommitteId",
-          "1": "CommitteeName",
-          "10": "PoliticalParty",
-          "13": "CompanyName"
+          "0": "committee_id",
+          "1": "committee_name",
+          "10": "political_party",
+          "13": "company_name"
         }
       }
     },
@@ -137,16 +137,16 @@
         "filename": "itcont.csv",
         "target_class": "Individuals",
         "column_map": {
-          "0": "CommitteeId",
-          "8": "FullName",
-          "9": "City",
-          "10": "State",
-          "11": "Zip",
-          "12": "Employer",
-          "13": "Occupation",
-          "14": "TransactionDate",
-          "15": "TransactionAmount",
-          "20": "Memo"
+          "0": "committee_id",
+          "8": "full_name",
+          "9": "city",
+          "10": "state",
+          "11": "zip",
+          "12": "employer",
+          "13": "occupation",
+          "14": "transaction_date",
+          "15": "transaction_amount",
+          "20": "memo"
         }
       }
     }

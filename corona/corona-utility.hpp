@@ -40,7 +40,7 @@ namespace corona {
 		for (int i = 0; i < s.size(); i++) 
 		{
 			if (s[i] == delim) {
-				std::string_view temp = s.substr(start, count - 1);
+				std::string_view temp = s.substr(start, count);
 				elems.push_back(temp);
 				start = i + 1;
 				count = 0;

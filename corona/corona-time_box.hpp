@@ -259,6 +259,11 @@ namespace corona
 			return *this;
 		}
 
+		bool is_empty()
+		{
+			return system_time.wYear == 0 and system_time.wMonth == 0;
+		}
+
 		operator time_span() const
 		{
 			FILETIME ft;

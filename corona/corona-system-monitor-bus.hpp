@@ -600,12 +600,17 @@ namespace corona
 			std::cout << Logfunction;
 			std::cout << std::format("{0:<20}", " ");
 			std::cout << Loginformation;
-			std::cout << std::format("{0:<45}{1:<10}{2:<25}",
-				trim(_message, 45),
-				GetCurrentThreadId(),
-				" "
-			);
-			file_line(_file, _line);
+			if (_message.size() < 45) {
+				std::cout << std::format("{0:<45}{1:<10}{2:<25}",
+					_message,
+					GetCurrentThreadId(),
+					" "
+				);
+				file_line(_file, _line);
+			}
+			else {
+				std::cout << _message;
+			}
 			std::cout << std::endl;
 
 			}

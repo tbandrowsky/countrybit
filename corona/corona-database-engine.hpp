@@ -2909,6 +2909,11 @@ private:
 
 			for (auto class_pair : class_list)
 			{
+				if (class_pair.first.empty()) {
+					response.put_member(success_field, false);
+					response.put_member(message_field, "empty class name");
+					return response;
+				}
 				write_class_sp cd = write_lock_class(class_pair.first);
 				if (cd) {
 					cd->init_validation(this);
@@ -3377,6 +3382,29 @@ private:
 			return class_def;
 		}
 
+		void log_error_array(json put_result)
+		{
+			auto result_items = put_result[data_field];
+			result_items.for_each_member([](const std::string& _member_name, json _member) {
+				if (_member.array()) {
+					_member.for_each_element([](json& _item) {
+						std::string msg = std::format("{0}:", (std::string)_item[message_field]);
+						system_monitoring_interface::global_mon->log_warning(msg);
+						if (not _item[success_field]) {
+							if (_item.has_member("errors"))
+							{
+								json errors = _item["errors"];
+								errors.for_each_element([](json& _msg) {
+									std::string msg = std::format("{0}.{1} {2}", (std::string)_msg[class_name_field], (std::string)_msg["field_name"], (std::string)_msg[message_field]);
+									system_monitoring_interface::global_mon->log_information(msg);
+									});
+							}
+						}
+						});
+				}
+				});
+		}
+
 		virtual json apply_schema(json _schema)
 		{
 			date_time start_schema = date_time::now();
@@ -3600,12 +3628,7 @@ private:
 													datomatic = jp.create_array();
 												}
 												else {
-													std::string msg = std::format("Error saving object {0}", (std::string)put_result[message_field]);
-													system_monitoring_interface::global_mon->log_warning(msg);
-													system_monitoring_interface::global_mon->log_information("Return result");
-													system_monitoring_interface::global_mon->log_json(put_result);
-													system_monitoring_interface::global_mon->log_information("Object that failed.");
-													system_monitoring_interface::global_mon->log_json(new_object);
+													log_error_array(put_result);
 													break;
 												}
 											}
@@ -3618,16 +3641,12 @@ private:
 											if (put_result[success_field]) {
 												double e = tx.get_elapsed_seconds();
 												total_row_count += datomatic.size();
-												std::string msg = std::format("import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
+												std::string msg = std::format("final import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
 												system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
 												datomatic = jp.create_array();
 											}
 											else {
-												std::string msg = std::format("Error saving object {0}", (std::string)put_result[message_field]);
-												system_monitoring_interface::global_mon->log_warning(msg);
-												system_monitoring_interface::global_mon->log_information("Return result");
-												system_monitoring_interface::global_mon->log_json(put_result);
-												system_monitoring_interface::global_mon->log_information("Object that failed.");
+												log_error_array(put_result);
 												break;
 											}
 										}

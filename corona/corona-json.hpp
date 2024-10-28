@@ -56,6 +56,10 @@ namespace corona
 		{
 			return "";
 		}
+		virtual bool is_empty()
+		{
+			return true;
+		}
 		virtual void from_string(const std::string_view& _src)
 		{
 			;
@@ -201,7 +205,10 @@ namespace corona
 			return _src;
 
 		}
-
+		virtual bool is_empty()
+		{
+			return false;
+		}
 		virtual void from_string(const std::string_view& _src)
 		{
 			std::string temp(_src);
@@ -384,6 +391,10 @@ namespace corona
 		{
 			return value;
 		}
+		virtual bool is_empty()
+		{
+			return value.is_empty();
+		}
 		virtual std::stringstream& serialize(std::stringstream& _src)
 		{
 			_src << to_json_typed();
@@ -445,6 +456,11 @@ namespace corona
 		virtual std::string to_json_typed()
 		{
 			return get_type_prefix() + " " + to_json();
+		}
+
+		virtual bool is_empty()
+		{
+			return value.size() == 0;
 		}
 
 		virtual std::string to_string()
@@ -538,6 +554,10 @@ namespace corona
 
 		}
 
+		virtual bool is_empty()
+		{
+			return false;
+		}
 
 		virtual std::string format(std::string _format)
 		{
@@ -638,6 +658,11 @@ namespace corona
 			value = _src;
 		}
 
+		virtual bool is_empty()
+		{
+			return value.empty();
+		}
+
 		virtual field_types get_field_type()
 		{
 			return field_types::ft_string;
@@ -708,6 +733,11 @@ namespace corona
 			}
 			ret += " ]";
 			return ret;
+		}
+
+		virtual bool is_empty()
+		{
+			return elements.empty();
 		}
 
 		virtual std::stringstream& serialize(std::stringstream& _src)
@@ -846,6 +876,11 @@ namespace corona
 			}
 			_src << " }";
 			return _src;
+		}
+
+		virtual bool is_empty()
+		{
+			return members.empty();
 		}
 
 		virtual field_types get_field_type()
@@ -1040,6 +1075,10 @@ namespace corona
 			for (auto s : _src) {
 				if (not has_member(s))
 					return false;
+				auto member = object_impl()->members[s];
+				if (member->is_empty()) {
+					return false;
+				}
 			}
 			return true;
 		}
@@ -1055,6 +1094,14 @@ namespace corona
 				if (not has_member(s)) {
 					good = false;
 					_missing.push_back(s);
+				}
+				else 
+				{
+					auto member = object_impl()->members[s];
+					if (member->is_empty()) {
+						good = false;
+						_missing.push_back(s);
+					}
 				}
 			}
 			return good;
@@ -2379,14 +2426,14 @@ namespace corona
 			return comparison_result;
 		}
 
-		json for_each_member(std::function<void(const std::string& _key_name)> _transform)
+		json for_each_member(std::function<void(const std::string& _key_name, json _member)> _transform)
 		{
 			if (not object_impl()) {
 				throw std::logic_error("Not an array");
 			}
 			for (auto m : object_impl()->members)
 			{
-				_transform(m.first);
+				_transform(m.first, m.second);
 			}
 			return *this;
 		}
