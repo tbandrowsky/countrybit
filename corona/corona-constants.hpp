@@ -703,7 +703,7 @@ namespace corona
 		return d;
 	}
 
-	int toInt2(const std::string& item, int _baseIndex)
+	int toInt2(const std::string_view& item, int _baseIndex)
 	{
 		int r = toInt(item[_baseIndex], 4) + toInt(item[_baseIndex + 1], 0);
 		return r;

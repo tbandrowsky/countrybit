@@ -56,7 +56,7 @@ namespace corona
 		{
 			return "";
 		}
-		virtual void from_string(std::string _src)
+		virtual void from_string(const std::string_view& _src)
 		{
 			;
 		}
@@ -202,9 +202,10 @@ namespace corona
 
 		}
 
-		virtual void from_string(std::string _src)
+		virtual void from_string(const std::string_view& _src)
 		{
-			value = std::stod(_src);
+			std::string temp(_src);
+			value = std::stod(temp);
 		}
 		virtual std::string format(std::string _format)
 		{
@@ -389,9 +390,9 @@ namespace corona
 			return _src;
 
 		}
-		virtual void from_string(std::string _src)
+		virtual void from_string(const std::string_view& _src)
 		{
-			value = _src;
+			value = std::string(_src);
 		}
 		virtual std::string format(std::string _format)
 		{
@@ -462,7 +463,7 @@ namespace corona
 			return _src;
 		}
 
-		virtual void from_string(std::string st)
+		virtual void from_string(const std::string_view& st)
 		{
 			value.clear();
 			for (int i = 0; i < st.size(); i += 2)
@@ -548,9 +549,10 @@ namespace corona
 			return std::format("{}", value);
 		}
 
-		virtual void from_string(std::string _src)
+		virtual void from_string(const std::string_view& _src)
 		{
-			value = std::stoll(_src);
+			std::string temp(_src);
+			value = std::stoll(temp);
 		}
 
 		virtual field_types get_field_type()
@@ -631,7 +633,7 @@ namespace corona
 		{
 			return value;
 		}
-		virtual void from_string(std::string _src)
+		virtual void from_string(const std::string_view& _src)
 		{
 			value = _src;
 		}
@@ -741,7 +743,7 @@ namespace corona
 		{
 			return to_json();
 		}
-		virtual void from_string(std::string _src)
+		virtual void from_string(const std::string_view& _src)
 		{
 			elements.clear();
 		}
@@ -856,7 +858,7 @@ namespace corona
 			return to_json();
 		}
 
-		virtual void from_string(std::string _src)
+		virtual void from_string(const std::string_view& _src)
 		{
 			members.clear();
 		}
@@ -1030,7 +1032,7 @@ namespace corona
 			return _dest;
 		}
 
-		bool has_members(std::vector<std::string> _src)
+		bool has_members(const std::vector<std::string>& _src)
 		{
 			if (not object())
 				return false;
@@ -1042,7 +1044,7 @@ namespace corona
 			return true;
 		}
 
-		bool has_members(std::vector<std::string>& _missing, std::vector<std::string> _src)
+		bool has_members(std::vector<std::string>& _missing, const std::vector<std::string>& _src)
 		{
 			if (not object())
 				return false;
@@ -1433,7 +1435,7 @@ namespace corona
 			}
 		}
 
-		bool import_member(std::string _member, std::string _value_to_import)
+		bool import_member(std::string _member, const std::string_view& _value_to_import)
 		{
 			bool stuffed = false;
 			if (object_impl() and object_impl()->members.contains(_member)) {
@@ -3253,17 +3255,25 @@ namespace corona
 
 	public:
 
-		bool parse_delimited_string(json _dest_template, json& _column_map, const std::string _src, char _delimiter)
+		bool parse_delimited_string(json _dest_template, json& _column_map, const std::string& _src, char _delimiter)
 		{
 			bool r = false;
 
-			std::vector<std::string> stuff = split(_src, _delimiter);
+			std::string_view line;
+			line = _src;
 
-			for (int i = 0; i < stuff.size(); i++) 
+			if (_src.ends_with("\n"))
+			{
+				line = line.substr(0, line.size() - 1);
+			}
+
+			std::vector<std::string_view> pieces = split(line, _delimiter);
+
+			for (int i = 0; i < pieces.size(); i++)
 			{
 				std::string index_key = std::to_string(i);
 				std::string column_name = _column_map[index_key];
-				bool t = _dest_template.import_member(column_name, stuff[i]);
+				bool t = _dest_template.import_member(column_name, pieces[i]);
 				if (t) r = t;
 			}
 

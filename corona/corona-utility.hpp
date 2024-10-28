@@ -32,6 +32,33 @@ namespace corona {
 	std::string join(std::vector<std::string> items, std::string delim);
 	std::vector<std::string> split(const std::string& s, char delim);
 
+	std::vector<std::string_view> split(const std::string_view& s, char delim)
+	{
+		std::vector<std::string_view> elems;
+		int start = 0;
+		int count = 0;
+		for (int i = 0; i < s.size(); i++) 
+		{
+			if (s[i] == delim) {
+				std::string_view temp = s.substr(start, count - 1);
+				elems.push_back(temp);
+				start = i + 1;
+				count = 0;
+			}
+			else 
+			{
+				count++;
+			}
+		}
+		if (count) {
+			std::string_view temp = s.substr(start, count);
+			elems.push_back(temp);
+		}
+
+		return elems;
+	}
+
+
 	std::vector<std::string> split(const std::string& s, char delim)
 	{
 		std::vector<std::string> elems;

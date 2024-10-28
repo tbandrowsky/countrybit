@@ -2039,8 +2039,10 @@ namespace corona
 			return indexes_list;
 		}
 
-		virtual void put_objects(corona_database_interface* _db, json& _child_objects, json& _src_list)
+		virtual void put_objects(corona_database_interface* _db, json& _child_objects, json& _src_list) override
 		{
+			bool index_ready = true;
+
 			json_parser jp;
 
 			struct index_object_pair {
@@ -2130,6 +2132,7 @@ namespace corona
 						for (auto& iop : index_updates)
 						{
 							auto& idx_keys = iop.index->get_index_keys();
+
 							json obj_to_delete = old_object.extract(idx_keys);
 							json obj_to_add = write_object.extract(idx_keys);
 							if (obj_to_delete.compare(obj_to_add) != 0) {
@@ -2143,6 +2146,8 @@ namespace corona
 						for (auto& iop : index_updates)
 						{
 							auto& idx_keys = iop.index->get_index_keys();
+							// check to make sure that we have all the fields 
+							// for the index
 							json obj_to_add = write_object.extract(idx_keys);
 							iop.objects_to_add.push_back(obj_to_add);
 						}
@@ -2150,7 +2155,7 @@ namespace corona
 				}
 
 			}
-
+			
 			tb->put_array(put_list);
 
 			for (auto& iop : index_updates)
@@ -2794,6 +2799,26 @@ private:
 						auto member_type = fld->get_field_type();
 						if (member_type != obj_type) {
 							object_definition.change_member_type(fld->get_field_name(), member_type);
+						}
+					}
+				}
+
+				// check to make sure that we have all the fields 
+				// for the index
+
+				for (auto &idx : class_data->get_indexes()) {
+					std::vector<std::string> missing;
+					std::vector<std::string> &idx_keys = idx->get_index_keys();
+					if (not object_definition.has_members(missing, idx_keys))
+					{
+						for (auto& missed : missing) {
+							validation_error ve;
+							ve.field_name = missed;
+							ve.class_name = class_data->get_class_name();
+							ve.filename = __FILE__;
+							ve.line_number = __LINE__;
+							ve.message = std::format("Missing field required for index '{0}'", idx->get_index_name());
+							validation_errors.push_back(ve);
 						}
 					}
 				}
@@ -3471,6 +3496,7 @@ private:
 						json script_definition = script_array.get_element(i);
 
 						script_definition.put_member(class_name_field, "sys_datasets");
+						script_definition.put_member_i64("schema_id", (int64_t)_schema[object_id_field]);
 						std::string dataset_name = script_definition["dataset_name"];
 						std::string dataset_version = script_definition["dataset_version"];
 
@@ -4425,7 +4451,6 @@ private:
 					json data_list = class_pair.second.map([](std::string _member, int _index, json& _item) -> json {
 						return _item[data_field];
 						});
-
 
 					cd->put_objects(this, child_objects, data_list);
 				}

@@ -827,12 +827,18 @@ namespace corona
 			return false;
 		}
 
+		bool has_wildcard;
 
 	public:
 
 		xrecord()
 		{
+			has_wildcard = false;
+		}
 
+		bool is_wildcard() const
+		{
+			return has_wildcard;
 		}
 
 		xrecord(std::vector<std::string>& _keys, json _src)
@@ -844,6 +850,7 @@ namespace corona
 
 		xrecord(const char* _src, size_t _length)
 		{
+			has_wildcard = false;
 			record_bytes.insert(record_bytes.end(), _src, _src + _length);
 		}
 
@@ -862,22 +869,28 @@ namespace corona
 		xrecord(const xrecord& _src)
 		{
 			record_bytes = _src.record_bytes;
+			has_wildcard = _src.has_wildcard;
 		}
 
 		xrecord& operator =(const xrecord& _src)
 		{
 			record_bytes = _src.record_bytes;
+			has_wildcard = _src.has_wildcard;
 			return *this;
 		}
 
 		xrecord(xrecord&& _src)
 		{
 			record_bytes = std::move(_src.record_bytes);
+			has_wildcard = _src.has_wildcard;
+
 		}
 
 		xrecord& operator = (xrecord&& _src)
 		{
 			record_bytes = std::move(_src.record_bytes);
+			has_wildcard = _src.has_wildcard;
+
 			return *this;
 		}
 
@@ -911,6 +924,7 @@ namespace corona
 					emplace<xint64_t, int64_t>(m);
 					break;
 				default:
+					has_wildcard = true;
 					emplace<xwildcard, int>(m);
 					break;
 				} // end switch
@@ -1346,16 +1360,6 @@ namespace corona
 			return key;
 		}
 
-		virtual xrecord get_end_key_nl()
-		{
-			xrecord key;
-			auto max_key = records.crbegin();
-			if (max_key != records.rend())
-			{
-				key = max_key->first;
-			}
-			return key;
-		}
 
 		void save_nl()
 		{
@@ -1414,13 +1418,6 @@ namespace corona
 			read_scope_lock lockit(locker);
 
 			return get_start_key_nl();
-		}
-
-		xrecord get_end_key()
-		{
-			read_scope_lock lockit(locker);
-
-			return get_end_key_nl();
 		}
 
 		virtual void release()
@@ -1744,13 +1741,10 @@ namespace corona
 			json_parser jp;
 			json result = jp.create_object();
 			auto start_key = get_start_key();
-			auto end_key = get_end_key();
 			result.put_member("block", "leaf");
 			result.put_member_i64("block_count", records.size());
 			std::string starts = start_key.to_string();
-			std::string ends = end_key.to_string();
 			result.put_member("block_key_start", starts);
-			result.put_member("block_key_stop", ends);
 			result.put_member_i64("block_location", get_reference().location);
 			return result;
 		}
@@ -1761,6 +1755,7 @@ namespace corona
 	{
 	private:
 		xblock_ref find_block(const xrecord& key);
+		std::map<xrecord, xblock_ref>::iterator find_xrecord(const xrecord& key);
 
 		virtual std::shared_ptr<xbranch_block> split_branch(std::shared_ptr<xbranch_block> _block, int _indent)
 		{
@@ -2086,8 +2081,9 @@ namespace corona
 			result.is_all = false;
 			result.is_any = false;
 
-			auto range = records.equal_range(_key);
-			for (auto iter = range.first; iter != range.second; iter++) {
+			auto iter = find_xrecord(_key);
+			while (iter != records.end() and iter->first <= _key)
+			{
 				xfor_each_result temp;
 				auto& found_block = iter->second;
 				if (found_block.block_type == xblock_types::xb_branch)
@@ -2118,8 +2114,9 @@ namespace corona
 
 			std::vector<xrecord> result = {};
 
-			auto range = records.equal_range(_key);
-			for (auto iter = range.first; iter != range.second; iter++) {
+			auto iter = find_xrecord(_key);
+			while (iter != records.end() and iter->first <= _key) 
+			{
 				std::vector<xrecord> temp;
 				auto& found_block = iter->second;
 				if (found_block.block_type == xblock_types::xb_branch)
@@ -2136,6 +2133,7 @@ namespace corona
 					temp = {};
 
 				result.insert(result.end(), temp.begin(), temp.end());
+				iter++;
 			}
 			return result;
 		}
@@ -2147,12 +2145,9 @@ namespace corona
 			json_parser jp;
 			json result = jp.create_object();
 			auto start_key = get_start_key();
-			auto end_key = get_end_key();
 			result.put_member("block", "branch");
 			std::string starts = start_key.to_string();
-			std::string ends = end_key.to_string();
 			result.put_member("block_key_start", starts);
-			result.put_member("block_key_stop", ends);
 			result.put_member_i64("block_count", records.size());
 			switch (xheader.content_type) {
 			case xblock_types::xb_branch:
@@ -2345,6 +2340,9 @@ namespace corona
 		virtual void put(json _object, bool _save = true) override
 		{
 			xrecord key(table_header->key_members, _object);
+			if (key.is_wildcard()) {
+				::DebugBreak();
+			}
 			xrecord data(table_header->object_members, _object);			 
 			table_header->root->put(0, key, data);
 			::InterlockedIncrement64(&table_header->count);
@@ -2511,8 +2509,6 @@ namespace corona
 
 	void xblock_cache::save()
 	{
-		write_scope_lock lockit(locker);
-
 		date_time current = date_time::now();
 		int64_t total_memory;
 		bool block_lifetime_set = false;
@@ -2532,60 +2528,109 @@ namespace corona
 		// as they tend to be more critical path
 
 		total_memory = 0;
-		std::vector<cached_branch *> branches;
+		std::vector<cached_branch> branches;
 		std::vector<int64_t> deletes;
-		for (auto& sv : branch_blocks)
 		{
-			branches.push_back(&sv.second);
+			read_scope_lock lockit(locker);
+
+			for (auto& sv : branch_blocks)
+			{
+				branches.push_back(sv.second);
+			}
 		}
-		std::sort(branches.begin(), branches.end(), [](const cached_branch* _a, const cached_branch* _b) {
-			return _a->last_access > _b->last_access;
+
+		std::sort(branches.begin(), branches.end(), [](const cached_branch& _a, const cached_branch& _b) {
+			return _a.last_access > _b.last_access;
 			});
 		for (auto& sv : branches)
 		{
-			total_memory += sv->block->save();
+			total_memory += sv.block->save();
 			if (test_io or total_memory > this->maximum_memory_bytes)
 			{
 				if (not block_lifetime_set) {
-					block_lifetime = current.get_time_t() - sv->get_last_access().get_time_t();
+					block_lifetime = current.get_time_t() - sv.get_last_access().get_time_t();
 					block_lifetime_set = true;
 				}
-				deletes.push_back(sv->block->get_reference().location);
+				deletes.push_back(sv.block->get_reference().location);
 			}
 		}
 
-		for (auto del : deletes)
 		{
-			branch_blocks.erase(del);
+			write_scope_lock lockit(locker);
+			for (auto del : deletes)
+			{
+				branch_blocks.erase(del);
+			}
+			deletes.clear();
 		}
-		deletes.clear();
 
 		// then leaves are taken
 
-		std::vector<cached_leaf *> leaves;
-		for (auto& sv : leaf_blocks)
+		std::vector<cached_leaf> leaves;
 		{
-			leaves.push_back(&sv.second);
+			read_scope_lock lockit(locker);
+
+			for (auto& sv : leaf_blocks)
+			{
+				leaves.push_back(sv.second);
+			}
+			std::sort(leaves.begin(), leaves.end(), [](const cached_leaf& _a, const cached_leaf& _b) {
+				return _a.last_access > _b.last_access;
+				});
 		}
-		std::sort(leaves.begin(), leaves.end(), [](const cached_leaf* _a, const cached_leaf* _b) {
-			return _a->last_access > _b->last_access;
-			});
 			
 		for (auto& sv : leaves)
 		{
-			total_memory += sv->block->save();
+			total_memory += sv.block->save();
 			if (test_io or total_memory > this->maximum_memory_bytes)
 			{
 				if (not block_lifetime_set) {
-					block_lifetime = current.get_time_t() - sv->get_last_access().get_time_t();
+					block_lifetime = current.get_time_t() - sv.get_last_access().get_time_t();
 					block_lifetime_set = true;
 				}
-				deletes.push_back(sv->block->get_reference().location);
+				deletes.push_back(sv.block->get_reference().location);
 			}
 		}
-		for (auto del : deletes)
+
 		{
-			leaf_blocks.erase(del);
+			write_scope_lock lockit(locker);
+
+			for (auto del : deletes)
+			{
+				leaf_blocks.erase(del);
+			}
+		}
+	}
+
+	std::map<xrecord, xblock_ref>::iterator xbranch_block::find_xrecord(const xrecord& key)
+	{
+		if constexpr (debug_branch) {
+			std::string key_render = key.to_string();
+		}
+		if (records.size() == 0)
+		{
+			return records.end();
+		}
+		else 
+		{
+			auto range_hit = records.lower_bound(key);
+			while (range_hit != records.end())
+			{
+				if constexpr (debug_branch) {
+					std::string key_found_render = range_hit->first.to_string();
+				}
+				if (range_hit->first <= key) {
+					return range_hit;
+				}
+				range_hit--;
+			}
+			auto backhit = records.rbegin();
+			if (backhit != records.rend())
+			{
+				range_hit = records.find(backhit->first);
+				return range_hit;
+			}
+			return records.end();
 		}
 	}
 
@@ -2594,53 +2639,14 @@ namespace corona
 		xblock_ref found_block;
 		found_block.block_type == xblock_types::xb_none;
 
-		std::shared_ptr<xrecord_block> return_block;
-
-		// see https://stackoverflow.com/questions/41455319/get-the-key-equal-if-key-exists-in-the-map-or-strictly-less-than-given-input-i
-
-
 		if constexpr (debug_branch) {
 			std::string key_render = key.to_string();
 		}
 
-		if (xheader.content_type == xblock_types::xb_leaf)
-		{
-			auto ifirst = records.upper_bound(key);
-			if (ifirst != std::begin(records)) {
-				ifirst--;
-				if (ifirst != std::end(records)) {
-					if constexpr (debug_branch) {
-						std::string key_found_render = ifirst->first.to_string();
-					}
-					found_block = ifirst->second;
-					return found_block;
-				}
-			}
-		}
-		else if (xheader.content_type == xblock_types::xb_branch)
-		{
-			if (records.size() == 0)
-			{
-				throw std::logic_error("What in the hell? empty branch branch found");
-			}
+		auto find_iter = find_xrecord(key);
 
-			auto ifirst = records.upper_bound(key);
-			if (ifirst != std::begin(records)) {
-				found_block = ifirst->second;
-				ifirst--;
-				if (ifirst != std::end(records)) {
-					if constexpr (debug_branch) {
-						std::string key_found_render = ifirst->first.to_string();
-					}
-					found_block = ifirst->second;
-					return found_block;
-				}
-			}
-			else 
-			{
-				found_block = records.rbegin()->second;
-			}
-		}
+		if (find_iter != records.end())
+			found_block = find_iter->second;
 
 		return found_block;
 	}
@@ -2738,6 +2744,7 @@ namespace corona
 		json_parser jp;
 
 		int test_record_count = 1000;
+		bool simple_put = true;
 
 		for (int64_t i = 1; i < test_record_count; i++)
 		{
@@ -2746,6 +2753,11 @@ namespace corona
 			value.add(10 + i % 50);
 			value.add(100 + (i % 4) * 50);
 			pbranch->put(0, key, value);
+			xrecord valueread = pbranch->get(key);
+			if (not valueread.exact_equal(value)) {
+				simple_put = false;
+				break;
+			}
 			if (pbranch->is_full()) {
 				pbranch->split_root(0);
 			}
@@ -2758,7 +2770,7 @@ namespace corona
 		pbranch = cache.open_branch_block(ref);
 
 		json saved_info = pbranch->get_info();
-		_tests->test({ "put_survived", true, __FILE__, __LINE__ });
+		_tests->test({ "put_survived", simple_put, __FILE__, __LINE__ });
 
 		json loaded_info = pbranch->get_info();
 
@@ -2798,8 +2810,6 @@ namespace corona
 		}
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
 
-		json info = pbranch->get_info();
-		system_monitoring_interface::global_mon->log_json(info);
 
 		system_monitoring_interface::global_mon->log_function_stop("xbranch", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
