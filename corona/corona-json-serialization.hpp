@@ -41,32 +41,33 @@ namespace corona
 
 	void get_json(json& _dest, measure _src)
 	{
+		using namespace std::literals;
 		_dest.put_member("amount", _src.amount);
 		switch (_src.units)
 		{
 		case measure_units::font:
-			_dest.put_member("units", "font");
+			_dest.put_member("units", "font"sv);
 			break;
 		case measure_units::font_golden_ratio:
-			_dest.put_member("units", "fontgr");
+			_dest.put_member("units", "fontgr"sv);
 			break;
 		case measure_units::percent_aspect:
-			_dest.put_member("units", "aspect");
+			_dest.put_member("units", "aspect"sv);
 			break;
 		case measure_units::percent_child:
-			_dest.put_member("units", "child");
+			_dest.put_member("units", "child"sv);
 			break;
 		case measure_units::percent_container:
-			_dest.put_member("units", "container");
+			_dest.put_member("units", "container"sv);
 			break;
 		case measure_units::percent_remaining:
-			_dest.put_member("units", "remaining");
+			_dest.put_member("units", "remaining"sv);
 			break;
 		case measure_units::pixels:
-			_dest.put_member("units", "pixels");
+			_dest.put_member("units", "pixels"sv);
 			break;
 		case measure_units::text:
-			_dest.put_member("units", "text");
+			_dest.put_member("units", "text"sv);
 			break;
 		default:
 			std::cout << "measure unit undefined" << std::endl;

@@ -88,12 +88,12 @@ namespace corona
             to_json.put_member("name", recipient_name);
 
             json from_json = jp.create_object();
-            from_json.put_member("email", sender_email);
-            from_json.put_member("name", sender_name);
+            from_json.put_member("email", std::string_view(sender_email));
+            from_json.put_member("name", std::string_view(sender_name));
 
             json reply_json = jp.create_object();
-            reply_json.put_member("email", sender_email);
-            reply_json.put_member("name", sender_name);
+            reply_json.put_member("email", std::string_view(sender_email));
+            reply_json.put_member("name", std::string_view(sender_name));
 
             email_request.put_member("from", from_json);
             email_request.put_member("reply_to", reply_json);

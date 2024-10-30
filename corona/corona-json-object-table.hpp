@@ -955,6 +955,7 @@ namespace corona
 		date_time st = date_time::now();
 		timer tx;
 		system_monitoring_interface::global_mon->log_function_start("object table proof", "start", st, __FILE__, __LINE__);
+		using namespace std::literals;
 
 		using return_type = bool;
 		json_parser jp;
@@ -967,7 +968,7 @@ namespace corona
 
 		json test_write = jp.create_object();
 		test_write.put_member_i64(object_id_field, 5);
-		test_write.put_member("Name", "Joe");
+		test_write.put_member("Name", "Joe"sv);
 		int64_t test_key = (int64_t)test_write[object_id_field];
 
 		json_object_table test_table(header, 0, &fp);
@@ -999,7 +1000,7 @@ namespace corona
 		_tests->test({ "array result", result, __FILE__, __LINE__ });
 
 		test_write.put_member_i64(object_id_field, 7);
-		test_write.put_member("Name", "Jack");
+		test_write.put_member("Name", "Jack"sv);
 		test_key = (int64_t)test_write[object_id_field];
 
 		test_table.put(test_write);
@@ -1025,7 +1026,7 @@ namespace corona
 		int db_size1 = db_contents.size();
 
 		test_write.put_member_i64(object_id_field, 7);
-		test_write.put_member("Name", "Jill");
+		test_write.put_member("Name", "Jill"sv);
 		test_key = (int64_t)test_write[object_id_field];
 		test_table.put(test_write);
 
@@ -1059,7 +1060,7 @@ namespace corona
 		_tests->test({ "table results size", result, __FILE__, __LINE__ });
 
 		test_write.put_member_i64(object_id_field, 2);
-		test_write.put_member("Name", "Sydney");
+		test_write.put_member("Name", "Sydney"sv);
 		test_key = (int64_t)test_write[object_id_field];
 		test_table.put(test_write);
 
@@ -1077,7 +1078,7 @@ namespace corona
 		_tests->test({ "insert front", result, __FILE__, __LINE__ });
 
 		test_write.put_member_i64(object_id_field, 7);
-		test_write.put_member("Name", "Orwell");
+		test_write.put_member("Name", "Orwell"sv);
 		test_key = (int64_t)test_write[object_id_field];
 		test_table.put(test_write);
 
@@ -1087,7 +1088,7 @@ namespace corona
 		_tests->test({ "update", result, __FILE__, __LINE__ });
 
 		test_write.put_member_i64(object_id_field, 1);
-		test_write.put_member("Name", "Canada");
+		test_write.put_member("Name", "Canada"sv);
 		test_key = (int64_t)test_write[object_id_field];
 		test_table.put(test_write);
 
@@ -1097,7 +1098,7 @@ namespace corona
 		_tests->test({ "insert first 2", result, __FILE__, __LINE__ });
 
 		test_write.put_member_i64(object_id_field, 7);
-		test_write.put_member("Name", "Roger");
+		test_write.put_member("Name", "Roger"sv);
 		test_key = (int64_t)test_write[object_id_field];
 		test_table.put(test_write);
 
@@ -1107,7 +1108,7 @@ namespace corona
 		_tests->test({ "update 2", result, __FILE__, __LINE__ });
 
 		test_write.put_member_i64(object_id_field, 1);
-		test_write.put_member("Name", "Maraca");
+		test_write.put_member("Name", "Maraca"sv);
 		test_key = (int64_t)test_write[object_id_field];
 		test_table.put(test_write);
 

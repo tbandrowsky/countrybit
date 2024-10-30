@@ -27,6 +27,7 @@ namespace corona
 	class query_context_base
 	{
 		json froms;
+		std::vector<validation_error> errors;
 
 	public:
 
@@ -34,7 +35,8 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "query_context");
+			using namespace std::literals;
+			_dest.put_member("class_name", "query_context"sv);
 			_dest.put_member("froms", froms);
 		}
 
@@ -58,6 +60,39 @@ namespace corona
 			froms = _src["froms"];
 		}
 
+		void add_error(const std::string& _class_name, const std::string& _field_name, const std::string& _message, const std::string& _file, int _line_number)
+		{
+			validation_error ve;
+			ve.class_name = _class_name;
+			ve.field_name = _field_name;
+			ve.message = _message;
+			ve.filename = _file;
+			ve.line_number = _line_number;
+			errors.push_back(ve);
+		}
+
+		void clear_errors()
+		{
+			errors.clear();
+		}
+
+		bool is_error()
+		{
+			return errors.size() > 0;
+		}
+
+		json get_errors()
+		{
+			json_parser jp;
+			json results = jp.create_array();
+			for (auto err : errors) {
+				json jerr = jp.create_object();
+				err.get_json(jerr);
+				results.push_back(jerr);
+			}
+			return results;
+		}
+
 
 		virtual json get_data(std::string _query) 
 		{
@@ -71,13 +106,15 @@ namespace corona
 			if (query_si.empty()) 
 			{
 				std::string msg = std::format("{0} query data request does not have a source_name: prefix", _query);
+				add_error("get_data", _query, msg, __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_warning(msg);
 			}
 			else 
 			{
 				j = froms[query_si];
 				if (j.empty()) {
-					std::string msg = std::format("{0} query data source not found", _query);
+					std::string msg = std::format("{0}({1}) query data source not found", _query, query_si);
+					add_error("get_data", _query, msg, __FILE__, __LINE__);
 					system_monitoring_interface::global_mon->log_warning(msg);
 				}
 
@@ -121,7 +158,8 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "query_stage");
+			using namespace std::literals;
+			_dest.put_member("class_name", "query_stage"sv);
 			_dest.put_member("stage_name", stage_name);
 			_dest.put_member("stage_output", stage_output);
 			_dest.put_member("execution_time_seconds", execution_time_seconds);
@@ -160,8 +198,8 @@ namespace corona
 		{
 			json_parser jp;
 			query_context_base::get_json(_dest);
-
-			_dest.put_member("class_name", "query_context");
+			using namespace std::literals;
+			_dest.put_member("class_name", "query_context"sv);
 			json stage_array = jp.create_array();
 			for (auto st : stages) {
 				json stj = jp.create_object();
@@ -266,9 +304,16 @@ namespace corona
 		virtual json process(query_context_base* _src) {
 			timer tx;
 			json_parser jp;
+			json result = jp.create_array();
+
+			if (stage_input_name.empty())
+			{
+				_src->add_error("filter", "input", "missing property 'input' for stage.", __FILE__, __LINE__);
+				return result;
+			}
+
 			json stage_input = _src->get_data(stage_input_name);
 			if (stage_input.object()) {
-				json result = jp.create_array();
 				if (condition) {
 					if (condition->accepts(_src, stage_input)) {
 						result.push_back(stage_input);
@@ -283,7 +328,6 @@ namespace corona
 				}
 			}
 			else if (stage_input.array()) {
-				json result = jp.create_array();
 				if (condition) {
 					for (auto item : stage_input) {
 						if (condition->accepts(_src, item)) {
@@ -298,6 +342,10 @@ namespace corona
 				stage_output = result;
 				return result;
 			}
+			else
+			{
+				_src->add_error("filter", stage_input_name, "Stage input name not found", __FILE__, __LINE__);
+			}
 			execution_time_seconds = tx.get_elapsed_seconds();
 			return stage_output;  
 		}
@@ -311,8 +359,9 @@ namespace corona
 				condition->get_json(jcondition);
 				_dest.put_member("condition", jcondition);
 			}
-			_dest.put_member("class_name", "filter");
-			_dest.put_member("stage_input_name", stage_input_name);
+			using namespace std::literals;
+			_dest.put_member("class_name", "filter"sv);
+			_dest.put_member("input", stage_input_name);
 		}
 
 		virtual void put_json(json& _src)
@@ -334,7 +383,7 @@ namespace corona
 			if (not jcondition.empty()) {
 				corona::put_json(condition, jcondition);
 			}
-			stage_input_name = _src["stage_input_name"];
+			stage_input_name = _src["input"];
 		}
 
 	};
@@ -357,7 +406,13 @@ namespace corona
 			stage_output = jp.create_array();
 
 			json query1 = _src->get_data(source1);
+			if (query1.empty()) {
+				_src->add_error("join", source1, "data not found", __FILE__, __LINE__);
+			}
 			json query2 = _src->get_data(source2);
+			if (query2.empty()) {
+				_src->add_error("join", source2, "data not found", __FILE__, __LINE__);
+			}
 
 			if (query1.object()) {
 				json t = jp.create_array();
@@ -395,8 +450,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			using namespace std::literals;
 			query_stage::get_json(_dest);
-			_dest.put_member("class_name", "join");
+			_dest.put_member("class_name", "join"sv);
 			_dest.put_member("resultname1", resultname1);
 			_dest.put_member("resultname2", resultname2);
 			_dest.put_member("source1", source1);
@@ -450,8 +506,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			using namespace std::literals;
 			query_condition::get_json(_dest);
-			_dest.put_member("class_name", "contains");
+			_dest.put_member("class_name", "contains"sv);
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
 		}
@@ -492,8 +549,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			using namespace std::literals;
 			query_condition::get_json(_dest);
-			_dest.put_member("class_name", "gt");
+			_dest.put_member("class_name", "gt"sv);
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
 		}
@@ -535,8 +593,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			using namespace std::literals;
 			query_condition::get_json(_dest);
-			_dest.put_member("class_name", "lt");
+			_dest.put_member("class_name", "lt"sv);
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
 		}
@@ -579,7 +638,8 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			query_condition::get_json(_dest);
-			_dest.put_member("class_name", "eq");
+			using namespace std::literals;
+			_dest.put_member("class_name", "eq"sv);
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
 		}
@@ -620,8 +680,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			using namespace std::literals;
 			query_condition::get_json(_dest);
-			_dest.put_member("class_name", "gte");
+			_dest.put_member("class_name", "gte"sv);
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
 		}
@@ -662,8 +723,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			using namespace std::literals;
 			query_condition::get_json(_dest);
-			_dest.put_member("class_name", "lte");
+			_dest.put_member("class_name", "lte"sv);
 			_dest.put_member("valuepath", valuepath);
 			_dest.put_member("value", value);
 		}
@@ -705,8 +767,8 @@ namespace corona
 		{
 			json_parser jp;
 			query_condition::get_json(_dest);
-
-			_dest.put_member("class_name", "between");
+			using namespace std::literals;
+			_dest.put_member("class_name", "between"sv);
 
 			json jstart = jp.create_object();
 			if (start) {
@@ -773,8 +835,8 @@ namespace corona
 		{
 			json_parser jp;
 			query_condition::get_json(_dest);
-
-			_dest.put_member("class_name", "in");
+			using namespace std::literals;
+			_dest.put_member("class_name", "in"sv);
 			_dest.put_member("src_path", src_path);
 			_dest.put_member("items_path", items_path);
 		}
@@ -816,8 +878,8 @@ namespace corona
 		{
 			json_parser jp;
 			query_condition::get_json(_dest);
-
-			_dest.put_member("class_name", "in");
+			using namespace std::literals;
+			_dest.put_member("class_name", "in"sv);
 			json jconditions = jp.create_array();
 			for (auto cond : conditions) {
 				json jcond = jp.create_object();
@@ -873,8 +935,8 @@ namespace corona
 		{
 			json_parser jp;
 			query_condition::get_json(_dest);
-
-			_dest.put_member("class_name", "any");
+			using namespace std::literals;
+			_dest.put_member("class_name", "any"sv);
 			json jconditions = jp.create_array();
 			for (auto cond : conditions) {
 				if (cond) {
@@ -926,7 +988,8 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "project");
+			using namespace std::literals;
+			_dest.put_member("class_name", "project"sv);
 			_dest.put_member("source_name", source_name);
 			_dest.put_member("projection", projection);
 		}
@@ -934,16 +997,6 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-
-			if (not _src.has_members(missing, { "class_name", "source_name", "projection" })) {
-				system_monitoring_interface::global_mon->log_warning("query_project missing:");
-				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_warning(s);
-					});
-				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
-				return;
-			}
 
 			source_name = _src["source_name"];
 			projection = _src["projection"];

@@ -1016,27 +1016,27 @@ namespace corona {
 	void get_json(json& _dest, generalBrushRequest& _src)
 	{
 		json_parser jp;
+		using namespace std::literals;
 
 		switch (_src.brush_type) {
 		case brush_types::solid_brush_type:
-			_dest.put_member("class_name", "solid_brush");
+			_dest.put_member("class_name", "solid_brush"sv);
 			get_json(_dest, *_src.solid_brush);
 			break;
 		case brush_types::linear_brush_type:
-			_dest.put_member("class_name", "linear_brush");
+			_dest.put_member("class_name", "linear_brush"sv);
 			get_json(_dest, *_src.linear_brush);
 			break;
 		case brush_types::radial_brush_type:
-			_dest.put_member("class_name", "radial_brush");
+			_dest.put_member("class_name", "radial_brush"sv);
 			get_json(_dest, *_src.radial_brush);
 			break;
 		case brush_types::bitmap_brush_type:
-			_dest.put_member("class_name", "bitmap_brush");
+			_dest.put_member("class_name", "bitmap_brush"sv);
 			get_json(_dest, *_src.bitmap_brush);
 			break;
 		}
 	}
-
 
 	void put_json(generalBrushRequest& _dest, json& _src)
 	{
@@ -1134,6 +1134,8 @@ namespace corona {
 	{
 		json_parser jp;
 
+		using namespace std::literals;
+
 		_dest.put_member("name", _src.name);
 		_dest.put_member("font_name", _src.fontName);
 		_dest.put_member("font_size", _src.fontSize);
@@ -1147,34 +1149,34 @@ namespace corona {
 
 		switch (_src.font_stretch) {
 		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_CONDENSED:
-			_dest.put_member("font_stretch", "condensed");
+			_dest.put_member("font_stretch", "condensed"sv);
 			break;
 		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_EXPANDED:
-			_dest.put_member("font_stretch", "expanded");
+			_dest.put_member("font_stretch", "expanded"sv);
 			break;
 		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_EXTRA_CONDENSED:
-			_dest.put_member("font_stretch", "extra_condensed");
+			_dest.put_member("font_stretch", "extra_condensed"sv);
 			break;
 		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_EXTRA_EXPANDED:
-			_dest.put_member("font_stretch", "extra_expanded");
+			_dest.put_member("font_stretch", "extra_expanded"sv);
 			break;
 		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_NORMAL:
-			_dest.put_member("font_stretch", "normal");
+			_dest.put_member("font_stretch", "normal"sv);
 			break;
 		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_SEMI_CONDENSED:
-			_dest.put_member("font_stretch", "semi_condensed");
+			_dest.put_member("font_stretch", "semi_condensed"sv);
 			break;
 		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_SEMI_EXPANDED:
-			_dest.put_member("font_stretch", "semi_expanded");
+			_dest.put_member("font_stretch", "semi_expanded"sv);
 			break;
 		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_ULTRA_CONDENSED:
-			_dest.put_member("font_stretch", "ultra_condensed");
+			_dest.put_member("font_stretch", "ultra_condensed"sv);
 			break;
 		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_ULTRA_EXPANDED:
-			_dest.put_member("font_stretch", "ultra_expanded");
+			_dest.put_member("font_stretch", "ultra_expanded"sv);
 			break;
 		default:
-			_dest.put_member("font_stretch", "normal");
+			_dest.put_member("font_stretch", "normal"sv);
 			break;
 		}
 

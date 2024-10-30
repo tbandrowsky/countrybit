@@ -539,6 +539,16 @@ namespace corona
 			return success;
 		}
 
+		template <> bool on_get_json<xstring>(json& _dest, const std::string& _key, size_t* _offset) const
+		{
+			xstring temp;
+			bool success = xstring::get(record_bytes, _offset, temp);
+			if (success) {
+				_dest.put_member(_key, std::string_view(temp.data));
+			}
+			return success;
+		}
+
 		template <> bool on_get_json<xint64_t>(json& _dest, const std::string& _key, size_t* _offset) const
 		{
 			xint64_t temp;
@@ -1090,6 +1100,7 @@ namespace corona
 		date_time start = date_time::now();
 
 		system_monitoring_interface::global_mon->log_function_start("xrecord", "start", start, __FILE__, __LINE__);
+		using namespace std::literals;
 
 		xrecord comp1, comp2, comp3;
 
@@ -1218,8 +1229,8 @@ namespace corona
 		// and now json tests.
 		json_parser jp;
 		json jsrc = jp.create_object();
-		jsrc.put_member("Name", "Bill");
-		jsrc.put_member("Age", "41");
+		jsrc.put_member("Name", "Bill"sv);
+		jsrc.put_member("Age", "41"sv);
 		jsrc.put_member_i64("Atoms", 124);
 		jsrc.put_member("Today", date_time::now());
 
@@ -1739,9 +1750,11 @@ namespace corona
 		json get_info()
 		{
 			json_parser jp;
+			using namespace std::literals;
+
 			json result = jp.create_object();
 			auto start_key = get_start_key();
-			result.put_member("block", "leaf");
+			result.put_member("block", "leaf"sv);
 			result.put_member_i64("block_count", records.size());
 			std::string starts = start_key.to_string();
 			result.put_member("block_key_start", starts);
@@ -2141,20 +2154,21 @@ namespace corona
 		json get_info()
 		{
 			read_scope_lock lockit(locker);
+			using namespace std::literals;
 
 			json_parser jp;
 			json result = jp.create_object();
 			auto start_key = get_start_key();
-			result.put_member("block", "branch");
+			result.put_member("block", "branch"sv);
 			std::string starts = start_key.to_string();
 			result.put_member("block_key_start", starts);
 			result.put_member_i64("block_count", records.size());
 			switch (xheader.content_type) {
 			case xblock_types::xb_branch:
-				result.put_member("block_content", "branch");
+				result.put_member("block_content", "branch"sv);
 				break;
 			case xblock_types::xb_leaf:
-				result.put_member("block_content", "leaf");
+				result.put_member("block_content", "leaf"sv);
 				break;
 			}
 			result.put_member_i64("block_location", get_reference().location);

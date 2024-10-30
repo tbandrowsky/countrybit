@@ -180,7 +180,9 @@ namespace corona
 		read_locked_sp(std::shared_ptr<T>& _data) :
 			data(_data)
 		{
-			data->read_lock();
+			if (data) {
+				data->read_lock();
+			}
 		}
 
 		read_locked_sp(const read_locked_sp& _src) = delete;

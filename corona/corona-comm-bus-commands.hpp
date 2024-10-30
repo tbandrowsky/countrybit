@@ -45,7 +45,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "create_object_command");
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "create_object_command"sv);
 			_dest.put_member("create_class_name", create_class_name);
 			_dest.put_member("form_name", form_name);
 		}
@@ -94,7 +96,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "select_object_frame_command");
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "select_object_frame_command"sv);
 			_dest.put_member("table_name", table_name);
 			_dest.put_member("page_to_select", page_to_select);
 			_dest.put_member("frame_to_load", frame_to_load);
@@ -147,7 +151,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "select_object_page_command");
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "select_object_page_command"sv);
 			_dest.put_member("table_name", table_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("page_name", page_name);
@@ -198,7 +204,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "preview_object_command");
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "preview_object_command"sv);
 			_dest.put_member("table_name", table_name);
 			_dest.put_member("form_name", form_name);
 		}
@@ -247,7 +255,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "save_object_command");
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "save_object_command"sv);
 			_dest.put_member("form_name", form_name);
 		}
 
@@ -291,7 +301,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "load_object_command");
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "load_object_command"sv);
 			_dest.put_member("control_name", control_name);
 			_dest.put_member("data", object_data);
 		}
@@ -334,7 +346,8 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "delete_object_command");
+			using namespace std::literals;
+			_dest.put_member("class_name", "delete_object_command"sv);
 			_dest.put_member("control_name", control_name);
 		}
 
@@ -408,7 +421,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "search_objects_command");
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "search_objects_command"sv);
 			_dest.put_member("search_class_name", search_class_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("table_name", table_name);
@@ -464,7 +479,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "select_page_command");
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "select_page_command"sv);
 			_dest.put_member("page_name", page_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("source_name", source_name);
@@ -527,7 +544,9 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "select_frame_command");
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "select_frame_command"sv);
 			_dest.put_member("form_to_read", form_to_read);
 			_dest.put_member("page_to_select", page_to_select);
 			_dest.put_member("frame_to_load", frame_to_load);

@@ -4107,8 +4107,9 @@ namespace corona
 			{
 				result.put_member("target", start);
 				result.put_member("array", start);
-				if (is_number(item)) {
-					int idx = std::strtol(item.c_str(), nullptr, 10);
+				std::string sitem(item);
+				if (is_number(sitem)) {
+					int idx = std::strtol(sitem.c_str(), nullptr, 10);
 					if (idx < 0 or idx >= start.size()) {
 						return result;
 					}
@@ -4116,12 +4117,12 @@ namespace corona
 					result.put_member("value", start);
 				}
 				else {
-					std::vector<std::string> item_ops = split(item, '-');
+					std::vector<std::string_view> item_ops = split(item, '-');
 					if (item_ops.size() < 2) {
 						return result;
 					}
-					std::string operation = item_ops[0];
-					std::string member_name = item_ops[1];
+					std::string_view &operation = item_ops[0];
+					std::string_view &member_name = item_ops[1];
 					if (item == "last")
 					{
 						int index_lists = start.size() - 1;
@@ -4148,7 +4149,7 @@ namespace corona
 					{
 						int count = 0;
 						for (auto ch : start) {
-							if (ch.has_member(member_name)) {
+							if (ch.has_member(std::string(member_name))) {
 								count++;
 							}
 						}
@@ -4159,7 +4160,7 @@ namespace corona
 					{
 						json mvalue;
 						for (auto ch : start) {
-							if (ch.has_member(member_name)) {
+							if (ch.has_member(std::string(member_name))) {
 								if (mvalue.empty()) {
 									mvalue = ch[member_name];
 								}
@@ -4178,7 +4179,7 @@ namespace corona
 					{
 						json mvalue;
 						for (auto ch : start) {
-							if (ch.has_member(member_name)) {
+							if (ch.has_member(std::string(member_name))) {
 								if (mvalue.empty()) {
 									mvalue = ch[member_name];
 								}
@@ -4197,7 +4198,7 @@ namespace corona
 					{
 						double rsum = 0;
 						for (auto ch : start) {
-							if (ch.has_member(member_name)) {
+							if (ch.has_member(std::string(member_name))) {
 								double t = (double)ch[member_name];
 								t += rsum;
 							}
@@ -4210,7 +4211,7 @@ namespace corona
 						double rsum = 0;
 						double count = 0;
 						for (auto ch : start) {
-							if (ch.has_member(member_name)) {
+							if (ch.has_member(std::string(member_name))) {
 								double t = (double)ch[member_name];
 								t += rsum;
 								count += 1.0;
@@ -4231,7 +4232,7 @@ namespace corona
 						std::string sresult = "";
 						std::string comma = "";
 						for (auto ch : start) {
-							if (ch.has_member(member_name)) {
+							if (ch.has_member(std::string(member_name))) {
 								sresult += comma;
 								sresult += (std::string)ch[member_name];
 								comma = ", ";
@@ -4246,6 +4247,39 @@ namespace corona
 		return result;
 	}
 
+	class validation_error
+	{
+	public:
+		std::string class_name;
+		std::string field_name;
+		std::string message;
+		std::string filename;
+		int			line_number;
+
+		validation_error() = default;
+		validation_error(const validation_error& _src) = default;
+		validation_error(validation_error&& _src) = default;
+		validation_error& operator = (const validation_error& _src) = default;
+		validation_error& operator = (validation_error&& _src) = default;
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member(class_name_field, class_name);
+			_dest.put_member("field_name", field_name);
+			_dest.put_member(message_field, message);
+			_dest.put_member("filename", filename);
+			_dest.put_member("line_number", line_number);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			class_name = _src[class_name_field];
+			field_name = _src["field_name"];
+			message = _src[message_field];
+			filename = _src["filename"];
+			line_number = _src["line_number"];
+		}
+	};
 
 }
 

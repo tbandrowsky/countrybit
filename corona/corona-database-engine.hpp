@@ -62,19 +62,20 @@ namespace corona
 	{
 		from_join_collection joins;
 		json source_data;
-		json dest_array;
 		json template_object;
+		json dest_array;
 
 		void join_impl(from_join_collection::iterator _it, std::function<void(from_join_spec&_src, json& _dest)> _apply)
 		{
 			if (_it != std::end(joins)) {
 				json data = source_data[_it->second.from_data_name];
 				if (data.array()) {
+					auto next_it = _it;
+					next_it++;
 					for (auto item : data)
 					{
 						_it->second.context = item;
-						_it++;
-						join_impl(_it, _apply);
+						join_impl(next_it, _apply);
 					}
 				}
 			}
@@ -82,11 +83,25 @@ namespace corona
 			{
 				json_parser jp;
 				json new_object = template_object.clone();
-				for (auto& ct : joins) 
+				json parent_child_result = jp.create_object();
+				json parent_child_current = parent_child_result;
+				for (auto& ct : joins)
 				{
+					json jchildren = parent_child_current[ct.second.from_data_name];
+					if (jchildren.array()) {
+						jchildren.push_back(ct.second.context);
+					}
+					else {
+						jchildren = jp.create_array();
+					}
+					parent_child_current.put_member(ct.second.from_data_name, jchildren);
+					parent_child_current = ct.second.context;
 					_apply(ct.second, new_object);
 				}
-				dest_array.push_back(new_object);
+				json obj = jp.create_object();
+				obj.put_member("filter", new_object);
+				obj.put_member("parent_child", parent_child_current);
+				dest_array.push_back(obj);
 			}
 		}
 
@@ -104,7 +119,8 @@ namespace corona
 			else {
 				from_join_spec fj;
 				fj.from_data_name = _src;
-				fj.from_fields.insert_or_assign(_field, _member);
+				std::vector<std::string> fields = { _member };
+				fj.from_fields.insert_or_assign(_field, fields);
 				joins.insert_or_assign(_src, fj);
 			}
 		}
@@ -126,7 +142,7 @@ namespace corona
 
 						for (auto &fdestfield : srcfield.second)
 						{
-							_dest.copy_member(fdestfield, temp);
+							_dest.put_member(fdestfield, temp);
 						}
 					}
 				});
@@ -134,39 +150,6 @@ namespace corona
 		}
 	};
 
-	class validation_error
-	{
-	public:
-		std::string class_name;
-		std::string field_name;
-		std::string message;
-		std::string filename;
-		int			line_number;
-
-		validation_error() = default;
-		validation_error(const validation_error& _src) = default;
-		validation_error(validation_error&& _src) = default;
-		validation_error& operator = (const validation_error& _src) = default;
-		validation_error& operator = (validation_error&& _src) = default;
-
-		virtual void get_json(json& _dest)
-		{
-			_dest.put_member(class_name_field, class_name);
-			_dest.put_member("field_name", field_name);
-			_dest.put_member(message_field, message);
-			_dest.put_member("filename", filename);
-			_dest.put_member("line_number", line_number);
-		}
-
-		virtual void put_json(json& _src)
-		{
-			class_name = _src[class_name_field];
-			field_name = _src["field_name"];
-			message = _src[message_field];
-			filename = _src["filename"];
-			line_number = _src["line_number"];
-		}
-	};
 
 	class child_bridge_interface
 	{
@@ -200,7 +183,7 @@ namespace corona
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(json& _src) = 0;
 		virtual void init_validation(corona_database_interface* _db) = 0;
-		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object) = 0;
+		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _class_name, json & _object) = 0;
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
 	};
@@ -232,7 +215,7 @@ namespace corona
 			return options;
 		}
 
-		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object) = 0;
+		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _class_name, json& _object) = 0;
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
 	};
 
@@ -288,7 +271,7 @@ namespace corona
 		virtual json	get_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
 		virtual json	delete_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
 
-		virtual void	run_queries(corona_database_interface* _db, std::string& _token, json& _target) = 0;
+		virtual void	run_queries(corona_database_interface* _db, std::string& _token, std::string& _class_name, json& _target) = 0;
 		virtual void	clear_queries(json& _target) = 0;
 
 		virtual json	get_info(corona_database_interface* _db) = 0;
@@ -409,7 +392,7 @@ namespace corona
 			;
 		}
 
-		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object)  override
+		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _classname, json & _object)  override
 		{
 			json empty;
 			return empty;
@@ -1111,16 +1094,21 @@ namespace corona
 			query_body = _src["query"];
 		}
 
-		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object)
+		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _classname, json& _object)
 		{
+			using namespace std::literals;
 			json_parser jp;
 			json this_query_body = query_body.clone();
-			json froms = query_body["from"];
+			this_query_body.put_member("include_children", false);
+
+			json froms = this_query_body["from"];
 			if (froms.array()) {
 				json new_from = jp.create_object();
 				new_from.put_member(data_field, _object);
-				new_from.copy_member(class_name_field, _object);
-				new_from.put_member("name", "this");
+				new_from.put_member(class_name_field, _classname);
+				new_from.put_member("name", "this"sv);
+				auto arr = froms.array_impl();
+				arr->elements.insert(arr->elements.begin(), new_from.object_impl());
 			}
 			this_query_body.put_member(token_field, _token);
 			json query_results, query_data_results;
@@ -1261,11 +1249,11 @@ namespace corona
 			}
 		}
 
-		virtual json run_queries(corona_database_interface* _db, std::string& _token, json& _object) override
+		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _classname, json& _object) override
 		{
 			json results;
 			if (options) {
-				results = options->run_queries(_db, _token, _object);
+				results = options->run_queries(_db, _token, _classname, _object);
 			}
 			return results;
 		}
@@ -1849,12 +1837,12 @@ namespace corona
 			}
 		}
 
-		virtual void run_queries(corona_database_interface* _db, std::string& _token, json& _target) override
+		virtual void run_queries(corona_database_interface* _db, std::string& _token, std::string& _classname, json& _target) override
 		{
 			for (auto fldpair : fields) {
 				auto query_field = fldpair.second;
 				if (query_field->get_field_type() == field_types::ft_query) {
-					json objects = query_field->run_queries(_db, _token, _target);
+					json objects = query_field->run_queries(_db, _token, _classname, _target);
 					_target.put_member(query_field->get_field_name(), objects);
 				}
 			}
@@ -2576,6 +2564,8 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 
+			using namespace std::literals;
+
 			system_monitoring_interface::global_mon->log_job_start("create_database", "start", start_time, __FILE__, __LINE__);
 			
 			cache = std::make_unique<xblock_cache>(static_cast<file_block*>(this), maximum_record_cache_size_bytes);
@@ -2786,7 +2776,7 @@ namespace corona
 			json new_user_data;
 
 			new_user_data = jp.create_object();
-			new_user_data.put_member(class_name_field, "sys_users");
+			new_user_data.put_member(class_name_field, "sys_users"sv);
 			new_user_data.put_member(user_name_field, default_user);
 			new_user_data.put_member(user_email_field, default_email_address);
 			new_user_data.put_member("password1", default_password);
@@ -2826,7 +2816,7 @@ private:
 		json check_single_object(date_time &current_date, std::string& _user_name, read_class_sp& class_data, json object_definition)
 		{
 			json_parser jp;
-
+			using namespace std::literals;
 			std::vector<validation_error> validation_errors;
 
 			json result = jp.create_object();
@@ -2957,7 +2947,7 @@ private:
 				result.put_member(data_field, object_definition);
 			}
 			else {
-				result.put_member(message_field, "Ok");
+				result.put_member(message_field, "Ok"sv);
 				result.put_member(success_field, 1);
 				result.put_member(data_field, object_definition);
 			}
@@ -2970,7 +2960,7 @@ private:
 			timer method_timer;
 			json_parser jp;
 			date_time current_date = date_time::now();
-
+			using namespace std::literals;
 			json response; 
 
 			response = jp.create_object();
@@ -2993,7 +2983,7 @@ private:
 			else
 			{
 				response.put_member(success_field, false);
-				response.put_member(message_field, "not an object");
+				response.put_member(message_field, "not an object"sv);
 				return response;
 			}
 
@@ -3009,7 +2999,7 @@ private:
 			{
 				if (class_pair.first.empty()) {
 					response.put_member(success_field, false);
-					response.put_member(message_field, "empty class name");
+					response.put_member(message_field, "empty class name"sv);
 					return response;
 				}
 				write_class_sp cd = write_lock_class(class_pair.first);
@@ -3019,7 +3009,7 @@ private:
 
 					if (not permission) {
 						response.put_member(success_field, false);
-						response.put_member(message_field, "denied");
+						response.put_member(message_field, "denied"sv);
 						return response;
 					}
 				}
@@ -3059,7 +3049,7 @@ private:
 			}
 
 			response.put_member(success_field, all_objects_good);
-			response.put_member(message_field, "Objects processed");
+			response.put_member(message_field, "Objects processed"sv);
 			response.put_member(data_field, classes_group);
 			return response;
 		}
@@ -3215,6 +3205,8 @@ private:
 			std::string class_name = _key[class_name_field];
 
 			read_class_sp classd = read_lock_class(class_name);
+			if (not classd)
+				return obj;
 
 			obj = classd->get_objects(this, _key, _children);
 
@@ -3236,6 +3228,9 @@ private:
 			key.put_member(user_name_field, _user_name);
 
 			read_class_sp classd = read_lock_class("sys_users");
+			if (not classd)
+				return jp.create_array();
+
 			json users = classd->get_objects(this, key, true);
 
 			return users.get_first_element();
@@ -3250,6 +3245,9 @@ private:
 			key.put_member("schema_version", schema_version);
 
 			auto classd = read_lock_class("sys_schemas");
+			if (not classd) {
+				return jp.create_array();
+			}
 			json data = classd->get_objects(this, key, true);
 
 			return data.get_first_element();
@@ -3263,6 +3261,9 @@ private:
 			key.put_member("dataset_version", dataset_version);
 
 			auto classd = read_lock_class("sys_datasets");
+			if (not classd) {
+				return json();
+			}
 			json data = classd->get_objects(this, key, true);
 
 			return data.get_first_element();
@@ -3312,6 +3313,40 @@ private:
 			if (cache_hit != std::end(class_cache)) {
 				cd = class_cache[_class_name];
 			}
+			return cd;
+		}
+
+		std::shared_ptr<class_implementation> cache_existing_class(const std::string& _class_name)
+		{
+			std::shared_ptr<class_implementation> cd;
+			write_scope_lock my_lock(class_lock);
+			json_parser jp;
+			cd = std::make_shared<class_implementation>();
+			json key = jp.create_object();
+			key.put_member(class_name_field, _class_name);
+			json class_def = classes->get(key);
+
+			if (class_def.empty())
+				return nullptr;
+
+			std::vector<validation_error> errors;
+
+			if (class_def.object()) {
+				cd->put_json(errors, class_def);
+				if (errors.size()) {
+					system_monitoring_interface::global_mon->log_warning(std::format("Errors on deserializing class {0}", _class_name), __FILE__, __LINE__);
+					for (auto error : errors) {
+						system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
+					}
+				}
+			}
+			else
+			{
+				// this will be a new, empty class.
+				cd->set_class_name(_class_name);
+			}
+
+			class_cache.insert_or_assign(_class_name, cd);
 			return cd;
 		}
 
@@ -3426,7 +3461,7 @@ private:
 			s_confirmation_code = confirmation_code;
 			return s_confirmation_code;
 		}
-
+		
 		virtual read_class_sp read_lock_class(const std::string& _class_name) override
 		{
 			std::shared_ptr<class_implementation> cd;
@@ -3435,7 +3470,7 @@ private:
 
 			if (not cd)
 			{
-				cd = cache_class(_class_name);
+				cd = cache_existing_class(_class_name);
 			}
 
 			std::shared_ptr<class_interface> cdi = std::dynamic_pointer_cast<class_interface>(cd);
@@ -3508,7 +3543,7 @@ private:
 			date_time start_schema = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_job_start("apply_schema", "Applying schema file", start_schema, __FILE__, __LINE__);
-
+			using namespace std::literals;
 			bool new_database = true;
 
 			if (not _schema.has_member("schema_name"))
@@ -3531,7 +3566,7 @@ private:
 			json schema_key = jp.create_object();
 			schema_key.copy_member("schema_name", _schema);
 			schema_key.copy_member("schema_version", _schema);
-			schema_key.put_member(class_name_field, "sys_schemas");
+			schema_key.put_member(class_name_field, "sys_schemas"sv);
 			schema_key.set_compare_order({ "schema_name", "schema_version" });
 
 			json schema_test =  select_object(schema_key, false);
@@ -3610,7 +3645,7 @@ private:
 				date_time start_section = date_time::now();
 				timer txsect;
 				system_monitoring_interface::global_mon->log_job_section_start("", "Datasets", start_section, __FILE__, __LINE__);
-
+				using namespace std::literals;
 				json script_array = _schema["datasets"];
 				if (script_array.array())
 				{
@@ -3621,7 +3656,7 @@ private:
 
 						json script_definition = script_array.get_element(i);
 
-						script_definition.put_member(class_name_field, "sys_datasets");
+						script_definition.put_member(class_name_field, "sys_datasets"sv);
 						script_definition.put_member_i64("schema_id", (int64_t)_schema[object_id_field]);
 						std::string dataset_name = script_definition["dataset_name"];
 						std::string dataset_version = script_definition["dataset_version"];
@@ -3823,7 +3858,7 @@ private:
 				}
 			}
 
-			_schema.put_member(class_name_field, "sys_schemas");
+			_schema.put_member(class_name_field, "sys_schemas"sv);
 
 			json put_schema_request = create_system_request(_schema);
 			// in corona, creating an object doesn't actually persist anything 
@@ -4013,7 +4048,6 @@ private:
 			timer tx;
 			std::string user_name;
 
-
 			bool include_children = (bool)_edit_object_request["include_children"];
 
 			if (not check_message(_edit_object_request, { auth_general }, user_name))
@@ -4038,7 +4072,7 @@ private:
 				if (not jedit_object.empty() and include_children) 
 				{
 					std::string token = _edit_object_request[token_field];
-					edit_class->run_queries(this, token, jedit_object);
+					edit_class->run_queries(this, token, class_name, jedit_object);
 				}
 				json jedit_class = jp.create_object();
 				edit_class->get_json(jedit_class);
@@ -4147,14 +4181,20 @@ private:
 			json class_definition = classes->get(key);
 			
 			auto classd = read_lock_class(class_name);
-			json class_info = classd->get_info(this);
+			if (classd) {
+				json class_info = classd->get_info(this);
 
-			result = jp.create_object();
-			result.put_member("definition", class_definition);
-			result.put_member("info", class_info);
+				result = jp.create_object();
+				result.put_member("definition", class_definition);
+				result.put_member("info", class_info);
 
-			result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());
-			system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+			else {
+				result = create_response(get_class_request, false, "Missing Class", key, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
 			return result;
 		}
 
@@ -4278,6 +4318,11 @@ private:
 			auto class_def = read_lock_class(base_class_name);
 
 			json object_list = jp.create_array();
+			if (not class_def) {
+				response = create_response(_user_name, auth_general, false, "class not found", query_details, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return response;
+			}
 
 			json filter = query_details["filter"];
 			if (filter.empty()) {
@@ -4287,11 +4332,13 @@ private:
 			for (auto class_pair : class_def->get_descendants())
 			{
 				read_class_sp classd = read_lock_class(class_pair.first);
-				json objects = classd->get_objects(this, filter, include_children);
+				if (classd) {
+					json objects = classd->get_objects(this, filter, include_children);
 
-				if (objects.array()) {
-					for (auto obj : objects) {
-						object_list.push_back(obj);
+					if (objects.array()) {
+						for (auto obj : objects) {
+							object_list.push_back(obj);
+						}
 					}
 				}
 			}
@@ -4356,7 +4403,8 @@ private:
 					}
 					auto cd = read_lock_class(class_name);
 					if (not cd) {
-						response = create_response(query_request, false, "from class not found", jp.create_object(), tx.get_elapsed_seconds());
+						std::string message = std::format("from class '{0}' not found", class_name);
+						response = create_response(query_request, false, message, jp.create_object(), tx.get_elapsed_seconds());
 						system_monitoring_interface::global_mon->log_function_stop("query", "from class not found", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
@@ -4364,6 +4412,7 @@ private:
 				json from_data = jp.create_object();
 
 				std::map<std::string, from_join> joins;
+				std::string last_from_name;
 
 				// these run in order to allow for dependencies
 				for (auto from_class : from_classes)
@@ -4385,27 +4434,34 @@ private:
 						objects = data;
 					}
 					else if (data.empty()) {
+						objects = jp.create_array();
 						json from_classes = jp.create_array();
 						json class_filter = from_class["filter"];
+						std::string filter_class_name = from_class[class_name_field];
+						auto filter_class = read_lock_class(class_name);
 						if (class_filter.object()) {
 							auto members = class_filter.get_members();
 							for (auto member : members)
 							{
+								auto fld = filter_class->get_field(member.first);
+								if (not fld) {
+									context.add_error(class_name, member.first, "Invalid field for filter", __FILE__, __LINE__);
+								}
 								if (member.second.is_string())
 								{
-									std::string_view value = (std::string)member.second;
+									std::string value = (std::string)member.second;
 									if (value.starts_with("$"))
 									{
-										std::string_view path = value.substr(1);
-										std::vector<std::string_view> split_path = split(path, '.');
+										std::string path(value.substr(1));
+										std::vector<std::string> split_path = split(path, '.');
 										if (split_path.size() == 2) {
-											std::string_view from_name = split_path[0];
-											std::string_view from_member = split_path[1];
-											fj.create_join(std::string(from_name), std::string(from_member), member.second);
+											std::string& from_name = split_path[0];
+											std::string& from_member = split_path[1];
+											fj.create_join(from_name, from_member, member.first);
 										}
 										else
 										{
-											response = create_response(query_request, false, "really a bad use of the $ in the filter clause", filters, tx.get_elapsed_seconds());
+											response = create_response(query_request, false, "Bad $ reference in query.", class_filter, tx.get_elapsed_seconds());
 											system_monitoring_interface::global_mon->log_function_stop("query", "bad query data", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 											return response;
 										}
@@ -4414,9 +4470,42 @@ private:
 							}
 						}
 						json filters = fj.join(from_data, class_filter);
-						for (auto from_filter : filters)
+						if (filters.size() > 0) {
+							json replace_parents = jp.create_array();
+							for (auto from_filter : filters)
+							{
+								json filter = from_filter["filter"];
+								json parent_child = from_filter["parent_child"];
+								from_class.put_member("filter", filter);
+								json query_class_response = query_class(user_name, from_class, jx);
+								json temp_objects = query_class_response[data_field];
+								if (temp_objects.array()) {
+									parent_child.put_member(class_name, temp_objects);
+									bool include_children = (bool)from_class["include_children"];
+									if (include_children)
+									{
+										auto edit_class = read_lock_class(class_name);
+										if (edit_class) {
+											std::string token = query_request[token_field];
+											for (auto obj : temp_objects) {
+												edit_class->run_queries(this, token, class_name, obj);
+											}
+										}
+									}
+									for (auto obj : temp_objects)
+									{
+										objects.push_back(obj);
+									}
+								}
+								replace_parents.push_back(parent_child);
+							}
+							if (not last_from_name.empty()) {
+								from_data.put_member(last_from_name, replace_parents);
+								context.set_data_source(last_from_name, replace_parents);
+							}
+						}
+						else
 						{
-							from_class.put_member("filter", from_filter);
 							json query_class_response = query_class(user_name, from_class, jx);
 							json temp_objects = query_class_response[data_field];
 							if (temp_objects.array()) {
@@ -4424,16 +4513,19 @@ private:
 								if (include_children)
 								{
 									auto edit_class = read_lock_class(class_name);
-									std::string token = query_request[token_field];
-									for (auto obj : temp_objects) {
-										edit_class->run_queries(this, token, obj);
+									if (edit_class) {
+										std::string token = query_request[token_field];
+										for (auto obj : temp_objects) {
+											edit_class->run_queries(this, token, class_name, obj);
+										}
 									}
 								}
 								for (auto obj : temp_objects)
 								{
-									objects.push_back(temp_objects);
+									objects.push_back(obj);
 								}
 							}
+
 						}
 					}
 					else {
@@ -4443,6 +4535,15 @@ private:
 					}
 					from_data.put_member(from_name, objects);
 					context.set_data_source(from_name, objects);
+					last_from_name = from_name;
+				}
+
+				if (context.is_error()) 
+				{
+					json query_errors = context.get_errors();
+					response = create_response(query_request, false, "errors", query_errors, tx.get_elapsed_seconds());
+					system_monitoring_interface::global_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					return response;
 				}
 
 				// so now, we've loaded up our context, we can extract the stages
@@ -4450,9 +4551,17 @@ private:
 
 				// and, we can run the thing.
 				json query_results = context.run();
-
-				response = create_response(query_request, true, "query ran", query_results, tx.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("query", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				if (context.is_error()) {
+					json query_errors = context.get_errors();
+					response = create_response(query_request, false, "errors", query_errors, tx.get_elapsed_seconds());
+					system_monitoring_interface::global_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				}
+				else 
+				{
+					json query_errors = context.get_errors();
+					response = create_response(query_request, true, "completed", query_results, tx.get_elapsed_seconds());
+					system_monitoring_interface::global_mon->log_function_stop("query", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				}
 			}
 			else 
 			{
@@ -4466,7 +4575,7 @@ private:
 		{
 			timer method_timer;
 			json_parser jp;
-
+			using namespace std::literals;
 			date_time start_time = date_time::now();
 			timer tx;
 			read_scope_lock my_lock(database_lock);
@@ -4526,7 +4635,7 @@ private:
 					}
 					else if (field->get_field_type() == field_types::ft_string)
 					{
-						new_object.put_member(field_name, "");
+						new_object.put_member(field_name, ""sv);
 					}
 					else if (field->get_field_type() == field_types::ft_int64)
 					{
@@ -4604,14 +4713,16 @@ private:
 				for (auto class_pair : classes_and_data)
 				{
 					auto cd = read_lock_class(class_pair.first);
+					if (cd) {
 
-					// now that we have our class, we can go ahead and open the storage for it
+						// now that we have our class, we can go ahead and open the storage for it
 
-					json data_list = class_pair.second.map([](std::string _member, int _index, json& _item) -> json {
-						return _item[data_field];
-						});
+						json data_list = class_pair.second.map([](std::string _member, int _index, json& _item) -> json {
+							return _item[data_field];
+							});
 
-					cd->put_objects(this, child_objects, data_list);
+						cd->put_objects(this, child_objects, data_list);
+					}
 				}
 
 				header.write(this);
@@ -4674,8 +4785,10 @@ private:
 				if (include_children)
 				{
 					auto edit_class = read_lock_class(class_name);
-					std::string token = get_object_request[token_field];
-					edit_class->run_queries(this, token, obj);
+					if (edit_class) {
+						std::string token = get_object_request[token_field];
+						edit_class->run_queries(this, token, class_name, obj);
+					}
 				}
 
 				result = create_response(get_object_request, true, "Ok", obj, method_timer.get_elapsed_seconds());
@@ -4721,10 +4834,18 @@ private:
 			}
 
 			auto cd = read_lock_class(class_name);
+			if (cd) {
 
-			cd->delete_objects(this, object_key, true);
+				cd->delete_objects(this, object_key, true);
 
-			system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				response = create_response(delete_object_request, true, "Ok", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+			else 
+			{
+				response = create_response(delete_object_request, true, "class not foudn", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
 
 			save();
 
@@ -4932,7 +5053,7 @@ private:
 	{
 		bool success = true;
 		std::shared_ptr<file> dtest = std::make_shared<file>();
-
+		using namespace std::literals;
 		date_time st = date_time::now();
 		timer tx;
 		system_monitoring_interface::global_mon->log_function_start("table proof", "start", st, __FILE__, __LINE__);
@@ -4942,7 +5063,7 @@ private:
 		json_parser jp;
 		json proof_assertion = jp.create_object();
 
-		proof_assertion.put_member("test_name", "database");
+		proof_assertion.put_member("test_name", "database"sv);
 
 		json dependencies = jp.parse_object(R"( 
 { 
@@ -4973,10 +5094,10 @@ private:
 		proof_assertion.put_member("dependencies", dependencies);
 		json db_config = jp.create_object();
 		json server_config = jp.create_object();
-		server_config.put_member(sys_user_name_field, "todd");
-		server_config.put_member(sys_user_password_field, "randomite");
-		server_config.put_member(sys_user_email_field, "todd.bandrowsky@gmail.com");
-		server_config.put_member(sys_default_team_field, "GuestTeam");
+		server_config.put_member(sys_user_name_field, "todd"sv);
+		server_config.put_member(sys_user_password_field, "randomite"sv);
+		server_config.put_member(sys_user_email_field, "todd.bandrowsky@gmail.com"sv);
+		server_config.put_member(sys_default_team_field, "GuestTeam"sv);
 		db_config.put_member("Server", server_config);
 
 		db.apply_config(db_config);

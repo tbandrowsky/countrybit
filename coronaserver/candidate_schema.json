@@ -27,14 +27,21 @@
                 "class_name": "CommitteeCandidates",
                 "name": "CommitteeCandidates",
                 "filter": {
-                  "candidate_id": "H0NV01219"
+                  "candidate_id": "$this.candidate_id"
+                }
+              },
+              {
+                "class_name": "Committees",
+                "name": "Committees",
+                "filter": {
+                  "committee_id": "CommitteeCandidates.committee_id"
                 }
               }
             ],
             "stages": [
               {
                 "class_name": "filter",
-                "stage_input_name": "Candidates"
+                "stage_input_name": "Committees"
               }
             ]
           }
@@ -70,9 +77,7 @@
       "base_class_name": "sys_object",
       "fields": {
         "committee_id": "string",
-        "candidate_id": "string",
-        "election_year": "string",
-        "linkage_id": "string"
+        "candidate_id": "string"
       },
       "indexes": {
         "committee_candidate_committee_id_idx": {
@@ -146,6 +151,24 @@
         }
       }
     },
+    {
+      "dataset_name": "CommitteeCandidates Master",
+      "dataset_description": "Map Committees and Candidates",
+      "dataset_version": "1.0",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "filename": "ccl.csv",
+        "target_class": "CommitteeCandidates",
+        "column_map": {
+          "0": "candidate_id",
+          "3": "committee_id"
+        }
+      }
+    },
+
     {
       "dataset_name": "Individual Master",
       "dataset_description": "Load Individuals",
