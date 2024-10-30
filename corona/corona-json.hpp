@@ -1529,6 +1529,17 @@ namespace corona
 			return nullptr;
 		}
 
+		std::shared_ptr<json_array> get_member_array(const std::string& _key)
+		{
+			if (object_impl()) {
+				auto vlist = object_impl()->members.find(_key);
+				if (vlist != std::end(object_impl()->members)) {
+					return std::dynamic_pointer_cast<json_array>(vlist->second);
+				}
+			}
+			return nullptr;
+		}
+
 		json operator[](const std::string_view& _key) const
 		{
 			std::string temp(_key);
@@ -1807,6 +1818,24 @@ namespace corona
 			else if (_member.function()) {
 				put_member_function(_key, _member);
 			}
+			return *this;
+		}
+
+		json put_member(std::string _key, std::shared_ptr<json_array> _value)
+		{
+			if (not object_impl()) {
+				throw std::logic_error("Not an object");
+			}
+			object_impl()->members[_key] = _value;
+			return *this;
+		}
+
+		json put_member(std::string _key, std::shared_ptr<json_object> _value)
+		{
+			if (not object_impl()) {
+				throw std::logic_error("Not an object");
+			}
+			object_impl()->members[_key] = _value;
 			return *this;
 		}
 

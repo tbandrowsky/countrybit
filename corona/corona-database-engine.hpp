@@ -47,109 +47,202 @@ namespace corona
 {
 
 	class corona_database_interface;
-
-	class from_join_spec
+	
+	class to_field
 	{
 	public:
-		std::string from_data_name;
-		std::map<std::string, std::vector<std::string>> from_fields;
-		json context;
+		std::string			  class_name;
+		std::string			  field_name;
 	};
 
-	using from_join_collection = std::map<std::string, from_join_spec>;
+	class from_field
+	{
+	public:
+		std::string			  field_name;
+		std::vector<std::shared_ptr<to_field>> targets;
+	};
+
+	class from_source
+	{
+	public:
+		int													index;
+		std::string											source_name;
+		std::string											parent_source_name;
+		std::map<std::string, std::shared_ptr<from_field>>  fields;
+		std::shared_ptr<json_object>						context;
+		std::vector<std::shared_ptr<to_field>>				origins;
+	};
+
+	using from_sources = std::map<std::string, std::shared_ptr<from_source>>;
 
 	class from_join
 	{
-		from_join_collection joins;
-		json source_data;
-		json template_object;
-		json dest_array;
+		from_sources			sources;
+		json					source_data;
+		json					class_filter;
+		json					dest_array;
+		int						join_index;
 
-		void join_impl(from_join_collection::iterator _it, std::function<void(from_join_spec&_src, json& _dest)> _apply)
+		void get_filters_impl(json& dest_array, json& class_filter, from_sources::iterator _it, std::function<bool(std::shared_ptr<from_source>& _src, std::string& _dest_class, std::shared_ptr<json_object>& _dest)> _apply)
 		{
-			if (_it != std::end(joins)) {
-				json data = source_data[_it->second.from_data_name];
+			if (_it != std::end(sources)) {
+				json data = source_data[_it->second->source_name];
 				if (data.array()) {
 					auto next_it = _it;
 					next_it++;
 					for (auto item : data)
 					{
-						_it->second.context = item;
-						join_impl(next_it, _apply);
+						_it->second->context = item.object_impl();
+						get_filters_impl(dest_array, class_filter, next_it, _apply);
 					}
 				}
 			}
 			else 
 			{
 				json_parser jp;
-				json new_object = template_object.clone();
-				json parent_child_result = jp.create_object();
-				json parent_child_current = parent_child_result;
-				for (auto& ct : joins)
+				json new_filter_object = class_filter.clone();
+				std::string class_name = new_filter_object[class_name_field];
+
+				auto jobj = new_filter_object.object_impl();
+				std::shared_ptr<from_source> parent_source;
+				for (auto& ct : sources)
 				{
-					json jchildren = parent_child_current[ct.second.from_data_name];
-					if (jchildren.array()) {
-						jchildren.push_back(ct.second.context);
+					if (_apply(ct.second, class_name, jobj)) 
+					{
+						if (not parent_source)
+							parent_source = ct.second;
+						else if (parent_source->index < ct.second->index)
+							parent_source = ct.second;
 					}
-					else {
-						jchildren = jp.create_array();
-					}
-					parent_child_current.put_member(ct.second.from_data_name, jchildren);
-					parent_child_current = ct.second.context;
-					_apply(ct.second, new_object);
 				}
+
 				json obj = jp.create_object();
-				obj.put_member("filter", new_object);
-				obj.put_member("parent_child", parent_child_current);
+				auto robj = obj.object_impl();
+				robj->members.insert_or_assign("filter", new_filter_object.object_impl());
+				if (parent_source) {
+					robj->members.insert_or_assign("parent", parent_source->context);
+				}
 				dest_array.push_back(obj);
 			}
 		}
 
 	public:
-	
-		void create_join(std::string _src, std::string _field, std::string _member)
+
+		from_join()
 		{
-			auto it = joins.find(_src);
-			if (it != joins.end()) {
-				auto fit = it->second.from_fields.find(_field);
-				if (fit != it->second.from_fields.end()) {
-					fit->second.push_back(_member);
+			json_parser jp;
+			source_data = jp.create_object();
+			join_index = 0;
+		}
+		
+		void add_join(std::string _from_class, std::string _from_field, std::string _to_class, std::string _to_field)
+		{
+			std::shared_ptr<to_field> dest = std::make_shared<to_field>();
+			dest->class_name = _to_class;
+			dest->field_name = _to_field;
+
+			std::shared_ptr<to_field> src = std::make_shared<to_field>();
+			src->class_name = _to_class;
+			src->field_name = _to_field;
+
+			// from->to
+			auto fsi = sources.find(_from_class);
+			if (fsi != sources.end()) {
+				auto& fs = fsi->second;
+				auto ffi = fs->fields.find(_from_class);
+				if (ffi != fs->fields.end()) 
+				{
+					ffi->second->targets.push_back(dest);
+				}
+				else 
+				{
+					std::shared_ptr<from_field> new_field = std::make_shared<from_field>();
+					new_field->field_name = _from_field;
+					new_field->targets.push_back(dest);
+					fs->fields.insert_or_assign(_from_field, new_field);
 				}
 			}
-			else {
-				from_join_spec fj;
-				fj.from_data_name = _src;
-				std::vector<std::string> fields = { _member };
-				fj.from_fields.insert_or_assign(_field, fields);
-				joins.insert_or_assign(_src, fj);
+			else 
+			{
+				std::shared_ptr<from_source> new_source = std::make_shared<from_source>();
+				std::shared_ptr<from_field> new_field = std::make_shared<from_field>();
+				new_field->field_name = _from_field;
+				new_field->targets.push_back(dest);
+				new_source->index = join_index++;
+				new_source->source_name = _from_class;
+				new_source->fields.insert_or_assign(_from_field, new_field);
+				sources.insert_or_assign(_from_class, new_source);
 			}
+
+			// now update for origins
+			auto fsio = sources.find(src->class_name);
+			if (fsio != sources.end()) {
+				fsio->second->origins.push_back(src);
+			}
+
 		}
 
-		json join(json _from_data, json _object_template)
+		json get_filters(json _class_filter)
 		{
 			json_parser jp;
 
-			template_object = _object_template;
-			source_data = _from_data;
-			dest_array = jp.create_array();
+			json class_filter = _class_filter;
+			json dest_array = jp.create_array();
 
-			from_join_collection::iterator _it = joins.begin();
-			join_impl(_it, 
-				[this](from_join_spec& _src, json& _dest) {
-					for (auto &srcfield : _src.from_fields)
+			from_sources::iterator _it = sources.begin();
+			get_filters_impl(dest_array, class_filter, _it,
+				[this](std::shared_ptr<from_source>& _src, std::string& _dest_class_name, std::shared_ptr<json_object>& _dest) -> bool 
+				{
+					bool used = false;
+					for (auto &srcfield : _src->fields)
 					{
-						json temp = _src.context[srcfield.first];
+						std::shared_ptr<json_value> temp = _src->context->members[srcfield.first];
 
-						for (auto &fdestfield : srcfield.second)
+						for (auto &fdestfield : srcfield.second->targets)
 						{
-							_dest.put_member(fdestfield, temp);
+							if (fdestfield->class_name == _dest_class_name) {
+								_dest->members.insert_or_assign(fdestfield->field_name, temp);
+							}
 						}
 					}
 				});
 			return dest_array;
 		}
-	};
 
+		json get(std::string _source_name)
+		{
+			return source_data[_source_name];
+		}
+
+		void add_data(std::string _source_name, json& _parent_filter, json& _src_array)
+		{
+			json_parser jp;
+			
+			std::shared_ptr<from_source> csp, cs;
+
+			// first, own data gets added;
+
+			auto target_array = source_data.get_member_array(_source_name);
+			if (not target_array) {
+				target_array = std::make_shared<json_array>();
+				source_data.object_impl()->members.insert_or_assign(_source_name, target_array);
+			}
+
+			std::shared_ptr<json_array> source_array = _src_array.array_impl();
+			target_array->elements.insert(target_array->elements.end(), source_array->elements.begin(), source_array->elements.end());
+
+			json obj = _parent_filter["parent"];
+			if (obj.object()) {
+				std::shared_ptr<json_array> children = obj[_source_name].array_impl();
+				if (not children)
+				{
+					children = std::make_shared<json_array>();
+					obj.put_member(_source_name, children);
+				}
+				children->elements.insert(children->elements.end(), source_array->elements.begin(), source_array->elements.end());
+			}
+		}
+	};
 
 	class child_bridge_interface
 	{
@@ -4409,15 +4502,12 @@ private:
 						return response;
 					}
 				}
-				json from_data = jp.create_object();
 
-				std::map<std::string, from_join> joins;
-				std::string last_from_name;
+				from_join fj;
 
 				// these run in order to allow for dependencies
 				for (auto from_class : from_classes)
 				{
-					from_join fj;
 					std::string class_name = from_class[class_name_field];
 					std::string from_name = from_class["name"];
 					json data = from_class[data_field];
@@ -4457,7 +4547,7 @@ private:
 										if (split_path.size() == 2) {
 											std::string& from_name = split_path[0];
 											std::string& from_member = split_path[1];
-											fj.create_join(from_name, from_member, member.first);
+											fj.add_join(from_name, from_member, class_name, member.first);
 										}
 										else
 										{
@@ -4469,18 +4559,16 @@ private:
 								}
 							}
 						}
-						json filters = fj.join(from_data, class_filter);
+						json filters = fj.get_filters(class_filter);
 						if (filters.size() > 0) {
-							json replace_parents = jp.create_array();
 							for (auto from_filter : filters)
 							{
 								json filter = from_filter["filter"];
-								json parent_child = from_filter["parent_child"];
+								int64_t parent_object_id = (int64_t)from_filter["parent_object_id"];
 								from_class.put_member("filter", filter);
 								json query_class_response = query_class(user_name, from_class, jx);
 								json temp_objects = query_class_response[data_field];
 								if (temp_objects.array()) {
-									parent_child.put_member(class_name, temp_objects);
 									bool include_children = (bool)from_class["include_children"];
 									if (include_children)
 									{
@@ -4494,15 +4582,11 @@ private:
 									}
 									for (auto obj : temp_objects)
 									{
+
 										objects.push_back(obj);
 									}
 								}
-								replace_parents.push_back(parent_child);
-							}
-							if (not last_from_name.empty()) {
-								from_data.put_member(last_from_name, replace_parents);
-								context.set_data_source(last_from_name, replace_parents);
-							}
+							}							
 						}
 						else
 						{
@@ -4533,9 +4617,7 @@ private:
 						system_monitoring_interface::global_mon->log_function_stop("query", "bad query data", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
-					from_data.put_member(from_name, objects);
-					context.set_data_source(from_name, objects);
-					last_from_name = from_name;
+					fj.add_data(from_name, from_class, objects);
 				}
 
 				if (context.is_error()) 

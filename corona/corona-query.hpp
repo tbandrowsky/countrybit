@@ -455,8 +455,8 @@ namespace corona
 			_dest.put_member("class_name", "join"sv);
 			_dest.put_member("resultname1", resultname1);
 			_dest.put_member("resultname2", resultname2);
-			_dest.put_member("source1", source1);
-			_dest.put_member("source2", source2);
+			_dest.put_member("input1", source1);
+			_dest.put_member("input2", source2);
 			std::string skeys = join(keys, ",");
 			_dest.put_member("keys", skeys);
 			_dest.put_member("execution_time_seconds", execution_time_seconds);
@@ -479,8 +479,8 @@ namespace corona
 
 			resultname1 = _src["resultname1"];
 			resultname2 = _src["resultname2"];
-			source1 = _src["source1"];
-			source2 = _src["source2"];
+			source1 = _src["input1"];
+			source2 = _src["input2"];
 			std::string skeys = _src["keys"];
 			keys = split(skeys, ',');
 
@@ -990,7 +990,7 @@ namespace corona
 		{
 			using namespace std::literals;
 			_dest.put_member("class_name", "project"sv);
-			_dest.put_member("source_name", source_name);
+			_dest.put_member("input", source_name);
 			_dest.put_member("projection", projection);
 		}
 
@@ -1018,7 +1018,8 @@ namespace corona
 					}
 					else 
 					{
-						std::string msg = std::format("projection member '{0}' has a path '{1}' that requires a projection source and none was supplied.", member.first, path);
+						std::string msg = std::format("'{0}' that does not have a source_name. Egs source_name:path.path.path", member.first, path);
+						_src->add_error("projection", member.first, msg, __FILE__, __LINE__);
 						comm_bus_app_interface::global_bus->log_warning(msg, __FILE__, __LINE__);
 					}
 				}
