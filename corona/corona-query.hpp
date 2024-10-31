@@ -344,7 +344,8 @@ namespace corona
 			}
 			else
 			{
-				_src->add_error("filter", stage_input_name, "Stage input name not found", __FILE__, __LINE__);
+				std::string msg = std::format("input '{0}' not found", stage_input_name);
+				_src->add_error("filter", "input", msg, __FILE__, __LINE__);
 			}
 			execution_time_seconds = tx.get_elapsed_seconds();
 			return stage_output;  

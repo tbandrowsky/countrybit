@@ -85,16 +85,31 @@ namespace corona
 
 		void get_filters_impl(json& dest_array, json& class_filter, from_sources::iterator _it, std::function<bool(std::shared_ptr<from_source>& _src, std::string& _dest_class, std::shared_ptr<json_object>& _dest)> _apply)
 		{
+			json_parser jp;
+
+			// for each element of data, go and create a filter set that may be used to get each item.
+
 			if (_it != std::end(sources)) {
 				json data = source_data[_it->second->source_name];
-				if (data.array()) {
-					auto next_it = _it;
-					next_it++;
-					for (auto item : data)
-					{
-						_it->second->context = item.object_impl();
-						get_filters_impl(dest_array, class_filter, next_it, _apply);
+				if (not data.array()) {
+					if (data.object()) {
+						json temp = data;
+						data = jp.create_array();
+						data.push_back(temp);
 					}
+					else 
+					{
+						json temp = jp.create_object();
+						data = jp.create_array();
+						data.push_back(temp);
+					}
+				}
+				auto next_it = _it;
+				next_it++;
+				for (auto item : data)
+				{
+					_it->second->context = item.object_impl();
+					get_filters_impl(dest_array, class_filter, next_it, _apply);
 				}
 			}
 			else 
@@ -142,8 +157,8 @@ namespace corona
 			dest->field_name = _to_field;
 
 			std::shared_ptr<to_field> src = std::make_shared<to_field>();
-			src->class_name = _to_class;
-			src->field_name = _to_field;
+			src->class_name = _from_class;
+			src->field_name = _from_field;
 
 			// from->to
 			auto fsi = sources.find(_from_class);
@@ -175,9 +190,21 @@ namespace corona
 			}
 
 			// now update for origins
-			auto fsio = sources.find(src->class_name);
+			auto fsio = sources.find(dest->class_name);
 			if (fsio != sources.end()) {
 				fsio->second->origins.push_back(src);
+			}
+			else 
+			{
+				std::shared_ptr<from_source> new_source = std::make_shared<from_source>();
+				std::shared_ptr<from_field> new_field = std::make_shared<from_field>();
+				new_field->field_name = _from_field;
+				new_field->targets.push_back(dest);
+				new_source->index = join_index++;
+				new_source->source_name = dest->class_name;
+				new_source->origins.push_back(src);
+				new_source->fields.insert_or_assign(_from_field, new_field);
+				sources.insert_or_assign(dest->class_name, new_source);
 			}
 
 		}
@@ -202,9 +229,11 @@ namespace corona
 						{
 							if (fdestfield->class_name == _dest_class_name) {
 								_dest->members.insert_or_assign(fdestfield->field_name, temp);
+								used = true;
 							}
 						}
 					}
+					return used;
 				});
 			return dest_array;
 		}
@@ -4480,7 +4509,7 @@ private:
 
 				for (auto from_class : from_classes)
 				{
-					std::string class_name = from_class[class_name_field];
+					std::string from_class_name = from_class[class_name_field];
 					std::string from_name = from_class["name"];
 					if (from_name.empty())
 					{
@@ -4488,15 +4517,15 @@ private:
 						system_monitoring_interface::global_mon->log_function_stop("query", "from with no name", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
-					if (class_name.empty())
+					if (from_class_name.empty())
 					{
 						response = create_response(query_request, false, "from with no class", jp.create_object(), tx.get_elapsed_seconds());
 						system_monitoring_interface::global_mon->log_function_stop("query", "from with no class", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
-					auto cd = read_lock_class(class_name);
+					auto cd = read_lock_class(from_class_name);
 					if (not cd) {
-						std::string message = std::format("from class '{0}' not found", class_name);
+						std::string message = std::format("from class '{0}' not found", from_class_name);
 						response = create_response(query_request, false, message, jp.create_object(), tx.get_elapsed_seconds());
 						system_monitoring_interface::global_mon->log_function_stop("query", "from class not found", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
@@ -4508,7 +4537,7 @@ private:
 				// these run in order to allow for dependencies
 				for (auto from_class : from_classes)
 				{
-					std::string class_name = from_class[class_name_field];
+					std::string from_class_name = from_class[class_name_field];
 					std::string from_name = from_class["name"];
 					json data = from_class[data_field];
 					json objects;
@@ -4528,14 +4557,14 @@ private:
 						json from_classes = jp.create_array();
 						json class_filter = from_class["filter"];
 						std::string filter_class_name = from_class[class_name_field];
-						auto filter_class = read_lock_class(class_name);
+						auto filter_class = read_lock_class(filter_class_name);
 						if (class_filter.object()) {
 							auto members = class_filter.get_members();
 							for (auto member : members)
 							{
 								auto fld = filter_class->get_field(member.first);
 								if (not fld) {
-									context.add_error(class_name, member.first, "Invalid field for filter", __FILE__, __LINE__);
+									context.add_error(filter_class_name, member.first, "Invalid field for filter", __FILE__, __LINE__);
 								}
 								if (member.second.is_string())
 								{
@@ -4545,9 +4574,9 @@ private:
 										std::string path(value.substr(1));
 										std::vector<std::string> split_path = split(path, '.');
 										if (split_path.size() == 2) {
-											std::string& from_name = split_path[0];
-											std::string& from_member = split_path[1];
-											fj.add_join(from_name, from_member, class_name, member.first);
+											std::string& source_from_name = split_path[0];
+											std::string& source_from_member = split_path[1];
+											fj.add_join(source_from_name, source_from_member, from_name, member.first);
 										}
 										else
 										{
@@ -4559,24 +4588,27 @@ private:
 								}
 							}
 						}
-						json filters = fj.get_filters(class_filter);
+						json filters = fj.get_filters(from_class);
 						if (filters.size() > 0) {
 							for (auto from_filter : filters)
 							{
+								json run_class = from_class.clone();
+								std::string filter_class_name = from_filter[class_name_field];
+
 								json filter = from_filter["filter"];
-								int64_t parent_object_id = (int64_t)from_filter["parent_object_id"];
-								from_class.put_member("filter", filter);
-								json query_class_response = query_class(user_name, from_class, jx);
+								run_class.put_member("filter", filter);
+
+								json query_class_response = query_class(user_name, run_class, jx);
 								json temp_objects = query_class_response[data_field];
 								if (temp_objects.array()) {
 									bool include_children = (bool)from_class["include_children"];
 									if (include_children)
 									{
-										auto edit_class = read_lock_class(class_name);
+										auto edit_class = read_lock_class(filter_class_name);
 										if (edit_class) {
 											std::string token = query_request[token_field];
 											for (auto obj : temp_objects) {
-												edit_class->run_queries(this, token, class_name, obj);
+												edit_class->run_queries(this, token, filter_class_name, obj);
 											}
 										}
 									}
@@ -4596,11 +4628,11 @@ private:
 								bool include_children = (bool)from_class["include_children"];
 								if (include_children)
 								{
-									auto edit_class = read_lock_class(class_name);
+									auto edit_class = read_lock_class(from_class);
 									if (edit_class) {
 										std::string token = query_request[token_field];
 										for (auto obj : temp_objects) {
-											edit_class->run_queries(this, token, class_name, obj);
+											edit_class->run_queries(this, token, from_class_name, obj);
 										}
 									}
 								}
@@ -4618,6 +4650,13 @@ private:
 						return response;
 					}
 					fj.add_data(from_name, from_class, objects);
+				}
+
+				for (auto from_class : from_classes)
+				{
+					std::string from_name = from_class["name"];
+					json data = fj.get(from_name);
+					context.set_data_source(from_name, data);
 				}
 
 				if (context.is_error()) 
