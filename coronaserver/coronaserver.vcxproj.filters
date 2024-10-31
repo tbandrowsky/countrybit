@@ -28,5 +28,6 @@
     <None Include="cm.csv" />
     <None Include="cn.csv" />
     <None Include="packages.config" />
+    <None Include="corona.postman_collection.json" />
   </ItemGroup>
 </Project>

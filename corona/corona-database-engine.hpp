@@ -51,7 +51,7 @@ namespace corona
 	class to_field
 	{
 	public:
-		std::string			  class_name;
+		std::string			  source_name;
 		std::string			  field_name;
 	};
 
@@ -110,9 +110,13 @@ namespace corona
 			{
 				json_parser jp;
 				json new_filter_object = class_filter.clone();
-				std::string class_name = new_filter_object[class_name_field];
+				std::string source_name = new_filter_object["name"];
 
 				auto jobj = new_filter_object["filter"];
+				if (jobj.empty()) {
+					jobj = jp.create_object();
+					new_filter_object.put_member("filter", jobj);
+				}
 				auto jmembers = jobj.get_members();
 
 				from_source* parent = nullptr;
@@ -160,21 +164,21 @@ namespace corona
 			join_index = 0;
 		}
 		
-		void add_join(std::string _from_class, std::string _from_field, std::string _to_class, std::string _to_field)
+		void add_join(std::string _from_source, std::string _from_field, std::string _to_source, std::string _to_field)
 		{
 			std::shared_ptr<to_field> dest = std::make_shared<to_field>();
-			dest->class_name = _to_class;
+			dest->source_name = _to_source;
 			dest->field_name = _to_field;
 
 			std::shared_ptr<to_field> src = std::make_shared<to_field>();
-			src->class_name = _from_class;
+			src->source_name = _from_source;
 			src->field_name = _from_field;
 
 			// from->to
-			auto fsi = sources.find(_from_class);
+			auto fsi = sources.find(_from_source);
 			if (fsi != sources.end()) {
 				auto& fs = fsi->second;
-				auto ffi = fs->fields.find(_from_class);
+				auto ffi = fs->fields.find(_from_field);
 				if (ffi != fs->fields.end()) 
 				{
 					ffi->second->targets.push_back(dest);
@@ -194,13 +198,13 @@ namespace corona
 				new_field->field_name = _from_field;
 				new_field->targets.push_back(dest);
 				new_source->index = join_index++;
-				new_source->source_name = _from_class;
+				new_source->source_name = _from_source;
 				new_source->fields.insert_or_assign(_from_field, new_field);
-				sources.insert_or_assign(_from_class, new_source);
+				sources.insert_or_assign(_from_source, new_source);
 			}
 
 			// now update for origins
-			auto fsio = sources.find(dest->class_name);
+			auto fsio = sources.find(dest->source_name);
 			if (fsio != sources.end()) {
 				fsio->second->origins.push_back(src);
 			}
@@ -211,10 +215,10 @@ namespace corona
 				new_field->field_name = _from_field;
 				new_field->targets.push_back(dest);
 				new_source->index = join_index++;
-				new_source->source_name = dest->class_name;
+				new_source->source_name = dest->source_name;
 				new_source->origins.push_back(src);
 				new_source->fields.insert_or_assign(_from_field, new_field);
-				sources.insert_or_assign(dest->class_name, new_source);
+				sources.insert_or_assign(dest->source_name, new_source);
 			}
 
 		}
@@ -250,7 +254,7 @@ namespace corona
 			
 			std::shared_ptr<from_source> csp, cs;
 
-			std::string source_name = _class_filter[class_name_field];
+			std::string source_name = _class_filter["name"];
 			json parent_object;
 
 			// first, own data gets added;
@@ -4570,7 +4574,8 @@ private:
 				for (auto from_class : from_classes)
 				{
 					std::string from_class_name = from_class[class_name_field];
-					std::string from_name = from_class["name"];
+					std::string filter_source_name = from_class["name"];
+					std::string filter_class_name = from_class[class_name_field];
 					json data = from_class[data_field];
 					json objects;
 
@@ -4590,15 +4595,15 @@ private:
 						objects = jp.create_array();
 						json from_classes = jp.create_array();
 						json class_filter = from_class["filter"];
-						std::string filter_class_name = from_class[class_name_field];
 						auto filter_class = read_lock_class(filter_class_name);
+
 						if (class_filter.object()) {
 							auto members = class_filter.get_members();
 							for (auto member : members)
 							{
 								auto fld = filter_class->get_field(member.first);
 								if (not fld) {
-									context.add_error(filter_class_name, member.first, "Invalid field for filter", __FILE__, __LINE__);
+									context.add_error(filter_source_name, member.first, "Invalid field for filter", __FILE__, __LINE__);
 								}
 								if (member.second.is_string())
 								{
@@ -4610,7 +4615,7 @@ private:
 										if (split_path.size() == 2) {
 											std::string& source_from_name = split_path[0];
 											std::string& source_from_member = split_path[1];
-											fj.add_join(source_from_name, source_from_member, from_name, member.first);
+											fj.add_join(source_from_name, source_from_member, filter_source_name, member.first);
 										}
 										else
 										{
