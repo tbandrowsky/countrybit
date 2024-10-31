@@ -94,9 +94,15 @@ namespace corona
 			if (_it != std::end(sources)) {
 				auto next_it = _it;
 				next_it++;
-				for (auto item : _it->second->data)
-				{
-					_it->second->context = item.second;
+				if (_it->second->data.size()) {
+					for (auto item : _it->second->data)
+					{
+						_it->second->context = item.second;
+						get_filters_impl(dest_array, class_filter, next_it);
+					}
+				}
+				else {
+					_it->second->context = std::make_shared<json_object>();
 					get_filters_impl(dest_array, class_filter, next_it);
 				}
 			}
@@ -126,7 +132,7 @@ namespace corona
 								auto fsi = sources.find(source_from_name);
 								if (fsi != sources.end())
 								{
-									jobj.object_impl()->members.insert_or_assign(source_from_member, fsi->second->context);
+									jobj.object_impl()->members.insert_or_assign(source_from_member, fsi->second->context->members[source_from_member]);
 									if (not parent or fsi->second->index > parent->index) {
 										parent = fsi->second.get();
 									}
@@ -250,6 +256,15 @@ namespace corona
 			// first, own data gets added;
 
 			auto csi = sources.find(source_name);
+			if (csi == sources.end())
+			{
+				std::shared_ptr<from_source> new_source = std::make_shared<from_source>();
+				std::shared_ptr<from_field> new_field = std::make_shared<from_field>();
+				new_source->index = join_index++;
+				new_source->source_name = source_name;
+				sources.insert_or_assign(source_name, new_source);
+			}
+			csi = sources.find(source_name);
 			if (csi != sources.end())
 			{
 				for (auto item : _src_array) {
@@ -4652,7 +4667,7 @@ private:
 				for (auto from_class : from_classes)
 				{
 					std::string from_name = from_class["name"];
-					json data = fj.get(from_name);
+					json data = fj.get_data(from_name);
 					context.set_data_source(from_name, data);
 				}
 
