@@ -71,6 +71,7 @@ namespace corona
 		std::map<std::string, std::shared_ptr<from_field>>  fields;
 		std::shared_ptr<json_object>						context;
 		std::vector<std::shared_ptr<to_field>>				origins;
+		std::map<int64_t, std::shared_ptr<json_object>>		data;
 	};
 
 	using from_sources = std::map<std::string, std::shared_ptr<from_source>>;
@@ -78,38 +79,25 @@ namespace corona
 	class from_join
 	{
 		from_sources			sources;
-		json					source_data;
 		json					class_filter;
 		json					dest_array;
 		int						join_index;
 
-		void get_filters_impl(json& dest_array, json& class_filter, from_sources::iterator _it, std::function<bool(std::shared_ptr<from_source>& _src, std::string& _dest_class, std::shared_ptr<json_object>& _dest)> _apply)
+		void get_filters_impl(json& dest_array, json& class_filter, from_sources::iterator _it)
 		{
 			json_parser jp;
 
-			// for each element of data, go and create a filter set that may be used to get each item.
+			// this basically permutes the data we have in our join tree
+			// at the end, we then take the chain of contexts, and from 
+			// that result, we load up our new filter objects
 
 			if (_it != std::end(sources)) {
-				json data = source_data[_it->second->source_name];
-				if (not data.array()) {
-					if (data.object()) {
-						json temp = data;
-						data = jp.create_array();
-						data.push_back(temp);
-					}
-					else 
-					{
-						json temp = jp.create_object();
-						data = jp.create_array();
-						data.push_back(temp);
-					}
-				}
 				auto next_it = _it;
 				next_it++;
-				for (auto item : data)
+				for (auto item : _it->second->data)
 				{
-					_it->second->context = item.object_impl();
-					get_filters_impl(dest_array, class_filter, next_it, _apply);
+					_it->second->context = item.second;
+					get_filters_impl(dest_array, class_filter, next_it);
 				}
 			}
 			else 
@@ -118,26 +106,43 @@ namespace corona
 				json new_filter_object = class_filter.clone();
 				std::string class_name = new_filter_object[class_name_field];
 
-				auto jobj = new_filter_object.object_impl();
-				std::shared_ptr<from_source> parent_source;
-				for (auto& ct : sources)
+				auto jobj = new_filter_object["filter"];
+				auto jmembers = jobj.get_members();
+
+				from_source* parent = nullptr;
+
+				for (auto member : jmembers)
 				{
-					if (_apply(ct.second, class_name, jobj)) 
+					if (member.second.is_string())
 					{
-						if (not parent_source)
-							parent_source = ct.second;
-						else if (parent_source->index < ct.second->index)
-							parent_source = ct.second;
+						std::string value = (std::string)member.second;
+						if (value.starts_with("$"))
+						{
+							std::string path(value.substr(1));
+							std::vector<std::string> split_path = split(path, '.');
+							if (split_path.size() == 2) {
+								std::string& source_from_name = split_path[0];
+								std::string& source_from_member = split_path[1];
+								auto fsi = sources.find(source_from_name);
+								if (fsi != sources.end())
+								{
+									jobj.object_impl()->members.insert_or_assign(source_from_member, fsi->second->context);
+									if (not parent or fsi->second->index > parent->index) {
+										parent = fsi->second.get();
+									}
+								}
+							}
+						}
 					}
 				}
 
-				json obj = jp.create_object();
-				auto robj = obj.object_impl();
-				robj->members.insert_or_assign("filter", new_filter_object.object_impl());
-				if (parent_source) {
-					robj->members.insert_or_assign("parent", parent_source->context);
+				if (parent) {
+					new_filter_object.put_member("parent_source", parent->source_name);
+					int64_t object_id = parent->context->members[object_id_field]->to_int64();
+					new_filter_object.put_member_i64("parent_id", object_id);
 				}
-				dest_array.push_back(obj);
+
+				dest_array.push_back(new_filter_object);
 			}
 		}
 
@@ -146,7 +151,6 @@ namespace corona
 		from_join()
 		{
 			json_parser jp;
-			source_data = jp.create_object();
 			join_index = 0;
 		}
 		
@@ -217,59 +221,72 @@ namespace corona
 			json dest_array = jp.create_array();
 
 			from_sources::iterator _it = sources.begin();
-			get_filters_impl(dest_array, class_filter, _it,
-				[this](std::shared_ptr<from_source>& _src, std::string& _dest_class_name, std::shared_ptr<json_object>& _dest) -> bool 
-				{
-					bool used = false;
-					for (auto &srcfield : _src->fields)
-					{
-						std::shared_ptr<json_value> temp = _src->context->members[srcfield.first];
-
-						for (auto &fdestfield : srcfield.second->targets)
-						{
-							if (fdestfield->class_name == _dest_class_name) {
-								_dest->members.insert_or_assign(fdestfield->field_name, temp);
-								used = true;
-							}
-						}
-					}
-					return used;
-				});
+			get_filters_impl(dest_array, class_filter, _it);
 			return dest_array;
 		}
 
-		json get(std::string _source_name)
+
+		json get_data(std::string _source_name)
 		{
-			return source_data[_source_name];
+			std::shared_ptr<json_array> jsarray = std::make_shared<json_array>();
+			auto sit = sources.find(_source_name);
+			if (sit != sources.end()) {
+				for (auto dit : sit->second->data) {
+					jsarray->elements.push_back(dit.second);
+				}
+			}
+			return json(jsarray);
 		}
 
-		void add_data(std::string _source_name, json& _parent_filter, json& _src_array)
+		void add_data(json _class_filter, json& _src_array)
 		{
 			json_parser jp;
 			
 			std::shared_ptr<from_source> csp, cs;
 
+			std::string source_name = _class_filter[class_name_field];
+			json parent_object;
+
 			// first, own data gets added;
 
-			auto target_array = source_data.get_member_array(_source_name);
-			if (not target_array) {
-				target_array = std::make_shared<json_array>();
-				source_data.object_impl()->members.insert_or_assign(_source_name, target_array);
-			}
-
-			std::shared_ptr<json_array> source_array = _src_array.array_impl();
-			target_array->elements.insert(target_array->elements.end(), source_array->elements.begin(), source_array->elements.end());
-
-			json obj = _parent_filter["parent"];
-			if (obj.object()) {
-				std::shared_ptr<json_array> children = obj[_source_name].array_impl();
-				if (not children)
-				{
-					children = std::make_shared<json_array>();
-					obj.put_member(_source_name, children);
+			auto csi = sources.find(source_name);
+			if (csi != sources.end())
+			{
+				for (auto item : _src_array) {
+					int64_t object_id = item.get_member(object_id_field);
+					csi->second->data.insert_or_assign(object_id, item.object_impl());
 				}
-				children->elements.insert(children->elements.end(), source_array->elements.begin(), source_array->elements.end());
+
+				std::string parent_source = _class_filter["parent_source"];
+				int64_t parent_id = (int64_t)_class_filter["parent_id"];
+				if (not parent_source.empty()) {
+					auto cspi = sources.find(parent_source);
+					if (cspi != sources.end())
+					{
+						auto fit = cspi->second->data.find(parent_id);
+						if (fit != cspi->second->data.end())
+						{
+							std::shared_ptr<json_array> children;
+							auto ci = fit->second->members.find(source_name);
+							if (ci == fit->second->members.end()) {
+								children = std::make_shared<json_array>();
+								fit->second->members.insert_or_assign(source_name, children);
+							}
+							else 
+							{
+								children = std::dynamic_pointer_cast<json_array>(ci->second);
+								if (not children) {
+									children = std::make_shared<json_array>();
+									fit->second->members.insert_or_assign(source_name, children);
+								}
+							}
+							children->elements.insert(children->elements.end(), _src_array.array_impl()->elements.begin(), _src_array.array_impl()->elements.end());
+						}
+					}
+				}
+
 			}
+
 		}
 	};
 
@@ -4547,10 +4564,12 @@ private:
 					{
 						objects = jp.create_array();
 						objects.push_back(data);
+						fj.add_data(from_class, objects);
 					}
 					else if (data.array())
 					{
 						objects = data;
+						fj.add_data(from_class, objects);
 					}
 					else if (data.empty()) {
 						objects = jp.create_array();
@@ -4592,13 +4611,7 @@ private:
 						if (filters.size() > 0) {
 							for (auto from_filter : filters)
 							{
-								json run_class = from_class.clone();
-								std::string filter_class_name = from_filter[class_name_field];
-
-								json filter = from_filter["filter"];
-								run_class.put_member("filter", filter);
-
-								json query_class_response = query_class(user_name, run_class, jx);
+								json query_class_response = query_class(user_name, from_filter, jx);
 								json temp_objects = query_class_response[data_field];
 								if (temp_objects.array()) {
 									bool include_children = (bool)from_class["include_children"];
@@ -4617,31 +4630,16 @@ private:
 
 										objects.push_back(obj);
 									}
+									fj.add_data(from_filter, objects);
 								}
 							}							
 						}
 						else
 						{
-							json query_class_response = query_class(user_name, from_class, jx);
-							json temp_objects = query_class_response[data_field];
-							if (temp_objects.array()) {
-								bool include_children = (bool)from_class["include_children"];
-								if (include_children)
-								{
-									auto edit_class = read_lock_class(from_class);
-									if (edit_class) {
-										std::string token = query_request[token_field];
-										for (auto obj : temp_objects) {
-											edit_class->run_queries(this, token, from_class_name, obj);
-										}
-									}
-								}
-								for (auto obj : temp_objects)
-								{
-									objects.push_back(obj);
-								}
-							}
-
+							std::string message = std::format("Missing filters for {0}", filter_class_name);
+							response = create_response(query_request, false, message, jp.create_object(), tx.get_elapsed_seconds());
+							system_monitoring_interface::global_mon->log_function_stop("query", "filter error", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+							return response;
 						}
 					}
 					else {
@@ -4649,7 +4647,6 @@ private:
 						system_monitoring_interface::global_mon->log_function_stop("query", "bad query data", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
-					fj.add_data(from_name, from_class, objects);
 				}
 
 				for (auto from_class : from_classes)
