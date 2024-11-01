@@ -2,6 +2,9 @@
   "SendGrid": {
     "ApiKey": "Your key goes here"
   },
+  "Sql": {
+    "AdventurWorks": "Driver={ODBC Driver 17 for SQL Server};Server=BANDROWSKY-RIPP\\DEV01;Database=AdventureWorks2016;Trusted_Connection=yes;TrustServerCertificate=yes"
+  },
   "Server": {
     "listen_point": "http://localhost:5678/corona",
     "application_name": "coronademo",

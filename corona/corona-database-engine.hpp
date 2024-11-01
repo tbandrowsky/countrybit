@@ -1581,6 +1581,7 @@ namespace corona
 
 	};
 
+
 	class class_implementation : public class_interface
 	{
 
@@ -1594,6 +1595,7 @@ namespace corona
 		std::map<std::string, std::shared_ptr<index_interface>> indexes;
 		std::map<std::string, bool> ancestors;
 		std::map<std::string, bool> descendants;
+		std::shared_ptr<sql_integration> sql;
 
 		void copy_from(const class_interface* _src)
 		{
@@ -1817,6 +1819,11 @@ namespace corona
 				_dest.put_member("descendants", jdescendants_array);
 			}
 
+			if (sql) {
+				json jsql = jp.create_object();
+				sql->get_json(jsql);
+				_dest.put_member("sql", jsql);
+			}
 		}
 
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src)
@@ -1979,7 +1986,11 @@ namespace corona
 				_errors.push_back(ve);
 			}
 
-
+			json jsql = _src["sql"];
+			if (jsql.object()) {
+				sql = std::make_shared<sql_integration>();
+				sql->put_json(_errors, jsql);
+			}
 		}
 
 		virtual void clear_queries(json& _target) override
@@ -2234,6 +2245,8 @@ namespace corona
 				});
 			}
 
+			sql = changed_class.sql;
+
 			return true;
 		}
 
@@ -2271,6 +2284,11 @@ namespace corona
 				indexes_list.push_back(fld.second);
 			}
 			return indexes_list;
+		}
+
+		virtual void put_objects_sql(corona_database_interface* _db, json& _child_objects)
+		{
+			;
 		}
 
 		virtual void put_objects(corona_database_interface* _db, json& _child_objects, json& _src_list) override

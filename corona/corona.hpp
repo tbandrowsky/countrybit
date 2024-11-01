@@ -63,6 +63,8 @@ For Future Consideration
 #include <cctype>
 #include <conio.h>
 #include <direct.h>
+#include <sql.h>
+#include <sqlext.h>
 
 // these are all miscellaneous utility classes and the ever abused core constants
 
@@ -122,6 +124,8 @@ namespace corona {
 #include "corona-visual.hpp"
 #include "corona-control-data.hpp"
 #include "corona-comm-bus-interface.hpp"
+#include "corona-express-record.hpp"
+#include "corona-sql.hpp"
 
 // these are general structures and are used for the binary saving stuff, not
 // folded into the bus just yet.

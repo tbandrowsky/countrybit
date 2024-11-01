@@ -67,7 +67,29 @@ namespace corona
 
 	class date_time
 	{
-		SYSTEMTIME system_time;
+		SQL_TIMESTAMP_STRUCT  sql_date_time;
+
+		void system_time_to_sql_time(const SYSTEMTIME& sysTime, SQL_TIMESTAMP_STRUCT& sqlTimestamp) const 
+		{
+			sqlTimestamp.year = sysTime.wYear;
+			sqlTimestamp.month = sysTime.wMonth;
+			sqlTimestamp.day = sysTime.wDay;
+			sqlTimestamp.hour = sysTime.wHour;
+			sqlTimestamp.minute = sysTime.wMinute;
+			sqlTimestamp.second = sysTime.wSecond;
+			sqlTimestamp.fraction = sysTime.wMilliseconds * 1000000i64; // Convert milliseconds to nanoseconds
+		}
+
+		void sql_time_to_system_time(const SQL_TIMESTAMP_STRUCT& sqlTimestamp, SYSTEMTIME& sysTime)  const 
+		{
+			sysTime.wYear = sqlTimestamp.year;
+			sysTime.wMonth = sqlTimestamp.month;
+			sysTime.wDay = sqlTimestamp.day;
+			sysTime.wHour = sqlTimestamp.hour;
+			sysTime.wMinute = sqlTimestamp.minute;
+			sysTime.wSecond = sqlTimestamp.second;
+			sysTime.wMilliseconds = sqlTimestamp.fraction / 1000000i64; // Convert nanoseconds to milliseconds
+		}
 
 		date_time add(int _sign, time_span _span)
 		{
@@ -76,6 +98,10 @@ namespace corona
 			int elapsed_months;
 			int elapsed_years;
 			int64_t span_value = _sign * _span.value;
+
+			SYSTEMTIME system_time = {};
+
+			sql_time_to_system_time(sql_date_time, system_time);
 
 			switch (_span.units) {
 			case time_models::milliseconds:
@@ -119,44 +145,48 @@ namespace corona
 
 		static date_time utc_now()
 		{
-			date_time dt;
-			::GetSystemTime(&dt.system_time);
-			return dt;
+			SYSTEMTIME system_time;
+			::GetSystemTime(&system_time);
+			return date_time(system_time);
 		}
 
 		static date_time now()
 		{
-			date_time dt;
-			::GetLocalTime(&dt.system_time);
-			return dt;
+			SYSTEMTIME system_time;
+			::GetLocalTime(&system_time);
+			return date_time(system_time);
 		}
 
 		date_time()
 		{
-			system_time = {};
+			sql_date_time = {};
 		}
 
 		date_time(const date_time& _src) = default;
 
 		date_time(SYSTEMTIME st)
 		{
-			system_time = st;
+			system_time_to_sql_time(st, sql_date_time);
 		}
 
 		date_time(FILETIME ft)
 		{
+			SYSTEMTIME system_time;
 			::FileTimeToSystemTime(&ft, &system_time);
+			system_time_to_sql_time(system_time, sql_date_time);
 		}
 
 		date_time(time_span ts)
 		{
 			FILETIME ft;
 			LARGE_INTEGER li;
+			SYSTEMTIME system_time;
 
 			li.QuadPart = ts.value * time_model_nanos[ts.units];
 			ft.dwLowDateTime = li.LowPart;
 			ft.dwHighDateTime = li.QuadPart;
 			::FileTimeToSystemTime(&ft, &system_time);
+			system_time_to_sql_time(system_time, sql_date_time);
 		}
 
 		date_time(time_t tt)
@@ -166,17 +196,23 @@ namespace corona
 			FILETIME ft;
 			LARGE_INTEGER li;
 
-			::SystemTimeToFileTime(&start.system_time, &ft);
+			SYSTEMTIME system_time;
+			sql_time_to_system_time(start.sql_date_time, system_time);
+			
+			::SystemTimeToFileTime(&system_time, &ft);
 			li.LowPart = ft.dwLowDateTime;
 			li.HighPart = ft.dwHighDateTime;
 			li.QuadPart += tt * time_model_nanos[ time_models::seconds ];
 			ft.dwLowDateTime = li.LowPart;
 			ft.dwHighDateTime = li.HighPart;
 			::FileTimeToSystemTime(&ft, &system_time);
+			system_time_to_sql_time(system_time, sql_date_time);
 		}
 
 		date_time(int _year, int _month, int _day, int _hour = 0, int _minute = 0, int _second = 0, int _milliseconds = 0)
 		{
+			SYSTEMTIME system_time;
+
 			system_time = {};
 			system_time.wYear = _year;
 			system_time.wMonth = _month;
@@ -185,10 +221,13 @@ namespace corona
 			system_time.wMinute = _minute;
 			system_time.wSecond = _second;
 			system_time.wMilliseconds = _milliseconds;
+			system_time_to_sql_time(system_time, sql_date_time);
 		}
 
 		date_time(struct std::tm _tm)
 		{
+			SYSTEMTIME system_time;
+
 			system_time = {};
 			system_time.wYear = _tm.tm_year + 1900;
 			system_time.wMonth = _tm.tm_mon;
@@ -197,17 +236,24 @@ namespace corona
 			system_time.wMinute = _tm.tm_min;
 			system_time.wSecond = _tm.tm_sec;
 			system_time.wMilliseconds = 0;
+			system_time_to_sql_time(system_time, sql_date_time);
 		}
 
 		date_time& operator = (SYSTEMTIME st)
 		{
+			SYSTEMTIME system_time;
+
 			system_time = st;
+			system_time_to_sql_time(system_time, sql_date_time);
 			return *this;
 		}
 
 		date_time& operator = (FILETIME ft)
 		{
+			SYSTEMTIME system_time;
+
 			::FileTimeToSystemTime(&ft, &system_time);
+			system_time_to_sql_time(system_time, sql_date_time);
 			return *this;
 		}
 
@@ -215,11 +261,13 @@ namespace corona
 		{
 			FILETIME ft;
 			LARGE_INTEGER li;
+			SYSTEMTIME system_time;
 
 			li.QuadPart = ts.value * time_model_nanos[ts.units];
 			ft.dwLowDateTime = li.LowPart;
 			ft.dwHighDateTime = li.QuadPart;
 			::FileTimeToSystemTime(&ft, &system_time);
+			system_time_to_sql_time(system_time, sql_date_time);
 			return *this;
 		}
 
@@ -229,19 +277,24 @@ namespace corona
 
 			FILETIME ft;
 			LARGE_INTEGER li;
+			SYSTEMTIME system_time;
 
-			::SystemTimeToFileTime(&start.system_time, &ft);
+			sql_time_to_system_time(start.sql_date_time, system_time);
+			::SystemTimeToFileTime(&system_time, &ft);
 			li.LowPart = ft.dwLowDateTime;
 			li.HighPart = ft.dwHighDateTime;
 			li.QuadPart += tt * time_model_nanos[time_models::seconds];
 			ft.dwLowDateTime = li.LowPart;
 			ft.dwHighDateTime = li.HighPart;
 			::FileTimeToSystemTime(&ft, &system_time);
+			system_time_to_sql_time(system_time, sql_date_time);
 			return *this;
 		}
 
 		date_time &operator = (struct std::tm _tm)
 		{
+			SYSTEMTIME system_time;
+
 			system_time = {};
 			system_time.wYear = _tm.tm_year + 1900;
 			system_time.wMonth = _tm.tm_mon + 1;
@@ -250,18 +303,20 @@ namespace corona
 			system_time.wMinute = _tm.tm_min;
 			system_time.wSecond = _tm.tm_sec;
 			system_time.wMilliseconds = 0;
+			system_time_to_sql_time(system_time, sql_date_time);
+
 			return *this;
 		}
 
 		date_time& operator = (date_time &_src)
 		{
-			system_time = _src.system_time;
+			sql_date_time = _src.sql_date_time;
 			return *this;
 		}
 
 		bool is_empty()
 		{
-			return system_time.wYear == 0 and system_time.wMonth == 0;
+			return sql_date_time.year == 0 and sql_date_time.month == 0;
 		}
 
 		operator time_span() const
@@ -270,17 +325,23 @@ namespace corona
 			LARGE_INTEGER li;
 			time_span ts;
 
+			SYSTEMTIME system_time;
+			sql_time_to_system_time(sql_date_time, system_time);
 			::SystemTimeToFileTime(&system_time, &ft);
 			li.LowPart = ft.dwLowDateTime;
 			li.HighPart = ft.dwHighDateTime;
 			ts.units = time_models::seconds;
 			ts.value = li.QuadPart / time_model_nanos[time_models::seconds];
+
 			return ts;
 		}
 
 		operator struct tm() const
 		{
 			struct tm tmx = {};
+
+			SYSTEMTIME system_time;
+			sql_time_to_system_time(sql_date_time, system_time);
 
 			if (system_time.wYear) 
 			{
@@ -348,6 +409,9 @@ namespace corona
 		{
 			std::string temp;
 
+			SYSTEMTIME system_time;
+			sql_time_to_system_time(sql_date_time, system_time);
+
 			temp = std::format("{0}/{1}/{2}", system_time.wMonth, system_time.wDay, system_time.wYear);
 
 			return temp;
@@ -412,49 +476,58 @@ namespace corona
 
 		operator SYSTEMTIME& ()
 		{
+			SYSTEMTIME system_time;
+			sql_time_to_system_time(sql_date_time, system_time);
+
 			return system_time;
 		}
 		
 		int year()
 		{
-			return system_time.wYear;
+			return sql_date_time.year;
 		}
 
 		int month()
 		{
-			return system_time.wMonth;
+			return sql_date_time.month;
 		}
 
 		int day()
 		{
-			return system_time.wDay;
+			return sql_date_time.day;
 		}
 
 		int hour()
 		{
-			return system_time.wHour;
+			return sql_date_time.hour;
 		}
 
 		int minute()
 		{
-			return system_time.wMinute;
+			return sql_date_time.minute;
 		}
 
 		int second()
 		{
-			return system_time.wSecond;
+			return sql_date_time.second;
 		}
 
 		int millisecond()
 		{
-			return system_time.wMilliseconds;
+			return sql_date_time.fraction / 1000000i64;
 		}
 
 		int compare(const date_time& _src) const
 		{
 			FILETIME fthis, fsrc;
+			
+			SYSTEMTIME system_time;
+			sql_time_to_system_time(sql_date_time, system_time);
 			SystemTimeToFileTime(&system_time, &fthis);
-			SystemTimeToFileTime(&_src.system_time, &fsrc);
+
+			SYSTEMTIME system_time_2;
+			sql_time_to_system_time(_src.sql_date_time, system_time_2);
+			SystemTimeToFileTime(&system_time_2, &fsrc);
 			LARGE_INTEGER lithis, lisrc;
 			lithis.HighPart = fthis.dwHighDateTime;
 			lithis.LowPart = fthis.dwLowDateTime;
@@ -471,8 +544,13 @@ namespace corona
 		std::weak_ordering operator <=>(const date_time& _src) const
 		{
 			FILETIME fthis, fsrc;
+			SYSTEMTIME system_time;
+			sql_time_to_system_time(sql_date_time, system_time);
 			SystemTimeToFileTime(&system_time, &fthis);
-			SystemTimeToFileTime(&_src.system_time, &fsrc);
+
+			SYSTEMTIME system_time_2;
+			sql_time_to_system_time(_src.sql_date_time, system_time_2);
+			SystemTimeToFileTime(&system_time_2, &fsrc);
 			LARGE_INTEGER lithis, lisrc;
 			lithis.HighPart = fthis.dwHighDateTime;
 			lithis.LowPart = fthis.dwLowDateTime;

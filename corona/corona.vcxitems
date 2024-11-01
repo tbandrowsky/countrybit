@@ -27,6 +27,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-bus-interface.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-bus-commands.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-service-bus.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-express-record.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-locks.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-constants.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-controller.hpp" />
@@ -91,6 +92,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-sendgrid-client.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-skip_list.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-sorted_index.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-sql.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-store_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-string_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-styles.hpp" />

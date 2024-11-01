@@ -96,6 +96,16 @@ namespace corona {
 		}
 		return str;
 	}
+
+	std::string replace(std::string source, std::string _search, std::string _replace )
+	{		
+		size_t pos = source.find(_search);
+		while (pos != std::string::npos) {
+			source.replace(pos, _search.length(), _replace);
+			pos = source.find(_search);
+		}
+	}
+
 }
 
 #endif
