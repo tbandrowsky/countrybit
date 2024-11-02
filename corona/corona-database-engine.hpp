@@ -381,7 +381,7 @@ namespace corona
 	class index_interface
 	{
 	protected:
-		relative_ptr_type				table_location;
+		relative_ptr_type								table_location;
 	public:
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
@@ -389,7 +389,7 @@ namespace corona
 		virtual int64_t									get_index_id() = 0;
 		virtual std::string								get_index_name() = 0;
 		virtual std::vector<std::string>				&get_index_keys() = 0;
-		virtual std::shared_ptr<xtable>					get_table(corona_database_interface* _db) = 0;
+		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
 		virtual std::string								get_index_key_string() = 0;
 
 	};
@@ -397,7 +397,7 @@ namespace corona
 	class class_interface : public shared_lockable
 	{
 	protected:
-		relative_ptr_type				table_location;
+		relative_ptr_type								table_location;
 	public:
 
 		virtual void get_json(json& _dest) = 0;
@@ -411,7 +411,9 @@ namespace corona
 		virtual std::map<std::string, bool>  const&		get_ancestors()  const = 0;
 		virtual std::map<std::string, bool>  &			update_descendants() = 0;
 		virtual std::map<std::string, bool>  &			update_ancestors()  = 0;
-		virtual std::shared_ptr<xtable>					get_table(corona_database_interface* _db) = 0;
+		virtual std::shared_ptr<xtable_interface>		get_table(corona_database_interface* _db) = 0;
+		virtual std::shared_ptr<sql_table>				get_stable(corona_database_interface* _db) = 0;
+		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) const = 0;
 		virtual	bool									update(std::vector<validation_error> &_errors, corona_database_interface* _db, json _changed_class) = 0;
 		virtual std::vector<std::string>				get_table_fields()  const = 0;
@@ -425,6 +427,7 @@ namespace corona
 		virtual int64_t	get_location()  const = 0;
 		virtual void	init_validation(corona_database_interface* _db) = 0;
 
+		virtual json	get_object(corona_database_interface* _db, int64_t _object_id) = 0;
 		virtual void	put_objects(corona_database_interface* _db, json& _children, json& _src_objects) = 0;
 		virtual json	get_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
 		virtual json	delete_objects(corona_database_interface* _db, json _key, bool _include_children) = 0;
@@ -445,6 +448,7 @@ namespace corona
 		std::unique_ptr<xblock_cache> cache;
 
 	public:
+		sql_connections connections;
 
 		corona_database_interface(std::shared_ptr<file> _fb) :
 			file_block(_fb)
@@ -1447,7 +1451,7 @@ namespace corona
 
 			table_location = null_row;;
 
-			auto temp = _ii_index->get_table(_db);
+			auto temp = _ii_index->get_xtable(_db);
 
 			if (temp) {
 				table_location = temp->get_location();
@@ -1560,7 +1564,7 @@ namespace corona
 			return *this;
 		}
 
-		virtual std::shared_ptr<xtable> get_table(corona_database_interface* _db) override
+		virtual std::shared_ptr<xtable> get_xtable(corona_database_interface* _db) override
 		{
 			std::shared_ptr<xtable> table;
 
@@ -1596,6 +1600,7 @@ namespace corona
 		std::map<std::string, bool> ancestors;
 		std::map<std::string, bool> descendants;
 		std::shared_ptr<sql_integration> sql;
+		std::shared_ptr<sql_table> stable;
 
 		void copy_from(const class_interface* _src)
 		{
@@ -1660,10 +1665,11 @@ namespace corona
 
 			for (auto idx : indexes) {
 				auto idx_name = idx.second->get_index_name();
-				auto idx_table = idx.second->get_table(_db);
+				auto idx_table = idx.second->get_xtable(_db);
 				info = idx_table->get_info();
 				all_info.put_member(idx_name, info);
 			}
+
 			return all_info;
 		}
 
@@ -1715,7 +1721,7 @@ namespace corona
 			return table_fields;
 		}
 
-		virtual std::shared_ptr<xtable> get_table(corona_database_interface *_db) override
+		virtual std::shared_ptr<xtable> get_xtable(corona_database_interface* _db) override
 		{
 			std::shared_ptr<xtable> table;
 			if (table_location > null_row)
@@ -1731,6 +1737,43 @@ namespace corona
 				table_location = table_header->get_location();
 			}
 			return table;
+		}
+
+		virtual std::shared_ptr<sql_table> get_stable(corona_database_interface* _db) override
+		{
+			if (not sql)
+				return nullptr;
+
+			if (stable)
+			{
+				return stable;
+			}
+			else
+			{
+				std::string connection = _db->connections.get_sql_connection(sql->connection_name);
+				stable = std::make_shared<sql_table>(sql, connection);
+
+				// we're going to make our xtable anyway so we can slap our object id 
+				// on top of a sql server primary key
+
+				auto table_header = std::make_shared<xtable_header>();
+				table_header->object_members = sql->primary_key;
+				table_header->key_members = { object_id_field };
+				auto tb = std::make_shared<xtable>(_db->get_cache(), table_header);
+				table_location = table_header->get_location();
+			}
+			return stable;
+		}
+
+
+		virtual std::shared_ptr<xtable_interface> get_table(corona_database_interface* _db) override
+		{
+			if (sql) 
+			{
+				return get_stable(_db);
+			}
+			else
+				return get_xtable(_db);
 		}
 
 		virtual std::map<std::string, bool>  const& get_descendants() const override
@@ -1990,6 +2033,13 @@ namespace corona
 			if (jsql.object()) {
 				sql = std::make_shared<sql_integration>();
 				sql->put_json(_errors, jsql);
+				for (auto& mp : sql->mappings) {
+					auto fi = fields.find(mp.corona_field_name);
+					if (fi != fields.end()) {
+						mp.field_type = fi->second->get_field_type();
+						mp.string_size = 100;
+					}
+				}
 			}
 		}
 
@@ -2049,7 +2099,7 @@ namespace corona
 			}
 
 			if (matched_index) {
-				index_table = matched_index->get_table(_db);
+				index_table = matched_index->get_xtable(_db);
 			}
 
 			return index_table;
@@ -2192,7 +2242,7 @@ namespace corona
 				// if the index is going away, then get rid of it.
 				if (existing == changed_class.indexes.end() or
 					existing->second->get_index_key_string() != old_index->get_index_key_string()) {
-					auto index_table = old_index->get_table(_db);
+					auto index_table = old_index->get_xtable(_db);
 					if (index_table)
 					{
 						index_table->clear();
@@ -2234,10 +2284,11 @@ namespace corona
 
 			json empty_key;
 			auto class_data = get_table(_db);
+
 			// and populate the new indexes with any data that might exist
 			for (auto idc : indexes) {
 				auto my_index = idc.second;
-				auto table = my_index->get_table(_db);
+				auto table = my_index->get_xtable(_db);
 				auto& keys = my_index->get_index_keys();
 				class_data->for_each(empty_key, [table](json& _item) -> relative_ptr_type {
 					table->put(_item);
@@ -2286,9 +2337,23 @@ namespace corona
 			return indexes_list;
 		}
 
-		virtual void put_objects_sql(corona_database_interface* _db, json& _child_objects)
+		virtual json get_object(corona_database_interface* _db, int64_t _object_id)
 		{
-			;
+			json_parser jp;
+			json result;
+			if (sql) {
+				auto tb = get_xtable(_db);
+				json sql_key = tb->get(_object_id);
+				auto stb = get_table(_db);
+				stb->get(sql_key);
+			}
+			else {
+				auto tb = get_table(_db);
+				json key = jp.create_object();
+				key.put_member_i64(object_id_field, _object_id);
+				result = tb->get(key);
+			}
+			return result;
 		}
 
 		virtual void put_objects(corona_database_interface* _db, json& _child_objects, json& _src_list) override
@@ -2314,15 +2379,13 @@ namespace corona
 				index_updates.push_back(iop);
 			}
 
-			auto tb = get_table(_db);
-
 			json put_list = jp.create_array();
 
 			for (auto _src_obj : _src_list)
 			{
 				int64_t parent_object_id = (int64_t)_src_obj[object_id_field];
 
-				json old_object = tb->get(parent_object_id);
+				json old_object = get_object(_db, parent_object_id);
 				json write_object;
 
 				if (old_object.object()) {
@@ -2408,11 +2471,17 @@ namespace corona
 
 			}
 			
+			auto tb = get_xtable(_db);
+
 			tb->put_array(put_list);
+			auto stb = get_stable(_db);
+			if (stb) {
+				stb->put_array(put_list);
+			}
 
 			for (auto& iop : index_updates)
 			{
-				auto idx_table = iop.index->get_table(_db);
+				auto idx_table = iop.index->get_xtable(_db);
 				idx_table->erase_array(iop.objects_to_delete);
 				idx_table->put_array(iop.objects_to_add);
 			}
@@ -2426,13 +2495,11 @@ namespace corona
 			json_parser jp;
 			json obj;
 
-			auto class_data = get_table(_db);
-
 			auto index_table = find_index(_db, _key);
 
 			if (_key.has_member(object_id_field)) {
 				int64_t object_id = (int64_t)_key[object_id_field];
-				json temp = class_data->get(object_id);
+				json temp = get_object(_db, object_id);
 				obj = jp.create_array();
 				obj.push_back(temp);
 			}
@@ -2443,14 +2510,15 @@ namespace corona
 				{
 					json object_key = jp.create_object();
 
- 					obj = index_table->select(_key, [&object_key, &class_data](json& _item) -> json {
+ 					obj = index_table->select(_key, [_db, this, &object_key](json& _item) -> json {
 						int64_t object_id = (int64_t)_item[object_id_field];
-						json objfound = class_data->get(object_id);
+						json objfound = get_object(_db, object_id);
 						return objfound;
 					});
 				}
 				else
 				{
+					auto class_data = get_table(_db);
 					obj = class_data->select(_key, [&_key](json& _j)
 						{
 							json result;
@@ -3593,6 +3661,16 @@ private:
 				json send_grid = _config["SendGrid"];
 				send_grid_api_key = send_grid["ApiKey"];
 			}
+
+			if (_config.has_member("Connections"))
+			{
+				json connections = _config["Connections"];
+				auto members = connections.get_members();
+				for (auto member : members) {
+					this->connections.set_sql_connection(member.first, (std::string)member.second);
+				}
+			}
+
 			if (_config.has_member("Server"))
 			{
 				json server = _config["Server"];

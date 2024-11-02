@@ -65,6 +65,8 @@ namespace corona
 		std::string connection_name;
 		std::string sql_view_name;
 		std::string sql_table_name;
+		std::vector<std::string> primary_key;
+		std::vector<std::string> all_fields;
 
 		virtual void get_json(json& _dest)
 		{
@@ -90,12 +92,17 @@ namespace corona
 			connection_name = _src["connection_name"];
 			sql_view_name = _src["sql_view_name"];
 			sql_table_name = _src["sql_table_name"];
+			primary_key.clear();
 
 			json jmappings = _src["mappings"];
 			for (auto mapping : jmappings)
 			{
 				sql_field_mapping sfm;
 				sfm.put_json(_errors, mapping);
+				if (sfm.primary_key) {
+					primary_key.push_back(sfm.corona_field_name);
+				}
+				all_fields.push_back(sfm.corona_field_name);
 			}
 		}
 		
@@ -119,6 +126,7 @@ namespace corona
 		std::string get_template;
 		std::string erase_template;
 
+		virtual std::string get_name() = 0;
 		virtual sql_statement put_statement(json& _object, std::shared_ptr<sql_integration>& _integration) = 0;
 		virtual sql_statement get_statement(json& _object, std::shared_ptr<sql_integration>& _integration) = 0;
 		virtual sql_statement erase_statement(json& _object, std::shared_ptr<sql_integration>& _integration) = 0;
@@ -369,9 +377,14 @@ namespace corona
 			stmt.string_to_execute = apply_template(stmt.string_to_execute, jvariables);
 			return stmt;
 		}
+
+		virtual std::string get_name()
+		{
+			return "SQL Server";
+		}
 	};
 
-	class sql_connection
+	class sql_table : public xtable_interface
 	{
 		SQLHENV hEnv;
 		SQLHDBC hDbc;
@@ -386,18 +399,21 @@ namespace corona
 			json_parser jp;
 		}
 
-		bool sql_error(	SQLHANDLE      hHandle,
-						SQLSMALLINT    hType,
-						RETCODE        RetCode)
+		bool sql_error(	SQLSMALLINT    hType,
+						SQLHANDLE      hHandle,						
+						RETCODE        retcode)
 		{
 			SQLSMALLINT iRec = 0;
 			SQLINTEGER  iError;
 			char		szMessage[4096];
 			char        szState[SQL_SQLSTATE_SIZE + 1];
 
-			if (RetCode == SQL_INVALID_HANDLE)
+			if ((retcode == SQL_SUCCESS) or (retcode == SQL_SUCCESS_WITH_INFO))
+				return false;
+
+			if (retcode == SQL_INVALID_HANDLE)
 			{
-				return;
+				return false;
 			}
 
 			while (SQLGetDiagRec(hType,
@@ -413,7 +429,7 @@ namespace corona
 				if (strncmp(szState, "01004", 5))
 				{
 					std::string error_message = std::format("[{0:5.5s}] {1} ({%d})", szState, szMessage, iError);
-
+					system_monitoring_interface::global_mon->log_warning(error_message);
 				}
 			}
 		}
@@ -425,7 +441,10 @@ namespace corona
 
 			SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
 
-			SQLPrepare(hStmt, (SQLCHAR*)_statement.string_to_execute.c_str(), SQL_NTS);
+			SQLRETURN status;
+
+			status = SQLPrepare(hStmt, (SQLCHAR*)_statement.string_to_execute.c_str(), SQL_NTS);
+			sql_error(SQL_HANDLE_STMT, hStmt, status);
 
 			xrecord xparams;
 			std::vector<int> offsets;
@@ -438,7 +457,7 @@ namespace corona
 					{
 					case field_types::ft_string:
 						{
-							std::string field = (std::string)_statement[param.corona_field_name];
+							std::string field = (std::string)_statement.source_object[param.corona_field_name];
 							int nsz = field.size() + 1;
 							int offset = xparams.bind(field);
 							offsets.push_back(offset);
@@ -446,19 +465,19 @@ namespace corona
 						break;
 					case field_types::ft_double:
 						{
-							int offset = xparams.bind((double)_statement[param.corona_field_name]);
+							int offset = xparams.bind((double)_statement.source_object[param.corona_field_name]);
 							offsets.push_back(offset);
 						}
 						break;
 					case field_types::ft_datetime:
 						{
-							int offset = xparams.bind((date_time)_statement[param.corona_field_name]);
+							int offset = xparams.bind((date_time)_statement.source_object[param.corona_field_name]);
 							offsets.push_back(offset);
 						}
 						break;
 					case field_types::ft_int64:
 						{
-							int offset = xparams.bind((int64_t)_statement[param.corona_field_name]);
+							int offset = xparams.bind((int64_t)_statement.source_object[param.corona_field_name]);
 							offsets.push_back(offset);
 						}
 						break;
@@ -478,22 +497,26 @@ namespace corona
 					{
 						std::string field = (std::string)_statement[param.corona_field_name];
 						int nsz = field.size() + 1;
-						SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, nsz, 0, dest, 0, NULL);
+						status = SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, nsz, 0, dest, 0, NULL);
+						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_double:
 					{
-						SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0, dest, 0, NULL);
+						status = SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0, dest, 0, NULL);
+						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_datetime:
 					{
-						SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_TYPE_TIMESTAMP, SQL_TIMESTAMP, 0, 0, dest, 0, NULL);
+						status = SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_TYPE_TIMESTAMP, SQL_TIMESTAMP, 0, 0, dest, 0, NULL);
+						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_int64:
 					{
-						SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_SBIGINT, SQL_BIGINT, 0, 0, dest, 0, NULL);
+						status = SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_SBIGINT, SQL_BIGINT, 0, 0, dest, 0, NULL);
+						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					}
@@ -548,28 +571,33 @@ namespace corona
 					{
 					case field_types::ft_string:
 					{
-						SQLBindCol(hStmt, offset_idx, SQL_C_CHAR, dest, binding.string_size, nullptr);
+						status = SQLBindCol(hStmt, offset_idx, SQL_C_CHAR, dest, binding.string_size, nullptr);
+						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_double:
 					{
-						SQLBindCol(hStmt, offset_idx, SQL_C_DOUBLE, dest, 0, nullptr);
+						status = SQLBindCol(hStmt, offset_idx, SQL_C_DOUBLE, dest, 0, nullptr);
+						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_datetime:
 					{
-						SQLBindCol(hStmt, offset_idx, SQL_C_TYPE_TIMESTAMP, dest, nullptr);
+						status = SQLBindCol(hStmt, offset_idx, SQL_C_TYPE_TIMESTAMP, dest, 0, nullptr);
+						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_int64:
 					{
-						SQLBindCol(hStmt, offset_idx, SQL_C_SBIGINT, dest, 0, nullptr);
+						status = SQLBindCol(hStmt, offset_idx, SQL_C_SBIGINT, dest, 0, nullptr);
+						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					}
 			}
 
-			SQLExecute(hStmt);
+			status = SQLExecute(hStmt);
+			sql_error(SQL_HANDLE_STMT, hStmt, status);
 
 			if (_statement.result_mappings.size() > 0) 
 			{
@@ -584,9 +612,11 @@ namespace corona
 
 		std::shared_ptr<sql_statements> statement_gen;
 
+		SQLRETURN status;
+
 	public:
 
-		sql_connection(std::shared_ptr<sql_integration> _sql)
+		sql_table(std::shared_ptr<sql_integration> _sql, std::string _connection)
 		{
 			sql = _sql;
 			hEnv = nullptr;
@@ -594,9 +624,26 @@ namespace corona
 			hStmt = nullptr;
 			conn_string[0] = 0;
 			statement_gen = std::make_shared<sql_server_statements>();
+
+			int max_conn_size = (sizeof(conn_string) - 16);
+			if (_connection.empty() or _connection.size() >= max_conn_size)
+				return;
+
+			SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &hEnv);
+			SQLSetEnvAttr(hEnv, SQL_ATTR_ODBC_VERSION, (void*)SQL_OV_ODBC3, 0);
+			SQLAllocHandle(SQL_HANDLE_DBC, hEnv, &hDbc);
+			SQLCHAR outstr[1024];
+			SQLSMALLINT outstrlen = 0;
+
+			std::strcpy(conn_string, _connection.c_str());
+
+			status = SQLDriverConnect(hDbc, NULL, (SQLCHAR*)&conn_string[0], SQL_NTS,
+				outstr, sizeof(outstr), &outstrlen,
+				SQL_DRIVER_NOPROMPT);
+			sql_error(SQL_HANDLE_DBC, hDbc, status);
 		}
 
-		~sql_connection()
+		~sql_table()
 		{
 			if (hStmt) {
 				SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
@@ -615,28 +662,7 @@ namespace corona
 			}
 		}
 
-		SQLRETURN connect(std::string _connection)
-		{
-			int max_conn_size = (sizeof(conn_string) - 16);
-			if (_connection.empty() or _connection.size() >= max_conn_size)
-				return;
-
-			SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &hEnv);
-			SQLSetEnvAttr(hEnv, SQL_ATTR_ODBC_VERSION, (void*)SQL_OV_ODBC3, 0);
-			SQLAllocHandle(SQL_HANDLE_DBC, hEnv, &hDbc);
-			SQLCHAR outstr[1024];
-			SQLSMALLINT outstrlen = 0;
-
-			std::strcpy(conn_string, _connection.c_str());
-
-			ret = SQLDriverConnect(hDbc, NULL, (SQLCHAR *) & conn_string[0], SQL_NTS,
-				outstr, sizeof(outstr), &outstrlen,
-				SQL_DRIVER_NOPROMPT);
-
-			return ret;
-		}
-
-		virtual void put(json& values)
+		virtual void put(json values) override
 		{
 			sql_statement stmt;
 
@@ -645,14 +671,14 @@ namespace corona
 
 		}
 
-		virtual void put_array(json& values)
+		virtual void put_array(json values) override
 		{
 			for (auto obj : values) {
 				put(obj);
 			}
 		}
 
-		virtual json get(json key)
+		virtual json get(json key) override
 		{
 			sql_statement stmt;
 			json results;
@@ -662,21 +688,105 @@ namespace corona
 			return results;
 		}
 
-		virtual json erase(json key)
+		virtual void erase(json key)  override
 		{
 			sql_statement stmt;
 			json results;
 
 			stmt = statement_gen->get_statement(key, sql);
 			results = execute(stmt);
-			return results;
 		}
 
-		virtual json erase_array(json values)
+		virtual void erase_array(json values)
 		{
 			for (auto obj : values) {
 				erase(obj);
 			}
+		}
+
+		virtual json get_info() override
+		{
+			json_parser jp;
+			json results = jp.create_object();
+			results.put_member("table", std::string("ODBC"));
+			results.put_member("language", statement_gen->get_name());
+			std::string connection = conn_string;
+			std::vector<std::string> sections = split(connection, ';');
+			for (auto section : sections) {
+				std::vector<std::string> terms = split(section, '=');
+				if (terms.size() == 2) {
+					std::string lower_name = terms[0];
+					std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+					if (lower_name == "driver" or lower_name == "server" or lower_name == "database" or lower_name == "trustservercertificate") {
+						results.put_member(terms[0], terms[1]);
+					}
+				}
+			}
+			return results;
+		}
+
+		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) override
+		{
+
+			xfor_each_result result = {};
+			json results = get(_object);
+			for (auto obj : results) 
+			{
+				if (_process(obj) != null_row)
+				{
+					result.count++;
+					result.is_any = true;
+				}
+				else {
+					result.is_any = false;
+				}
+			}
+			return result;
+		}
+
+		virtual json select(json _object, std::function<json(json& _item)> _process) override
+		{
+			json_parser jp;
+			json raw_results = get(_object);
+			json results = jp.create_array();
+			for (auto obj : raw_results)
+			{
+				json jresult = _process(obj);
+				if (jresult.object()) {
+					results.push_back(jresult);
+				}
+			}
+			return results;
+		}
+
+	};
+
+	class sql_connections
+	{
+
+		std::map<std::string, std::string> sql_connections;
+		shared_lockable locker;
+
+	public:
+
+		std::string get_sql_connection(std::string _source)
+		{
+			read_scope_lock lockit(locker);
+			std::string result;
+			std::string env_path = "corona_sql_" + _source;
+			std::transform(env_path.begin(), env_path.end(), env_path.begin(), ::toupper);
+			char* env = getenv(env_path.c_str());
+			if (env != nullptr)
+				result = env;
+			else
+				result = sql_connections[_source];
+			return result;
+		}
+
+		void set_sql_connection(std::string _source, std::string _connection)
+		{
+			write_scope_lock lockit(locker);
+			sql_connections.insert_or_assign(_source, _connection);
 		}
 
 	};

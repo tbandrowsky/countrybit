@@ -73,15 +73,15 @@ namespace corona
 
 		virtual relative_ptr_type get_location() = 0;
 		virtual json get(json _object) = 0;
-		virtual json get(int64_t _object_id) = 0;
-		virtual void put(json _object, bool _save) = 0;
+		virtual void put(json _object) = 0;
 		virtual void put_array(json _object) = 0;
-		virtual void erase(json _object, bool _save) = 0;
-		virtual void erase(int64_t _object_id, bool _save) = 0;
+		virtual void erase(json _object)= 0;
+		virtual void erase(int64_t _object_id) = 0;
 		virtual void erase_array(json _object) = 0;
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) = 0;
 		virtual json select(json _object, std::function<json(json& _item)> _process) = 0;
 		virtual void clear() = 0;
+		virtual json get_info() = 0;
 	};
 
 
@@ -1101,7 +1101,7 @@ namespace corona
 			return table_header->get_location();
 		}
 
-		virtual json get(int64_t _key) override
+		virtual json get(int64_t _key)
 		{
 			json_parser jp;
 			json jresult;
@@ -1132,7 +1132,7 @@ namespace corona
 			return jresult;
 		}
 
-		virtual void put(json _object, bool _save = true) override
+		virtual void put(json _object) override
 		{
 			xrecord key(table_header->key_members, _object);
 			if (key.is_wildcard()) {
@@ -1156,7 +1156,7 @@ namespace corona
 			}
 		}
 
-		virtual void erase(int64_t _id, bool _save = true) override
+		virtual void erase(int64_t _id) override
 		{
 			xrecord key;
 			key.add(_id);
@@ -1164,7 +1164,7 @@ namespace corona
 			::InterlockedDecrement64(&table_header->count);
 		}
 
-		virtual void erase(json _object, bool _save = true) override
+		virtual void erase(json _object) override
 		{
 			xrecord key(table_header->key_members, _object);
 			::InterlockedDecrement64(&table_header->count);

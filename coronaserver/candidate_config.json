@@ -2,7 +2,7 @@
   "SendGrid": {
     "ApiKey": "Your key goes here"
   },
-  "Sql": {
+  "Connections": {
     "AdventurWorks": "Driver={ODBC Driver 17 for SQL Server};Server=BANDROWSKY-RIPP\\DEV01;Database=AdventureWorks2016;Trusted_Connection=yes;TrustServerCertificate=yes"
   },
   "Server": {
