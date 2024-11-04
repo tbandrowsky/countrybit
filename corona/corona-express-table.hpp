@@ -76,7 +76,6 @@ namespace corona
 		virtual void put(json _object) = 0;
 		virtual void put_array(json _object) = 0;
 		virtual void erase(json _object)= 0;
-		virtual void erase(int64_t _object_id) = 0;
 		virtual void erase_array(json _object) = 0;
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) = 0;
 		virtual json select(json _object, std::function<json(json& _item)> _process) = 0;
@@ -1151,12 +1150,12 @@ namespace corona
 		{
 			if (_array.array()) {
 				for (auto item : _array) {
-					put(item, false);
+					put(item);
 				}
 			}
 		}
 
-		virtual void erase(int64_t _id) override
+		virtual void erase(int64_t _id) 
 		{
 			xrecord key;
 			key.add(_id);

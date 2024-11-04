@@ -104,6 +104,78 @@
         "transaction_amount": "double",
         "memo": "string"
       }
+    },
+    {
+      "class_name": "People",
+      "class_description": "SQL Server Adventure Works People.People",
+      "base_class_name": "sys_object",
+      "fields": {
+        "BusinessEntityID": "string",
+        "PersonType": "string",
+        "NameStyle": "string",
+        "Title": "string",
+        "FirstName": "string",
+        "MiddleName": "string",
+        "LastName": "string",
+        "Suffix": "string",
+        "EmailPromotion": "number"
+      },
+      "sql": {
+        "connection_name": "",
+        "sql_view_name": "",
+        "sql_table_name": "",
+        "mappings": [
+          {
+            "corona_field_name": "BusinessEntityID",
+            "sql_field_name": "BusinessEntityID",
+            "primary_key": true,
+            "field_type": "string",
+            "string_size": 20.0
+          },
+          {
+            "corona_field_name": "PersonType",
+            "sql_field_name": "PersonType",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20.0
+          },
+          {
+            "corona_field_name": "NameStyle",
+            "sql_field_name": "NameStyle",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20.0
+          },
+          {
+            "corona_field_name": "Title",
+            "sql_field_name": "Title",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20.0
+          },
+          {
+            "corona_field_name": "FirstName",
+            "sql_field_name": "FirstName",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20.0
+          },
+          {
+            "corona_field_name": "MiddleName",
+            "sql_field_name": "MiddleName",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20.0
+          },
+          {
+            "corona_field_name": "LastName",
+            "sql_field_name": "LastName",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20.0
+          }
+        ]
+      }
     }
   ],
   "users": [],

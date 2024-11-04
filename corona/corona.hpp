@@ -125,7 +125,6 @@ namespace corona {
 #include "corona-control-data.hpp"
 #include "corona-comm-bus-interface.hpp"
 #include "corona-express-record.hpp"
-#include "corona-sql.hpp"
 
 // these are general structures and are used for the binary saving stuff, not
 // folded into the bus just yet.
@@ -202,6 +201,10 @@ namespace corona {
 
 // this is going to replace json-table, because the skip list doesn't work and its too damned slow anyway.
 #include "corona-express-table.hpp"
+
+// this is a contract of the express table,
+// but implemented using SQL Server tables
+#include "corona-sql.hpp"
 
 // the corona client is an http client for the corona server
 #include "corona-coronaclient.hpp"

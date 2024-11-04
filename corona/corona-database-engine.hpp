@@ -1600,7 +1600,6 @@ namespace corona
 		std::map<std::string, bool> ancestors;
 		std::map<std::string, bool> descendants;
 		std::shared_ptr<sql_integration> sql;
-		std::shared_ptr<sql_table> stable;
 
 		void copy_from(const class_interface* _src)
 		{
@@ -1744,24 +1743,17 @@ namespace corona
 			if (not sql)
 				return nullptr;
 
-			if (stable)
-			{
-				return stable;
-			}
-			else
-			{
-				std::string connection = _db->connections.get_sql_connection(sql->connection_name);
-				stable = std::make_shared<sql_table>(sql, connection);
+			std::string connection = _db->connections.get_sql_connection(sql->connection_name);
+			auto stable = std::make_shared<sql_table>(sql, connection);
 
-				// we're going to make our xtable anyway so we can slap our object id 
-				// on top of a sql server primary key
+			// we're going to make our xtable anyway so we can slap our object id 
+			// on top of a sql server primary key
 
-				auto table_header = std::make_shared<xtable_header>();
-				table_header->object_members = sql->primary_key;
-				table_header->key_members = { object_id_field };
-				auto tb = std::make_shared<xtable>(_db->get_cache(), table_header);
-				table_location = table_header->get_location();
-			}
+			auto table_header = std::make_shared<xtable_header>();
+			table_header->object_members = sql->primary_key;
+			table_header->key_members = { object_id_field };
+			auto tb = std::make_shared<xtable>(_db->get_cache(), table_header);
+			table_location = table_header->get_location();
 			return stable;
 		}
 
@@ -2587,8 +2579,7 @@ namespace corona
 					}
 				}
 
-				int64_t object_id = _src_obj[ object_id_field ];
-				tb->erase(object_id);
+				tb->erase(_src_obj);
 			}
 			return matching_objects;
 		}
@@ -3096,10 +3087,8 @@ private:
 
 				if (object_definition.has_member(object_id_field))
 				{
-					json object_key = jp.create_object();
-					object_id = (int64_t)object_definition[object_id_field];
-					auto tbl = class_data->get_table(this);
-					auto existing_object = tbl->get(object_id);
+					object_id = object_definition[object_id_field];
+					auto existing_object = class_data->get_object(this, object_id);
 
 					if (existing_object.object()) {
 						existing_object.merge(object_definition);

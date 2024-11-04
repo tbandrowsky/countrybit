@@ -109,7 +109,7 @@ namespace corona
 		sql_field_mappings::iterator find(std::string _corona_name)
 		{
 			sql_field_mappings::iterator it = 				
-				std::find(mappings.begin(), mappings.end(), [&_corona_name](sql_field_mapping& _mapping) -> bool
+				std::find_if(mappings.begin(), mappings.end(), [&_corona_name](sql_field_mapping& _mapping) -> bool
 				{
 					return _mapping.corona_field_name == _corona_name;
 				});
@@ -184,6 +184,7 @@ namespace corona
 			for (auto member : members) {
 				replace(src, member.first, (std::string)member.second);
 			}
+			return src;
 		}
 
 		virtual sql_statement put_statement(json& _object, std::shared_ptr<sql_integration>& _integration) override
@@ -392,7 +393,8 @@ namespace corona
 		SQLRETURN ret;
 		std::shared_ptr<sql_integration> sql;
 
-		char conn_string[2048];
+		istring<2048> conn_string;
+		istring<2048> completed_string;
 
 		json sql_execute(std::string _statement, std::vector<std::string>& _paramters, json& _src)
 		{
@@ -428,7 +430,7 @@ namespace corona
 				// Hide data truncated..
 				if (strncmp(szState, "01004", 5))
 				{
-					std::string error_message = std::format("[{0:5.5s}] {1} ({%d})", szState, szMessage, iError);
+					std::string error_message = std::format("[{0:5.5s}] {1} ({2})", std::string_view(szState), std::string_view(szMessage), (int)iError);
 					system_monitoring_interface::global_mon->log_warning(error_message);
 				}
 			}
@@ -447,7 +449,7 @@ namespace corona
 			sql_error(SQL_HANDLE_STMT, hStmt, status);
 
 			xrecord xparams;
-			std::vector<int> offsets;
+			std::vector<point> offsets;
 
 			for (auto& param : _statement.parameters)
 			{
@@ -460,25 +462,25 @@ namespace corona
 							std::string field = (std::string)_statement.source_object[param.corona_field_name];
 							int nsz = field.size() + 1;
 							int offset = xparams.bind(field);
-							offsets.push_back(offset);
+							offsets.push_back({ offset, nsz });
 						}
 						break;
 					case field_types::ft_double:
 						{
 							int offset = xparams.bind((double)_statement.source_object[param.corona_field_name]);
-							offsets.push_back(offset);
+							offsets.push_back({ offset, 0 });
 						}
 						break;
 					case field_types::ft_datetime:
 						{
 							int offset = xparams.bind((date_time)_statement.source_object[param.corona_field_name]);
-							offsets.push_back(offset);
+							offsets.push_back({ offset, 0 });
 						}
 						break;
 					case field_types::ft_int64:
 						{
 							int offset = xparams.bind((int64_t)_statement.source_object[param.corona_field_name]);
-							offsets.push_back(offset);
+							offsets.push_back({ offset, 0 });
 						}
 						break;
 					}
@@ -488,16 +490,14 @@ namespace corona
 			int offset_idx = 0;
 			for (auto& param : _statement.parameters)
 			{
-				char *dest = xparams.get_ptr(offsets[offset_idx]);
+				char *dest = xparams.get_ptr(offsets[offset_idx].x);
 				auto binding = sql->find(param.corona_field_name);
 				if (binding != std::end(sql->mappings)) {
 					switch (binding->field_type)
 					{
 					case field_types::ft_string:
 					{
-						std::string field = (std::string)_statement[param.corona_field_name];
-						int nsz = field.size() + 1;
-						status = SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, nsz, 0, dest, 0, NULL);
+						status = SQLBindParameter(hStmt, param.parameter_index, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, offsets[offset_idx].y, 0, dest, 0, NULL);
 						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
@@ -536,64 +536,65 @@ namespace corona
 				{
 					std::string temp(binding.string_size * 2, ' ');
 					int offset = xresults.bind(temp);
-					offsets.push_back(offset);
+					offsets.push_back({ offset, (int)temp.size() });
 				}
 				break;
 				case field_types::ft_double:
 				{
 					int offset = xresults.bind((double)0.0);
-					offsets.push_back(offset);
+					offsets.push_back({ offset, 0 });
 				}
 				break;
 				case field_types::ft_datetime:
 				{
 					int offset = xresults.bind(date_time::now());
-					offsets.push_back(offset);
+					offsets.push_back({ offset, 0 });
 				}
 				break;
 				case field_types::ft_int64:
 				{
 					int offset = xresults.bind((int64_t)0);
-					offsets.push_back(offset);
+					offsets.push_back({ offset, 0 });
 				}
 				break;
 				}
 			}
 
-			int offset_idx = 0;
+			offset_idx = 0;
 			int result_idx = 1;
 			for (auto& binding : _statement.result_mappings)
 			{
-				char* dest = xresults.get_ptr(offsets[offset_idx]);
-				offset_idx++;
+				char* dest = xresults.get_ptr(offsets[offset_idx].x);
 
 				switch (binding.field_type)
 					{
 					case field_types::ft_string:
 					{
-						status = SQLBindCol(hStmt, offset_idx, SQL_C_CHAR, dest, binding.string_size, nullptr);
+						status = SQLBindCol(hStmt, result_idx, SQL_C_CHAR, dest, binding.string_size, nullptr);
 						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_double:
 					{
-						status = SQLBindCol(hStmt, offset_idx, SQL_C_DOUBLE, dest, 0, nullptr);
+						status = SQLBindCol(hStmt, result_idx, SQL_C_DOUBLE, dest, 0, nullptr);
 						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_datetime:
 					{
-						status = SQLBindCol(hStmt, offset_idx, SQL_C_TYPE_TIMESTAMP, dest, 0, nullptr);
+						status = SQLBindCol(hStmt, result_idx, SQL_C_TYPE_TIMESTAMP, dest, 0, nullptr);
 						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_int64:
 					{
-						status = SQLBindCol(hStmt, offset_idx, SQL_C_SBIGINT, dest, 0, nullptr);
+						status = SQLBindCol(hStmt, result_idx, SQL_C_SBIGINT, dest, 0, nullptr);
 						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					}
+				offset_idx++;
+				result_idx++;
 			}
 
 			status = SQLExecute(hStmt);
@@ -608,6 +609,8 @@ namespace corona
 					results_array.push_back(new_object);
 				};
 			}
+
+			return results_array;
 		}
 
 		std::shared_ptr<sql_statements> statement_gen;
@@ -622,24 +625,20 @@ namespace corona
 			hEnv = nullptr;
 			hDbc = nullptr;
 			hStmt = nullptr;
-			conn_string[0] = 0;
 			statement_gen = std::make_shared<sql_server_statements>();
 
-			int max_conn_size = (sizeof(conn_string) - 16);
+			int max_conn_size = conn_string.capacity();
 			if (_connection.empty() or _connection.size() >= max_conn_size)
 				return;
+
+			conn_string = _connection;
 
 			SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &hEnv);
 			SQLSetEnvAttr(hEnv, SQL_ATTR_ODBC_VERSION, (void*)SQL_OV_ODBC3, 0);
 			SQLAllocHandle(SQL_HANDLE_DBC, hEnv, &hDbc);
-			SQLCHAR outstr[1024];
-			SQLSMALLINT outstrlen = 0;
 
-			std::strcpy(conn_string, _connection.c_str());
-
-			status = SQLDriverConnect(hDbc, NULL, (SQLCHAR*)&conn_string[0], SQL_NTS,
-				outstr, sizeof(outstr), &outstrlen,
-				SQL_DRIVER_NOPROMPT);
+			SQLSMALLINT completed_len = 0;
+			status = SQLDriverConnect(hDbc, NULL, (SQLCHAR*)conn_string.c_str_w(), SQL_NTS, (SQLCHAR *)completed_string.c_str_w(), completed_string.capacity()-4, &completed_len, SQL_DRIVER_NOPROMPT);
 			sql_error(SQL_HANDLE_DBC, hDbc, status);
 		}
 
@@ -662,6 +661,21 @@ namespace corona
 			}
 		}
 
+		virtual relative_ptr_type get_location() override
+		{
+			return -1;
+		}
+
+		virtual json get(json key) override
+		{
+			sql_statement stmt;
+			json results;
+
+			stmt = statement_gen->get_statement(key, sql);
+			results = execute(stmt);
+			return results;
+		}
+
 		virtual void put(json values) override
 		{
 			sql_statement stmt;
@@ -678,16 +692,6 @@ namespace corona
 			}
 		}
 
-		virtual json get(json key) override
-		{
-			sql_statement stmt;
-			json results;
-
-			stmt = statement_gen->get_statement(key, sql);
-			results = execute(stmt);
-			return results;
-		}
-
 		virtual void erase(json key)  override
 		{
 			sql_statement stmt;
@@ -697,7 +701,7 @@ namespace corona
 			results = execute(stmt);
 		}
 
-		virtual void erase_array(json values)
+		virtual void erase_array(json values) override
 		{
 			for (auto obj : values) {
 				erase(obj);
@@ -710,7 +714,7 @@ namespace corona
 			json results = jp.create_object();
 			results.put_member("table", std::string("ODBC"));
 			results.put_member("language", statement_gen->get_name());
-			std::string connection = conn_string;
+			std::string connection = conn_string.c_str();
 			std::vector<std::string> sections = split(connection, ';');
 			for (auto section : sections) {
 				std::vector<std::string> terms = split(section, '=');
@@ -759,6 +763,13 @@ namespace corona
 			return results;
 		}
 
+		virtual void clear() override
+		{
+			sql_statement stmt;
+			stmt.string_to_execute = "DELETE FROM [" + sql->sql_table_name + "]";
+			execute(stmt);
+		}
+
 	};
 
 	class sql_connections
@@ -775,11 +786,11 @@ namespace corona
 			std::string result;
 			std::string env_path = "corona_sql_" + _source;
 			std::transform(env_path.begin(), env_path.end(), env_path.begin(), ::toupper);
-			char* env = getenv(env_path.c_str());
-			if (env != nullptr)
-				result = env;
-			else
+
+			result = get_environment(_source);
+			if (result.empty()) {
 				result = sql_connections[_source];
+			}
 			return result;
 		}
 

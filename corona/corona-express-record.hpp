@@ -82,12 +82,12 @@ namespace corona
 			return true;
 		}
 
-		static char *emplace(const std::string& _src, std::vector<char>& _dest)
+		static int emplace(const std::string& _src, std::vector<char>& _dest)
 		{
 			char ft = (char)field_types::ft_string;
 			_dest.push_back(ft);
-			char* return_value;
-			return_value = (char )&_dest[_dest.end() - _dest.begin()];
+			int return_value;
+			return_value = _dest.end() - _dest.begin();
 			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + _src.size() + 1);
 			return return_value;
 		}
@@ -175,7 +175,7 @@ namespace corona
 			return true;
 		}
 
-		int emplace(const data_type& _src, std::vector<char>& _dest)
+		static int emplace(const data_type& _src, std::vector<char>& _dest)
 		{
 			char ft = (char)field_type;
 			_dest.push_back(ft);
@@ -471,7 +471,7 @@ namespace corona
 			xstring temp;
 			bool success = xstring::get(record_bytes, _offset, temp);
 			if (success) {
-				_dest.put_member(_key, std::string_view(temp.data));
+				_dest.put_member(_key, std::string(temp.data));
 			}
 			return success;
 		}
