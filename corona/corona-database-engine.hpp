@@ -46,6 +46,11 @@ the great module disaster.
 namespace corona
 {
 
+	const std::string class_permission_put = "put";
+	const std::string class_permission_get = "get";
+	const std::string class_permission_delete = "delete";
+	const std::string class_permission_alter = "alter";
+
 	class corona_database_interface;
 	
 	class to_field
@@ -448,7 +453,7 @@ namespace corona
 		std::unique_ptr<xblock_cache> cache;
 
 	public:
-		sql_connections connections;
+		corona_connections connections;
 
 		corona_database_interface(std::shared_ptr<file> _fb) :
 			file_block(_fb)
@@ -471,6 +476,8 @@ namespace corona
 
 		virtual json create_user(json create_user_request) = 0;
 		virtual json login_user(json _login_request) = 0;
+		virtual json confirm_user(json _login_request) = 0;
+		virtual json send_user_validation(json _send_user_request) = 0;
 		virtual json get_classes(json get_classes_request) = 0;
 		virtual json get_class(json get_class_request) = 0;
 		virtual json put_class(json put_class_request) = 0;
@@ -1458,6 +1465,23 @@ namespace corona
 			}
 		}
 
+		index_implementation(std::string &_name, std::vector<std::string> &_keys, corona_database_interface* _db)
+		{
+			index_id = 0;
+			index_name = _name;
+			index_keys = _keys;
+
+			table_location = null_row;
+			if (_db) {
+
+				auto temp = get_xtable(_db);
+
+				if (temp) {
+					table_location = temp->get_location();
+				}
+			}
+		}
+
 		index_implementation(const index_implementation& _src)
 		{
 			index_id = _src.index_id;
@@ -1748,12 +1772,9 @@ namespace corona
 
 			// we're going to make our xtable anyway so we can slap our object id 
 			// on top of a sql server primary key
+			// but we don't do this all the time, because we'd like to keep the data around.
 
-			auto table_header = std::make_shared<xtable_header>();
-			table_header->object_members = sql->primary_key;
-			table_header->key_members = { object_id_field };
-			auto tb = std::make_shared<xtable>(_db->get_cache(), table_header);
-			table_location = table_header->get_location();
+			auto xtable = get_xtable(_db);
 			return stable;
 		}
 
@@ -2029,10 +2050,18 @@ namespace corona
 					auto fi = fields.find(mp.corona_field_name);
 					if (fi != fields.end()) {
 						mp.field_type = fi->second->get_field_type();
-						mp.string_size = 100;
+						if (mp.string_size <= 0) {
+							mp.string_size = 100;
+						}
 					}
 				}
+				std::vector keys = sql->primary_key;
+				keys.insert(keys.end(), object_id_field);
+				std::string backing_index_name = sql->sql_table_name + "_idx";
+				std::shared_ptr<index_implementation> idx = std::make_shared<index_implementation>(backing_index_name, keys, nullptr);
+				indexes.insert_or_assign(backing_index_name, idx);
 			}
+
 		}
 
 		virtual void clear_queries(json& _target) override
@@ -2142,6 +2171,7 @@ namespace corona
 			class_name = changed_class.class_name;
 			base_class_name = changed_class.base_class_name;
 			class_description = changed_class.class_description;
+			sql = changed_class.sql;
 
 			for (auto field : changed_class.fields) 
 			{
@@ -2238,6 +2268,7 @@ namespace corona
 					if (index_table)
 					{
 						index_table->clear();
+						index_table->save();
 					}
 				}
 			}
@@ -2275,7 +2306,7 @@ namespace corona
 			}
 
 			json empty_key;
-			auto class_data = get_table(_db);
+			auto class_data = get_xtable(_db);
 
 			// and populate the new indexes with any data that might exist
 			for (auto idc : indexes) {
@@ -2287,8 +2318,6 @@ namespace corona
 					return 1;
 				});
 			}
-
-			sql = changed_class.sql;
 
 			return true;
 		}
@@ -2335,9 +2364,14 @@ namespace corona
 			json result;
 			if (sql) {
 				auto tb = get_xtable(_db);
-				json sql_key = tb->get(_object_id);
-				auto stb = get_table(_db);
-				stb->get(sql_key);
+				result = tb->get(_object_id);
+				if (result.object()) {
+					auto stb = get_stable(_db);
+					json skey = result.extract(sql->primary_key);
+					json sqlobja = stb->get(skey);
+					json sqlobj = sqlobja.get_first_element();
+					result.merge(sqlobj);
+				}
 			}
 			else {
 				auto tb = get_table(_db);
@@ -2470,12 +2504,14 @@ namespace corona
 			if (stb) {
 				stb->put_array(put_list);
 			}
+			tb->save();
 
 			for (auto& iop : index_updates)
 			{
 				auto idx_table = iop.index->get_xtable(_db);
 				idx_table->erase_array(iop.objects_to_delete);
 				idx_table->put_array(iop.objects_to_add);
+				idx_table->save();
 			}
 		}
 
@@ -2486,8 +2522,6 @@ namespace corona
 
 			json_parser jp;
 			json obj;
-
-			auto index_table = find_index(_db, _key);
 
 			if (_key.has_member(object_id_field)) {
 				int64_t object_id = (int64_t)_key[object_id_field];
@@ -2547,6 +2581,78 @@ namespace corona
 					}
 				}
 			}
+
+			// since we got the objects from sql, we want to now get them from
+			if (sql) 
+			{
+				auto backing_table = get_xtable(_db);
+				json idx_search = jp.create_object();
+				for (auto& s : sql->primary_key) {
+					idx_search.put_member(s, s);
+				}
+
+				auto index_table = find_index(_db, idx_search);
+
+				for (auto ob : obj)
+				{
+					json key = ob.extract(sql->primary_key);
+					json ob_found;
+
+					if (index_table)
+					{
+						ob_found = index_table->select(key, [this, &backing_table](json& _item) -> json {
+							int64_t object_id = (int64_t)_item[object_id_field];
+							auto objfound = backing_table->get(object_id);
+							return objfound;
+						});
+					}
+					else
+					{
+						ob_found = backing_table->select(key, [&key](json& _j)
+							{
+								json result;
+								if (key.compare(_j) == 0)
+									result = _j;
+								return result;
+
+							});
+					}
+
+					int64_t object_id = -1;
+					json old_value;
+
+					if (ob_found.array())
+					{
+						old_value = ob_found.get_first_element();
+						if (old_value.object()) {
+							object_id = (int64_t)old_value[object_id_field];
+						}
+						else 
+						{
+							object_id = _db->get_next_object_id();
+						}
+					}
+					else
+					{
+						object_id = _db->get_next_object_id();
+					}
+
+					ob.put_member_i64(object_id_field, object_id);
+					backing_table->put(ob);
+					if (old_value.compare(ob) != 0) 
+					{
+						for (auto idx : indexes)
+						{
+							auto idx_table = idx.second->get_xtable(_db);
+							if (not old_value.empty()) {
+								idx_table->erase(old_value);
+							}
+							idx_table->put(ob);
+						}
+					}
+				}
+				backing_table->save();
+			}
 			return obj;
 		}
 
@@ -2599,7 +2705,6 @@ namespace corona
 
 		crypto crypter;
 
-		std::string send_grid_api_key;
 		bool watch_polling;
 
 		const std::string auth_general = "auth-general";
@@ -2850,6 +2955,53 @@ namespace corona
 
 			created_classes.put_member("sys_object", true);
 
+
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_teams",
+	"base_class_name" : "sys_object",
+	"class_description" : "Teams a user can belong to",
+	"fields" : {
+			"team_name" : "string",
+			"team_description" : "string",
+			"team_domain" : "string",
+			"permissions" :"object",
+			"home_class_name" : "string"
+	},
+	"indexes" : {
+        "sys_team_name": {
+          "index_keys": [ "team_domain" ]
+        },
+        "sys_team_email": {
+          "index_keys": [ "team_email" ]
+        }
+	}
+}
+)");
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class sys_teams put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_teams"})");
+			if (test.empty() or test.is_member("class_name", "SysParseError")) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_teams after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			created_classes.put_member("sys_teams", true);
+
+
+
+
+
 			response = create_class(R"(
 {
 	"class_name" : "sys_datasets",
@@ -2957,7 +3109,10 @@ namespace corona
 			"city" : "string",
 			"state" : "string",
 			"zip" : "string",
-			"password" : "string"
+			"password" : "string",
+			"team_name" : "string",
+			"validation_code" : "string",
+			"confirmed_code" : "number"
 	}
 }
 )");
@@ -3238,7 +3393,7 @@ private:
 				write_class_sp cd = write_lock_class(class_pair.first);
 				if (cd) {
 					cd->init_validation(this);
-					bool permission = has_class_permission(_user_name, class_pair.first, "Put");
+					bool permission = has_class_permission(_user_name, class_pair.first, class_permission_put);
 
 					if (not permission) {
 						response.put_member(success_field, false);
@@ -3453,6 +3608,18 @@ private:
 			return result;
 		}
 
+		void put_user(json _user)
+		{
+			json_parser jp;
+
+			write_class_sp classd = write_lock_class("sys_users");
+	
+			json children = jp.create_array();
+			json items = jp.create_array();
+			items.push_back(_user);
+			classd->put_objects(this, children, items);
+		}
+
 		json get_user(std::string _user_name)
 		{
 			json_parser jp;
@@ -3461,6 +3628,38 @@ private:
 			key.put_member(user_name_field, _user_name);
 
 			read_class_sp classd = read_lock_class("sys_users");
+			if (not classd)
+				return jp.create_array();
+
+			json users = classd->get_objects(this, key, true);
+
+			return users.get_first_element();
+		}
+
+		json get_team_by_domain(std::string _domain)
+		{
+			json_parser jp;
+
+			json key = jp.create_object();
+			key.put_member("team_domain", _domain);
+
+			read_class_sp classd = read_lock_class("sys_teams");
+			if (not classd)
+				return jp.create_array();
+
+			json users = classd->get_objects(this, key, true);
+
+			return users.get_first_element();
+		}
+
+		json get_team(std::string _team_name)
+		{
+			json_parser jp;
+
+			json key = jp.create_object();
+			key.put_member("team_name", _team_name);
+
+			read_class_sp classd = read_lock_class("sys_teams");
 			if (not classd)
 				return jp.create_array();
 
@@ -3524,7 +3723,23 @@ private:
 			}
 			else 
 			{
-				granted = true;
+				granted = false;
+
+				std::string team_name = (std::string)user["team_name"];
+				json jteam = get_team(team_name);
+				if (jteam.object()) {
+					json jpermissions = jteam["permissions"];
+					json perms = jpermissions[_class_name];
+					if (perms.array()) {
+						for (auto perm : perms) {
+							std::string sperm = perm;
+							if (sperm == _permission) {
+								granted = true;
+								break;
+							}
+						}
+					}
+				}
 			}
 			
 			return granted;
@@ -3616,6 +3831,37 @@ private:
 
 		int64_t maximum_record_cache_size_bytes = giga_to_bytes(1);
 
+		void send_user_confirmation(json user_info)
+		{
+			std::string new_code = get_random_code();
+
+			user_info.put_member("validation_code", new_code);
+			user_info.put_member("confirmed_code", 0);
+
+			put_user(user_info);
+
+			sendgrid_client sc_client;
+			sc_client.api_key = connections.get_connection("sendgrid");
+
+			std::string email_template = R"(
+<html>
+<body>
+<h2>Country Video Games Validation Code</h2>
+<p>Your username is $USERNAME$</p>
+<p>Your validation code is <span style="background:grey;border:1px solid black;padding 8px;">$CODE$</p>
+<body>
+</html>
+)";
+
+			std::string user_name = user_info[user_name];
+
+			std::string email_body = replace(email_template, "$CODE$", new_code);
+			email_body = replace(email_body, "$USERNAME$", user_name);
+			sc_client.send_email(user_info, "Country Video Games Validation Code", R"(
+)", "text/html");
+
+		}
+
 	public:
 
 		std::string default_user;
@@ -3648,7 +3894,8 @@ private:
 			if (_config.has_member("SendGrid"))
 			{
 				json send_grid = _config["SendGrid"];
-				send_grid_api_key = send_grid["ApiKey"];
+				std::string send_grid_api_key = send_grid["ApiKey"];
+				this->connections.set_connection("sendgrid", (std::string)send_grid_api_key);
 			}
 
 			if (_config.has_member("Connections"))
@@ -3656,7 +3903,7 @@ private:
 				json connections = _config["Connections"];
 				auto members = connections.get_members();
 				for (auto member : members) {
-					this->connections.set_sql_connection(member.first, (std::string)member.second);
+					this->connections.set_connection(member.first, (std::string)member.second);
 				}
 			}
 
@@ -4153,6 +4400,7 @@ private:
 			return header_location;
 		}
 
+
 		virtual json create_user(json create_user_request)
 		{
 			timer method_timer;
@@ -4169,6 +4417,7 @@ private:
 			json data = create_user_request[data_field];
 
 			std::string user_name = data[user_name_field];
+			std::string user_email = data[user_email_field];
 			std::string user_password1 = data["password1"];
 			std::string user_password2 = data["password2"];
 			std::string user_class = "sys_users";
@@ -4216,6 +4465,11 @@ private:
 			create_user_params.copy_member(user_street2_field, data);
 			create_user_params.copy_member(user_state_field, data);
 			create_user_params.copy_member(user_zip_field, data);
+			create_user_params.put_member("confirmed_code", 0);
+
+			std::string new_code = get_random_code();
+			create_user_params.put_member("validation_code", new_code);
+
 
 			json create_object_request = create_request(user_name, auth_general, create_user_params);
 			json user_result =  put_object(create_object_request);
@@ -4231,6 +4485,95 @@ private:
 			save();
 
 			system_monitoring_interface::global_mon->log_function_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			return response;
+		}
+
+
+		virtual json send_user_validation(json validation_code_request) override
+		{
+			timer method_timer;
+			json_parser jp;
+			json response;
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("send_validation_code", "start", start_time, __FILE__, __LINE__);
+
+			json data = validation_code_request[data_field];
+
+			std::string user_name = data[user_name_field];
+
+			json user_info = get_user(user_name);
+
+			if (user_info.object()) {
+				send_user_confirmation(user_info);
+			}
+
+			system_monitoring_interface::global_mon->log_function_stop("send_validation_code", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			return response;
+		}
+
+
+		// this allows a user to login
+		virtual json confirm_user(json _confirm_request)
+		{
+			timer method_timer;
+			json_parser jp;
+			json response;
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			read_scope_lock my_lock(database_lock);
+
+			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
+
+			json data = _confirm_request;
+			std::string user_name = data[user_name_field];
+			std::string user_code = data["validation_code"];
+
+			json user = get_user(user_name);
+			std::string sys_code = user["validation_code"];
+
+			if (sys_code == user_code)
+			{
+				user.put_member("confirmed_code", 1);
+				std::string email = user[user_email_field];
+				std::vector<std::string> email_components = split(email, '@');
+
+				if (email_components.size() > 1) {
+					std::string domain = email_components[1];
+					json team = get_team_by_domain(domain);
+
+					if (team.empty()) 
+					{
+						team = get_team_by_domain("*");
+					}
+
+					if (not team.empty())
+					{
+						user.put_member("team_name", (std::string)team["team_name"]);
+					}
+					else
+					{
+						user.put_member("team_name", std::string(""));
+					}
+				}
+
+				put_user(user);
+				response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
+			}
+			else
+			{
+				response = create_response(_confirm_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
+			}
+
+			system_monitoring_interface::global_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			save();
 
 			return response;
 		}
@@ -4261,11 +4604,17 @@ private:
 
 			if (pw == hashed_pw)
 			{
+				bool confirm = (bool)user["confirmed_code"];
 				if (user_name == default_user and default_user.size() > 0) {
 					response = create_response(user_name, auth_system, true, "Ok", data, method_timer.get_elapsed_seconds());
 				}
-				else {
+				else if (confirm)
+				{
 					response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
+				}
+				else
+				{
+					response = create_response(user_name, auth_general, false, "Need confirmation", data, method_timer.get_elapsed_seconds());
 				}
 			}
 			else
@@ -4357,7 +4706,7 @@ private:
 			}
 
 			result_list =  classes->select([this, user_name](int _index, json& _item) {
-				bool has_permission = has_class_permission(user_name, _item[class_name_field], "Describe");
+				bool has_permission = has_class_permission(user_name, _item[class_name_field], class_permission_get);
 				json_parser jp;
 
 				if (has_permission) 
@@ -4416,7 +4765,7 @@ private:
 
 			std::string class_name = get_class_request[class_name_field];
 
-			bool can_get_class =  has_class_permission( user_name, class_name, "Describe");
+			bool can_get_class =  has_class_permission( user_name, class_name, class_permission_get);
 
 			json key = jp.create_object(class_name_field, class_name);
 			key.set_natural_order();
@@ -4492,7 +4841,7 @@ private:
 			bool can_put_class =  has_class_permission(
 				user_name,
 				class_name,
-				"Alter");
+				class_permission_alter);
 
 			if (not can_put_class) {
 				result = create_response(put_class_request, false, "Denied", jclass_definition, method_timer.get_elapsed_seconds());
@@ -4550,7 +4899,7 @@ private:
 				return response;
 			}
 
-			bool class_granted =  has_class_permission(_user_name, base_class_name, "Get");
+			bool class_granted =  has_class_permission(_user_name, base_class_name, class_permission_get);
 			if (not class_granted)
 			{
 				response = create_response(_user_name, auth_general, false, "denied", query_details, method_timer.get_elapsed_seconds());
@@ -4818,7 +5167,7 @@ private:
 				return response;
 			}
 
-			bool permission =  has_class_permission(user_name, class_name, "Create");
+			bool permission =  has_class_permission(user_name, class_name, class_permission_put);
 			if (not permission) {
 				json result = create_response(create_object_request, false, "Denied", data, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4993,7 +5342,7 @@ private:
 
 			std::string class_name = object_key[class_name_field];
 
-			bool permission =  has_class_permission(user_name, class_name, "Get");
+			bool permission =  has_class_permission(user_name, class_name, class_permission_get);
 			if (not permission) {
 				json result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -5049,7 +5398,7 @@ private:
 
 			std::string class_name = object_key[class_name_field];
 
-			bool permission = has_class_permission(user_name, class_name, "Delete");
+			bool permission = has_class_permission(user_name, class_name, class_permission_delete);
 			if (not permission) {
 				response = create_response(delete_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -5108,14 +5457,14 @@ private:
 			json transform_spec = copy_request["transform"];
 			std::string transform_class = transform_spec[class_name_field];
 
-			bool permission = has_class_permission(user_name, source_class, "Get");
+			bool permission = has_class_permission(user_name, source_class, class_permission_get);
 			if (not permission) {
 				response = create_response(copy_request, false, "Denied", source_spec, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
-			permission = has_class_permission(user_name, dest_class, "Put");
+			permission = has_class_permission(user_name, dest_class, class_permission_put);
 			if (not permission) {
 				response = create_response(copy_request, false, "Denied", dest_spec, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -5123,7 +5472,7 @@ private:
 			}
 
 			if (not transform_class.empty()) {
-				permission = has_class_permission(user_name, transform_class, "Put");
+				permission = has_class_permission(user_name, transform_class, class_permission_put);
 				if (not permission) {
 					response = create_response(copy_request, false, "Denied", transform_spec, method_timer.get_elapsed_seconds());
 					system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);

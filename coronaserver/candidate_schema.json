@@ -110,66 +110,72 @@
       "class_description": "SQL Server Adventure Works People.People",
       "base_class_name": "sys_object",
       "fields": {
-        "BusinessEntityID": "string",
-        "PersonType": "string",
-        "NameStyle": "string",
-        "Title": "string",
-        "FirstName": "string",
-        "MiddleName": "string",
-        "LastName": "string",
-        "Suffix": "string",
-        "EmailPromotion": "number"
+        "business_entity_id": "string",
+        "person_type": "string",
+        "name_style": "string",
+        "title": "string",
+        "first_name": "string",
+        "middle_name": "string",
+        "last_name": "string",
+        "suffix": "string"
       },
       "sql": {
-        "connection_name": "",
-        "sql_view_name": "",
-        "sql_table_name": "",
+        "connection_name": "AdventureWorks2016",
+        "sql_view_name": "[AdventureWorks2016].[Person].[Person]",
+        "sql_table_name": "[AdventureWorks2016].[Person].[Person]",
         "mappings": [
           {
-            "corona_field_name": "BusinessEntityID",
+            "corona_field_name": "business_entity_id",
             "sql_field_name": "BusinessEntityID",
             "primary_key": true,
             "field_type": "string",
-            "string_size": 20.0
+            "string_size": 100.0
           },
           {
-            "corona_field_name": "PersonType",
+            "corona_field_name": "person_type",
             "sql_field_name": "PersonType",
             "primary_key": false,
             "field_type": "string",
             "string_size": 20.0
           },
           {
-            "corona_field_name": "NameStyle",
+            "corona_field_name": "name_style",
             "sql_field_name": "NameStyle",
             "primary_key": false,
             "field_type": "string",
             "string_size": 20.0
           },
           {
-            "corona_field_name": "Title",
+            "corona_field_name": "title",
             "sql_field_name": "Title",
             "primary_key": false,
             "field_type": "string",
             "string_size": 20.0
           },
           {
-            "corona_field_name": "FirstName",
+            "corona_field_name": "first_name",
             "sql_field_name": "FirstName",
             "primary_key": false,
             "field_type": "string",
-            "string_size": 20.0
+            "string_size": 100.0
           },
           {
-            "corona_field_name": "MiddleName",
+            "corona_field_name": "middle_name",
             "sql_field_name": "MiddleName",
             "primary_key": false,
             "field_type": "string",
-            "string_size": 20.0
+            "string_size": 100.0
           },
           {
-            "corona_field_name": "LastName",
+            "corona_field_name": "last_name",
             "sql_field_name": "LastName",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 100.0
+          },
+          {
+            "corona_field_name": "suffix",
+            "sql_field_name": "Suffix",
             "primary_key": false,
             "field_type": "string",
             "string_size": 20.0

@@ -101,7 +101,7 @@ namespace corona {
 	{		
 		size_t pos = source.find(_search);
 		while (pos != std::string::npos) {
-			source.replace(pos, _search.length(), _replace);
+			source = source.replace(pos, _search.length(), _replace);
 			pos = source.find(_search);
 		}
 		return source;

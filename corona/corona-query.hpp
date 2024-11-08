@@ -160,8 +160,8 @@ namespace corona
 		{
 			using namespace std::literals;
 			_dest.put_member("class_name", "query_stage"sv);
-			_dest.put_member("stage_name", stage_name);
-			_dest.put_member("stage_output", stage_output);
+			_dest.put_member("name", stage_name);
+			_dest.put_member("output", stage_output);
 			_dest.put_member("execution_time_seconds", execution_time_seconds);
 		}
 
@@ -169,8 +169,8 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (not _src.has_members(missing, { "class_name", "stage_name" })) {
-				system_monitoring_interface::global_mon->log_warning("query_project missing:");
+			if (not _src.has_members(missing, { "class_name", "name" })) {
+				system_monitoring_interface::global_mon->log_warning("query_stage missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
@@ -179,8 +179,8 @@ namespace corona
 				return;
 			}
 
-			stage_name = _src["stage_name"];
-			stage_output = _src["stage_output"];
+			stage_name = _src["name"];
+			stage_output = _src["output"];
 		}
 
 	};

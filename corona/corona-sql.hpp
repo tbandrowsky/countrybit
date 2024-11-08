@@ -63,7 +63,6 @@ namespace corona
 	public:
 		sql_field_mappings mappings;
 		std::string connection_name;
-		std::string sql_view_name;
 		std::string sql_table_name;
 		std::vector<std::string> primary_key;
 		std::vector<std::string> all_fields;
@@ -73,7 +72,6 @@ namespace corona
 			json_parser jp;
 
 			_dest.put_member("connection_name", connection_name);
-			_dest.put_member("sql_view_name", sql_view_name);
 			_dest.put_member("sql_table_name", sql_table_name);
 
 			json jmappings = jp.create_array();
@@ -90,19 +88,51 @@ namespace corona
 		{
 			mappings.clear();
 			connection_name = _src["connection_name"];
-			sql_view_name = _src["sql_view_name"];
 			sql_table_name = _src["sql_table_name"];
 			primary_key.clear();
 
+			if (connection_name.empty()) {
+				validation_error ve;
+				ve.class_name = "sql";
+				ve.field_name = "connection";
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "missing connection name";
+				_errors.push_back(ve);
+			}
+
+			if (sql_table_name.empty()) {
+				validation_error ve;
+				ve.class_name = "sql";
+				ve.field_name = "table";
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "missing connection name";
+				_errors.push_back(ve);
+			}
+
 			json jmappings = _src["mappings"];
-			for (auto mapping : jmappings)
-			{
-				sql_field_mapping sfm;
-				sfm.put_json(_errors, mapping);
-				if (sfm.primary_key) {
-					primary_key.push_back(sfm.corona_field_name);
+
+			if (jmappings.array()) {
+				for (auto mapping : jmappings)
+				{
+					sql_field_mapping sfm;
+					sfm.put_json(_errors, mapping);
+					if (sfm.primary_key) {
+						primary_key.push_back(sfm.corona_field_name);
+					}
+					all_fields.push_back(sfm.corona_field_name);
+					mappings.push_back(sfm);
 				}
-				all_fields.push_back(sfm.corona_field_name);
+			}
+			else {
+				validation_error ve;
+				ve.class_name = "sql";
+				ve.field_name = "mappings";
+				ve.filename = __FILE__;
+				ve.line_number = __LINE__;
+				ve.message = "sql mappings not found";
+				_errors.push_back(ve);
 			}
 		}
 		
@@ -141,7 +171,7 @@ namespace corona
 			put_template = R"(
 	IF EXISTS( SELECT 1 
 			FROM 
-			[$TABLE_NAME$] T
+			$TABLE_NAME$ T
 			WHERE $SELECT_KEY$
 	)
 	BEGIN
@@ -151,7 +181,7 @@ namespace corona
 	END
 	ELSE
 	BEGIN
-		INSERT [$TABLE_NAME$] 
+		INSERT $TABLE_NAME$
 		($INSERT_FIELDS$) 
 		VALUES ($INSERT_VALUES$)
 	END
@@ -159,16 +189,15 @@ namespace corona
 
 			get_template = R"(
 	SELECT $SELECT_FIELDS$
-	FROM 
-			[$VIEW_NAME$] T
-	WHERE $WHERE_CLAUSE$
+	FROM   $TABLE_NAME$ T
+	WHERE $SELECT_KEY$
 	
 )";
 
 			erase_template = R"(
 	DELETE 
 	FROM 
-			[$TABLE_NAME$] T
+			$TABLE_NAME$ T
 	WHERE 
 			$DELETE_KEY$
 	
@@ -182,7 +211,7 @@ namespace corona
 		{
 			auto members = _values.get_members();
 			for (auto member : members) {
-				replace(src, member.first, (std::string)member.second);
+				src = replace(src, member.first, (std::string)member.second);
 			}
 			return src;
 		}
@@ -191,11 +220,13 @@ namespace corona
 		{
 			sql_statement stmt;
 
+			stmt.string_to_execute = put_template;
+			stmt.source_object = _object;
+
 			json_parser jp;
 
 			json jvariables = jp.create_object();
 			jvariables.put_member("$TABLE_NAME$", _integration->sql_table_name);
-			jvariables.put_member("$VIEW_NAME$", _integration->sql_view_name);
 
 			std::stringstream select_key, update_fields, update_key, insert_fields, insert_values;
 			std::string comma;
@@ -211,6 +242,9 @@ namespace corona
 						ssp.corona_field_name = fld.corona_field_name;
 						ssp.parameter_index = index++;
 						ssp.sql_field_name = "?";
+						ssp.field_type = fld.field_type;
+						ssp.string_size = fld.string_size;
+
 						stmt.parameters.push_back(ssp);
 
 						select_key << comma;
@@ -229,11 +263,14 @@ namespace corona
 					ssp.corona_field_name = fld.corona_field_name;
 					ssp.parameter_index = index++;
 					ssp.sql_field_name = "?";
+					ssp.field_type = fld.field_type;
+					ssp.string_size = fld.string_size;
 					stmt.parameters.push_back(ssp);
 
 					update_fields << comma;
 					comma = ", ";
 					update_fields << std::format("{0} = {1}", fld.sql_field_name, ssp.sql_field_name);
+
 				}
 			}
 
@@ -241,11 +278,13 @@ namespace corona
 			comma = "";
 			for (auto fld : _integration->mappings)
 			{
-				if (_object.has_member(fld.corona_field_name)) {
+				if (_object.has_member(fld.corona_field_name) && fld.primary_key) {
 					sql_statement_parameter ssp;
 					ssp.corona_field_name = fld.corona_field_name;
 					ssp.parameter_index = index++;
 					ssp.sql_field_name = "?";
+					ssp.field_type = fld.field_type;
+					ssp.string_size = fld.string_size;
 					stmt.parameters.push_back(ssp);
 
 					update_key << comma;
@@ -261,9 +300,10 @@ namespace corona
 				if (_object.has_member(fld.corona_field_name)) {
 					insert_fields << comma;
 					comma = ", ";
-					update_fields << fld.sql_field_name;
+					insert_fields << fld.sql_field_name;
 				}
 			}
+
 
 			// insert_values
 			comma = "";
@@ -274,19 +314,21 @@ namespace corona
 					ssp.corona_field_name = fld.corona_field_name;
 					ssp.parameter_index = index++;
 					ssp.sql_field_name = "?";
+					ssp.field_type = fld.field_type;
+					ssp.string_size = fld.string_size;
 					stmt.parameters.push_back(ssp);
 
-					update_fields << comma;
+					insert_values << comma;
 					comma = ", ";
-					update_fields << ssp.sql_field_name;
+					insert_values << ssp.sql_field_name;
 				}
 			}
 
 			jvariables.put_member("$SELECT_KEY$", select_key.str());
 			jvariables.put_member("$UPDATE_FIELDS$", update_fields.str());
-			jvariables.put_member("$UPDATE_KEY", update_key.str());
+			jvariables.put_member("$UPDATE_KEY$", update_key.str());
 			jvariables.put_member("$INSERT_FIELDS$", insert_fields.str());
-			jvariables.put_member("$INSERT_VALUES", insert_values.str());
+			jvariables.put_member("$INSERT_VALUES$", insert_values.str());
 			stmt.string_to_execute = apply_template(stmt.string_to_execute, jvariables);
 			return stmt;
 		}
@@ -294,13 +336,14 @@ namespace corona
 		virtual sql_statement get_statement(json& _object, std::shared_ptr<sql_integration>& _integration) override
 		{
 			sql_statement stmt;
+			stmt.string_to_execute = get_template;
+			stmt.source_object = _object;
 
 			json_parser jp;
 
 			json jvariables = jp.create_object();
 			jvariables.put_member("$TABLE_NAME$", _integration->sql_table_name);
-			jvariables.put_member("$VIEW_NAME$", _integration->sql_view_name);
-
+			
 			std::stringstream select_fields, select_key;
 			std::string comma;
 
@@ -310,13 +353,11 @@ namespace corona
 			// select fields
 			for (auto fld : _integration->mappings)
 			{
-				if (_object.has_member(fld.corona_field_name)) {
-					select_key << comma;
-					comma = ", ";
-					select_key << fld.sql_field_name;
-					stmt.result_mappings.push_back(fld);
-					stmt.result_keys.push_back(fld.corona_field_name);
-				}
+				select_fields << comma;
+				comma = ", ";
+				select_fields << fld.sql_field_name;
+				stmt.result_mappings.push_back(fld);
+				stmt.result_keys.push_back(fld.corona_field_name);
 			}
 
 			// select_key
@@ -328,6 +369,8 @@ namespace corona
 					ssp.corona_field_name = fld.corona_field_name;
 					ssp.parameter_index = index++;
 					ssp.sql_field_name = "?";
+					ssp.field_type = fld.field_type;
+					ssp.string_size = fld.string_size;
 					stmt.parameters.push_back(ssp);
 
 					select_key << comma;
@@ -336,7 +379,11 @@ namespace corona
 				}
 			}
 
-			jvariables.put_member("$SELECT_KEY$", select_key.str());
+			std::string sselect_key = select_key.str();
+			if (sselect_key.size() < 2) {
+				sselect_key = "1 = 1";
+			}
+			jvariables.put_member("$SELECT_KEY$", sselect_key);
 			jvariables.put_member("$SELECT_FIELDS$", select_fields.str());
 			stmt.string_to_execute = apply_template(stmt.string_to_execute, jvariables);
 			return stmt;
@@ -345,12 +392,12 @@ namespace corona
 		virtual sql_statement erase_statement(json& _object, std::shared_ptr<sql_integration>& _integration) override
 		{
 			sql_statement stmt;
+			stmt.source_object = _object;
+			stmt.string_to_execute = erase_template;
 
 			json_parser jp;
-
 			json jvariables = jp.create_object();
 			jvariables.put_member("$TABLE_NAME$", _integration->sql_table_name);
-			jvariables.put_member("$VIEW_NAME$", _integration->sql_view_name);
 
 			std::stringstream erase_key;
 			std::string comma;
@@ -374,7 +421,12 @@ namespace corona
 				}
 			}
 
-			jvariables.put_member("$DELETE_KEY", erase_key.str());
+
+			std::string serase_key = erase_key.str();
+			if (serase_key.size() < 2) {
+				serase_key = "1 = 1";
+			}
+			jvariables.put_member("$DELETE_KEY", serase_key);
 			stmt.string_to_execute = apply_template(stmt.string_to_execute, jvariables);
 			return stmt;
 		}
@@ -418,6 +470,8 @@ namespace corona
 				return false;
 			}
 
+			bool warned = false;
+
 			while (SQLGetDiagRec(hType,
 				hHandle,
 				++iRec,
@@ -430,8 +484,14 @@ namespace corona
 				// Hide data truncated..
 				if (strncmp(szState, "01004", 5))
 				{
+					if (not warned) {
+						system_monitoring_interface::global_mon->log_warning("SQL Statement Error");
+						warned = true;
+					}
 					std::string error_message = std::format("[{0:5.5s}] {1} ({2})", std::string_view(szState), std::string_view(szMessage), (int)iError);
-					system_monitoring_interface::global_mon->log_warning(error_message);
+					system_monitoring_interface::global_mon->log_information(error_message, __FILE__, __LINE__);
+
+					
 				}
 			}
 		}
@@ -469,13 +529,14 @@ namespace corona
 						{
 							int offset = xparams.bind((double)_statement.source_object[param.corona_field_name]);
 							offsets.push_back({ offset, 0 });
+
 						}
 						break;
 					case field_types::ft_datetime:
 						{
 							int offset = xparams.bind((date_time)_statement.source_object[param.corona_field_name]);
 							offsets.push_back({ offset, 0 });
-						}
+					}
 						break;
 					case field_types::ft_int64:
 						{
@@ -528,33 +589,64 @@ namespace corona
 			xrecord xresults;
 			offsets.clear();
 
+			std::vector<std::string> all_columns;
+			std::vector<std::string> mapped_columns;
+
 			for (auto& binding : _statement.result_mappings)
 			{
 				switch (binding.field_type)
 				{
 				case field_types::ft_string:
 				{
-					std::string temp(binding.string_size * 2, ' ');
+					std::string temp(binding.string_size, ' ');
 					int offset = xresults.bind(temp);
-					offsets.push_back({ offset, (int)temp.size() });
+					offsets.push_back({ offset, binding.string_size + 1 });
+					// for the indicator
+					offset = xresults.bind(0i64);
+					offsets.push_back({ offset, 0 });
+					all_columns.push_back(binding.corona_field_name);
+					mapped_columns.push_back(binding.corona_field_name);
+					all_columns.push_back(binding.corona_field_name + "_null");
+
 				}
 				break;
 				case field_types::ft_double:
 				{
 					int offset = xresults.bind((double)0.0);
 					offsets.push_back({ offset, 0 });
+					// for the indicator
+					offset = xresults.bind(0i64);
+					offsets.push_back({ offset, 0 });
+					all_columns.push_back(binding.corona_field_name);
+					mapped_columns.push_back(binding.corona_field_name);
+					all_columns.push_back(binding.corona_field_name + "_null");
+
 				}
 				break;
 				case field_types::ft_datetime:
 				{
 					int offset = xresults.bind(date_time::now());
 					offsets.push_back({ offset, 0 });
+					// for the indicator
+					offset = xresults.bind(0i64);
+					offsets.push_back({ offset, 0 });
+					all_columns.push_back(binding.corona_field_name);
+					mapped_columns.push_back(binding.corona_field_name);
+					all_columns.push_back(binding.corona_field_name + "_null");
+
 				}
 				break;
 				case field_types::ft_int64:
 				{
 					int offset = xresults.bind((int64_t)0);
 					offsets.push_back({ offset, 0 });
+					// for the indicator
+					offset = xresults.bind(0i64);
+					offsets.push_back({ offset, 0 });
+					all_columns.push_back(binding.corona_field_name);
+					mapped_columns.push_back(binding.corona_field_name);
+					all_columns.push_back(binding.corona_field_name + "_null");
+
 				}
 				break;
 				}
@@ -565,48 +657,75 @@ namespace corona
 			for (auto& binding : _statement.result_mappings)
 			{
 				char* dest = xresults.get_ptr(offsets[offset_idx].x);
+				SQLLEN* destind = (SQLLEN*)xresults.get_ptr(offsets[offset_idx + 1].x);
 
 				switch (binding.field_type)
 					{
 					case field_types::ft_string:
 					{
-						status = SQLBindCol(hStmt, result_idx, SQL_C_CHAR, dest, binding.string_size, nullptr);
+						status = SQLBindCol(hStmt, result_idx, SQL_C_CHAR, dest, binding.string_size, destind);
 						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_double:
 					{
-						status = SQLBindCol(hStmt, result_idx, SQL_C_DOUBLE, dest, 0, nullptr);
+						status = SQLBindCol(hStmt, result_idx, SQL_C_DOUBLE, dest, 0, destind);
 						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_datetime:
 					{
-						status = SQLBindCol(hStmt, result_idx, SQL_C_TYPE_TIMESTAMP, dest, 0, nullptr);
+						status = SQLBindCol(hStmt, result_idx, SQL_C_TYPE_TIMESTAMP, dest, 0, destind);
 						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					case field_types::ft_int64:
 					{
-						status = SQLBindCol(hStmt, result_idx, SQL_C_SBIGINT, dest, 0, nullptr);
+						status = SQLBindCol(hStmt, result_idx, SQL_C_SBIGINT, dest, 0, destind);
 						sql_error(SQL_HANDLE_STMT, hStmt, status);
 					}
 					break;
 					}
-				offset_idx++;
+				offset_idx+=2;
 				result_idx++;
 			}
 
 			status = SQLExecute(hStmt);
 			sql_error(SQL_HANDLE_STMT, hStmt, status);
-
+			
 			if (_statement.result_mappings.size() > 0) 
 			{
-				while (SQLFetch(hStmt) == SQL_SUCCESS) 
+				status = SQLFetch(hStmt);
+				sql_error(SQL_HANDLE_STMT, hStmt, status);
+				while (status == SQL_SUCCESS or status == SQL_SUCCESS_WITH_INFO)
 				{
 					json new_object = jp.create_object();
-					xresults.get_json(new_object, _statement.result_keys);
-					results_array.push_back(new_object);
+					xresults.get_json(new_object, all_columns);
+					json obj = jp.create_object();
+					for (auto key : _statement.result_keys)
+					{
+						std::string null_key = key + "_null";
+						int64_t null_ind = (int64_t)new_object[null_key];
+						if (null_ind != SQL_NULL_DATA) {
+							std::shared_ptr<json_value> jv = new_object.get_member_value(key);
+							if (jv) {
+								if (jv->get_field_type() == field_types::ft_string)
+								{
+									auto sjv = std::dynamic_pointer_cast<json_string>(jv);
+									auto sjd = std::make_shared<json_string>();
+									sjd->value = trim(sjv->value, null_ind);
+									obj.object_impl()->members[key] = sjd;
+								}
+								else {
+									obj.object_impl()->members[key] = jv;
+								}
+							}
+						}
+					}
+					obj = new_object.extract(_statement.result_keys);
+					results_array.push_back(obj);
+					status = SQLFetch(hStmt);
+					sql_error(SQL_HANDLE_STMT, hStmt, status);
 				};
 			}
 
@@ -697,7 +816,7 @@ namespace corona
 			sql_statement stmt;
 			json results;
 
-			stmt = statement_gen->get_statement(key, sql);
+			stmt = statement_gen->erase_statement(key, sql);
 			results = execute(stmt);
 		}
 
@@ -772,32 +891,32 @@ namespace corona
 
 	};
 
-	class sql_connections
+	class corona_connections
 	{
 
-		std::map<std::string, std::string> sql_connections;
+		std::map<std::string, std::string> connections;
 		shared_lockable locker;
 
 	public:
 
-		std::string get_sql_connection(std::string _source)
+		std::string get_connection(std::string _source)
 		{
 			read_scope_lock lockit(locker);
 			std::string result;
-			std::string env_path = "corona_sql_" + _source;
+			std::string env_path = "connection_" + _source;
 			std::transform(env_path.begin(), env_path.end(), env_path.begin(), ::toupper);
 
 			result = get_environment(_source);
 			if (result.empty()) {
-				result = sql_connections[_source];
+				result = connections[_source];
 			}
 			return result;
 		}
 
-		void set_sql_connection(std::string _source, std::string _connection)
+		void set_connection(std::string _source, std::string _connection)
 		{
 			write_scope_lock lockit(locker);
-			sql_connections.insert_or_assign(_source, _connection);
+			connections.insert_or_assign(_source, _connection);
 		}
 
 	};

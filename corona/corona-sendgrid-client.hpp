@@ -24,8 +24,8 @@ namespace corona
 	{
 
 		const char *default_api_key = "";
-        const char* sender_name = "Willie Otis";
-        const char* sender_email = "willie.otis@countrybit.com";
+        const char* sender_name = "Todd Bandrowsky";
+        const char* sender_email = "todd.bandrowsky@countryvideogames.com";
 
     public:
         std::string api_key;
@@ -62,12 +62,12 @@ namespace corona
         }
       ],
       "from": {
-            "email": "willie.otis@countrybit.com",
-            "name" : "Willie Otis"
+            "email": "todd.bandrowsky@countryvideogames.com",
+            "name" : "Todd Bandrowsky"
       },
       "reply_to" : {
-            "email": "willie.otis@countrybit.com",
-            "name" : "Willie Otis"
+            "email": "todd.bandrowsky@countryvideogames.com",
+            "name" : "Todd Bandrowsky"
       },
       "subject" : "Countrybit Access Code",
       "content" : [

@@ -1229,6 +1229,11 @@ namespace corona
 		{
 			table_header->root->clear();
 		}
+
+		virtual void save()
+		{
+			table_header->write(fb);
+		}
 	};
 
 	std::shared_ptr<xleaf_block> xblock_cache::open_leaf_block(xblock_ref& _ref)

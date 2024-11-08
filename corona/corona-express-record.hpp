@@ -12,6 +12,7 @@ namespace corona
 	struct xstring
 	{
 		field_types ft;
+		int32_t length;
 		const char* data;
 		size_t size_bytes;
 
@@ -19,6 +20,7 @@ namespace corona
 		{
 			ft = field_types::ft_string;
 			data = nullptr;
+			length = 0;
 			size_bytes = 0;
 		}
 
@@ -26,14 +28,18 @@ namespace corona
 		{
 			ft = (field_types)_src[_offset];
 			_offset++;
+			length =*(& _src[_offset]);
+			_offset += sizeof(int32_t);
 			data = &_src[_offset];
-			size_bytes = strlen(data) + 1 + packed_field_type_size;
+			_offset += length;
+			size_bytes = packed_field_type_size + sizeof(length) + length;
 		}
 
 		xstring(const xstring& _src)
 		{
 			ft = _src.ft;
 			data = _src.data;
+			length = _src.length;
 			size_bytes = _src.size_bytes;
 		}
 
@@ -41,6 +47,7 @@ namespace corona
 		{
 			ft = _src.ft;
 			data = _src.data;
+			length = _src.length;
 			size_bytes = _src.size_bytes;
 			return *this;
 		}
@@ -49,6 +56,7 @@ namespace corona
 		{
 			ft = _src.ft;
 			data = _src.data;
+			length = _src.length;
 			size_bytes = _src.size_bytes;
 		}
 
@@ -56,6 +64,7 @@ namespace corona
 		{
 			ft = _src.ft;
 			data = _src.data;
+			length = _src.length;
 			size_bytes = _src.size_bytes;
 			return *this;
 		}
@@ -77,7 +86,7 @@ namespace corona
 			if (ofs >= _src.size())
 				return false;
 			_dest = xstring(_src.data(), ofs);
-			auto sz = _dest.size();
+			auto sz = _dest.size_bytes;
 			*_offset += sz;
 			return true;
 		}
@@ -86,9 +95,12 @@ namespace corona
 		{
 			char ft = (char)field_types::ft_string;
 			_dest.push_back(ft);
+			int32_t l = _src.size() + 1;
+			char* x = (char *)&l;
+			_dest.insert(_dest.end(), x, x + sizeof(l));
 			int return_value;
-			return_value = _dest.end() - _dest.begin();
-			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + _src.size() + 1);
+			return_value = std::distance(_dest.begin(), _dest.end());
+			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + l);
 			return return_value;
 		}
 	};
@@ -180,8 +192,7 @@ namespace corona
 			char ft = (char)field_type;
 			_dest.push_back(ft);
 			int return_value;
-			return_value = _dest.end() - _dest.begin();
-
+			return_value = std::distance(_dest.begin(), _dest.end());
 			const char* sd = (const char*)&_src;
 			const char* se = sd + sizeof(data_type);
 			_dest.insert(_dest.end(), sd, se);
@@ -992,7 +1003,7 @@ namespace corona
 
 		int bind(int64_t _value)
 		{
-			return xdatetime::emplace(_value, record_bytes);
+			return xint64_t::emplace(_value, record_bytes);
 		}
 
 		char* get_ptr(int _binding_offset)

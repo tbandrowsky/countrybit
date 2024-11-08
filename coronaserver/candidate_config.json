@@ -3,7 +3,7 @@
     "ApiKey": "Your key goes here"
   },
   "Connections": {
-    "AdventurWorks": "Driver={ODBC Driver 17 for SQL Server};Server=BANDROWSKY-RIPP\\DEV01;Database=AdventureWorks2016;Trusted_Connection=yes;TrustServerCertificate=yes"
+    "AdventureWorks2016": "Driver={ODBC Driver 17 for SQL Server};Server=BANDROWSKY-RIPP\\DEV01;Database=AdventureWorks2016;Trusted_Connection=yes;TrustServerCertificate=yes"
   },
   "Server": {
     "listen_point": "http://localhost:5678/corona",
