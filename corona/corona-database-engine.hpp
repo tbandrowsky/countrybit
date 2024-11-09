@@ -1767,7 +1767,7 @@ namespace corona
 			if (not sql)
 				return nullptr;
 
-			std::string connection = _db->connections.get_sql_connection(sql->connection_name);
+			std::string connection = _db->connections.get_connection(sql->connection_name);
 			auto stable = std::make_shared<sql_table>(sql, connection);
 
 			// we're going to make our xtable anyway so we can slap our object id 
@@ -3729,12 +3729,13 @@ private:
 				json jteam = get_team(team_name);
 				if (jteam.object()) {
 					json jpermissions = jteam["permissions"];
-					json perms = jpermissions[_class_name];
-					if (perms.array()) {
-						for (auto perm : perms) {
-							std::string sperm = perm;
-							if (sperm == _permission) {
-								granted = true;
+					if (jpermissions.array()) {
+						for (auto jperm : jpermissions) {
+							std::string jclass = jperm["class_name"];
+							auto permclass = read_lock_class(jclass);
+							if (permclass->get_descendants().contains(_class_name)) {
+								json jgrant = jperm["grants"];
+								granted = (bool)jgrant[_permission];
 								break;
 							}
 						}
