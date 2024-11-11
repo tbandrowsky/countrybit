@@ -112,6 +112,12 @@ namespace corona
 
 				json create_database_response = local_db->create_database();
 
+				bool success = (bool)create_database_response[success_field];
+				if (!success) {
+					log_json(create_database_response);
+					throw std::exception("Coult not create database");
+				}
+
 				relative_ptr_type result = database_config_mon.poll(app.get());
 				ready_for_polling = true;
 			}

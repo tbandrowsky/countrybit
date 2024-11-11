@@ -21,6 +21,7 @@ namespace corona
 		bool				primary_key;
 		field_types			field_type;
 		int					string_size;
+		bool				is_expression;
 
 		sql_field_mapping()
 		{
@@ -43,6 +44,12 @@ namespace corona
 			sql_field_name = _src["sql_field_name"];
 			primary_key = (bool)_src["primary_key"];
 			string_size = (int)_src["string_size"];
+			is_expression = false;
+			for (auto s : sql_field_name) {
+				if (s == '(' or s == ')' or s == '*' or s == '+' or s == '/' or s == '-' or s == '!') {
+					is_expression = true;
+				}
+			}
 		}
 	};
 
@@ -267,9 +274,11 @@ namespace corona
 					ssp.string_size = fld.string_size;
 					stmt.parameters.push_back(ssp);
 
-					update_fields << comma;
-					comma = ", ";
-					update_fields << std::format("{0} = {1}", fld.sql_field_name, ssp.sql_field_name);
+					if (not fld.is_expression) {
+						update_fields << comma;
+						comma = ", ";
+						update_fields << std::format("{0} = {1}", fld.sql_field_name, ssp.sql_field_name);
+					}
 
 				}
 			}
@@ -298,9 +307,11 @@ namespace corona
 			for (auto fld : _integration->mappings)
 			{
 				if (_object.has_member(fld.corona_field_name)) {
-					insert_fields << comma;
-					comma = ", ";
-					insert_fields << fld.sql_field_name;
+					if (not fld.is_expression) {
+						insert_fields << comma;
+						comma = ", ";
+						insert_fields << fld.sql_field_name;
+					}
 				}
 			}
 
@@ -309,18 +320,20 @@ namespace corona
 			comma = "";
 			for (auto fld : _integration->mappings)
 			{
-				if (_object.has_member(fld.corona_field_name)) {
-					sql_statement_parameter ssp;
-					ssp.corona_field_name = fld.corona_field_name;
-					ssp.parameter_index = index++;
-					ssp.sql_field_name = "?";
-					ssp.field_type = fld.field_type;
-					ssp.string_size = fld.string_size;
-					stmt.parameters.push_back(ssp);
+				if (not fld.is_expression) {
+					if (_object.has_member(fld.corona_field_name)) {
+						sql_statement_parameter ssp;
+						ssp.corona_field_name = fld.corona_field_name;
+						ssp.parameter_index = index++;
+						ssp.sql_field_name = "?";
+						ssp.field_type = fld.field_type;
+						ssp.string_size = fld.string_size;
+						stmt.parameters.push_back(ssp);
 
-					insert_values << comma;
-					comma = ", ";
-					insert_values << ssp.sql_field_name;
+						insert_values << comma;
+						comma = ", ";
+						insert_values << ssp.sql_field_name;
+					}
 				}
 			}
 

@@ -3053,7 +3053,7 @@ namespace corona
 			}
 
 			json test =  classes->get(R"({"class_name":"sys_object"})");
-			if (test.empty() or test.is_member("class_name", "SysParseError")) {
+			if (test.empty() or test.error()) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysObject after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
@@ -3066,14 +3066,30 @@ namespace corona
 {
 	"class_name" : "sys_grant",
 	"base_class_name" : "sys_object",
-	"class_description" : "Teams a user can belong to",
+	"class_description" : "grants a team can have",
 	"fields" : {
 			"team_id"	  : "int64",
 			"grant_class" : "string",
-			"get" : "string",
-			"put" : "string",
-			"delete" : "string",
-			"alter" : "string"
+			"get" : {
+				"field_type":"string",
+				"field_name":"get",
+				"enum" : [ "any", "none", "own" ]
+			},
+			"put" : {
+				"field_type":"string",
+				"field_name":"put",
+				"enum" : [ "any", "none", "own" ]
+			},
+			"delete" : {
+				"field_type":"string",
+				"field_name":"delete",
+				"enum" : [ "any", "none", "own" ]
+			},
+			"alter" : {
+				"field_type":"string",
+				"field_name":"alter",
+				"enum" : [ "any", "none", "own" ]
+			}
 	},
 	"indexes" : {
         "sys_grant_team": {
@@ -3092,7 +3108,7 @@ namespace corona
 			}
 
 			test = classes->get(R"({"class_name":"sys_grant"})");
-			if (test.empty() or test.is_member("class_name", "SysParseError")) {
+			if (test.empty() or test.error()) {
 				system_monitoring_interface::global_mon->log_warning("could not find class sys_grant after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
@@ -3103,7 +3119,7 @@ namespace corona
 
 			response = create_class(R"(
 {
-	"class_name" : "sys_teams",
+	"class_name" : "sys_team",
 	"base_class_name" : "sys_object",
 	"class_description" : "Teams a user can belong to",
 	"fields" : {
@@ -3115,7 +3131,7 @@ namespace corona
 				"field_name" : "permissions",
 				"child_objects" : {
 					"sys_grant" : {
-						"child_class_name" : "sys_grant";
+						"child_class_name" : "sys_grant",
 						"copy_values" : {
 							"object_id" : "team_id"
 						},
@@ -3139,21 +3155,21 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class sys_teams put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning("create_class sys_team put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				std::cout << response.to_json() << std::endl;
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			test = classes->get(R"({"class_name":"sys_teams"})");
-			if (test.empty() or test.is_member("class_name", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_teams after creation.", __FILE__, __LINE__);
+			test = classes->get(R"({"class_name":"sys_team"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_team after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			created_classes.put_member("sys_teams", true);
+			created_classes.put_member("sys_team", true);
 
 
 
@@ -3161,7 +3177,7 @@ namespace corona
 
 			response = create_class(R"(
 {
-	"class_name" : "sys_datasets",
+	"class_name" : "sys_dataset",
 	"base_class_name" : "sys_object",
 	"class_description" : "Database script changes",
 	"fields" : {
@@ -3184,25 +3200,25 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class sys_datasets put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning("create_class sys_dataset put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				std::cout << response.to_json() << std::endl;
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			test = classes->get(R"({"class_name":"sys_datasets"})");
+			test = classes->get(R"({"class_name":"sys_dataset"})");
 			if (test.empty() or test.is_member("class_name", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_datasets after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_dataset after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			created_classes.put_member("sys_datasets", true);
+			created_classes.put_member("sys_dataset", true);
 
 			response =  create_class(R"(
 {
-	"class_name" : "sys_schemas",
+	"class_name" : "sys_schema",
 	"base_class_name" : "sys_object",
 	"class_description" : "Database script changes",
 	"fields" : {		
@@ -3216,8 +3232,8 @@ namespace corona
 				"field_type" : "array",
 				"field_name" : "datasets",
 				"child_objects" : {
-					"sys_datasets" : {
-						"child_class_name" : "sys_datasets",
+					"sys_dataset" : {
+						"child_class_name" : "sys_dataset",
 						"copy_values" : {
 							"object_id" : "schema_id"
 						},
@@ -3232,7 +3248,7 @@ namespace corona
 }
 )");
 
-			created_classes.put_member("sys_schemas", true);
+			created_classes.put_member("sys_schema", true);
 
 			if (not response[success_field]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
@@ -3241,9 +3257,9 @@ namespace corona
 				return result;
 			}
 
-			test =  classes->get(R"({"class_name":"sys_schemas"})");
-			if (test.empty() or test.is_member("class_name", "SysParseErrors")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_schemas after creation.", __FILE__, __LINE__);
+			test =  classes->get(R"({"class_name":"sys_schema"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_schema after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
@@ -3282,7 +3298,7 @@ namespace corona
 			}
 
 			test =  classes->get(R"({"class_name":"sys_users"})");
-			if (test.empty() or test.is_member("class_name", "SysParseError")) {
+			if (test.empty() or test.error()) {
 				system_monitoring_interface::global_mon->log_warning("could not find class sys_users after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
@@ -3806,7 +3822,7 @@ private:
 			json key = jp.create_object();
 			key.put_member("team_domain", _domain);
 
-			read_class_sp classd = read_lock_class("sys_teams");
+			read_class_sp classd = read_lock_class("sys_team");
 			if (not classd)
 				return jp.create_array();
 
@@ -3822,7 +3838,7 @@ private:
 			json key = jp.create_object();
 			key.put_member("team_name", _team_name);
 
-			read_class_sp classd = read_lock_class("sys_teams");
+			read_class_sp classd = read_lock_class("sys_team");
 			if (not classd)
 				return jp.create_array();
 
@@ -3839,7 +3855,7 @@ private:
 			key.put_member("schema_name", schema_name);
 			key.put_member("schema_version", schema_version);
 
-			auto classd = read_lock_class("sys_schemas");
+			auto classd = read_lock_class("sys_schema");
 			if (not classd) {
 				return jp.create_array();
 			}
@@ -3855,7 +3871,7 @@ private:
 			key.put_member("dataset_name", dataset_name);
 			key.put_member("dataset_version", dataset_version);
 
-			auto classd = read_lock_class("sys_datasets");
+			auto classd = read_lock_class("sys_dataset");
 			if (not classd) {
 				return json();
 			}
@@ -3898,6 +3914,7 @@ private:
 			// extract the user key from the token and get the user object
 			if (_user_name == default_user) 
 			{
+				grants = get_system_permission();
 				return grants;
 			}
 			auto sys_perm = get_system_permission();
@@ -4260,7 +4277,7 @@ private:
 			json schema_key = jp.create_object();
 			schema_key.copy_member("schema_name", _schema);
 			schema_key.copy_member("schema_version", _schema);
-			schema_key.put_member(class_name_field, "sys_schemas"sv);
+			schema_key.put_member(class_name_field, "sys_schema"sv);
 			schema_key.set_compare_order({ "schema_name", "schema_version" });
 
 			json schema_test =  select_object(schema_key, false, sys_perm);
@@ -4350,7 +4367,7 @@ private:
 
 						json script_definition = script_array.get_element(i);
 
-						script_definition.put_member(class_name_field, "sys_datasets"sv);
+						script_definition.put_member(class_name_field, "sys_dataset"sv);
 						script_definition.put_member_i64("schema_id", (int64_t)_schema[object_id_field]);
 						std::string dataset_name = script_definition["dataset_name"];
 						std::string dataset_version = script_definition["dataset_version"];
@@ -4552,7 +4569,7 @@ private:
 				}
 			}
 
-			_schema.put_member(class_name_field, "sys_schemas"sv);
+			_schema.put_member(class_name_field, "sys_schema"sv);
 
 			json put_schema_request = create_system_request(_schema);
 			// in corona, creating an object doesn't actually persist anything 
@@ -5058,6 +5075,13 @@ private:
 			json token = put_class_request[token_field];
 			json jclass_definition = put_class_request[data_field];
 			std::string class_name = jclass_definition[class_name_field];
+
+			if (jclass_definition.error())
+			{
+				result = create_response(put_class_request, false, "Invalid class", jclass_definition, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
 
 			std::vector<validation_error> errors;
 

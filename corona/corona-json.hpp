@@ -1398,7 +1398,7 @@ namespace corona
 
 		bool error()
 		{
-			return has_member("ClassName") and (std::string)get_member("ClassName") == parse_error_class;
+			return has_member(class_name_field) and (std::string)get_member(class_name_field) == parse_error_class;
 		}
 
 		int64_t& get_int64()   const
@@ -2928,7 +2928,7 @@ namespace corona
 				error_array.append_element( err);
 			}
 
-			error_root.put_member("SysParseErrors", error_array);
+			error_root.put_member("errors", error_array);
 			return error_root;
 		}
 

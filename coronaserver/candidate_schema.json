@@ -7,7 +7,7 @@
   ],
   "classes": [
     {
-      "class_name": "UserContentBase",
+      "class_name": "user_content",
       "class_description": "Base of user owned objects",
       "base_class_name": "sys_object",
       "content_object_id": "int64",
@@ -20,14 +20,14 @@
       }
     },
     {
-      "class_name": "SystemContentBase",
+      "class_name": "system_content",
       "class_description": "Base of system owned objects",
       "base_class_name": "sys_object",
       "comments": {
         "field_type": "array",
         "child_objects": {
           "UserContentBase": {
-            "child_class_name": "UserContentBase",
+            "child_class_name": "user_content",
             "copy_values": {
               "object_id": "content_object_id"
             },
@@ -39,7 +39,7 @@
       }
     },
     {
-      "class_name": "Comments",
+      "class_name": "comment",
       "class_description": "Comments made by users",
       "base_class_name": "UserContentBase",
       "fields": {
@@ -47,7 +47,7 @@
       }
     },
     {
-      "class_name": "Links",
+      "class_name": "link",
       "class_description": "Links made by users",
       "base_class_name": "UserContentBase",
       "fields": {
@@ -55,7 +55,7 @@
       }
     },
     {
-      "class_name": "Candidates",
+      "class_name": "candidate",
       "class_description": "Candidates running for public office",
       "base_class_name": "SystemContentBase",
       "fields": {
@@ -74,24 +74,24 @@
           "query": {
             "from": [
               {
-                "class_name": "CommitteeCandidates",
-                "name": "CommitteeCandidates",
+                "class_name": "committee_candidate",
+                "name": "committee_candidate",
                 "filter": {
                   "candidate_id": "$this.candidate_id"
                 }
               },
               {
-                "class_name": "Committees",
-                "name": "Committees",
+                "class_name": "committee",
+                "name": "committee",
                 "filter": {
-                  "committee_id": "CommitteeCandidates.committee_id"
+                  "committee_id": "committee_candidate.committee_id"
                 }
               }
             ],
             "stages": [
               {
                 "class_name": "filter",
-                "stage_input_name": "Committees"
+                "stage_input_name": "committee"
               }
             ]
           }
@@ -111,9 +111,9 @@
       }
     },
     {
-      "class_name": "Committees",
+      "class_name": "committee",
       "class_description": "Political groups that accept money from the public to support candidates",
-      "base_class_name": "SystemContentBase",
+      "base_class_name": "system_content",
       "fields": {
         "committee_id": "string",
         "committee_name": "string",
@@ -128,9 +128,9 @@
       }
     },
     {
-      "class_name": "CommitteeCandidates",
+      "class_name": "committee_candidate",
       "class_description": "Mapping of committees and candidates",
-      "base_class_name": "SystemContentBase",
+      "base_class_name": "system_content",
       "fields": {
         "committee_id": "string",
         "candidate_id": "string"
@@ -149,9 +149,9 @@
       }
     },
     {
-      "class_name": "Individuals",
+      "class_name": "individual",
       "class_description": "Mapping of committees and candidates",
-      "base_class_name": "SystemContentBase",
+      "base_class_name": "system_content",
       "fields": {
         "committee_id": "string",
         "full_name": "string",
@@ -166,14 +166,15 @@
       }
     },
     {
-      "class_name": "People",
+      "class_name": "people",
       "class_description": "SQL Server Adventure Works People.People",
-      "base_class_name": "SystemContentBase",
+      "base_class_name": "system_content",
       "fields": {
         "business_entity_id": "string",
         "person_type": "string",
         "name_style": "string",
         "title": "string",
+        "full_name": "string",
         "first_name": "string",
         "middle_name": "string",
         "last_name": "string",
@@ -212,6 +213,13 @@
               "string_size": 20
             },
             {
+              "corona_field_name": "full_name",
+              "sql_field_name": "Upper(Concat(LastName, ', ', FirstName))",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
               "corona_field_name": "first_name",
               "sql_field_name": "FirstName",
               "primary_key": false,
@@ -239,6 +247,13 @@
               "field_type": "string",
               "string_size": 20
             }
+          ]
+        }
+      },
+      "indexes": {
+        "people_full_name_idx": {
+          "index_keys": [
+            "full_name"
           ]
         }
       }
