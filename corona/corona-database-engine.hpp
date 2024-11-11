@@ -3141,7 +3141,7 @@ namespace corona
 					}	
 				}
 			},
-			"home_class_name" : "string"
+			"workflow_classes" : "array"
 	},
 	"indexes" : {
         "sys_team_name": {
@@ -3285,7 +3285,8 @@ namespace corona
 			"password" : "string",
 			"team_name" : "string",
 			"validation_code" : "string",
-			"confirmed_code" : "number"
+			"confirmed_code" : "number",
+			"workflow_objects" : "object"
 	}
 }
 )");
@@ -4784,6 +4785,23 @@ private:
 					if (not team.empty())
 					{
 						user.put_member("team_name", (std::string)team["team_name"]);
+						json workflow_objects = jp.create_array();
+						json workflow_classes = team["workflow_classes"];
+						json workflow_objects = user["workflow_objects"];
+						if (workflow_classes.array()) {
+							for (auto wf_classes : team) {
+								std::string class_name = (std::string)wf_classes;
+								if (workflow_objects.has_member(class_name)) {
+									continue;
+								}
+								json create_req = jp.create_object();
+								create_req.put_member(class_name_field, class_name);
+								json sys_create_req = create_system_request(create_req);
+								json result = create_object(sys_create_req);
+								json new_object = result[data];
+								workflow_objects.put_member(class_name, data);
+							}
+						}
 					}
 					else
 					{

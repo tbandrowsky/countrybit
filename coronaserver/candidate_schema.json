@@ -57,7 +57,7 @@
     {
       "class_name": "candidate",
       "class_description": "Candidates running for public office",
-      "base_class_name": "SystemContentBase",
+      "base_class_name": "system_content",
       "fields": {
         "candidate_id": "string",
         "full_name": "string",
@@ -111,6 +111,42 @@
       }
     },
     {
+      "class_name": "candidate_search",
+      "class_description": "search object for candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "full_name": "string",
+        "state": "string",
+        "city": "string",
+        "political_party": "string",
+        "zip": "string",
+        "candidates": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "candidate",
+                "name": "candidate",
+                "filter": {
+                  "full_name": "$this.full_name",
+                  "state": "$this.state",
+                  "city": "$this.city",
+                  "zip": "$this.zip",
+                  "political_party": "$this.political_party"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "candidate"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
       "class_name": "committee",
       "class_description": "Political groups that accept money from the public to support candidates",
       "base_class_name": "system_content",
@@ -124,6 +160,36 @@
           "index_keys": [
             "committee_id"
           ]
+        }
+      }
+    },
+    {
+      "class_name": "committee_search",
+      "class_description": "search object for committees",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_name": "string",
+        "political_party": "string",
+        "committees": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "committee",
+                "name": "committee",
+                "filter": {
+                  "committee_name": "$this.committee_name",
+                  "political_party": "$this.political_party"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "committee"
+              }
+            ]
+          }
         }
       }
     },
@@ -257,7 +323,37 @@
           ]
         }
       }
+    },
+    {
+      "class_name": "people_search",
+      "class_description": "search object for people",
+      "base_class_name": "sys_object",
+      "fields": {
+        "full_name": "string",
+        "people": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "people",
+                "name": "people",
+                "filter": {
+                  "full_name": "$this.full_name"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "people"
+              }
+            ]
+          }
+        }
+      }
+
     }
+
   ],
   "users": [],
   "datasets": [
