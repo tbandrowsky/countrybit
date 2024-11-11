@@ -3138,10 +3138,10 @@ namespace corona
 	},
 	"indexes" : {
         "sys_team_name": {
-          "index_keys": [ "team_domain" ]
+          "index_keys": [ "team_name" ]
         },
         "sys_team_email": {
-          "index_keys": [ "team_email" ]
+          "index_keys": [ "team_domain" ]
         }
 	}
 }
@@ -3180,6 +3180,7 @@ namespace corona
 			"dataset_version" : "string",
 			"dataset_author" : "string",
 			"dataset_source" : "string",
+			"completed" : "datetime",
 			"run_on_change": "bool",
 			"objects": "array",
 			"import" : "object"
@@ -4296,7 +4297,6 @@ private:
 						timer txc;
 
 						json class_definition = class_array.get_element(i);
-						system_monitoring_interface::global_mon->log_function_start("put class", class_definition[class_name_field], start_class, __FILE__, __LINE__);
 
 						try {
 
@@ -4312,7 +4312,6 @@ private:
 						{
 							system_monitoring_interface::global_mon->log_exception(exc);
 						}
-						system_monitoring_interface::global_mon->log_function_stop("put class", class_definition[class_name_field], txc.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
 				system_monitoring_interface::global_mon->log_job_section_stop("", "Classes", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4530,15 +4529,15 @@ private:
 											system_monitoring_interface::global_mon->log_warning(save_result[message_field]);
 											system_monitoring_interface::global_mon->log_json<json>(save_result);
 										}
-										else
-											system_monitoring_interface::global_mon->log_information(save_result[message_field]);
-										object_definition.copy_member(success_field, create_result);
-										object_definition.copy_member(message_field, create_result);
+										else {
+											std::string new_class_name = object_definition[class_name_field];
+											int64_t object_id = object_definition[object_id_field];
+											std::string object_created = std::format("object {0} ({1})", new_class_name, object_id);
+											system_monitoring_interface::global_mon->log_information(object_created);
+										}
 									}
 									else 
 									{
-										object_definition.copy_member(success_field, create_result);
-										object_definition.copy_member(message_field, create_result);
 										system_monitoring_interface::global_mon->log_warning(create_result[message_field], __FILE__, __LINE__);
 										system_monitoring_interface::global_mon->log_json<json>(create_result);
 									}
@@ -4546,7 +4545,7 @@ private:
 							}
 
 							date_time completed_date = date_time::now();
-							script_definition.put_member("Completed", completed_date);
+							script_definition.put_member("completed", completed_date);
 							json put_script_request = create_system_request(script_definition);
 							json save_script_result =  put_object(put_script_request);
 							if (not save_script_result[success_field]) {
@@ -5065,7 +5064,13 @@ private:
 			date_time start_time = date_time::now();
 			timer tx;
 
-			system_monitoring_interface::global_mon->log_function_start("put_class", "start", start_time, __FILE__, __LINE__);
+			std::string pc_name = "put_class";
+			std::string pc_msg = (std::string)put_class_request[data_field][class_name_field];
+			std::string pc_start = pc_msg + " start";
+			std::string pc_stop = pc_msg + " stop";
+			std::string pc_failed = pc_msg + " failed";
+
+			system_monitoring_interface::global_mon->log_function_start(pc_name, pc_start, start_time, __FILE__, __LINE__);
 
 			std::vector<std::string> missing_elements;
 			if (not put_class_request.has_members(missing_elements, { token_field })) {
@@ -5077,7 +5082,7 @@ private:
 					error_message.append(m);
 				}
 				json response = create_response(put_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -5086,7 +5091,7 @@ private:
 			if (not check_message(put_class_request, { auth_general }, user_name))
 			{
 				result = create_response(put_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
 			}
@@ -5098,7 +5103,7 @@ private:
 			if (jclass_definition.error())
 			{
 				result = create_response(put_class_request, false, "Invalid class", jclass_definition, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -5106,7 +5111,7 @@ private:
 
 			if (class_name.empty()) {
 				result = create_response(put_class_request, false, "No class name", jclass_definition, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			auto permission = get_class_permission(
@@ -5115,7 +5120,7 @@ private:
 
 			if (permission.put_grant != class_grants::grant_any) {
 				result = create_response(put_class_request, false, "Denied", jclass_definition, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
 			}
@@ -5142,7 +5147,7 @@ private:
 			}
 
 			save();
-			system_monitoring_interface::global_mon->log_function_stop("put_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_stop, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return result;
 		}
 

@@ -346,7 +346,7 @@
               "string_size": 20
             }
           ]
-        }
+      },
       "indexes": {
         "people_full_name_idx": {
           "index_keys": [
@@ -455,7 +455,7 @@
         "type": "csv",
         "delimiter": "|",
         "filename": "cn.csv",
-        "target_class": "Candidates",
+        "target_class": "candidate",
         "column_map": {
           "0": "candidate_id",
           "1": "full_name",
@@ -479,7 +479,7 @@
         "type": "csv",
         "delimiter": "|",
         "filename": "cm.csv",
-        "target_class": "Committees",
+        "target_class": "committee",
         "column_map": {
           "0": "committee_id",
           "1": "committee_name",
@@ -498,7 +498,7 @@
         "type": "csv",
         "delimiter": "|",
         "filename": "ccl.csv",
-        "target_class": "CommitteeCandidates",
+        "target_class": "committee_candidate",
         "column_map": {
           "0": "candidate_id",
           "3": "committee_id"
@@ -515,7 +515,7 @@
         "type": "csv",
         "delimiter": "|",
         "filename": "itcont.csv",
-        "target_class": "Individuals",
+        "target_class": "individual",
         "column_map": {
           "0": "committee_id",
           "8": "full_name",
