@@ -237,7 +237,9 @@ namespace corona
 		write_locked_sp(std::shared_ptr<T>& _data) :
 			data(_data)
 		{
-			data->write_lock();
+			if (data) {
+				data->write_lock();
+			}
 		}
 
 		write_locked_sp(const write_locked_sp& _src) = delete;

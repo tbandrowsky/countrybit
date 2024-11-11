@@ -2009,7 +2009,6 @@ namespace corona
 				auto jfield_members = jfields.get_members();
 				for (auto jfield : jfield_members) {
 					std::shared_ptr<field_implementation> field = std::make_shared<field_implementation>();
-					field->set_field_name(jfield.first);
 					field->set_field_type(field_types::ft_none);
 					if (jfield.second.object()) 
 					{
@@ -2035,13 +2034,7 @@ namespace corona
 
 					if (field->get_field_name().empty())
 					{
-						validation_error ve;
-						ve.class_name = class_name;
-						ve.field_name = field->get_field_name();
-						ve.message = "Missing field name.";
-						ve.filename = __FILE__;
-						ve.line_number = __LINE__;
-						_errors.push_back(ve);
+						field->set_field_name(jfield.first);
 					}
 
 					if (field->get_field_type() != field_types::ft_none) 

@@ -70,7 +70,6 @@
         "zip": "string",
         "committees": {
           "field_type": "query",
-          "field_name": "committees",
           "query": {
             "from": [
               {
@@ -276,8 +275,9 @@
         "first_name": "string",
         "middle_name": "string",
         "last_name": "string",
-        "suffix": "string",
-        "sql": {
+        "suffix": "string"
+      },
+      "sql": {
           "connection_name": "AdventureWorks2016",
           "sql_view_name": "[AdventureWorks2016].[Person].[Person]",
           "sql_table_name": "[AdventureWorks2016].[Person].[Person]",
@@ -347,7 +347,6 @@
             }
           ]
         }
-      },
       "indexes": {
         "people_full_name_idx": {
           "index_keys": [
@@ -390,7 +389,6 @@
           }
         }
       }
-
     }
 
   ],
@@ -404,7 +402,7 @@
       "dataset_source": "inline",
       "objects": [
         {
-          "class_name": "sys_teams",
+          "class_name": "sys_team",
           "team_name": "admins",
           "team_description": "company admins",
           "team_domain": "countryvideogames.com",
@@ -421,7 +419,7 @@
           "workflow_classes": [ "committee_search", "candidate_search", "people_search" ]
         },
         {
-          "class_name": "sys_teams",
+          "class_name": "sys_team",
           "team_name": "general users",
           "team_description": "users",
           "team_domain": "*",
