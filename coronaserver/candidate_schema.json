@@ -2,12 +2,62 @@
   "schema_name": "Country Video Games Candidate",
   "schema_description": "Schema creates a simple searchable database using FEC donations as a source.",
   "schema_version": "1.0",
-  "schema_authors": [ "TJ Bandrowsky" ],
+  "schema_authors": [
+    "TJ Bandrowsky"
+  ],
   "classes": [
+    {
+      "class_name": "UserContentBase",
+      "class_description": "Base of user owned objects",
+      "base_class_name": "sys_object",
+      "content_object_id": "int64",
+      "indexes": {
+        "object_content": {
+          "index_keys": [
+            "content_object_id"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "SystemContentBase",
+      "class_description": "Base of system owned objects",
+      "base_class_name": "sys_object",
+      "comments": {
+        "field_type": "array",
+        "child_objects": {
+          "UserContentBase": {
+            "child_class_name": "UserContentBase",
+            "copy_values": {
+              "object_id": "content_object_id"
+            },
+            "construct_values": {
+              "object_id": "content_object_id"
+            }
+          }
+        }
+      }
+    },
+    {
+      "class_name": "Comments",
+      "class_description": "Comments made by users",
+      "base_class_name": "UserContentBase",
+      "fields": {
+        "comment_text": "string"
+      }
+    },
+    {
+      "class_name": "Links",
+      "class_description": "Links made by users",
+      "base_class_name": "UserContentBase",
+      "fields": {
+        "link_url": "string"
+      }
+    },
     {
       "class_name": "Candidates",
       "class_description": "Candidates running for public office",
-      "base_class_name": "sys_object",
+      "base_class_name": "SystemContentBase",
       "fields": {
         "candidate_id": "string",
         "full_name": "string",
@@ -20,7 +70,7 @@
         "zip": "string",
         "committees": {
           "field_type": "query",
-          "field_name" : "committees",
+          "field_name": "committees",
           "query": {
             "from": [
               {
@@ -49,17 +99,21 @@
       },
       "indexes": {
         "candidate_candidate_id_idx": {
-          "index_keys": [ "candidate_id" ]
+          "index_keys": [
+            "candidate_id"
+          ]
         },
         "candidate_full_name_idx": {
-          "index_keys": [ "full_name" ]
+          "index_keys": [
+            "full_name"
+          ]
         }
       }
     },
     {
       "class_name": "Committees",
       "class_description": "Political groups that accept money from the public to support candidates",
-      "base_class_name": "sys_object",
+      "base_class_name": "SystemContentBase",
       "fields": {
         "committee_id": "string",
         "committee_name": "string",
@@ -67,31 +121,37 @@
       },
       "indexes": {
         "committee_committee_id_idx": {
-          "index_keys": [ "committee_id" ]
+          "index_keys": [
+            "committee_id"
+          ]
         }
       }
     },
     {
       "class_name": "CommitteeCandidates",
       "class_description": "Mapping of committees and candidates",
-      "base_class_name": "sys_object",
+      "base_class_name": "SystemContentBase",
       "fields": {
         "committee_id": "string",
         "candidate_id": "string"
       },
       "indexes": {
         "committee_candidate_committee_id_idx": {
-          "index_keys": [ "committee_id" ]
+          "index_keys": [
+            "committee_id"
+          ]
         },
         "committee_candidate_candidate_id_idx": {
-          "index_keys": [ "candidate_id" ]
+          "index_keys": [
+            "candidate_id"
+          ]
         }
       }
     },
     {
       "class_name": "Individuals",
       "class_description": "Mapping of committees and candidates",
-      "base_class_name": "sys_object",
+      "base_class_name": "SystemContentBase",
       "fields": {
         "committee_id": "string",
         "full_name": "string",
@@ -108,7 +168,7 @@
     {
       "class_name": "People",
       "class_description": "SQL Server Adventure Works People.People",
-      "base_class_name": "sys_object",
+      "base_class_name": "SystemContentBase",
       "fields": {
         "business_entity_id": "string",
         "person_type": "string",
@@ -117,75 +177,116 @@
         "first_name": "string",
         "middle_name": "string",
         "last_name": "string",
-        "suffix": "string"
-      },
-      "sql": {
-        "connection_name": "AdventureWorks2016",
-        "sql_view_name": "[AdventureWorks2016].[Person].[Person]",
-        "sql_table_name": "[AdventureWorks2016].[Person].[Person]",
-        "mappings": [
-          {
-            "corona_field_name": "business_entity_id",
-            "sql_field_name": "BusinessEntityID",
-            "primary_key": true,
-            "field_type": "string",
-            "string_size": 100.0
-          },
-          {
-            "corona_field_name": "person_type",
-            "sql_field_name": "PersonType",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 20.0
-          },
-          {
-            "corona_field_name": "name_style",
-            "sql_field_name": "NameStyle",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 20.0
-          },
-          {
-            "corona_field_name": "title",
-            "sql_field_name": "Title",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 20.0
-          },
-          {
-            "corona_field_name": "first_name",
-            "sql_field_name": "FirstName",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 100.0
-          },
-          {
-            "corona_field_name": "middle_name",
-            "sql_field_name": "MiddleName",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 100.0
-          },
-          {
-            "corona_field_name": "last_name",
-            "sql_field_name": "LastName",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 100.0
-          },
-          {
-            "corona_field_name": "suffix",
-            "sql_field_name": "Suffix",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 20.0
-          }
-        ]
+        "suffix": "string",
+        "sql": {
+          "connection_name": "AdventureWorks2016",
+          "sql_view_name": "[AdventureWorks2016].[Person].[Person]",
+          "sql_table_name": "[AdventureWorks2016].[Person].[Person]",
+          "mappings": [
+            {
+              "corona_field_name": "business_entity_id",
+              "sql_field_name": "BusinessEntityID",
+              "primary_key": true,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
+              "corona_field_name": "person_type",
+              "sql_field_name": "PersonType",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 20
+            },
+            {
+              "corona_field_name": "name_style",
+              "sql_field_name": "NameStyle",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 20
+            },
+            {
+              "corona_field_name": "title",
+              "sql_field_name": "Title",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 20
+            },
+            {
+              "corona_field_name": "first_name",
+              "sql_field_name": "FirstName",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
+              "corona_field_name": "middle_name",
+              "sql_field_name": "MiddleName",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
+              "corona_field_name": "last_name",
+              "sql_field_name": "LastName",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
+              "corona_field_name": "suffix",
+              "sql_field_name": "Suffix",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 20
+            }
+          ]
+        }
       }
     }
   ],
   "users": [],
   "datasets": [
+    {
+      "dataset_name": "Candidate Teams",
+      "dataset_description": "Load Teams",
+      "dataset_version": "1.0",
+      "dataset_author": "TJ Bandrowsky",
+      "dataset_source": "inline",
+      "objects": [
+        {
+          "class_name": "sys_teams",
+          "team_name": "admins",
+          "team_description": "company admins",
+          "team_domain": "countryvideogames.com",
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "SystemContentBase",
+              "put": "any",
+              "get": "any",
+              "alter": "any",
+              "erase": "any"
+            }
+          ]
+        },
+        {
+          "class_name": "sys_teams",
+          "team_name": "general users",
+          "team_description": "users",
+          "team_domain": "*",
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "UserContentBase",
+              "put": "own",
+              "get": "any",
+              "alter": "none",
+              "erase": "own"
+            }
+          ]
+        }
+      ]
+    },
     {
       "dataset_name": "Candidate Master",
       "dataset_description": "Load Candidates",
@@ -246,7 +347,6 @@
         }
       }
     },
-
     {
       "dataset_name": "Individual Master",
       "dataset_description": "Load Individuals",
