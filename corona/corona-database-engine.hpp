@@ -4787,7 +4787,11 @@ private:
 						user.put_member("team_name", (std::string)team["team_name"]);
 						json workflow_objects = jp.create_array();
 						json workflow_classes = team["workflow_classes"];
-						json workflow_objects = user["workflow_objects"];
+						workflow_objects = user["workflow_objects"];
+						if (not workflow_objects.object())
+						{
+							workflow_objects = jp.create_object();
+						}
 						if (workflow_classes.array()) {
 							for (auto wf_classes : team) {
 								std::string class_name = (std::string)wf_classes;
@@ -4802,6 +4806,7 @@ private:
 								workflow_objects.put_member(class_name, data);
 							}
 						}
+						user.put_member("workflow_objects", workflow_objects);
 					}
 					else
 					{
@@ -4852,12 +4857,15 @@ private:
 			if (pw == hashed_pw)
 			{
 				bool confirm = (bool)user["confirmed_code"];
+
+				json result_data = user["workflow_objects"];
+
 				if (user_name == default_user and default_user.size() > 0) {
-					response = create_response(user_name, auth_system, true, "Ok", data, method_timer.get_elapsed_seconds());
+					response = create_response(user_name, auth_system, true, "Ok", result_data, method_timer.get_elapsed_seconds());
 				}
 				else if (confirm)
 				{
-					response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
+					response = create_response(user_name, auth_general, true, "Ok", result_data, method_timer.get_elapsed_seconds());
 				}
 				else
 				{

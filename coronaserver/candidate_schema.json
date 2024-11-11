@@ -119,27 +119,44 @@
         "state": "string",
         "city": "string",
         "political_party": "string",
-        "zip": "string",
         "candidates": {
           "field_type": "query",
           "query": {
             "from": [
               {
                 "class_name": "candidate",
-                "name": "candidate",
-                "filter": {
-                  "full_name": "$this.full_name",
-                  "state": "$this.state",
-                  "city": "$this.city",
-                  "zip": "$this.zip",
-                  "political_party": "$this.political_party"
-                }
+                "name": "candidate"
               }
             ],
             "stages": [
               {
                 "class_name": "filter",
-                "stage_input_name": "candidate"
+                "stage_input_name": "candidate",
+                "condition": {
+                  "class_name": "all",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "full_name",
+                      "value": "$this.full_name"
+                    },
+                    {
+                      "class_name": "eq",
+                      "valuepath": "state",
+                      "value": "$this.state"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "city",
+                      "value": "$this.city"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "political_party",
+                      "value": "$this.political_party"
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -186,7 +203,22 @@
             "stages": [
               {
                 "class_name": "filter",
-                "stage_input_name": "committee"
+                "stage_input_name": "committee",
+                "condition": {
+                  "class_name": "all",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "committee_name",
+                      "value": "$this.committee_name"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "political_party",
+                      "value": "$this.political_party"
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -336,16 +368,23 @@
             "from": [
               {
                 "class_name": "people",
-                "name": "people",
-                "filter": {
-                  "full_name": "$this.full_name"
-                }
+                "name": "people"
               }
             ],
             "stages": [
               {
                 "class_name": "filter",
-                "stage_input_name": "people"
+                "stage_input_name": "people",
+                "condition": {
+                  "class_name": "any",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "full_name",
+                      "value" :  "$this.full_name"
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -372,13 +411,14 @@
           "permissions": [
             {
               "class_name": "sys_grant",
-              "grant_class": "SystemContentBase",
+              "grant_class": "system_content",
               "put": "any",
               "get": "any",
               "alter": "any",
               "erase": "any"
             }
-          ]
+          ],
+          "workflow_classes": [ "committee_search", "candidate_search", "people_search" ]
         },
         {
           "class_name": "sys_teams",
@@ -388,13 +428,22 @@
           "permissions": [
             {
               "class_name": "sys_grant",
-              "grant_class": "UserContentBase",
+              "grant_class": "user_content",
               "put": "own",
               "get": "any",
               "alter": "none",
               "erase": "own"
+            },
+            {
+              "class_name": "sys_grant",
+              "grant_class": "system_content",
+              "put": "none",
+              "get": "any",
+              "alter": "none",
+              "erase": "none"
             }
-          ]
+          ],
+          "workflow_classes": [ "committee_search", "candidate_search", "people_search" ]
         }
       ]
     },
