@@ -3262,7 +3262,7 @@ namespace corona
 			response =  create_class(R"(
 {	
 	"base_class_name" : "sys_object",
-	"class_name" : "sys_users",
+	"class_name" : "sys_user",
 	"class_description" : "A user",
 	"fields" : {			
 			"class_name" : "string",
@@ -3286,20 +3286,20 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class sys_users put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning("create_class sys_user put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			test =  classes->get(R"({"class_name":"sys_users"})");
+			test =  classes->get(R"({"class_name":"sys_user"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_users after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_user after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			created_classes.put_member("sys_users", true);
+			created_classes.put_member("sys_user", true);
 
 			json gc = jp.create_object();
 			json gcr = create_system_request( gc );
@@ -3334,7 +3334,7 @@ namespace corona
 			json new_user_data;
 
 			new_user_data = jp.create_object();
-			new_user_data.put_member(class_name_field, "sys_users"sv);
+			new_user_data.put_member(class_name_field, "sys_user"sv);
 			new_user_data.put_member(user_name_field, default_user);
 			new_user_data.put_member(user_email_field, default_email_address);
 			new_user_data.put_member("password1", default_password);
@@ -3786,7 +3786,7 @@ private:
 		{
 			json_parser jp;
 
-			write_class_sp classd = write_lock_class("sys_users");
+			write_class_sp classd = write_lock_class("sys_user");
 	
 			json children = jp.create_array();
 			json items = jp.create_array();
@@ -3801,7 +3801,7 @@ private:
 			json key = jp.create_object();
 			key.put_member(user_name_field, _user_name);
 
-			read_class_sp classd = read_lock_class("sys_users");
+			auto classd = read_get_class("sys_user");
 			if (not classd)
 				return jp.create_array();
 
@@ -3817,7 +3817,7 @@ private:
 			json key = jp.create_object();
 			key.put_member("team_domain", _domain);
 
-			read_class_sp classd = read_lock_class("sys_team");
+			auto classd = read_get_class("sys_team");
 			if (not classd)
 				return jp.create_array();
 
@@ -3833,7 +3833,7 @@ private:
 			json key = jp.create_object();
 			key.put_member("team_name", _team_name);
 
-			read_class_sp classd = read_lock_class("sys_team");
+			auto classd = read_get_class("sys_team");
 			if (not classd)
 				return jp.create_array();
 
@@ -3850,7 +3850,7 @@ private:
 			key.put_member("schema_name", schema_name);
 			key.put_member("schema_version", schema_version);
 
-			auto classd = read_lock_class("sys_schema");
+			auto classd = read_get_class("sys_schema");
 			if (not classd) {
 				return jp.create_array();
 			}
@@ -3866,7 +3866,7 @@ private:
 			key.put_member("dataset_name", dataset_name);
 			key.put_member("dataset_version", dataset_version);
 
-			auto classd = read_lock_class("sys_dataset");
+			auto classd = read_get_class("sys_dataset");
 			if (not classd) {
 				return json();
 			}
@@ -4047,32 +4047,33 @@ private:
 
 		void send_user_confirmation(json user_info)
 		{
-			std::string new_code = get_random_code();
 
-			user_info.put_member("validation_code", new_code);
-			user_info.put_member("confirmed_code", 0);
-			auto sys_perm = get_system_permission();
-			put_user(user_info, sys_perm);
+			try {
+				std::string new_code = get_random_code();
 
-			sendgrid_client sc_client;
-			sc_client.api_key = connections.get_connection("sendgrid");
+				user_info.put_member("validation_code", new_code);
+				user_info.put_member("confirmed_code", 0);
+				auto sys_perm = get_system_permission();
+				put_user(user_info, sys_perm);
 
-			std::string email_template = R"(
-<html>
-<body>
-<h2>Country Video Games Validation Code</h2>
-<p>Your username is $USERNAME$</p>
-<p>Your validation code is <span style="background:grey;border:1px solid black;padding 8px;">$CODE$</p>
-<body>
-</html>
-)";
+				sendgrid_client sc_client;
+				sc_client.sender_email = sendgrid_sender_email;
+				sc_client.sender_name = sendgrid_sender;
+				sc_client.api_key = connections.get_connection("sendgrid");
 
-			std::string user_name = user_info[user_name];
+				std::string email_template = R"(<html><body><h2>$EMAIL_TITLE$</h2><p>Username is $USERNAME$</p><p>Validation code <span style="background:grey;border:1px solid black;padding 8px;">$CODE$</p><body>/html>)";
 
-			std::string email_body = replace(email_template, "$CODE$", new_code);
-			email_body = replace(email_body, "$USERNAME$", user_name);
-			sc_client.send_email(user_info, "Country Video Games Validation Code", R"(
-)", "text/html");
+				std::string user_name = user_info[user_name_field];
+
+				std::string email_body = replace(email_template, "$CODE$", new_code);
+				email_body = replace(email_body, "$USERNAME$", user_name);
+				email_body = replace(email_body, "$EMAIL_TITLE$", user_confirmation_title);
+				sc_client.send_email(user_info, user_confirmation_title, email_body, "text/html");
+			}
+			catch (std::exception exc)
+			{
+				system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+			}
 
 		}
 
@@ -4083,6 +4084,10 @@ private:
 		std::string default_email_address;
 		std::string default_guest_team;
 		time_span token_life;
+
+		std::string sendgrid_sender;
+		std::string sendgrid_sender_email;
+		std::string user_confirmation_title;
 
 		// constructing and opening a database
 
@@ -4109,6 +4114,9 @@ private:
 			{
 				json send_grid = _config["SendGrid"];
 				std::string send_grid_api_key = send_grid["ApiKey"];
+				sendgrid_sender = send_grid["SenderName"];
+				sendgrid_sender_email = send_grid["SenderEmail"];
+				user_confirmation_title = send_grid["UserConfirmationTitle"];
 				this->connections.set_connection("sendgrid", (std::string)send_grid_api_key);
 			}
 
@@ -4165,7 +4173,21 @@ private:
 			s_confirmation_code = confirmation_code;
 			return s_confirmation_code;
 		}
-		
+
+		virtual std::shared_ptr<class_implementation> read_get_class(const std::string& _class_name) 
+		{
+			std::shared_ptr<class_implementation> cd;
+
+			cd = get_cached_class(_class_name);
+
+			if (not cd)
+			{
+				cd = cache_existing_class(_class_name);
+			}
+
+			return cd;
+		}
+
 		virtual read_class_sp read_lock_class(const std::string& _class_name) override
 		{
 			std::shared_ptr<class_implementation> cd;
@@ -4516,7 +4538,7 @@ private:
 							json object_list = script_definition["objects"];
 							if (object_list.array()) {
 								for (int j = 0; j < object_list.size(); j++) {
-									json object_definition = object_list.get_element(i);
+									json object_definition = object_list.get_element(j);
 									json put_object_request = create_system_request(object_definition);
 									// in corona, creating an object doesn't actually persist anything 
 									// but a change in identifier.  It's a clean way of just getting the 
@@ -4634,7 +4656,7 @@ private:
 			std::string user_email = data[user_email_field];
 			std::string user_password1 = data["password1"];
 			std::string user_password2 = data["password2"];
-			std::string user_class = "sys_users";
+			std::string user_class = "sys_user";
 
 			if (user_password1 != user_password2) 
 			{
@@ -4687,15 +4709,18 @@ private:
 			create_user_params.put_member("validation_code", new_code);
 
 
-			json create_object_request = create_request(user_name, auth_general, create_user_params);
+			json create_object_request = create_system_request(create_user_params);
 			json user_result =  put_object(create_object_request);
 			if (user_result[success_field]) {
-				json new_user_wrapper = user_result[data_field];
-				response = create_response(user_name, auth_general, true, "User created", data, method_timer.get_elapsed_seconds());
+				json new_user_wrapper = user_result[data_field]["sys_user"].get_element(0);
+				new_user_wrapper = new_user_wrapper[data_field];
+				send_user_confirmation(new_user_wrapper);
+				new_user_wrapper.erase_member("password");
+				response = create_response(user_name, auth_general, true, "User created", new_user_wrapper, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
-				response = create_response(create_user_request, false, "User not created", data, method_timer.get_elapsed_seconds());
+				response = create_response(create_user_request, false, "User not created", user_result, method_timer.get_elapsed_seconds());
 			}
 
 			save();

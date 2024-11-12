@@ -23,16 +23,18 @@
       "class_name": "system_content",
       "class_description": "Base of system owned objects",
       "base_class_name": "sys_object",
-      "comments": {
-        "field_type": "array",
-        "child_objects": {
-          "UserContentBase": {
-            "child_class_name": "user_content",
-            "copy_values": {
-              "object_id": "content_object_id"
-            },
-            "construct_values": {
-              "object_id": "content_object_id"
+      "fields": {
+        "comments": {
+          "field_type": "array",
+          "child_objects": {
+            "UserContentBase": {
+              "child_class_name": "user_content",
+              "copy_values": {
+                "object_id": "content_object_id"
+              },
+              "construct_values": {
+                "object_id": "content_object_id"
+              }
             }
           }
         }
@@ -41,7 +43,7 @@
     {
       "class_name": "comment",
       "class_description": "Comments made by users",
-      "base_class_name": "UserContentBase",
+      "base_class_name": "user_content",
       "fields": {
         "comment_text": "string"
       }
@@ -49,7 +51,7 @@
     {
       "class_name": "link",
       "class_description": "Links made by users",
-      "base_class_name": "UserContentBase",
+      "base_class_name": "user_content",
       "fields": {
         "link_url": "string"
       }
@@ -413,7 +415,7 @@
               "put": "any",
               "get": "any",
               "alter": "any",
-              "erase": "any"
+              "delete": "any"
             }
           ],
           "workflow_classes": [ "committee_search", "candidate_search", "people_search" ]
@@ -430,7 +432,7 @@
               "put": "own",
               "get": "any",
               "alter": "none",
-              "erase": "own"
+              "delete": "own"
             },
             {
               "class_name": "sys_grant",
@@ -438,7 +440,7 @@
               "put": "none",
               "get": "any",
               "alter": "none",
-              "erase": "none"
+              "delete": "none"
             }
           ],
           "workflow_classes": [ "committee_search", "candidate_search", "people_search" ]

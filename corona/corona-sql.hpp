@@ -919,7 +919,7 @@ namespace corona
 			std::string env_path = "connection_" + _source;
 			std::transform(env_path.begin(), env_path.end(), env_path.begin(), ::toupper);
 
-			result = get_environment(_source);
+			result = get_environment(env_path);
 			if (result.empty()) {
 				result = connections[_source];
 			}

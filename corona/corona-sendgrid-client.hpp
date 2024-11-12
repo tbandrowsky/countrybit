@@ -24,18 +24,18 @@ namespace corona
 	{
 
 		const char *default_api_key = "";
-        const char* sender_name = "Todd Bandrowsky";
-        const char* sender_email = "todd.bandrowsky@countryvideogames.com";
 
     public:
         std::string api_key;
         std::string host;
         int port;
+        std::string sender_name = "";
+        std::string sender_email = "";
 
 		sendgrid_client()
 		{
 			api_key = default_api_key;
-			host = "https://api.sendgrid.com";
+			host = "api.sendgrid.com";
 			port = 443;
 		}
 
@@ -48,7 +48,7 @@ namespace corona
 			http_client send_grid_client;
 			std::string send_grid_url;
 			std::string user_mail = _user["Email"];
-			std::string authorization_header = "Authorization:Bearer " + api_key;
+			std::string authorization_header = "Authorization:Bearer " + api_key + "\n";
             std::string email_template =  R"(
 {
       "personalizations": [
@@ -62,14 +62,14 @@ namespace corona
         }
       ],
       "from": {
-            "email": "todd.bandrowsky@countryvideogames.com",
-            "name" : "Todd Bandrowsky"
+            "email": "p1",
+            "name" : "p2"
       },
       "reply_to" : {
-            "email": "todd.bandrowsky@countryvideogames.com",
-            "name" : "Todd Bandrowsky"
+            "email": "p1",
+            "name" : "p2"
       },
-      "subject" : "Countrybit Access Code",
+      "subject" : "p3",
       "content" : [
         {
           "type": "text/html",
@@ -78,8 +78,8 @@ namespace corona
       ]
 }			
 )";
-            std::string recipient_name = _user["Name"];
-            std::string recipient_email = _user["Email"];
+            std::string recipient_name = _user["user_name"];
+            std::string recipient_email = _user["email"];
 
             json email_request = jp.parse_object(email_template);
 
@@ -88,28 +88,36 @@ namespace corona
             to_json.put_member("name", recipient_name);
 
             json from_json = jp.create_object();
-            from_json.put_member("email", std::string_view(sender_email));
-            from_json.put_member("name", std::string_view(sender_name));
+            from_json.put_member("email", std::string(sender_email));
+            from_json.put_member("name", std::string(sender_name));
 
             json reply_json = jp.create_object();
-            reply_json.put_member("email", std::string_view(sender_email));
-            reply_json.put_member("name", std::string_view(sender_name));
+            reply_json.put_member("email", std::string(sender_email));
+            reply_json.put_member("name", std::string(sender_name));
 
             email_request.put_member("from", from_json);
             email_request.put_member("reply_to", reply_json);
             email_request.put_member("subject", _subject);
 
-            json personalizations = email_request["Personalizations"];
-            personalizations.put_element(0, to_json);
+            json personalizations = jp.create_array();
+            json personal = jp.create_object();
+            json to_array = jp.create_array();
+            to_array.push_back(to_json);
+            personal.put_member("to", to_array);
+            personalizations.push_back(personal);
+            email_request.put_member("personalizations", personalizations);
 
             json content = jp.create_object();
             content.put_member("type", _body_mime);
             content.put_member("value", _body);
 
-            json contents = email_request["content"];
-            contents.put_element(0, content);
+            json contents = jp.create_array();
+            contents.push_back(content);
+            email_request.put_member("content", contents);
 
-			http_params params = send_grid_client.post(host.c_str(), port, "/v3/mail/send", email_request, authorization_header.c_str());
+            std::string header = "Content-Type: application/json\r\n" + authorization_header;
+
+			http_params params = send_grid_client.post(host.c_str(), port, "/v3/mail/send", email_request, header.c_str());
 
             return params;
 		}

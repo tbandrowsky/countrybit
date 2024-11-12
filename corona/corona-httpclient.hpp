@@ -172,37 +172,45 @@ namespace corona
         {
             std::string header;
 
+            wchar_t basic_buffer[2048] = {};
             BOOL bResults;
-            DWORD dwHeaderSize;
+            DWORD dwHeaderSize = sizeof(basic_buffer);
             wchar_converter converter;
 
             BOOL success = WinHttpQueryHeaders(hRequest,
                 header_id,
                 WINHTTP_HEADER_NAME_BY_INDEX,
-                NULL,  &dwHeaderSize, 
+                basic_buffer,  &dwHeaderSize, 
                 0);
 
-            os_result header_result;
+            if (not success) {
 
-            // Allocate memory for the buffer.
-            if (header_result.error_code == ERROR_INSUFFICIENT_BUFFER)
-            {
-                buffer headerBuffer(dwHeaderSize);
+                DWORD result_code = GetLastError();
 
-                // Now, use WinHttpQueryHeaders to retrieve the header.
-                bResults = WinHttpQueryHeaders(hRequest,
-                    header_id,
-                    WINHTTP_HEADER_NAME_BY_INDEX,
-                    headerBuffer.get_ptr(), &dwHeaderSize,
-                    0);
+                // Allocate memory for the buffer.
+                if (result_code == ERROR_INSUFFICIENT_BUFFER)
+                {
+                    buffer headerBuffer(dwHeaderSize);
 
-                if (bResults) {
-                    wchar_t* header_w = (wchar_t*)headerBuffer.get_ptr();
-                    header = converter.to_char(header_w);
+                    // Now, use WinHttpQueryHeaders to retrieve the header.
+                    bResults = WinHttpQueryHeaders(hRequest,
+                        header_id,
+                        WINHTTP_HEADER_NAME_BY_INDEX,
+                        headerBuffer.get_ptr(), &dwHeaderSize,
+                        0);
+
+                    if (bResults) {
+                        wchar_t* header_w = (wchar_t*)headerBuffer.get_ptr();
+                        header = converter.to_char(header_w);
+                    }
+                }
+                else {
+                    header = "";
                 }
             }
-            else {
-                throw_error(context, "Reading Http Headers");
+            else
+            {
+                header = converter.to_char(basic_buffer);
             }
 
             return header;
@@ -274,6 +282,8 @@ namespace corona
                 throw_error(params.request.host, "System issue: Cannot open connection.");
             }
 
+            DWORD security = params.request.port == 443 ? WINHTTP_FLAG_SECURE : 0;
+
             // Create an HTTP request handle.
             if (hConnect) {
                 hRequest = WinHttpOpenRequest(hConnect,
@@ -282,7 +292,7 @@ namespace corona
                     NULL,
                     WINHTTP_NO_REFERER,
                     allowed_types_lies,
-                    WINHTTP_FLAG_ESCAPE_DISABLE /* WINHTTP_FLAG_SECURE */);
+                    WINHTTP_FLAG_ESCAPE_DISABLE | security);
             }
             else 
             {
@@ -318,8 +328,8 @@ namespace corona
 
             // Check the headers
 
-            params.response.content_type = get_header(params.request.host + "/" + params.request.path, hRequest, WINHTTP_QUERY_CONTENT_TYPE);
-            params.response.content_length = get_header(params.request.host + "/" + params.request.path, hRequest, WINHTTP_QUERY_CONTENT_LENGTH);
+            params.response.content_type = get_header(params.request.host + params.request.path, hRequest, WINHTTP_QUERY_CONTENT_TYPE);
+            params.response.content_length = get_header(params.request.host + params.request.path, hRequest, WINHTTP_QUERY_CONTENT_LENGTH);
 
             // Keep checking for data until there is nothing left.
             if (bResults)

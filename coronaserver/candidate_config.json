@@ -1,6 +1,9 @@
 {
   "SendGrid": {
-    "ApiKey": "Your key goes here"
+    "ApiKey": "Your key goes here",
+    "SenderName": "Todd Bandrowsky",
+    "SenderEmail": "todd.bandrowsky@countryvideogames.com",
+    "UserConfirmationTitle": "Your countryvideogames account"
   },
   "Connections": {
     "AdventureWorks2016": "Driver={ODBC Driver 17 for SQL Server};Server=BANDROWSKY-RIPP\\DEV01;Database=AdventureWorks2016;Trusted_Connection=yes;TrustServerCertificate=yes"
@@ -12,7 +15,7 @@
     "database_filename": "candidate_database.cdb",
     "sys_user_name": "system",
     "sys_user_password": "systempassword",
-    "sys_user_email": "todd.bandrowsky@countryvideogames.com",
+    "sys_user_email": "todd.bandrowsky@gmail.com",
     "new_user_default_team": "Guests"
   }
 }
