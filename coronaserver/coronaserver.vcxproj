@@ -172,6 +172,7 @@
     <None Include="cm.csv" />
     <None Include="cn.csv" />
     <None Include="corona.postman_collection.json" />
+    <None Include="CoronaApplicationServer.docx" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
