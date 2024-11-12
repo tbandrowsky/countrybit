@@ -156,7 +156,7 @@
     <ClCompile Include="coronaserver.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="candidate_config.json">
+    <CopyFileToFolders Include="config.json">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DeploymentContent>
       <FileType>Document</FileType>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</DeploymentContent>

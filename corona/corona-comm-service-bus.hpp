@@ -309,17 +309,30 @@ namespace corona
 				json_parser jp;
 				json temp;
 				date_time start_time = date_time::now();
+
+				bool show_listen = false;
+
 				if (database_schema_mon.poll_contents(app.get(), temp) != null_row) {
 					log_command_start("poll_db", "apply schema", start_time, __FILE__, __LINE__);
 					auto tempo = local_db->apply_schema(temp);
 					log_command_stop("poll_db", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					show_listen = true;
 				}
 				timer tx2;
 				if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
 					log_command_start("poll_db", "apply config", start_time, __FILE__, __LINE__);
 					local_db->apply_config(temp);
 					log_command_stop("poll_db", "config applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					show_listen = true;
 				}
+
+				if (show_listen) {
+					log_information("listening on :" + listen_point, __FILE__, __LINE__);
+					for (auto path : api_paths) {
+						log_information(path, __FILE__, __LINE__);
+					}
+				}
+
 			}
 		}
 

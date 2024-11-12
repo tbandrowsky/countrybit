@@ -4061,7 +4061,7 @@ private:
 				sc_client.sender_name = sendgrid_sender;
 				sc_client.api_key = connections.get_connection("sendgrid");
 
-				std::string email_template = R"(<html><body><h2>$EMAIL_TITLE$</h2><p>Username is $USERNAME$</p><p>Validation code <span style="background:grey;border:1px solid black;padding 8px;">$CODE$</p><body>/html>)";
+				std::string email_template = R"(<html><body><h2>$EMAIL_TITLE$</h2><p>Username is $USERNAME$</p><p>Validation code <span style="background:grey;border:1px solid black;padding 8px;">$CODE$</p></body></html>)";
 
 				std::string user_name = user_info[user_name_field];
 

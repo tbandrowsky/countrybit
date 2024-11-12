@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="candidate_config.json" />
+    <CopyFileToFolders Include="config.json" />
     <CopyFileToFolders Include="candidate_schema.json" />
   </ItemGroup>
   <ItemGroup>
