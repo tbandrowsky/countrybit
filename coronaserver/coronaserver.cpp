@@ -60,8 +60,9 @@ int main(int argc, char *argv[])
     exit_flag = false;
     std::string config_filename = "config.json";
     if (argc <= 1) {
-        corona::system_monitoring_interface::global_mon->log_warning("No configuration file specified, using config.json");
-        corona::system_monitoring_interface::global_mon->log_information("start with 'coronaserver configfilename'");
+        std::cout << "No configuration file specified, using config.json" << std::endl;
+        std::cout << "start with 'coronaserver configfilename'" << std::endl;
+        return 0;
     }
     else 
     {
