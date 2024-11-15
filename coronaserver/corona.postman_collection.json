@@ -88,6 +88,128 @@
 			"response": []
 		},
 		{
+			"name": "Login Company",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"\r",
+							"pm.test(\"Receive Token\", function () {\r",
+							"    let jsonData = pm.response.json();\r",
+							"\r",
+							"   console.log(jsonData);\r",
+							"    pm.collectionVariables.set(\"LoginToken\", \"variable_value\");\r",
+							"    let mytoken = jsonData.token;\r",
+							"\r",
+							"    pm.environment.set(\"LoginAccessToken\", mytoken);\r",
+							"})"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_name\" : \"system\",\r\n    \"password\" : \"systempassword\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/loginuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"loginuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login Customer",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"\r",
+							"pm.test(\"Receive Token\", function () {\r",
+							"    let jsonData = pm.response.json();\r",
+							"\r",
+							"   console.log(jsonData);\r",
+							"    pm.collectionVariables.set(\"LoginToken\", \"variable_value\");\r",
+							"    let mytoken = jsonData.token;\r",
+							"\r",
+							"    pm.environment.set(\"LoginAccessToken\", mytoken);\r",
+							"})"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_name\" : \"customeruser\",\r\n    \"password\" : \"systempassword\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/loginuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"loginuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Get Classes",
 			"request": {
 				"auth": {
@@ -102,6 +224,79 @@
 				},
 				"method": "POST",
 				"header": [],
+				"url": {
+					"raw": "http://localhost:5678/corona/classes/get",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"classes",
+						"get"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Company User",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"companydrone\",\r\n        \"password1\" : \"testo1\",\r\n        \"password2\" : \"testo1\",\r\n        \"email\" : \"todd.bandrowsky@countryvideogames.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/createuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"createuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Customer User",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"companydrone\",\r\n        \"password1\" : \"testo1\",\r\n        \"password2\" : \"testo1\",\r\n        \"user_email\" : \"todd.bandrowsky@countryvideogames.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
 					"raw": "http://localhost:5678/corona/classes/get",
 					"protocol": "http",
@@ -177,7 +372,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"Candidates\",\r\n            \"name\" : \"Candidates\",\r\n            \"filter\" : {\r\n                \"candidate_id\" : \"H0AK00105\"\r\n            }\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"Candidates\"\r\n        }\r\n    ]\r\n}",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {\r\n                \"candidate_id\" : \"H0AK00105\"\r\n            }\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -217,7 +412,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"Candidates\",\r\n            \"name\" : \"cans\",\r\n            \"filter\" : {\r\n                \"candidate_id\" : \"H0NV01219\"\r\n            }\r\n        },\r\n        {\r\n            \"class_name\" : \"CommitteeCandidates\",\r\n            \"name\" : \"CommitteeCandidates\",\r\n            \"filter\" : {\r\n                \"candidate_id\" : \"$Candidates.candidate_id\"\r\n            }\r\n        },\r\n        {\r\n            \"class_name\" : \"Committees\",\r\n            \"name\" : \"Committees\",\r\n            \"filter\" : {\r\n                \"committee_id\" : \"$CommitteeCandidates.committee_id\"\r\n            }\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"Candidates\"            \r\n        }\r\n    ]\r\n}",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {\r\n                \"candidate_id\" : \"H0NV01219\"\r\n            }\r\n        },\r\n        {\r\n            \"class_name\" : \"committee_candidate\",\r\n            \"name\" : \"committee_candidate\",\r\n            \"filter\" : {\r\n                \"candidate_id\" : \"$candidate.candidate_id\"\r\n            }\r\n        },\r\n        {\r\n            \"class_name\" : \"committee\",\r\n            \"name\" : \"committee\",\r\n            \"filter\" : {\r\n                \"committee_id\" : \"$committee_candidate.committee_id\"\r\n            }\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"candidate\"            \r\n        }\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -257,7 +452,127 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"CommitteeCandidates\",\r\n            \"name\" : \"CommitteeCandidates\"\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"CommitteeCandidates\"\r\n        }\r\n    ]\r\n}",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {}\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"name\" : \"people_result\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "System Teams",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {}\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"name\" : \"people_result\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "System Grants",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {}\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"name\" : \"people_result\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query SQL",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"People\",\r\n            \"name\" : \"somename\"\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"name\" : \"people_result\",\r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"somename\"\r\n        }\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -457,7 +772,87 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"class_name\" : \"Candidates\",\r\n    \"object_id\": 9396,\r\n    \"include_children\" : true\r\n}",
+					"raw": "{\r\n    \"class_name\" : \"candidate\",\r\n    \"object_id\": 5,\r\n    \"include_children\" : true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/get",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"get"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Objects Team",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"class_name\" : \"candidate\",\r\n    \"object_id\": 5,\r\n    \"include_children\" : true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/get",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"get"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Objects SQL",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"class_name\" : \"people\",\r\n    \"object_id\": 37838,\r\n    \"include_children\" : false\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -497,7 +892,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"class_name\" : \"Candidates\",\r\n    \"object_id\": 9396,\r\n    \"include_children\" : true\r\n}",
+					"raw": "{\r\n    \"class_name\" : \"candidate\",\r\n    \"object_id\": 29425,\r\n    \"include_children\" : true\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -617,7 +1012,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"data\": \r\n  {\r\n        \"class_name\": \"Candidates\",\r\n        \"candidate_id\": \"THX1138\",\r\n        \"city\": \"BOWLING GREEN\",\r\n        \"election_year\": 2026,\r\n        \"full_name\": \"TODD BANDROWSKY\",\r\n        \"object_id\": 9403,\r\n        \"political_party\": \"REP\",\r\n        \"state\": \"KY\",\r\n        \"street1\": \"120 W MCLELLAN RD\",\r\n        \"street2\": \"UPSTAIRS\",\r\n        \"zip\": \"42101\"\r\n    }\r\n}\r\n",
+					"raw": "{\r\n  \"data\": \r\n  {\r\n        \"object_id\": 29425,\r\n        \"class_name\": \"candidate\",\r\n        \"candidate_id\": \"R2D2\"\r\n    }\r\n}\r\n",
 					"options": {
 						"raw": {
 							"language": "json"

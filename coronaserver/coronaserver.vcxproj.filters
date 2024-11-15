@@ -22,6 +22,7 @@
   <ItemGroup>
     <CopyFileToFolders Include="config.json" />
     <CopyFileToFolders Include="candidate_schema.json" />
+    <CopyFileToFolders Include="CoronaApplicationServer.docx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ccl.csv" />
@@ -29,6 +30,5 @@
     <None Include="cn.csv" />
     <None Include="packages.config" />
     <None Include="corona.postman_collection.json" />
-    <None Include="CoronaApplicationServer.docx" />
   </ItemGroup>
 </Project>

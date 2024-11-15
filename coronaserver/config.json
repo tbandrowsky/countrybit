@@ -14,7 +14,7 @@
     "schema_filename": "candidate_schema.json",
     "database_filename": "candidate_database.cdb",
     "sys_user_name": "system",
-    "sys_user_password": "systempassword",
+    "sys_user_password": "systempassword1!",
     "sys_user_email": "todd.bandrowsky@gmail.com",
     "new_user_default_team": "Guests"
   }

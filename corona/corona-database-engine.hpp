@@ -500,10 +500,11 @@ namespace corona
 			const class_permissions& _src,
 			std::string _class_name) = 0;
 
-		virtual json create_user(json create_user_request) = 0;
+		virtual json create_user(json create_user_request, bool _system_user) = 0;
 		virtual json login_user(json _login_request) = 0;
-		virtual json confirm_user(json _login_request) = 0;
-		virtual json send_user_validation(json _send_user_request) = 0;
+		virtual json user_confirm_user_code(json _login_request) = 0;
+		virtual json send_user_confirm_code(json _send_user_request) = 0;
+		virtual json set_user_password(json _set_password_request) = 0;
 		virtual json get_classes(json get_classes_request) = 0;
 		virtual json get_class(json get_class_request) = 0;
 		virtual json put_class(json put_class_request) = 0;
@@ -3342,9 +3343,18 @@ namespace corona
 
 			new_user_request = create_system_request(new_user_data);
 			json new_user_result =  create_user(new_user_request);
-			json new_user = new_user_result[data_field];
-			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
-			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
+			bool success = (bool)new_user_result[success_field];
+			if (success) {
+				json new_user = new_user_result[data_field];
+				json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
+				response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
+			}
+			else {
+				system_monitoring_interface::global_mon->log_warning("system user create failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(new_user_result);
+				json temp = jp.create_object();
+				response = create_response(new_user_request, false, "Database user create failed.", temp, method_timer.get_elapsed_seconds());
+			}
 
 			system_monitoring_interface::global_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
@@ -4636,8 +4646,42 @@ private:
 			return header_location;
 		}
 
+		class password_metrics
+		{
+		public:
+			int punctuation_count = 0;
+			int digit_count = 0;
+			int alpha_count = 0;
+			int char_count = 0;
 
-		virtual json create_user(json create_user_request)
+			password_metrics(const std::string& _check)
+			{
+				for (auto c : _check)
+				{
+					if (std::ispunct(c) or c == ' ') {
+						punctuation_count++;
+					}
+					else if (std::isdigit(c)) {
+						digit_count++;
+					}
+					else if (std::isalpha(c))
+					{
+						alpha_count++;
+					}
+
+					char_count++;
+				}
+
+			}
+
+			bool is_stupid()
+			{
+				return char_count < 10 or (punctuation_count == 0 or digit_count == 0 or alpha_count == 0);
+			}
+		};
+
+
+		virtual json create_user(json create_user_request, bool _system_user = false)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -4656,12 +4700,22 @@ private:
 			std::string user_email = data[user_email_field];
 			std::string user_password1 = data["password1"];
 			std::string user_password2 = data["password2"];
-			std::string user_class = "sys_user";
+			std::string user_class = "sys_user";		
 
-			if (user_password1 != user_password2) 
+			if (user_password1 != user_password2)
 			{
 				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				response = create_response(create_user_request, false, "Passwords don't match", data, method_timer.get_elapsed_seconds());
+				return response;
+			}
+			// password complexity check
+
+			password_metrics pm1(user_password1);
+
+			if (pm1.is_stupid())
+			{
+				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				response = create_response(create_user_request, false, "password is stupid", data, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -4703,18 +4757,31 @@ private:
 			create_user_params.copy_member(user_street2_field, data);
 			create_user_params.copy_member(user_state_field, data);
 			create_user_params.copy_member(user_zip_field, data);
-			create_user_params.put_member("confirmed_code", 0);
+
+			// TODO: SYSTEM USER CONFIRMATION POLICY
+			// the default system user doesn't need a confirmation process
+			// this may change or at least be allowed as an option 
+			// if in the future you really wanted to lock this down.
+
+			bool is_system_user = _system_user;
+			if (is_system_user) {
+				is_system_user = user_name == user_name;
+			}
+
+			create_user_params.put_member("confirmed_code", is_system_user ? 1 : 0);
 
 			std::string new_code = get_random_code();
 			create_user_params.put_member("validation_code", new_code);
-
 
 			json create_object_request = create_system_request(create_user_params);
 			json user_result =  put_object(create_object_request);
 			if (user_result[success_field]) {
 				json new_user_wrapper = user_result[data_field]["sys_user"].get_element(0);
 				new_user_wrapper = new_user_wrapper[data_field];
-				send_user_confirmation(new_user_wrapper);
+				if (not is_system_user)
+				{
+					send_user_confirmation(new_user_wrapper);
+				}
 				new_user_wrapper.erase_member("password");
 				response = create_response(user_name, auth_general, true, "User created", new_user_wrapper, method_timer.get_elapsed_seconds());
 			}
@@ -4731,7 +4798,7 @@ private:
 		}
 
 
-		virtual json send_user_validation(json validation_code_request) override
+		virtual json send_user_confirm_code(json validation_code_request) override
 		{
 			timer method_timer;
 			json_parser jp;
@@ -4761,7 +4828,7 @@ private:
 
 
 		// this allows a user to login
-		virtual json confirm_user(json _confirm_request)
+		virtual json user_confirm_user_code(json _confirm_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -4772,16 +4839,21 @@ private:
 
 			read_scope_lock my_lock(database_lock);
 
-			auto sys_perm = get_system_permission();
-
-
 			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
 
 			json data = _confirm_request;
 			std::string user_name = data[user_name_field];
 			std::string user_code = data["validation_code"];
 
+			auto sys_perm = get_system_permission();
+
 			json user = get_user(user_name, sys_perm);
+
+			if (user.empty()) {
+				response = create_response(_confirm_request, false, "user not found", data, method_timer.get_elapsed_seconds());
+				return response;
+			}
+
 			std::string sys_code = user["validation_code"];
 
 			if (sys_code == user_code)
@@ -4845,6 +4917,83 @@ private:
 
 			return response;
 		}
+
+		// and user set password
+		virtual json set_user_password(json _password_request)
+		{
+			timer method_timer;
+			json_parser jp;
+			json response;
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
+
+			read_scope_lock my_lock(database_lock);
+
+			std::string user_name;
+
+			if (not check_message(_password_request, { auth_general }, user_name))
+			{
+				response = create_response(_password_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return response;
+			}
+
+			auto sys_perm = get_system_permission();
+
+			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
+
+			json data = _password_request;
+			std::string requested_user_name = data[user_name_field];
+
+			if (requested_user_name != user_name)
+			{
+				response = create_response(_password_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return response;
+			}
+
+			std::string user_password1 = data["password1"];
+			std::string user_password2 = data["password2"];
+
+			if (user_password1 != user_password2)
+			{
+				response = create_response(_password_request, false, "No match", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return response;
+			}
+
+			password_metrics pm1(user_password1);
+
+			if (pm1.is_stupid())
+			{
+				response = create_response(_password_request, false, "Stupid password", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return response;
+			}
+
+			json user = get_user(user_name, sys_perm);
+
+			if (user.empty()) {
+				response = create_response(_password_request, false, "user not found", data, method_timer.get_elapsed_seconds());
+				return response;
+			}
+
+			std::string encrypted_password = crypter.hash(user_password1);
+			user.put_member("password", encrypted_password);
+
+			put_user(user, sys_perm);
+			response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
+
+			system_monitoring_interface::global_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			save();
+
+			return response;
+		}
+
 
 		// this starts a login attempt
 		virtual json login_user(json _login_request)

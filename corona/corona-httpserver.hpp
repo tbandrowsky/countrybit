@@ -154,10 +154,10 @@ namespace corona
 			try {
 				if (_success and bytes_transferred > 0)
 				{
-					system_monitoring_interface::global_mon->log_function_start("http request", "start", thetime, __FILE__, __LINE__);
+					system_monitoring_interface::global_mon->log_command_start("http request", "start", thetime, __FILE__, __LINE__);
 					PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
 					request.server->execute_request(prequest);
-					system_monitoring_interface::global_mon->log_function_stop("http request", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::global_mon->log_command_stop("http request", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 			catch (std::exception exc)
