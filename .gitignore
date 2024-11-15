@@ -370,3 +370,5 @@ FodyWeavers.xsd
 *.cdb
 /coronaserver/candidate_database.cdb
 /coronaserver/test.cxdb
+/coronaserver/ky_eform_config.json
+/coronaserver/ky_eform_schema.json
