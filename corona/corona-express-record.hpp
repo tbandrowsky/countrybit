@@ -487,6 +487,32 @@ namespace corona
 			return success;
 		}
 
+		bool on_get_json_object(json& _dest, const std::string& _key, size_t* _offset) const
+		{
+			xstring temp;
+			bool success = xstring::get(record_bytes, _offset, temp);
+			if (success) {
+				std::string temp_obj = std::string(temp.data);
+				json_parser jp;
+				json obj = jp.parse_object(temp_obj);
+				_dest.put_member(_key, obj);
+			}
+			return success;
+		}
+
+		bool on_get_json_array(json& _dest, const std::string& _key, size_t* _offset) const
+		{
+			xstring temp;
+			bool success = xstring::get(record_bytes, _offset, temp);
+			if (success) {
+				std::string temp_obj = std::string(temp.data);
+				json_parser jp;
+				json obj = jp.parse_array(temp_obj);
+				_dest.put_member(_key, obj);
+			}
+			return success;
+		}
+
 		template <> bool on_get_json<xint64_t>(json& _dest, const std::string& _key, size_t* _offset) const
 		{
 			xint64_t temp;
@@ -502,6 +528,12 @@ namespace corona
 			xwildcard temp;
 			bool success = xwildcard::get(record_bytes, _offset, temp);
 			return success;
+		}
+
+		void emplace_json(json& _src)
+		{
+			std::string temp = _src.to_json_typed();
+			xstring::emplace(temp, record_bytes);
 		}
 
 		template <typename xtype, typename native_type> void emplace(json& _src)
@@ -855,12 +887,19 @@ namespace corona
 			for (auto& fld : _keys)
 			{
 				std::string field_name = fld;
+				std::string temp;
 				auto m = _j[field_name];
 
 				switch (m.get_field_type())
 				{
 				case field_types::ft_string:
 					emplace<xstring, std::string>(m);
+					break;
+				case field_types::ft_array:
+					emplace_json(m);
+					break;
+				case field_types::ft_object:
+					emplace_json(m);
 					break;
 				case field_types::ft_double:
 					emplace<xdouble, double>(m);
@@ -908,6 +947,13 @@ namespace corona
 				case field_types::ft_wildcard:
 					on_to_string<xwildcard>(temp, &this_offset);
 					break;
+				case field_types::ft_array:
+					on_to_string<xstring>(temp, &this_offset);
+					break;
+				case field_types::ft_object:
+					on_to_string<xstring>(temp, &this_offset);
+					break;
+
 				}
 				output << temp;
 				remaining = this_offset < size();
@@ -932,6 +978,12 @@ namespace corona
 				switch (ft) {
 				case field_types::ft_string:
 					on_get_json<xstring>(_dest, *ki, &this_offset);
+					break;
+				case field_types::ft_object:
+					on_get_json_object(_dest, *ki, &this_offset);
+					break;
+				case field_types::ft_array:
+					on_get_json_array(_dest, *ki, &this_offset);
 					break;
 				case field_types::ft_int64:
 					on_get_json<xint64_t>(_dest, *ki, &this_offset);

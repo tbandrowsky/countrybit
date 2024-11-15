@@ -4891,8 +4891,13 @@ private:
 								create_req.put_member(class_name_field, class_name);
 								json sys_create_req = create_system_request(create_req);
 								json result = create_object(sys_create_req);
-								json new_object = result[data];
-								workflow_objects.put_member(class_name, data);
+								if (result[success_field]) {
+									json new_object = result[data_field];
+									int64_t object_id = new_object[object_id_field];
+									json sys_create_req = create_system_request(new_object);
+									workflow_objects.put_member_i64(class_name, object_id);
+									put_object_nl(sys_create_req);
+								}
 							}
 						}
 						user.put_member("workflow_objects", workflow_objects);
@@ -5701,11 +5706,10 @@ private:
 			
 		}
 
-		virtual json put_object(json put_object_request)
+		virtual json put_object_nl(json put_object_request)
 		{
 			timer method_timer;
 			json_parser jp;
-			read_scope_lock my_lock(database_lock);
 			json token;
 			json object_definition;
 			json result;
@@ -5725,7 +5729,7 @@ private:
 				return result;
 			}
 
-			result =  check_object(object_definition, user_name);
+			result = check_object(object_definition, user_name);
 
 			json grouped_by_class_name = result[data_field];
 
@@ -5757,7 +5761,7 @@ private:
 				if (child_objects.size() == 0) {
 					save();
 				}
-				else 
+				else
 				{
 					put_object_request.put_member(data_field, child_objects);
 					put_object(put_object_request);
@@ -5765,13 +5769,20 @@ private:
 
 				result = create_response(put_object_request, true, "Object(s) created", grouped_by_class_name, method_timer.get_elapsed_seconds());
 			}
-			else 
+			else
 			{
 				result = create_response(put_object_request, false, result[message_field], grouped_by_class_name, method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return result;
+		}
+
+		virtual json put_object(json put_object_request)
+		{
+			read_scope_lock my_lock(database_lock);
+
+			return put_object_nl(put_object_request);
 		}
 
 		virtual json get_object(json get_object_request)
