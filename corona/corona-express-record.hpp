@@ -103,6 +103,20 @@ namespace corona
 			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + l);
 			return return_value;
 		}
+
+		static int emplace_as(field_types _ft, const std::string& _src, std::vector<char>& _dest)
+		{
+			char ft = (char)_ft;
+			_dest.push_back(ft);
+			int32_t l = _src.size() + 1;
+			char* x = (char*)&l;
+			_dest.insert(_dest.end(), x, x + sizeof(l));
+			int return_value;
+			return_value = std::distance(_dest.begin(), _dest.end());
+			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + l);
+			return return_value;
+		}
+
 	};
 
 	template <typename data_type, field_types field_type>
@@ -533,7 +547,7 @@ namespace corona
 		void emplace_json(json& _src)
 		{
 			std::string temp = _src.to_json_typed();
-			xstring::emplace(temp, record_bytes);
+			xstring::emplace_as(_src.get_field_type(), temp, record_bytes);
 		}
 
 		template <typename xtype, typename native_type> void emplace(json& _src)
