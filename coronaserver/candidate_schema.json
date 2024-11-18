@@ -416,10 +416,18 @@
       "objects": [
         {
           "class_name": "sys_team",
-          "team_name": "admins",
+          "team_name": "candidate_admins",
           "team_description": "company admins",
           "team_domain": "countryvideogames.com",
           "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "user_content",
+              "put": "own",
+              "get": "any",
+              "alter": "none",
+              "delete": "own"
+            },
             {
               "class_name": "sys_grant",
               "grant_class": "system_content",
@@ -433,8 +441,8 @@
         },
         {
           "class_name": "sys_team",
-          "team_name": "general users",
-          "team_description": "users",
+          "team_name": "candidate_users",
+          "team_description": "candidate users",
           "team_domain": "*",
           "permissions": [
             {

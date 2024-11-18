@@ -598,17 +598,17 @@ namespace corona
 
 	enum class field_types {
 		ft_none = 0,
-		ft_wildcard = 1,
-		ft_double = 2,
-		ft_int64 = 3,
-		ft_string = 4,
-		ft_bool = 5,
-		ft_datetime = 6,
-		ft_object = 7,
-		ft_array = 8,
-		ft_function = 9,
-		ft_query = 10,
-		ft_blob = 11
+		ft_wildcard = 'w',
+		ft_double = 'd',
+		ft_int64 = 'i',
+		ft_string = 's',
+		ft_bool = 'b',
+		ft_datetime = 't',
+		ft_object = 'o',
+		ft_array = 'a',
+		ft_function = 'f',
+		ft_query = 'q',
+		ft_blob = 'x'
 	};
 	
 	const int field_type_size = 12;

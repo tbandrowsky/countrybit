@@ -4569,7 +4569,7 @@ private:
 									// "new chumpy" item for ya.  
 									json create_result =  create_object(put_object_request);
 									if (create_result[success_field]) {
-										json created_object = put_object_request[data_field];
+										json created_object = create_result[data_field];
 										json save_result =  put_object(put_object_request);
 										if (not save_result[success_field]) {
 											system_monitoring_interface::global_mon->log_warning(save_result[message_field]);
@@ -5740,6 +5740,12 @@ private:
 
 					if (field_name == "created_by" or field_name == "created" or field_name == "updated_by" or field_name == "updated")
 						continue;
+
+					if (data.has_member(field_name))
+					{
+						new_object.copy_member(field_name, data);
+						continue;
+					}
 
 					if (field_name == class_name_field) {
 						new_object.put_member(field_name, class_name);

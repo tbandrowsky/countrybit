@@ -28,11 +28,12 @@ namespace corona
 		{
 			ft = (field_types)_src[_offset];
 			_offset++;
-			length =*(& _src[_offset]);
+			int32_t* l = (int *)(&_src[_offset]);
+			length = *l;
 			_offset += sizeof(int32_t);
 			data = &_src[_offset];
 			_offset += length;
-			size_bytes = packed_field_type_size + sizeof(length) + length;
+			size_bytes = packed_field_type_size + sizeof(int32_t) + length;
 		}
 
 		xstring(const xstring& _src)
@@ -95,12 +96,14 @@ namespace corona
 		{
 			char ft = (char)field_types::ft_string;
 			_dest.push_back(ft);
+
 			int32_t l = _src.size() + 1;
 			char* x = (char *)&l;
 			_dest.insert(_dest.end(), x, x + sizeof(l));
+
+			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + l);
 			int return_value;
 			return_value = std::distance(_dest.begin(), _dest.end());
-			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + l);
 			return return_value;
 		}
 
@@ -108,12 +111,14 @@ namespace corona
 		{
 			char ft = (char)_ft;
 			_dest.push_back(ft);
+
 			int32_t l = _src.size() + 1;
 			char* x = (char*)&l;
 			_dest.insert(_dest.end(), x, x + sizeof(l));
+
+			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + l);
 			int return_value;
 			return_value = std::distance(_dest.begin(), _dest.end());
-			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + l);
 			return return_value;
 		}
 
