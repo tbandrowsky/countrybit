@@ -394,7 +394,18 @@
     }
 
   ],
-  "users": [],
+  "users": [
+    {
+      "user_name": "doctorw420",
+      "first_name": "jack",
+      "last_name": "swatsky"
+    },
+    {
+      "user_name": "doctorw421",
+      "first_name": "dianne",
+      "last_name": "jackson"
+    }
+  ],
   "datasets": [
     {
       "dataset_name": "Candidate Teams",

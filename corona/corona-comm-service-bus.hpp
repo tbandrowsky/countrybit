@@ -572,6 +572,19 @@ namespace corona
 			_request.send_response(200, "Ok", fn_response);
 			};
 
+		http_handler_function corona_objects_run = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.error()) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			std::string token = get_token(_request);
+			parsed_request.put_member("Token", token);
+			json fn_response = local_db->run_object(parsed_request);
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
 		json parse_request(http_request _request)
 		{
 			json_parser jph;
@@ -645,6 +658,14 @@ namespace corona
 			api_paths.push_back(path);
 			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_confirm);
 
+			path = _root_path + "login/senduser/";
+			api_paths.push_back(path);
+			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_send_confirm);
+
+			path = _root_path + "login/passworduser/";
+			api_paths.push_back(path);
+			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_user_password);
+
 			path = _root_path + "classes/get/";
 			api_paths.push_back(path);
 			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
@@ -680,6 +701,10 @@ namespace corona
 			path = _root_path + "objects/edit/";
 			api_paths.push_back(path);
 			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
+
+			path = _root_path + "objects/run/";
+			api_paths.push_back(path);
+			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_run);
 
 			path = _root_path + "objects/copy/";
 			api_paths.push_back(path);

@@ -510,6 +510,7 @@ namespace corona
 		virtual json put_class(json put_class_request) = 0;
 
 		virtual json edit_object(json _edit_object_request) = 0;
+		virtual json run_object(json _edit_object_request) = 0;
 		virtual json create_object(json create_object_request) = 0;
 		virtual json put_object(json put_object_request) = 0;
 		virtual json get_object(json get_object_request) = 0;
@@ -2226,14 +2227,6 @@ namespace corona
 			base_class_name = changed_class.base_class_name;
 			class_description = changed_class.class_description;
 			sql = changed_class.sql;
-
-			for (auto field : changed_class.fields) 
-			{
-				if (not fields.contains(field.first) and field.first != object_id_field) {
-					table_fields.push_back(field.first);
-				}
-			}
-
 			fields = changed_class.fields;
 
 			ancestors.clear();
@@ -2262,6 +2255,15 @@ namespace corona
 					ve.message = "base class nnot found";
 					_errors.push_back(ve);
 					return false;
+				}
+			}
+
+			for (auto field : fields)
+			{
+				if (std::find_if(table_fields.begin(), table_fields.end(), [&field](const std::string& _src) {
+						return _src == field.first;
+					}) == std::end(table_fields)) {
+					table_fields.push_back(field.first);
 				}
 			}
 
@@ -3266,7 +3268,6 @@ namespace corona
 	"class_name" : "sys_user",
 	"class_description" : "A user",
 	"fields" : {			
-			"class_name" : "string",
 			"first_name" : "string",
 			"last_name" : "string",
 			"user_name" : "string",
@@ -3658,6 +3659,18 @@ private:
 			payload.put_member(data_field, _data);
 			payload.put_member(seconds_field, _seconds);
 
+			return payload;
+		}
+
+		json create_user_response(json _request, bool _success, std::string _message, json _data, double _seconds)
+		{
+			json_parser jp;
+			json payload = jp.create_object();
+
+			payload.put_member(success_field, _success);
+			payload.put_member(message_field, _message);
+			payload.put_member(data_field, _data);
+			payload.put_member_double(seconds_field, _seconds);
 			return payload;
 		}
 
@@ -4055,9 +4068,9 @@ private:
 
 		int64_t maximum_record_cache_size_bytes = giga_to_bytes(1);
 
-		void send_user_confirmation(json user_info)
+		bool send_user_confirmation(json user_info)
 		{
-
+			bool success = false;
 			try {
 				std::string new_code = get_random_code();
 
@@ -4079,12 +4092,13 @@ private:
 				email_body = replace(email_body, "$USERNAME$", user_name);
 				email_body = replace(email_body, "$EMAIL_TITLE$", user_confirmation_title);
 				sc_client.send_email(user_info, user_confirmation_title, email_body, "text/html");
+				success = true;
 			}
 			catch (std::exception exc)
 			{
 				system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
 			}
-
+			return success;
 		}
 
 	public:
@@ -4783,11 +4797,13 @@ private:
 					send_user_confirmation(new_user_wrapper);
 				}
 				new_user_wrapper.erase_member("password");
-				response = create_response(user_name, auth_general, true, "User created", new_user_wrapper, method_timer.get_elapsed_seconds());
+				new_user_wrapper.erase_member("confirmed_code");
+				new_user_wrapper.erase_member("validation_code");
+				response = create_user_response(create_user_request, true, "User created", new_user_wrapper, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
-				response = create_response(create_user_request, false, "User not created", user_result, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, "User not created", user_result, method_timer.get_elapsed_seconds());
 			}
 
 			save();
@@ -4820,6 +4836,8 @@ private:
 			if (user_info.object()) {
 				send_user_confirmation(user_info);
 			}
+
+			response = create_user_response(validation_code_request, true, "Ok", data, tx.get_elapsed_seconds());
 
 			system_monitoring_interface::global_mon->log_function_stop("send_validation_code", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -4909,11 +4927,11 @@ private:
 				}
 
 				put_user(user, sys_perm);
-				response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
+				response = create_user_response(_confirm_request, true, "Ok", data, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
-				response = create_response(_confirm_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_user_response(_confirm_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
 			}
 
 			system_monitoring_interface::global_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4937,21 +4955,36 @@ private:
 
 			read_scope_lock my_lock(database_lock);
 
+			json data = _password_request;
 			std::string user_name;
+			std::string user_code = data["validation_code"];
+			std::string requested_user_name = data[user_name_field];
 
-			if (not check_message(_password_request, { auth_general }, user_name))
+			auto sys_perm = get_system_permission();
+
+			json user = get_user(requested_user_name, sys_perm);
+
+			if (user.empty()) {
+				response = create_response(_password_request, false, "user not found", data, method_timer.get_elapsed_seconds());
+				return response;
+			}
+
+			std::string sys_code = user["validation_code"];
+
+			if (user_code.size()>0 and sys_code.size()>0 and sys_code == user_code)
+			{
+				user.put_member("validation_code", std::string(""));
+				user_name = requested_user_name;
+
+			}
+			else if (not check_message(_password_request, { auth_general }, user_name))
 			{
 				response = create_response(_password_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
-			auto sys_perm = get_system_permission();
-
 			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
-
-			json data = _password_request;
-			std::string requested_user_name = data[user_name_field];
 
 			if (requested_user_name != user_name)
 			{
@@ -4976,13 +5009,6 @@ private:
 			{
 				response = create_response(_password_request, false, "Stupid password", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return response;
-			}
-
-			json user = get_user(user_name, sys_perm);
-
-			if (user.empty()) {
-				response = create_response(_password_request, false, "user not found", data, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -5030,7 +5056,7 @@ private:
 				bool confirm = (bool)user["confirmed_code"];
 
 				json workflow = user["workflow_objects"];
-				json navigation_options = jp.create_array();
+				json navigation_options = jp.create_object();
 
 				if (user_name == default_user and default_user.size() > 0) 
 				{					
@@ -5042,8 +5068,8 @@ private:
 							json key = jp.create_object();
 							key.put_member_i64(object_id_field, object_id);
 							key.put_member(class_name_field, class_name);
-							json obj = select_object(key, false, sys_perm);
-							navigation_options.push_back(obj);
+							json obj = select_single_object(key, false, sys_perm);
+							navigation_options.put_member(class_name, obj);
 						}
 					}
 
@@ -5065,8 +5091,8 @@ private:
 							json key = jp.create_object();
 							key.put_member_i64(object_id_field, object_id);
 							key.put_member(class_name_field, class_name);
-							json obj = select_object(key, false, sys_perm);
-							navigation_options.push_back(obj);
+							json obj = select_single_object(key, false, sys_perm);
+							navigation_options.put_member(class_name, obj);
 						}
 					}
 
@@ -5094,7 +5120,34 @@ private:
 			return response;
 		}
 
-		virtual json edit_object(json _edit_object_request)
+		virtual json run_object(json _run_object_request)
+		{
+			std::string user_name;
+			json_parser jp;
+			json response;
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			if (not check_message(_run_object_request, { auth_general }, user_name))
+			{
+				response = create_response(_run_object_request, false, "Denied", jp.create_object(), tx.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return response;
+			}
+
+			json data = _run_object_request[data_field];
+			json result = put_object(_run_object_request);
+			json key = jp.create_object();
+			key.copy_member(class_name_field, data);
+			key.copy_member(object_id_field, data);
+			json get_object_request = create_request(user_name, auth_general, key);
+			get_object_request.put_member("include_children", true);
+			response = get_object(get_object_request);
+			return response;
+		}
+
+		virtual json edit_object(json _edit_object_request) override
 		{
 			timer method_timer;
 			json_parser jp;
