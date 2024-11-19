@@ -134,7 +134,7 @@
                 "class_name": "filter",
                 "stage_input_name": "candidate",
                 "condition": {
-                  "class_name": "all",
+                  "class_name": "any",
                   "conditions": [
                     {
                       "class_name": "contains",

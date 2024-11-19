@@ -2502,15 +2502,17 @@ namespace corona
 					continue;
 				}
 
+				bool use_write_object = false;
+
 				if (_grant.put_grant == class_grants::grant_any)
 				{
-					put_list.push_back(write_object);
+					use_write_object = true;
 				}
 				else if (_grant.put_grant == class_grants::grant_own)
 				{
 					std::string owner = (std::string)write_object["created_by"];
 					if (_grant.user_name == owner) {
-						put_list.push_back(write_object);
+						use_write_object = true;
 					}
 				}
 
@@ -2554,7 +2556,11 @@ namespace corona
 						}
 					}
 				}
-				
+
+				if (use_write_object) {
+					put_list.array_impl()->elements.push_back(write_object.object_impl());
+				}
+
 				if (index_updates.size() > 0)
 				{
 					int64_t object_id = (int64_t)write_object[object_id_field];
@@ -4719,7 +4725,7 @@ private:
 			if (user_password1 != user_password2)
 			{
 				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				response = create_response(create_user_request, false, "Passwords don't match", data, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, "Passwords don't match", data, method_timer.get_elapsed_seconds());
 				return response;
 			}
 			// password complexity check
@@ -4729,7 +4735,7 @@ private:
 			if (pm1.is_stupid())
 			{
 				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				response = create_response(create_user_request, false, "password is stupid", data, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, "password is stupid", data, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -4868,7 +4874,7 @@ private:
 			json user = get_user(user_name, sys_perm);
 
 			if (user.empty()) {
-				response = create_response(_confirm_request, false, "user not found", data, method_timer.get_elapsed_seconds());
+				response = create_user_response(_confirm_request, false, "user not found", data, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -4927,7 +4933,7 @@ private:
 				}
 
 				put_user(user, sys_perm);
-				response = create_user_response(_confirm_request, true, "Ok", data, method_timer.get_elapsed_seconds());
+				response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
@@ -4955,7 +4961,7 @@ private:
 
 			read_scope_lock my_lock(database_lock);
 
-			json data = _password_request;
+			json data = _password_request[data_field];
 			std::string user_name;
 			std::string user_code = data["validation_code"];
 			std::string requested_user_name = data[user_name_field];
@@ -4965,7 +4971,7 @@ private:
 			json user = get_user(requested_user_name, sys_perm);
 
 			if (user.empty()) {
-				response = create_response(_password_request, false, "user not found", data, method_timer.get_elapsed_seconds());
+				response = create_user_response(_password_request, false, "user not found", data, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -4979,7 +4985,7 @@ private:
 			}
 			else if (not check_message(_password_request, { auth_general }, user_name))
 			{
-				response = create_response(_password_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_user_response(_password_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -4998,7 +5004,7 @@ private:
 
 			if (user_password1 != user_password2)
 			{
-				response = create_response(_password_request, false, "No match", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_user_response(_password_request, false, "No match", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -5007,7 +5013,7 @@ private:
 
 			if (pm1.is_stupid())
 			{
-				response = create_response(_password_request, false, "Stupid password", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_user_response(_password_request, false, "Stupid password", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -5016,7 +5022,7 @@ private:
 			user.put_member("password", encrypted_password);
 
 			put_user(user, sys_perm);
-			response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
+			response = create_user_response(_password_request, true, "Ok", data, method_timer.get_elapsed_seconds());
 
 			system_monitoring_interface::global_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
