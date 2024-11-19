@@ -529,6 +529,7 @@ namespace corona
 		virtual write_class_sp write_lock_class(const std::string& _class_name) = 0;
 		virtual write_class_sp create_lock_class(const std::string& _class_name) = 0;
 		virtual json save_class(write_class_sp& _class_to_save) = 0;
+		virtual json save_class(class_interface* _class_to_save) = 0;
 
 	};
 
@@ -2311,6 +2312,8 @@ namespace corona
 				return false;
 			}
 
+			
+
 			// loop through existing indexes,
 			// dropping old ones that don't match
 			auto existing_indexes = get_indexes();
@@ -2360,6 +2363,8 @@ namespace corona
 			if (class_id == 0) {
 				class_id = _db->get_next_object_id();
 			}
+
+			_db->save_class(this);
 
 			json empty_key;
 			auto class_data = get_xtable(_db);
@@ -4258,6 +4263,17 @@ private:
 			std::shared_ptr<class_interface> cdi = std::dynamic_pointer_cast<class_interface>(cd);
 
 			return write_class_sp(cdi);
+		}
+
+		virtual json save_class(class_interface *_class_to_save)
+		{
+			json_parser jp;
+			json class_def;
+
+			class_def = jp.create_object();
+			_class_to_save->get_json(class_def);
+			classes->put(class_def);
+			return class_def;
 		}
 
 		virtual json save_class(write_class_sp& _class_to_save) override

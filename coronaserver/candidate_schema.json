@@ -10,7 +10,9 @@
       "class_name": "user_content",
       "class_description": "Base of user owned objects",
       "base_class_name": "sys_object",
-      "content_object_id": "int64",
+      "fields": {
+        "content_object_id": "int64"
+      },
       "indexes": {
         "object_content": {
           "index_keys": [
