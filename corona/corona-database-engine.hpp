@@ -437,6 +437,7 @@ namespace corona
 		virtual std::shared_ptr<xtable_interface>		get_table(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<sql_table>				get_stable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
+		virtual std::shared_ptr<xtable>					alter_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) const = 0;
 		virtual	bool									update(std::vector<validation_error> &_errors, corona_database_interface* _db, json _changed_class) = 0;
 		virtual std::vector<std::string>				get_table_fields()  const = 0;
@@ -1825,6 +1826,37 @@ namespace corona
 			return table;
 		}
 
+		virtual std::shared_ptr<xtable> alter_xtable(corona_database_interface* _db) override
+		{
+			std::shared_ptr<xtable> current_table, new_table, table;
+			if (table_location > null_row)
+			{
+				current_table = std::make_shared<xtable>(_db->get_cache(), table_location);
+				auto table_header = std::make_shared<xtable_header>();
+				table_header->object_members = table_fields;
+				table_header->key_members = { object_id_field };
+				new_table = std::make_shared<xtable>(_db->get_cache(), table_header);
+				table_location = new_table->get_location();
+				json_parser jp;
+				json empty = jp.create_object();
+				current_table->for_each(empty, [new_table](json& _src)->relative_ptr_type {
+					new_table->put(_src);
+					});
+				table = new_table;
+			}
+			else
+			{
+				auto table_header = std::make_shared<xtable_header>();
+				table_header->object_members = table_fields;
+				table_header->key_members = { object_id_field };
+				current_table = std::make_shared<xtable>(_db->get_cache(), table_header);
+				table_location = table_header->get_location();
+				table = current_table;
+			}
+			return current_table;
+		}
+
+
 		virtual std::shared_ptr<sql_table> get_stable(corona_database_interface* _db) override
 		{
 			if (not sql)
@@ -2228,6 +2260,33 @@ namespace corona
 			base_class_name = changed_class.base_class_name;
 			class_description = changed_class.class_description;
 			sql = changed_class.sql;
+
+			// check to see if we have changes requiring a table rebuild.
+
+			bool alter_table = false;
+			for (auto f : fields) {
+				auto changed_field = changed_class.fields.find(f.first);
+				if (changed_field != std::end(changed_class.fields))
+				{
+					if (changed_field->second->get_field_type() != f.second->get_field_type())
+					{
+						alter_table = true;
+					}
+				}
+				else 
+				{
+					alter_table = true;
+				}
+			}
+
+			for (auto f : changed_class.fields) {
+				auto changed_field = fields.find(f.first);
+				if (changed_field == std::end(changed_class.fields))
+				{
+					alter_table = true;
+				}
+			}
+
 			fields = changed_class.fields;
 
 			ancestors.clear();
@@ -2312,8 +2371,6 @@ namespace corona
 				return false;
 			}
 
-			
-
 			// loop through existing indexes,
 			// dropping old ones that don't match
 			auto existing_indexes = get_indexes();
@@ -2367,7 +2424,15 @@ namespace corona
 			_db->save_class(this);
 
 			json empty_key;
-			auto class_data = get_xtable(_db);
+			std::shared_ptr<xtable> class_data;
+
+			if (alter_table) {
+				class_data = alter_xtable(_db);
+			}
+			else 
+			{
+				class_data = get_xtable(_db);
+			}
 
 			// and populate the new indexes with any data that might exist
 			for (auto idc : indexes) {
