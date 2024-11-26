@@ -442,6 +442,7 @@ namespace corona
 		virtual	bool									update(std::vector<validation_error> &_errors, corona_database_interface* _db, json _changed_class) = 0;
 		virtual std::vector<std::string>				get_table_fields()  const = 0;
 
+		virtual	void									put_field(std::shared_ptr<field_interface>& _name) = 0;
 		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name)  const = 0;
 		virtual std::vector<std::shared_ptr<field_interface>> get_fields()  const = 0;
 
@@ -1710,6 +1711,7 @@ namespace corona
 
 		}
 
+
 	public:
 
 		class_implementation()
@@ -1841,6 +1843,7 @@ namespace corona
 				json empty = jp.create_object();
 				current_table->for_each(empty, [new_table](json& _src)->relative_ptr_type {
 					new_table->put(_src);
+					return 1;
 					});
 				table = new_table;
 			}
@@ -2279,10 +2282,13 @@ namespace corona
 				}
 			}
 
+			std::vector<std::shared_ptr<field_interface>> new_fields;
+
 			for (auto f : changed_class.fields) {
 				auto changed_field = fields.find(f.first);
-				if (changed_field == std::end(changed_class.fields))
+				if (changed_field != std::end(fields))
 				{
+					new_fields.push_back(changed_field->second);
 					alter_table = true;
 				}
 			}
@@ -2335,7 +2341,18 @@ namespace corona
 			{
 				write_class_sp desc_class = _db->write_lock_class(descendant.first);
 				if (desc_class) {
+					json_parser jp;
+					json descendant_json = jp.create_object();
+
 					desc_class->update_ancestors().insert_or_assign(class_name, true);
+					desc_class->get_json(descendant_json);
+
+					for (auto nf : new_fields) {
+						json jfld = jp.create_object();
+						nf->get_json(jfld);
+						descendant_json["fields"].put_member(nf->get_field_name(), jfld);
+					}
+
 					_db->save_class(desc_class);
 				}
 				else {
@@ -2448,12 +2465,17 @@ namespace corona
 			return true;
 		}
 
+		virtual void put_field(std::shared_ptr<field_interface>& _new_field) override
+		{
+			fields.insert_or_assign(_new_field->get_field_name(), _new_field);
+		}
+
 		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name)  const override
 		{
 			auto found = fields.find(_name);
 			if (found != std::end(fields)) {
 				return found->second;
-			} 
+			}
 			return nullptr;
 		}
 
