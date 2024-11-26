@@ -2222,7 +2222,13 @@ namespace corona
 			return table_location;
 		}
 
-		virtual bool update(std::vector<validation_error>& _errors, corona_database_interface* _db, json _changed_class) override
+		class update_context
+		{
+		public:
+			std::map<std::string, write_locked_sp<class_implementation>> classes;
+		};
+
+		virtual bool update(update_context& _context, std::vector<validation_error>& _errors, corona_database_interface* _db, json _changed_class) override
 		{
 			class_implementation changed_class;
 
@@ -2286,9 +2292,9 @@ namespace corona
 
 			for (auto f : changed_class.fields) {
 				auto changed_field = fields.find(f.first);
-				if (changed_field != std::end(fields))
+				if (changed_field == std::end(fields))
 				{
-					new_fields.push_back(changed_field->second);
+					new_fields.push_back(f.second);
 					alter_table = true;
 				}
 			}
@@ -2336,35 +2342,6 @@ namespace corona
 			auto view_descendants = descendants | std::views::filter([this](auto& pair) {
 				return pair.first != class_name;
 				});
-
-			for (auto descendant : view_descendants)
-			{
-				write_class_sp desc_class = _db->write_lock_class(descendant.first);
-				if (desc_class) {
-					json_parser jp;
-					json descendant_json = jp.create_object();
-
-					desc_class->update_ancestors().insert_or_assign(class_name, true);
-					desc_class->get_json(descendant_json);
-
-					for (auto nf : new_fields) {
-						json jfld = jp.create_object();
-						nf->get_json(jfld);
-						descendant_json["fields"].put_member(nf->get_field_name(), jfld);
-					}
-
-					_db->save_class(desc_class);
-				}
-				else {
-					validation_error ve;
-					ve.class_name = changed_class.class_name;
-					ve.filename = __FILE__;
-					ve.line_number = __LINE__;
-					ve.message = "descendant class not found";
-					_errors.push_back(ve);
-					return false;
-				}
-			}
 
 			// check the indexes here, because here we have all of our fields from class anncestors.
 
@@ -2460,6 +2437,43 @@ namespace corona
 					table->put(_item);
 					return 1;
 				});
+			}
+
+			// now update the descendants
+
+			for (auto descendant : view_descendants)
+			{
+				write_class_sp desc_class = _db->write_lock_class(descendant.first);
+				if (desc_class) {
+					json_parser jp;
+					json descendant_json = jp.create_object();
+
+					desc_class->update_ancestors().insert_or_assign(class_name, true);
+
+					if (desc_class->get_base_class_name() == class_name) {
+
+						desc_class->get_json(descendant_json);
+
+						for (auto nf : new_fields) {
+							json jfld = jp.create_object();
+							nf->get_json(jfld);
+							descendant_json["fields"].put_member(nf->get_field_name(), jfld);
+						}
+
+						desc_class->update(_errors, _db, descendant_json);
+					}
+
+					_db->save_class(desc_class);
+				}
+				else {
+					validation_error ve;
+					ve.class_name = descendant.first;
+					ve.filename = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = "descendant class not found";
+					_errors.push_back(ve);
+					return false;
+				}
 			}
 
 			return true;
