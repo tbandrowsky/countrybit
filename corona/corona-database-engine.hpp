@@ -417,6 +417,18 @@ namespace corona
 
 	};
 
+	class class_interface;
+
+	class activity
+	{
+	public:
+		std::map<std::string, write_class_sp> classes;
+		corona_database_interface* db;
+		std::vector<validation_error> errors;
+
+		write_class_sp& get_class(std::string _class_name);
+	};
+
 	class class_interface : public shared_lockable
 	{
 	protected:
@@ -439,7 +451,7 @@ namespace corona
 		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					alter_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) const = 0;
-		virtual	bool									update(std::vector<validation_error> &_errors, corona_database_interface* _db, json _changed_class) = 0;
+		virtual	bool									update(activity& _context, json _changed_class) = 0;
 		virtual std::vector<std::string>				get_table_fields()  const = 0;
 
 		virtual	void									put_field(std::shared_ptr<field_interface>& _name) = 0;
@@ -2222,22 +2234,16 @@ namespace corona
 			return table_location;
 		}
 
-		class update_context
-		{
-		public:
-			std::map<std::string, write_locked_sp<class_implementation>> classes;
-		};
-
-		virtual bool update(update_context& _context, std::vector<validation_error>& _errors, corona_database_interface* _db, json _changed_class) override
+		virtual bool update(activity& _context, json _changed_class) override
 		{
 			class_implementation changed_class;
 
-			changed_class.put_json(_errors, _changed_class);
+			changed_class.put_json(_context.errors, _changed_class);
 
-			if (_errors.size())
+			if (_context.errors.size())
 			{
 				system_monitoring_interface::global_mon->log_warning(std::format("Errors on updating class {0}", changed_class.class_name), __FILE__, __LINE__);
-				for (auto error : _errors) {
+				for (auto error : _context.errors) {
 					system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
 				}
 
@@ -2250,7 +2256,7 @@ namespace corona
 				ve.filename = __FILE__;
 				ve.line_number = __LINE__;
 				ve.message = "class description not found";
-				_errors.push_back(ve);
+				_context.errors.push_back(ve);
 				return false;
 			}
 
@@ -2261,7 +2267,7 @@ namespace corona
 				ve.filename = __FILE__;
 				ve.line_number = __LINE__;
 				ve.message = "cannot change base class of a class.";
-				_errors.push_back(ve);
+				_context.errors.push_back(ve);
 				return false;
 			}
 
@@ -2305,7 +2311,7 @@ namespace corona
 
 			if (not base_class_name.empty()) {
 
-				write_class_sp base_class = _db->write_lock_class(base_class_name);
+				write_class_sp& base_class = _context.get_class(base_class_name);
 				if (base_class) {
 
 					ancestors = base_class->get_ancestors();
@@ -2317,7 +2323,7 @@ namespace corona
 					{
 						fields.insert_or_assign(temp_field->get_field_name(), temp_field);
 					}
-					_db->save_class(base_class);
+					_context.db->save_class(base_class);
 				}
 				else {
 					validation_error ve;
@@ -2325,7 +2331,7 @@ namespace corona
 					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = "base class nnot found";
-					_errors.push_back(ve);
+					_context.errors.push_back(ve);
 					return false;
 				}
 			}
@@ -2355,12 +2361,12 @@ namespace corona
 						ve.message = "Invalid field for index";
 						ve.filename = __FILE__;
 						ve.line_number = __LINE__;
-						_errors.push_back(ve);
+						_context.errors.push_back(ve);
 					}
 				}
 			}
 
-			if (_errors.size() > 0) 
+			if (_context.errors.size() > 0)
 			{
 				return false;
 			}
@@ -2374,7 +2380,7 @@ namespace corona
 				// if the index is going away, then get rid of it.
 				if (existing == changed_class.indexes.end() or
 					existing->second->get_index_key_string() != old_index->get_index_key_string()) {
-					auto index_table = old_index->get_xtable(_db);
+					auto index_table = old_index->get_xtable(_context.db);
 					if (index_table)
 					{
 						index_table->clear();
@@ -2396,13 +2402,13 @@ namespace corona
 				// we want to use the existing class to pick up if we have a table
 				index_to_create  = get_index(new_index.first);
 				if (index_to_create) {
-					auto temp = std::make_shared<index_implementation>(index_to_create, _db);
+					auto temp = std::make_shared<index_implementation>(index_to_create, _context.db);
 					index_to_create = std::dynamic_pointer_cast<index_implementation, index_interface>(temp);
 				}
 
 				if (not index_to_create)
 				{
-					auto temp = std::make_shared<index_implementation>(new_index.second, _db);
+					auto temp = std::make_shared<index_implementation>(new_index.second, _context.db);
 					index_to_create = std::dynamic_pointer_cast<index_implementation, index_interface>(temp);
 				}
 
@@ -2412,26 +2418,26 @@ namespace corona
 			indexes = correct_indexes;
 
 			if (class_id == 0) {
-				class_id = _db->get_next_object_id();
+				class_id = _context.db->get_next_object_id();
 			}
 
-			_db->save_class(this);
+			_context.db->save_class(this);
 
 			json empty_key;
 			std::shared_ptr<xtable> class_data;
 
 			if (alter_table) {
-				class_data = alter_xtable(_db);
+				class_data = alter_xtable(_context.db);
 			}
 			else 
 			{
-				class_data = get_xtable(_db);
+				class_data = get_xtable(_context.db);
 			}
 
 			// and populate the new indexes with any data that might exist
 			for (auto idc : indexes) {
 				auto my_index = idc.second;
-				auto table = my_index->get_xtable(_db);
+				auto table = my_index->get_xtable(_context.db);
 				auto& keys = my_index->get_index_keys();
 				class_data->for_each(empty_key, [table](json& _item) -> relative_ptr_type {
 					table->put(_item);
@@ -2443,7 +2449,7 @@ namespace corona
 
 			for (auto descendant : view_descendants)
 			{
-				write_class_sp desc_class = _db->write_lock_class(descendant.first);
+				write_class_sp &desc_class = _context.get_class(descendant.first);
 				if (desc_class) {
 					json_parser jp;
 					json descendant_json = jp.create_object();
@@ -2460,10 +2466,10 @@ namespace corona
 							descendant_json["fields"].put_member(nf->get_field_name(), jfld);
 						}
 
-						desc_class->update(_errors, _db, descendant_json);
+						desc_class->update(_context, descendant_json);
 					}
 
-					_db->save_class(desc_class);
+					_context.db->save_class(desc_class);
 				}
 				else {
 					validation_error ve;
@@ -2471,7 +2477,7 @@ namespace corona
 					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = "descendant class not found";
-					_errors.push_back(ve);
+					_context.errors.push_back(ve);
 					return false;
 				}
 			}
@@ -5522,7 +5528,11 @@ private:
 
 			write_class_sp class_to_modify = create_lock_class(class_name);
 
-			bool success = class_to_modify->update(errors, this, jclass_definition);
+			activity update_activity;
+
+			update_activity.db = this;
+
+			bool success = class_to_modify->update(update_activity, jclass_definition);
 
 			json results_array = jp.create_array();
 			for (auto& ve : errors) {
@@ -6310,6 +6320,21 @@ private:
 		}
 
 	};
+
+	////
+
+	write_locked_sp<class_implementation>& activity::get_class(std::string _class_name)
+	{
+		auto fi = classes.find(_class_name);
+
+		if (fi != classes.end()) {
+			return fi->second;
+		}
+
+		auto impl = db->write_lock_class(_class_name);
+		classes.insert_or_assign(_class_name, impl);
+		return get_class(_class_name);
+	}
 
 	bool test_database_engine(json& _proof, std::shared_ptr<application> _app)
 	{
