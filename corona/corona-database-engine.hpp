@@ -476,6 +476,7 @@ namespace corona
 		std::vector<validation_error> errors;
 
 		class_interface* get_class(std::string _class_name);
+		class_interface* create_class(std::string _class_name);
 	};
 
 	class corona_database_interface : public file_block
@@ -5526,11 +5527,11 @@ private:
 				return result;
 			}
 
-			write_class_sp class_to_modify = create_lock_class(class_name);
-
 			activity update_activity;
 
 			update_activity.db = this;
+
+			auto class_to_modify = update_activity.create_class(class_name);
 
 			bool success = class_to_modify->update(&update_activity, jclass_definition);
 
@@ -6323,7 +6324,7 @@ private:
 
 	////
 
-	class_interface *activity::get_class(std::string _class_name)
+	class_interface* activity::get_class(std::string _class_name)
 	{
 		auto fi = classes.find(_class_name);
 
@@ -6331,10 +6332,24 @@ private:
 			return fi->second.get();
 		}
 
-		auto impl = db->write_lock_class(_class_name);		
-		classes.emplace(std::pair<std::string, write_class_sp>(_class_name, std::move(impl)) );
-		return impl.get();
+		auto impl = db->write_lock_class(_class_name);
+		classes.emplace(std::pair<std::string, write_class_sp>(_class_name, std::move(impl)));
+		return get_class(_class_name);
 	}
+
+	class_interface* activity::create_class(std::string _class_name)
+	{
+		auto fi = classes.find(_class_name);
+
+		if (fi != classes.end()) {
+			return fi->second.get();
+		}
+
+		auto impl = db->create_lock_class(_class_name);
+		classes.emplace(std::pair<std::string, write_class_sp>(_class_name, std::move(impl)));
+		return get_class(_class_name);
+	}
+
 
 	bool test_database_engine(json& _proof, std::shared_ptr<application> _app)
 	{

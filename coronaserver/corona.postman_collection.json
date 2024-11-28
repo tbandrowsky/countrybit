@@ -88,7 +88,233 @@
 			"response": []
 		},
 		{
-			"name": "Login Company",
+			"name": "User - Create Company User",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"companydrone\",\r\n        \"password1\" : \"testo12345!\",\r\n        \"password2\" : \"testo12345!\",\r\n        \"email\" : \"todd.bandrowsky@countryvideogames.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/createuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"createuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Confirm Company User",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n        \"user_name\" : \"companydrone\",\r\n        \"validation_code\" : \"MEAYLN\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/confirmuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"confirmuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Create Customer User",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"userdrone\",\r\n        \"password1\" : \"testo12345!\",\r\n        \"password2\" : \"testo12345!\",\r\n        \"email\" : \"todd.bandrowsky@gmail.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/createuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"createuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Send Customer Confirmation",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"userdrone\",\r\n        \"password1\" : \"testo12345!\",\r\n        \"password2\" : \"testo12345!\",\r\n        \"email\" : \"todd.bandrowsky@gmail.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/createuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"createuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Change Customer Password",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"userdrone\",\r\n        \"password1\" : \"testo12345!\",\r\n        \"password2\" : \"testo12345!\",\r\n        \"email\" : \"todd.bandrowsky@gmail.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/createuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"createuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Confirm Customer User",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n        \"user_name\" : \"userdrone\",\r\n        \"validation_code\" : \"PHQGHU\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/confirmuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"confirmuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Login Company",
 			"event": [
 				{
 					"listen": "test",
@@ -149,7 +375,7 @@
 			"response": []
 		},
 		{
-			"name": "Login Customer",
+			"name": "User - Login Customer",
 			"event": [
 				{
 					"listen": "test",
@@ -186,7 +412,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"user_name\" : \"customeruser\",\r\n    \"password\" : \"systempassword\"\r\n}",
+					"raw": "{\r\n    \"user_name\" : \"userdrone17\",\r\n    \"password\" : \"testo12345!\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -241,40 +467,7 @@
 			"response": []
 		},
 		{
-			"name": "Create Company User",
-			"request": {
-				"auth": {
-					"type": "noauth"
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"companydrone\",\r\n        \"password1\" : \"testo1\",\r\n        \"password2\" : \"testo1\",\r\n        \"email\" : \"todd.bandrowsky@countryvideogames.com\"\r\n    }\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:5678/corona/login/createuser",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "5678",
-					"path": [
-						"corona",
-						"login",
-						"createuser"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Create Customer User",
+			"name": "Get Class Detail",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -290,7 +483,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"companydrone\",\r\n        \"password1\" : \"testo1\",\r\n        \"password2\" : \"testo1\",\r\n        \"user_email\" : \"todd.bandrowsky@countryvideogames.com\"\r\n    }\r\n}",
+					"raw": "{\r\n    \"ClassName\" : \"Candidates\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -298,7 +491,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5678/corona/classes/get",
+					"raw": "http://localhost:5678/corona/classes/get/details/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -307,14 +500,16 @@
 					"path": [
 						"corona",
 						"classes",
-						"get"
+						"get",
+						"details",
+						""
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Get Class Detail",
+			"name": "Put Class",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -916,7 +1111,7 @@
 			"response": []
 		},
 		{
-			"name": "Create Object",
+			"name": "Create Object Sibling 1",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -933,6 +1128,46 @@
 				"body": {
 					"mode": "raw",
 					"raw": "{\r\n    \"class_name\" : \"Candidates\",\r\n    \"object_id\": 9396,\r\n    \"include_children\" : true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Object Sibling 2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"class_name\" : \"comment\"\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
