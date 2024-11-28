@@ -631,46 +631,6 @@
 			"response": []
 		},
 		{
-			"name": "Query All",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{LoginAccessToken}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {}\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"name\" : \"people_result\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:5678/corona/objects/query",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "5678",
-					"path": [
-						"corona",
-						"objects",
-						"query"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "System Teams",
 			"request": {
 				"auth": {
@@ -1151,6 +1111,46 @@
 			"response": []
 		},
 		{
+			"name": "Put Object 1",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"data\": \r\n  {\r\n        \"class_name\": \"Candidates\",\r\n        \"candidate_id\": \"THX1138\",\r\n        \"city\": \"BOWLING GREEN\",\r\n        \"election_year\": 2026,\r\n        \"full_name\": \"TODD BANDROWSKY\",\r\n        \"object_id\": 9403,\r\n        \"political_party\": \"REP\",\r\n        \"state\": \"KY\",\r\n        \"street1\": \"120 W MCLELLAN RD\",\r\n        \"street2\": \"UPSTAIRS\",\r\n        \"zip\": \"42101\"\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/put",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"put"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Create Object Sibling 2",
 			"request": {
 				"auth": {
@@ -1185,6 +1185,86 @@
 						"corona",
 						"objects",
 						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Put Object 2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"data\": \r\n  {\r\n        \"class_name\": \"Candidates\",\r\n        \"candidate_id\": \"THX1138\",\r\n        \"city\": \"BOWLING GREEN\",\r\n        \"election_year\": 2026,\r\n        \"full_name\": \"TODD BANDROWSKY\",\r\n        \"object_id\": 9403,\r\n        \"political_party\": \"REP\",\r\n        \"state\": \"KY\",\r\n        \"street1\": \"120 W MCLELLAN RD\",\r\n        \"street2\": \"UPSTAIRS\",\r\n        \"zip\": \"42101\"\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/put",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"put"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query sibling base",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {}\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"name\" : \"people_result\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
 					]
 				}
 			},
