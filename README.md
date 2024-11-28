@@ -10,10 +10,13 @@ This is designed to do experimental real time modelling with forms built up as q
 
 Visual Studio Solution Structure as follows.
 
-1.  colorparty - Color Party application package for Microsoft Store
+1.  coronaserver - Database server stand alone for Corona.  This application runs from a schema file and a config.  Edit both of those, and the database changes while running.
 2.  corona - Shared Source C++ project.  Partially factored to support C++20 modules but alas not quite yet.
-3.  coronaserver - Database server stand alone for Corona.  This application runs from a schema file and a config.  Edit both of those, and the database changes while running.
+
+3.  colorparty - Color Party application package for Microsoft Store
+
 4.  revolution - Main client EXE projects.  All the EXEs start out from Revolution, each has its own app_file that is conditionally compiled based on what product you are building for.
+				This is more for gaming and experimentation at Country Video games.  
 
 ## Getting Started, Windows Server
 
@@ -23,29 +26,9 @@ The default url to browse it is in the config file.
 
 Presently, the server seems to work ok but much more testing is needed.
 
-You can:
-
-
+Be sure to read the Word document CoronaApplicationServer.docx.
 
 ## Getting Started, Windows Client
-
-Revolution is a single EXE controlled by an include to produce different .EXES.  The current output is set to donationfinder.  There's a lot of damage right now, so hang tight!
-
-1.  Build donationfinder.EXE with x64 from the Revolution Project
-
-2.  Run It
-  
-In one window is the application monitoring window, through which, all things on the Corona bus are shown.
-a.  Parse errors from configuration files
-b.  Run time events and bus interactions
-c.  Consistent json output
-
-3.  Fire up your favorite editor and pay close attention to these files.
-a.  schema.json  You can edit this and change the database schema while the app is running.  Schema specifies a set of classes in the system.  Classes may be derived via single inheritance.
-
-
-b.  pages and style.json.  You can edit this to change the appearance and bindings of the page to the command bus.
-
 
 ## Downloads that are working and samples can be found on https://countryvideogames.com
 
