@@ -2,17 +2,18 @@
 #define APPLICATION_GUITAR 2
 #define APPLICATION_AURA 3
 #define APPLICATION_REPARATIONS 4
-#define APPLICATION_DONATION_FINDER 5
-#define APPLICATION_ID APPLICATION_CANDIDATE
+#define APPLICATION_TOOLKIT 5
+#define APPLICATION_ID APPLICATION_TOOLKIT
 
-#if APPLICATION_ID == APPLICATION_CANDIDATE
-#include "app_candidate.hpp"
-#define application_function(a,b) corona::run_candidate_application(a,b);
-#endif
 
 #if APPLICATION_ID == APPLICATION_AURA
 #include "app_aura.hpp"
 #define application_function(a,b) corona::run_aura_application(a,b);
+#endif
+
+#if APPLICATION_ID == APPLICATION_CANDIDATE
+#include "app_candidate.hpp"
+#define application_function(a,b) corona::run_candidate_application(a,b);
 #endif
 
 #if APPLICATION_ID == APPLICATION_GUITAR
@@ -25,9 +26,9 @@
 #define application_function(a,b) corona::run_reparations_application(a,b);
 #endif
 
-#if APPLICATION_ID == APPLICATION_DONATION_FINDER
-#include "app_donation_finder.hpp"
-#define application_function(a,b) corona::run_donation_finder_application(a,b);
+#if APPLICATION_ID == APPLICATION_VILLAGE
+#include "app_villages.hpp"
+#define application_function(a,b) corona::run_village_application(a,b);
 #endif
 
 int __stdcall WinMain(HINSTANCE hInstance,

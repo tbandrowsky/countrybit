@@ -107,10 +107,6 @@ namespace corona
 
 			log_command_start("comm_app_bus", "startup", t);
 
-			log_information("Thank you for flying with Country Video Games");
-			log_information("Country Video Games Corona is going to do a formal verification of itself");
-			log_information("and this environment.");
-
 			ready_for_polling = false;
 
 			app = std::make_shared<application>();
@@ -134,11 +130,7 @@ namespace corona
 
 			app_menu = std::make_shared<menu_item>();
 
-			prove_system();
-
-			log_information("Welcome to the Revolution " + app->get_user_display_name());
-			log_information("Your first super secret order:");
-			log_information("remember to drink your ovaltine");
+			log_information("Default user:" + app->get_user_display_name());
 
 			database_schema_filename = _config_filename_base + "schema.json";
 			database_config_filename = "config.json";
@@ -185,20 +177,6 @@ namespace corona
 			}
 
 			log_command_stop("comm_app_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-			log_information("This is an immensely modable system.");
-			log_information("config.json - for networking stuff in the next release.");
-			log_information("revolution_schema.json - the database configuration is here.");
-			log_information("			   you can add your own data sources.");
-			log_information("			   add new fields, all while the system");
-			log_information("			   is running.");
-			log_information("revolution_styles.json -  similar to CSS, lets you change colors and fonts.");
-			log_information("revolution_pages.json -  forms, plus the commands back to the engine.");
-			log_information("                         edit this guy to change the way the app works.");
-			log_information("the database is in");
-			log_information("username/appdata/roaming/appname");
-			log_information("The schema, styles and pages files can be edited live.");
-			log_information("We are cleared for departure.");
 		}
 
 		void prove_system()

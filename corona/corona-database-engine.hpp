@@ -353,6 +353,7 @@ namespace corona
 		virtual std::shared_ptr<child_bridge_interface> get_bridge(std::string _class_name) = 0;
 		virtual std::vector<std::string> get_bridge_list() = 0;
 
+		virtual void init_validation() = 0;
 		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions) = 0;
 		virtual json get_children(corona_database_interface* _db, json _parent_object, class_permissions _permissions) = 0;
 	};
@@ -363,6 +364,7 @@ namespace corona
 
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(json& _src) = 0;
+		virtual void init_validation() = 0;
 		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions) = 0;
 		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _class_name, json & _object) = 0;
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
@@ -377,6 +379,7 @@ namespace corona
 
 	public:
 
+		virtual void init_validation() = 0;
 		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions) = 0;
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
 		virtual void get_json(json& _dest) = 0;
@@ -600,6 +603,11 @@ namespace corona
 			required = (bool)_src["required"];
 		}
 
+		virtual void init_validation() override
+		{
+
+		}
+
 		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions)  override
 		{
 			;
@@ -765,6 +773,11 @@ namespace corona
 			return results;
 		}
 
+		virtual void init_validation() override
+		{
+
+		}
+
 		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions)
 		{
 			all_constructors.clear();
@@ -838,6 +851,11 @@ namespace corona
 			if (jctors.object()) {
 				bridges->put_json(jctors);
 			}
+		}
+
+		virtual void init_validation() override
+		{
+
 		}
 
 		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions)
@@ -1237,6 +1255,11 @@ namespace corona
 		choice_field_options& operator = (choice_field_options&& _src) = default;
 		virtual ~choice_field_options() = default;
 
+		virtual void init_validation() override
+		{
+
+		}
+
 		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions)
 		{
 			json_parser jp;
@@ -1412,6 +1435,11 @@ namespace corona
 			return options;
 		}
 
+		virtual void init_validation() override
+		{
+			class_permissions default_perms;
+			if (options) options->init_validation();
+		}
 
 		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions) override
 		{

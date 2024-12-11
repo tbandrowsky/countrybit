@@ -270,6 +270,9 @@ namespace corona {
 // consisting of multiple classes
 #include "corona-database-engine.hpp"
 
+// this is the http client to the corona service
+#include "corona-corona-client.hpp"
+
 // publicity stunts..  this implements the OLE drag and drop of us as a source target
 #include "corona-publicity-stunts.hpp"
 
