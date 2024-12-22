@@ -561,7 +561,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="app_reparations.hpp" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="revolution.h" />
   </ItemGroup>
@@ -576,6 +575,7 @@
       <FileType>CppCode</FileType>
     </ClInclude>
     <ClInclude Include="app_donation_finder.hpp" />
+    <ClCompile Include="app_socialism.hpp" />
     <ClCompile Include="revolution.cpp" />
   </ItemGroup>
   <ItemGroup>

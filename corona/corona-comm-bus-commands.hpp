@@ -26,18 +26,301 @@ For Future Consideration
 namespace corona
 {
 
+	class  corona_register_user_command : public corona_bus_command
+	{
+	public:
+
+		std::string user_name_ctl;
+		std::string email_ctl;
+		std::string password1_ctl;
+		std::string password2_ctl;
+
+		virtual json execute()
+		{
+			json obj;
+
+			auto cuser_name = bus->find_control(user_name_ctl);
+			auto cemail_ctl = bus->find_control(email_ctl);
+			auto cpassword1 = bus->find_control(password1_ctl);
+			auto cpassword2 = bus->find_control(password2_ctl);
+
+			if (cuser_name and cpassword1 and cpassword2) {
+				std::string user_name = cuser_name->get_data();
+				std::string email = cemail_ctl->get_data();
+				std::string password1 = cpassword1->get_data();
+				std::string password2 = cpassword2->get_data();
+				obj = bus->remote_register_user(user_name, email, password1, password2);
+			}
+			return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "register_user_command"sv);
+			_dest.put_member("user_name_ctl", user_name_ctl);
+			_dest.put_member("email_ctl", email_ctl);
+			_dest.put_member("password1_ctl", password1_ctl);
+			_dest.put_member("password2_ctl", password2_ctl);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { "user_name_ctl", "email_ctl", "password1_ctl", "password2_ctl"})) {
+				system_monitoring_interface::global_mon->log_warning("register_user_command missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			user_name_ctl = _src["user_name_ctl"];
+			email_ctl = _src["email_ctl"];
+			password1_ctl = _src["password1_ctl"];
+			password2_ctl = _src["password2_ctl"];
+		}
+
+	};
+
+	class  corona_send_user_command : public corona_bus_command
+	{
+	public:
+		std::string user_name_ctl;
+
+		virtual json execute()
+		{
+			json obj;
+
+			auto cuser_name = bus->find_control(user_name_ctl);
+
+			if (cuser_name) {
+				std::string user_name = cuser_name->get_data();
+				obj = bus->remote_send_user(user_name_ctl);
+			}
+			return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "send_user_command"sv);
+			_dest.put_member("user_name_ctl", user_name_ctl);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { "user_name_ctl" })) {
+				system_monitoring_interface::global_mon->log_warning("send_user_command missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			user_name_ctl = _src["user_name_ctl"];	
+		}
+
+	};
+
+	class  corona_login_command : public corona_bus_command
+	{
+	public:
+		std::string user_name_ctl;
+
+		virtual json execute()
+		{
+			json obj;
+
+			auto cuser_name = bus->find_control(user_name_ctl);
+
+			if (cuser_name) {
+				std::string user_name = cuser_name->get_data();
+				obj = bus->remote_send_user(user_name_ctl);
+			}
+			return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "login_command"sv);
+			_dest.put_member("user_name_ctl", user_name_ctl);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { "user_name_ctl" })) {
+				system_monitoring_interface::global_mon->log_warning("login_command missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			user_name_ctl = _src["user_name_ctl"];
+		}
+
+	};
+
+	class  corona_get_classes_command : public corona_bus_command
+	{
+	public:
+		std::string			table_name;
+
+		virtual json execute()
+		{
+			json obj;
+			json_parser jp;
+			json obj;
+			control_base* cb_table = {};
+
+			if (not table_name.empty())
+				cb_table = bus->find_control(table_name);
+
+			if (not cb_table) {
+				comm_bus_app_interface::global_bus->log_warning(std::format("{0} table for search command not found", table_name), __FILE__, __LINE__);
+			}
+
+			if (cb_table)
+			{
+				corona_client_response classes = bus->remote_get_classes();
+				if (classes.success) {
+					json results = jp.create_array();
+					if (classes.data.array()) {
+						for (auto cls : classes.data) {
+							json item = jp.create_object();
+							std::string cls_name = cls[class_name_field];
+							std::string cls_description = cls["class_description"];
+							std::string cls_base = cls[base_class_name_field];
+							item.put_member(base_class_name_field, cls_base);
+							item.put_member(class_name_field, cls_name);
+							item.put_member("class_description", cls_description);
+							results.push_back(item);
+						}
+					}
+					cb_table->set_items(results);
+				}
+			}
+
+			return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "get_classes_command"sv);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { })) {
+				system_monitoring_interface::global_mon->log_warning("get_classes_command missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+		}
+	};
+
+	class  corona_get_class_command : public corona_bus_command
+	{
+		
+	};
+
+	class  corona_put_class_command : public corona_bus_command
+	{
+
+	};
+
+	class  corona_set_password_command : public corona_bus_command
+	{
+	public:
+		std::string user_name_ctl;
+		std::string validation_code_ctl;
+		std::string password1_ctl;
+		std::string password2_ctl;
+
+		virtual json execute()
+		{
+			json obj;
+
+			auto cuser_name = bus->find_control(user_name_ctl);
+			auto cvalidation_code_ctl = bus->find_control(validation_code_ctl);
+			auto cpassword1 = bus->find_control(password1_ctl);
+			auto cpassword2 = bus->find_control(password2_ctl);
+
+			if (cuser_name and cpassword1 and cpassword2) {
+				std::string user_name = cuser_name->get_data();
+				std::string validation_code = cvalidation_code_ctl->get_data();
+				std::string password1 = cpassword1->get_data();
+				std::string password2 = cpassword2->get_data();
+				obj = bus->remote_set_password(user_name, validation_code, password1, password2);
+			}
+			return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "set_password_command"sv);
+			_dest.put_member("user_name_ctl", user_name_ctl);
+			_dest.put_member("validation_code_ctl", validation_code_ctl);
+			_dest.put_member("password1_ctl", password1_ctl);
+			_dest.put_member("password2_ctl", password2_ctl);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { "user_name_ctl", "validation_code_ctl", "password1_ctl", "password2_ctl" })) {
+				system_monitoring_interface::global_mon->log_warning("set_password_command missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			user_name_ctl = _src["user_name_ctl"];
+			validation_code_ctl = _src["validation_code_ctl"];
+			password1_ctl = _src["password1_ctl"];
+			password2_ctl = _src["password2_ctl"];
+		}
+
+	};
+
 	class corona_create_object_command : public corona_bus_command
 	{
 	public:
 		std::string	create_class_name;
 		std::string form_name;
+		corona_instance instance;
 
 		virtual json execute()
 		{
 			json obj;
 			control_base* cb = bus->find_control(form_name);
 			if (cb) {
-				obj =  bus->create_object(create_class_name);
+				obj =  bus->create_object(instance, create_class_name);
 				cb->put_json(obj);
 			}
 			return obj;
@@ -50,6 +333,7 @@ namespace corona
 			_dest.put_member("class_name", "create_object_command"sv);
 			_dest.put_member("create_class_name", create_class_name);
 			_dest.put_member("form_name", form_name);
+			_dest.put_member_i64("instance", (int64_t)instance);
 		}
 
 		virtual void put_json(json& _src)
@@ -67,6 +351,7 @@ namespace corona
 
 			create_class_name = _src["create_class_name"];
 			form_name = _src["form_name"];
+			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 
 	};
@@ -79,6 +364,7 @@ namespace corona
 		std::string		frame_to_load;
 		std::string		frame_contents_page;
 		std::string		form_to_load;
+		corona_instance instance;
 
 		virtual json execute()
 		{
@@ -87,7 +373,7 @@ namespace corona
 			if (cb) {
 				json key_data = cb->get_selected_object();
 				if (key_data.object()) {
-					obj = bus->get_object(key_data);
+					obj = bus->get_object(instance, key_data);
 					bus->select_page(page_to_select, frame_to_load, frame_contents_page, form_to_load, obj);
 				}
 			}
@@ -104,6 +390,8 @@ namespace corona
 			_dest.put_member("frame_to_load", frame_to_load);
 			_dest.put_member("frame_contents_page", frame_contents_page);
 			_dest.put_member("form_to_load", form_to_load);
+			_dest.put_member_i64("instance", (int64_t)instance);
+
 		}
 
 		virtual void put_json(json& _src)
@@ -124,6 +412,7 @@ namespace corona
 			frame_to_load = _src["frame_to_load"];
 			frame_contents_page = _src["frame_contents_page"];
 			form_to_load = _src["form_to_load"];
+			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 	};
 
@@ -134,6 +423,7 @@ namespace corona
 		std::string	table_name;
 		std::string page_name;
 		std::string form_name;
+		corona_instance instance;
 
 		virtual json execute()
 		{
@@ -142,7 +432,7 @@ namespace corona
 			if (cb) {
 				json key_data = cb->get_selected_object();
 				if (key_data.object()) {
-					obj =  bus->get_object(key_data);
+					obj =  bus->get_object(instance, key_data);
 					bus->select_page(page_name, form_name, obj);
 				}
 			}
@@ -157,6 +447,8 @@ namespace corona
 			_dest.put_member("table_name", table_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("page_name", page_name);
+			_dest.put_member_i64("instance", (int64_t)instance);
+
 		}
 
 		virtual void put_json(json& _src)
@@ -175,6 +467,7 @@ namespace corona
 			table_name = _src["table_name"];
 			form_name = _src["form_name"];
 			page_name = _src["page_name"];
+			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 
 	};
@@ -184,6 +477,7 @@ namespace corona
 	public:
 		std::string	table_name;
 		std::string form_name;
+		corona_instance instance;
 
 		virtual json execute()
 		{
@@ -192,7 +486,7 @@ namespace corona
 			if (cb) {
 				json key_data = cb->get_selected_object();
 				if (key_data.object()) {
-					obj =  bus->get_object(key_data);
+					obj =  bus->get_object(instance, key_data);
 					control_base* cf = bus->find_control(form_name);
 					if (cf) {
 						cf->set_data(obj);
@@ -209,6 +503,8 @@ namespace corona
 			_dest.put_member("class_name", "preview_object_command"sv);
 			_dest.put_member("table_name", table_name);
 			_dest.put_member("form_name", form_name);
+			_dest.put_member_i64("instance", (int64_t)instance);
+
 		}
 
 		virtual void put_json(json& _src)
@@ -226,6 +522,7 @@ namespace corona
 
 			table_name = _src["table_name"];
 			form_name = _src["form_name"];
+			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 
 	};
@@ -235,6 +532,7 @@ namespace corona
 	public:
 
 		std::string form_name;
+		corona_instance instance;
 
 		virtual json execute()
 		{
@@ -247,7 +545,7 @@ namespace corona
 			if (cb) {
 				json object_data = cb->get_data();
 				if (object_data.object()) {
-					obj =  bus->put_object(object_data);
+					obj =  bus->put_object(instance, object_data);
 				}
 			}
 			return obj;
@@ -259,6 +557,8 @@ namespace corona
 
 			_dest.put_member("class_name", "save_object_command"sv);
 			_dest.put_member("form_name", form_name);
+			_dest.put_member_i64("instance", (int64_t)instance);
+
 		}
 
 		virtual void put_json(json& _src)
@@ -274,6 +574,7 @@ namespace corona
 				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
+			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 
 	};
@@ -283,6 +584,7 @@ namespace corona
 	public:
 		std::string control_name;
 		json		object_data;
+		corona_instance instance;
 
 		virtual json execute()
 		{
@@ -293,7 +595,7 @@ namespace corona
 
 			if (cb) {
 				if (object_data.object()) {
-					obj =  bus->put_object(object_data);
+					obj =  bus->put_object(instance, object_data);
 				}
 			}
 			return obj;
@@ -306,6 +608,8 @@ namespace corona
 			_dest.put_member("class_name", "load_object_command"sv);
 			_dest.put_member("control_name", control_name);
 			_dest.put_member("data", object_data);
+			_dest.put_member_i64("instance", (int64_t)instance);
+
 		}
 
 		virtual void put_json(json& _src)
@@ -322,6 +626,7 @@ namespace corona
 			}
 			control_name = _src["control_name"];
 			object_data = _src["data"];
+			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 
 	};
@@ -330,6 +635,7 @@ namespace corona
 	{
 	public:
 		std::string		control_name;
+		corona_instance instance;
 
 		virtual json execute()
 		{
@@ -338,7 +644,7 @@ namespace corona
 			if (cb) {
 				json object_data = cb->get_data();
 				if (object_data.object()) {
-					obj =  bus->delete_object(object_data);
+					obj =  bus->delete_object(instance, object_data);
 				}
 			}
 			return obj;
@@ -349,6 +655,8 @@ namespace corona
 			using namespace std::literals;
 			_dest.put_member("class_name", "delete_object_command"sv);
 			_dest.put_member("control_name", control_name);
+			_dest.put_member_i64("instance", (int64_t)instance);
+
 		}
 
 		virtual void put_json(json& _src)
@@ -365,6 +673,7 @@ namespace corona
 			}
 
 			control_name = _src["control_name"];
+			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 
 	};
@@ -376,6 +685,7 @@ namespace corona
 		std::string			form_name;
 		std::string			table_name;
 		query_context		qctx;
+		corona_instance instance;
 
 		virtual json execute()
 		{
@@ -406,7 +716,7 @@ namespace corona
 					json search_class = jp.create_object();
 					search_class.put_member("ClassName", search_class_name);
 					search_class_filters.put_member("Filter", object_data);
-					obj =  bus->query_objects(search_class_filters);
+					obj =  bus->query_objects(instance, search_class_filters);
 					qctx.set_data_source(form_name, object_data);
 					qctx.set_data_source(search_class_name, obj);
 					json results = qctx.run();
@@ -431,6 +741,8 @@ namespace corona
 			json jctx = jp.create_object();
 			qctx.get_json(jctx);
 			_dest.put_member("query", jctx);
+			_dest.put_member_i64("instance", (int64_t)instance);
+
 		}
 
 		virtual void put_json(json& _src)
@@ -452,6 +764,7 @@ namespace corona
 			search_class_name = _src["search_class_name"];
 			json jctx = _src["query"];
 			qctx.put_json(jctx);
+			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 
 	};
@@ -462,6 +775,7 @@ namespace corona
 		std::string		page_name;
 		std::string		form_name;
 		std::string		source_name;
+		corona_instance instance;
 
 		virtual json execute()
 		{
@@ -485,6 +799,8 @@ namespace corona
 			_dest.put_member("page_name", page_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("source_name", source_name);
+			_dest.put_member_i64("instance", (int64_t)instance);
+
 		}
 
 		virtual void put_json(json& _src)
@@ -516,6 +832,8 @@ namespace corona
 			page_name = _src["page_name"];
 			form_name = _src["form_name"];
 			source_name = _src["source_name"];
+			instance = (corona_instance)((int64_t)_src["instance"]);
+
 		}
 	};
 
@@ -526,6 +844,7 @@ namespace corona
 		std::string		page_to_select;
 		std::string		frame_to_load;
 		std::string		frame_contents_page;
+		corona_instance instance;
 
 		virtual json execute()
 		{
@@ -551,6 +870,8 @@ namespace corona
 			_dest.put_member("page_to_select", page_to_select);
 			_dest.put_member("frame_to_load", frame_to_load);
 			_dest.put_member("frame_contents_page", frame_contents_page);
+			_dest.put_member_i64("instance", (int64_t)instance);
+
 		}
 
 		virtual void put_json(json& _src)
@@ -570,6 +891,7 @@ namespace corona
 			page_to_select = _src["page_to_select"];
 			frame_to_load = _src["frame_to_load"];
 			frame_contents_page = _src["frame_contents_page"];
+			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 	};
 
@@ -600,7 +922,42 @@ namespace corona
 		{
 			std::string class_name = _src["class_name"];
 
-			if (class_name == "create_object_command")
+			if (class_name == "register_user_command")
+			{
+				_dest = std::make_shared<corona_register_user_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "send_user_command")
+			{
+				_dest = std::make_shared<corona_send_user_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "login_command")
+			{
+				_dest = std::make_shared<corona_login_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "get_classes_command")
+			{
+				_dest = std::make_shared<corona_get_classes_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "get_class_command")
+			{
+				_dest = std::make_shared<corona_get_class_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "put_class_command")
+			{
+				_dest = std::make_shared<corona_put_class_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "set_password_command")
+			{
+				_dest = std::make_shared<corona_set_password_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "create_object_command")
 			{
 				_dest = std::make_shared<corona_create_object_command>();
 				_dest->put_json(_src);

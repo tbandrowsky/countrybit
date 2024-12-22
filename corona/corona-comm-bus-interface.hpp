@@ -227,6 +227,12 @@ namespace corona
 
 	};
 
+	enum class corona_instance
+	{
+		remote = 0,
+		local = 1
+	};
+
 	class comm_bus_app_interface : public system_monitoring_interface
 	{
 
@@ -255,15 +261,22 @@ namespace corona
 
 		virtual void run_app_ui(HINSTANCE hInstance, LPSTR command_line, bool fullScreen) = 0;
 
+		virtual corona_client_response remote_register_user(std::string _user_name, std::string _email, std::string _password1, std::string _password2) = 0;
+		virtual corona_client_response remote_confirm_user(std::string _user_name, std::string _confirmation_code) = 0;
+		virtual corona_client_response remote_send_user(std::string _user_name) = 0;
+		virtual corona_client_response remote_login(std::string _user_name, std::string _password) = 0;
+		virtual corona_client_response remote_login() = 0;
+		virtual corona_client_response remote_set_password(std::string user_name, std::string validation_code, std::string password1, std::string password2) = 0;
+		virtual corona_client_response remote_get_classes() = 0;
+		virtual corona_client_response remote_get_class(std::string class_name) = 0;
+		virtual corona_client_response remote_put_class(std::shared_ptr<client_class>& _client) = 0;
 
-		virtual json create_user(json user_information) = 0;
-		virtual json login_user(json login_information) = 0;
-		virtual json create_object(std::string class_name) = 0;
-		virtual json put_object(json object_information) = 0;
-		virtual json get_object(json object_information) = 0;
-		virtual json delete_object(json object_information) = 0;
-		virtual json pop_object(json object_information) = 0;
-		virtual json query_objects(json object_information) = 0;
+		virtual json create_object(corona_instance _instance, std::string class_name) = 0;
+		virtual json put_object(corona_instance _instance, json object_information) = 0;
+		virtual json get_object(corona_instance _instance, json object_information) = 0;
+		virtual json delete_object(corona_instance _instance, json object_information) = 0;
+		virtual json pop_object(corona_instance _instance, json object_information) = 0;
+		virtual json query_objects(corona_instance _instance, json object_information) = 0;
 		virtual void error(json _error) = 0;
 
 		virtual void when(UINT topic, std::function<void()> _runnable) = 0;
@@ -294,6 +307,11 @@ namespace corona
 				waiters++;
 			}
 			topic_waiters.erase(_topic);
+		}
+
+		virtual void log_error(corona_client_response& ccr, const char* _file = nullptr, int _line = 0)
+		{
+			log_warning(ccr.message, _file, _line);
 		}
 
 		virtual void log_error(json j, const char* _file = nullptr, int _line = 0)

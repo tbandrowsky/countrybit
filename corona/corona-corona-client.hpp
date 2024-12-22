@@ -471,26 +471,6 @@ namespace corona
 		}
 	};
 
-	class corona_client_response 
-	{
-	public:
-		bool			success;
-		std::string		message;
-		double			execution_time;
-		json			data;
-
-		corona_client_response& operator = (http_params& _params)
-		{
-			json_parser jp;
-			json response = jp.parse_object(_params.response.server.c_str());
-			data = response[data_field];
-			execution_time = response["execution_time_seconds"];
-			success = (bool)response[success_field];
-			message = (bool)response[message_field];
-			return *this;
-		}
-	};
-
 	class corona_class_response : public corona_client_response
 	{
 	public:
@@ -551,9 +531,10 @@ namespace corona
 		virtual corona_client_response login(std::string _user_name, std::string _password);
 		virtual corona_client_response login();
 		virtual corona_client_response set_password(std::string user_name, std::string validation_code, std::string password1, std::string password2);
-		virtual corona_class_response get_classes(std::string class_name);
-		virtual corona_class_response get_class(std::string class_name);;
+		virtual corona_client_response get_classes();
+		virtual corona_client_response get_class(std::string class_name);;
 		virtual corona_client_response put_class(std::shared_ptr<client_class>& _client);
+		virtual corona_object_response create_object(std::string _class_name);
 		virtual corona_object_response edit_object(std::string _class_name, int64_t _object_id, bool _object_id_field);
 		virtual corona_object_response get_object(std::string _class_name, int64_t _object_id, bool _include_children);
 		virtual corona_object_response put_object(json _object);
@@ -738,7 +719,7 @@ namespace corona
 			return result;
 		}
 
-		corona_class_response get_classes(std::string class_name)
+		corona_client_response get_classes()
 		{
 			corona_class_response result;
 
@@ -757,7 +738,7 @@ namespace corona
 			return result;
 		}
 
-		corona_class_response get_class(std::string class_name)
+		corona_client_response get_class(std::string class_name)
 		{
 			corona_class_response result;
 
@@ -799,6 +780,31 @@ namespace corona
 
 			return result;
 		}
+
+		corona_object_response create_object(std::string _class_name)
+		{
+			corona_object_response result;
+			json_parser jp;
+			http_client cc;
+
+			std::string header = "Content-Type: application/json\r\n" + authorization_header;
+
+			json payload = jp.create_object();
+			json data = jp.create_object();
+
+			data.put_member(class_name_field, _class_name);
+
+			payload.put_member("data", data);
+
+			std::string path = base_path + "/corona/objects/create/";
+
+			http_params params = cc.post(host.c_str(), port, path.c_str(), payload, header.c_str());
+
+			result = params;
+
+			return result;
+		}
+
 
 		corona_object_response edit_object(std::string _class_name, int64_t _object_id, bool _object_id_field)
 		{

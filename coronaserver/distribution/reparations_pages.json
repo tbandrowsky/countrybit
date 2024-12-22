@@ -1,0 +1,1346 @@
+{
+  "startup": [
+    {
+      "class_name": "select_frame_command",
+      "page_to_select": "home",
+      "frame_to_load": "reparations_home_frame",
+      "frame_contents_page" :  "sample_login"
+    }
+  ],
+  "pages": [
+    {
+      "class_name": "page",
+      "page_name": "home",
+      "default": true,
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "width": "1.0 container",
+            "height": "1.0 container"
+          },
+          "padding": "0 pixels",
+          "content_alignment": "near",
+          "content_cross_alignment": "center",
+          "children": [
+            {
+              "class_name": "caption_bar",
+              "corporate_name": "country video games",
+              "image_file": "cockade.png",
+              "title_name": "Reparations : Act 1 of the Revolution Game",
+              "subtitle_name": "Country Video Games",
+              "title_start": "0.28 container",
+              "box": {
+                "width": "1.0 container",
+                "height": "100 pixels"
+              }
+            },
+            {
+              "class_name": "column",
+              "box": {
+                "width": "0.9 container",
+                "height": "0.8 container"
+              },
+              "view_style": {
+                "box_fill_brush": {
+                  "class_name": "solid_brush",
+                  "color": "211012AA"
+                },
+                "box_border_brush": {
+                  "class_name": "solid_brush",
+                  "color": "21101277"
+                },
+                "box_border_thickness": 8
+              },
+              "padding": {
+                "amount": 10,
+                "units": "pixels"
+              },
+              "content_alignment": "near",
+              "content_cross_alignment": "near",
+              "children": [
+                {
+                  "class_name": "frame",
+                  "name": "reparations_home_frame",
+                  "box": {
+                    "width": "1.0 container",
+                    "height": "1.0 container"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "sample_login",
+      "default": true,
+      "children": [
+        {
+          "class_name": "chaptertitle",
+          "text": "Reparations Process",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 34,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "chaptersubtitle",
+          "text": "Process Activities",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 30,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "paragraph",
+          "text": "This is an interactive simulation of a Reparations System for subjects of the United States Government.  With this system, American subjects can walk through a reparations process, from research to claims and payments.  The entire process may be viewed at any point, in any detail, to promote transparancy.",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 6.2,
+              "units": "text"
+            }
+          }
+        },
+        {
+          "class_name": "row",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1,
+              "units": "container"
+            }
+          },
+          "wrap": true,
+          "children": [
+            {
+              "class_name": "push_button",
+              "text": "Researcher",
+              "box": {
+                "width": {
+                  "amount": 150,
+                  "units": "pixels"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              },
+              "margin": {
+                "amount": 20,
+                "units": "pixels"
+              },
+              "click_command": {
+                "class_name": "select_frame_command",
+                "page_to_select": "home",
+                "frame_to_load": "reparations_home_frame",
+                "frame_contents_page": "researcher_home"
+              }
+            },
+            {
+              "class_name": "push_button",
+              "text": "Plaintiff Attorneys",
+              "box": {
+                "width": {
+                  "amount": 150,
+                  "units": "pixels"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              },
+              "margin": {
+                "amount": 20,
+                "units": "pixels"
+              },
+              "click_command": {
+                "class_name": "select_frame_command",
+                "form_to_read": "",
+                "page_to_select": "home",
+                "frame_to_load": "reparations_home_frame",
+                "frame_contents_page": "plaintiff_home"
+              }
+            },
+            {
+              "class_name": "push_button",
+              "text": "Reparations Court",
+              "box": {
+                "width": {
+                  "amount": 150,
+                  "units": "pixels"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              },
+              "margin": {
+                "amount": 20,
+                "units": "pixels"
+              },
+              "click_command": {
+                "class_name": "select_frame_command",
+                "select_page_name": "home",
+                "select_frame_name": "court_home",
+                "frame_name": "reparations_home_frame"
+              }
+            },
+            {
+              "class_name": "push_button",
+              "text": "Government Attorneys",
+              "box": {
+                "width": {
+                  "amount": 150,
+                  "units": "pixels"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              },
+              "margin": {
+                "amount": 20,
+                "units": "pixels"
+              },
+              "click_command": {
+                "class_name": "select_frame_command",
+                "select_page_name": "home",
+                "select_frame_name": "defense_home",
+                "frame_name": "reparations_home_frame"
+              }
+            },
+            {
+              "class_name": "push_button",
+              "text": "Claims Fund Managers",
+              "box": {
+                "width": {
+                  "amount": 150,
+                  "units": "pixels"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              },
+              "margin": {
+                "amount": 20,
+                "units": "pixels"
+              },
+              "click_command": {
+                "class_name": "select_frame_command",
+                "select_page_name": "home",
+                "select_frame_name": "sample_login",
+                "frame_name": "reparations_home_frame"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "researcher_home",
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "width": "1.0 container",
+            "height": "1.0 container"
+          },
+          "padding": "0 pixels",
+          "content_alignment": "near",
+          "content_cross_alignment": "center",
+          "children": [
+            {
+              "class_name": "row",
+              "item_next_space": "16 pixels",
+              "box": {
+                "width": "1.0 container",
+                "height": "1.0 container"
+              },
+              "children": [
+                {
+                  "class_name": "column",
+                  "name": "navbar",
+                  "box": {
+                    "width": "125 pixels",
+                    "height": "1.0 container"
+                  },
+                  "children": [
+                    {
+                      "class_name": "chaptertitle",
+                      "text": "Research",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "30 pixels"
+                      }
+                    },
+
+                    {
+                      "class_name": "push_button",
+                      "text": "Events",
+                      "box": {
+                        "width": {
+                          "amount": 100,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 40,
+                          "units": "pixels"
+                        }
+                      },
+                      "click_command": {
+                        "class_name": "create_object_command",
+                        "create_class_name": "Institutions",
+                        "form_name": "InstitutionPage"
+                      }
+                    },
+
+                    {
+                      "class_name": "push_button",
+                      "text": "Actors",
+                      "box": {
+                        "width": {
+                          "amount": 100,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 40,
+                          "units": "pixels"
+                        }
+                      },
+                      "click_command": {
+                        "class_name": "create_object_command",
+                        "create_class_name": "Actors",
+                        "form_name": "ActorPage"
+                      }
+                    },
+                    {
+                      "class_name": "push_button",
+                      "text": "Institutions",
+                      "box": {
+                        "width": {
+                          "amount": 100,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 40,
+                          "units": "pixels"
+                        }
+                      },
+                      "click_command": {
+                        "class_name": "create_object_command",
+                        "create_class_name": "Institutions",
+                        "form_name": "InstitutionPage"
+                      }
+                    },
+                    {
+                      "class_name": "push_button",
+                      "text": "Home",
+                      "box": {
+                        "width": {
+                          "amount": 100,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 40,
+                          "units": "pixels"
+                        }
+                      },
+                      "click_command": {
+                        "class_name": "select_frame_command",
+                        "form_to_read": "",
+
+                        "page_to_select": "home",
+                        "frame_to_load": "reparations_home_frame",
+
+                        "frame_contents_page": "sample_login"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "class_name": "column",
+                  "box": {
+                    "x": "32.0 pixels",
+                    "width": "250 pixels",
+                    "height": "1.0 container"
+                  },
+                  "children": [
+                    {
+                      "class_name": "chaptertitle",
+                      "text": "Events",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "30 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "chaptersubtitle",
+                      "text": "Search",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "25 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "form",
+                      "name": "search_event_form",
+                      "model": {
+                        "name": "search_event_form",
+                        "defaults": {
+                          "box": {
+                            "width": "1.0 container",
+                            "height": "50 pixels"
+                          },
+                          "label_box": {
+                            "width": "1.0 container",
+                            "height": "25 pixels"
+                          },
+                          "field_box": {
+                            "width": "1.0 remaining",
+                            "height": "25 pixels"
+                          }
+                        },
+                        "fields": [
+                          {
+                            "json_field_name": "Description",
+                            "label_text": "Description",
+                            "class_name": "edit",
+                            "tooltip_text": "Search for an event",
+                            "is_default_focus": true
+                          }
+                        ],
+                        "data": []
+                      },
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "75 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "row",
+                      "name": "event row",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "50 pixels"
+                      },
+                      "item_next_space": "8 pixels",
+                      "wrap": true,
+                      "children": [
+                        {
+                          "class_name": "push_button",
+                          "text": "Search Events",
+                          "box": {
+                            "width": {
+                              "amount": 100,
+                              "units": "pixels"
+                            },
+                            "height": {
+                              "amount": 40,
+                              "units": "pixels"
+                            }
+                          },
+                          "click_command": {
+                            "class_name": "search_objects_command",
+                            "search_class_name": "Events",
+                            "form_name": "search_event_form",
+                            "table_name": "event_list",
+                            "query": {
+                              "class_name":  "query_context",
+                              "froms": {
+                                "event_list": [],
+                                "search_event_form": {}
+                              },
+                              "stages": [
+                                {
+                                  "stage_name":  "search for any event text",
+                                  "class_name": "filter",
+                                  "stage_input_name": "Events:",
+                                  "predicate": {
+                                    "class_name": "contains",
+                                    "textsrc": "search_event_form:Description"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "class_name": "chaptersubtitle",
+                      "text": "Create",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "25 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "push_button",
+                      "text": "New Event",
+                      "box": {
+                        "width": {
+                          "amount": 100,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 40,
+                          "units": "pixels"
+                        }
+                      },
+                      "click_command": {
+                        "class_name": "create_object_command",
+                        "create_class_name": "Events",
+                        "form_name": "EventPage"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "class_name": "column",
+                  "box": {
+                    "x": "48 pixels",
+                    "width": "0.30 container",
+                    "height": "0.8 container"
+                  },
+                  "view_style": {
+                    "box_fill_brush": {
+                      "class_name": "solid_brush",
+                      "color": "211012AA"
+                    },
+                    "box_border_brush": {
+                      "class_name": "solid_brush",
+                      "color": "21101277"
+                    },
+                    "box_border_thickness": 8
+                  },
+                  "content_alignment": "near",
+                  "content_cross_alignment": "near",
+                  "children": [
+                    {
+                      "class_name": "chaptertitle",
+                      "text": "",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "30 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "chaptersubtitle",
+                      "text": "List",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "25 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "listview",
+                      "name": "event_list",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": {
+                          "amount": 1.0,
+                          "units": "remaining"
+                        }
+                      },
+                      "table": {
+                        "id_field": "ObjectId",
+                        "columns": [
+                          {
+                            "json_field_name": "EventDate",
+                            "label_text": "Year",
+                            "width": 100,
+                            "format": "%Y"
+                          },
+                          {
+                            "json_field_name": "Description",
+                            "label_text": "Name",
+                            "width": 300
+                          },
+                          {
+                            "json_field_name": "ObjectId",
+                            "label_text": "Id",
+                            "width": 100
+                          }
+                        ],
+                        "items": []
+                      },
+                      "select_command": {
+                        "class_name": "preview_object_command",
+                        "table_name": "event_list",
+                        "form_name": "edit_event_form"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "class_name": "column",
+                  "name": "event_edit_column",
+                  "box": {
+                    "x": "48 pixels",
+                    "width": "1.0 remaining",
+                    "height": "0.8 container"
+                  },
+                  "view_style": {
+                    "box_fill_brush": {
+                      "class_name": "solid_brush",
+                      "color": "211012AA"
+                    },
+                    "box_border_brush": {
+                      "class_name": "solid_brush",
+                      "color": "21101277"
+                    },
+                    "box_border_thickness": 8
+                  },
+                  "content_alignment": "near",
+                  "content_cross_alignment": "near",
+                  "children": [
+                    {
+                      "class_name": "chaptertitle",
+                      "text": "",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "30 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "chaptersubtitle",
+                      "text": "Edit",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "25 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "form",
+                      "name": "edit_event_form",
+                      "model": {
+                        "name": "edit_event",
+                        "defaults": {
+                          "box": {
+                            "width": "1.0 container",
+                            "height": "50 pixels"
+                          },
+                          "label_box": {
+                            "width": "1.0 container",
+                            "height": "25 pixels"
+                          },
+                          "field_box": {
+                            "width": "1.0 remaining",
+                            "height": "25 pixels"
+                          }
+                        },
+                        "fields": [
+                          {
+                            "json_field_name": "Description",
+                            "label_text": "Description",
+                            "class_name": "edit",
+                            "tooltip_text": "Event preview",
+                            "is_default_focus": true
+                          },
+                          {
+                            "json_field_name": "EventDate",
+                            "label_text": "Date",
+                            "class_name": "edit",
+                            "tooltip_text": "The day of the event",
+                            "is_default_focus": false,
+                            "field_box": {
+                              "width": "250 pixels",
+                              "height": "25 pixels"
+                            },
+                            "box": {
+                              "width": "250 pixels",
+                              "height": "50 pixels"
+                            }
+                          },
+                          {
+                            "json_field_name": "Story",
+                            "label_text": "Story",
+                            "class_name": "edit",
+                            "tooltip_text": "The day of the event",
+                            "is_default_focus": false,
+                            "field_box": {
+                              "width": "250 pixels",
+                              "height": "125 pixels"
+                            },
+                            "box": {
+                              "width": "250 pixels",
+                              "height": "150 pixels"
+                            }
+                          }
+
+                        ],
+                        "data": []
+                      },
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "250 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "chaptersubtitle",
+                      "text": "Create",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "25 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "push_button",
+                      "text": "Save Event",
+                      "box": {
+                        "width": {
+                          "amount": 100,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 40,
+                          "units": "pixels"
+                        }
+                      },
+                      "click_command": {
+                        "class_name": "save_object_command",
+                        "form_name": "edit_event_form"
+                      }
+                    }
+
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "event_detail",
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "x": "32.0 pixels",
+            "width": "0.25 container",
+            "height": "1.0 container"
+          },
+          "children": [
+            {
+              "class_name": "chaptertitle",
+              "text": "Researcher Home",
+              "box": {
+                "width": "1.0 container",
+                "height": "30 pixels"
+              }
+            },
+            {
+              "class_name": "form",
+              "name": "search_form",
+              "model": {
+                "name": "search_form",
+                "defaults": {
+                  "container_box": {
+                    "width": "250 pixels",
+                    "height": "120 pixels"
+                  },
+                  "label_box": {
+                    "width": "200 pixels",
+                    "height": "25 pixels"
+                  },
+                  "field_box": {
+                    "width": "200 pixels",
+                    "height": "25 pixels"
+                  }
+                },
+                "fields": [
+                  {
+                    "json_field_name": "Description",
+                    "label_text": "Description",
+                    "class_name": "edit",
+                    "tooltip_text": "Search for an event",
+                    "is_default_focus": true
+                  },
+                  {
+                    "json_field_name": "EventDate",
+                    "label_text": "Date",
+                    "class_name": "edit",
+                    "tooltip_text": "Date of the event",
+                    "is_default_focus": false
+                  },
+                  {
+                    "class_name": "push_button",
+                    "text": "Search",
+                    "box": {
+                      "width": {
+                        "amount": 100,
+                        "units": "pixels"
+                      },
+                      "height": {
+                        "amount": 40,
+                        "units": "pixels"
+                      }
+                    },
+                    "click_command": {
+                      "class_name": "search_objects_command",
+                      "search_class_name": "Events",
+                      "form_name": "search_form",
+                      "table_name": "search_list"
+                    }
+                  }
+                ],
+                "data": []
+              },
+              "box": {
+                "width": "1.0 container",
+                "height": "200 pixels"
+              }
+            },
+            {
+              "class_name": "push_button",
+              "text": "New Event",
+              "box": {
+                "width": {
+                  "amount": 100,
+                  "units": "pixels"
+                },
+                "height": {
+                  "amount": 40,
+                  "units": "pixels"
+                }
+              },
+              "click_command": {
+                "class_name": "create_object_command",
+                "create_class_name": "Events",
+                "form_name": "EventPage"
+              }
+            }
+          ]
+        },
+        {
+          "class_name": "column",
+          "box": {
+            "x": "48 pixels",
+            "width": "0.65 container",
+            "height": "0.8 container"
+          },
+          "view_style": {
+            "box_fill_brush": {
+              "class_name": "solid_brush",
+              "color": "211012AA"
+            },
+            "box_border_brush": {
+              "class_name": "solid_brush",
+              "color": "21101277"
+            },
+            "box_border_thickness": 8
+          },
+          "content_alignment": "near",
+          "content_cross_alignment": "near",
+          "children": [
+            {
+              "class_name": "chaptertitle",
+              "text": "Event Detail",
+              "box": {
+                "width": "1.0 container",
+                "height": "30 pixels"
+              }
+            },
+            {
+              "class_name": "row",
+              "box": {
+                "width": "1.0 container",
+                "height": "75 pixels"
+              },
+              "item_next_space": "10 pixels",
+              "wrap": true,
+              "children": [
+              ]
+            }
+          ]
+        }
+
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "plaintiff_home",
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1.0,
+              "units": "container"
+            }
+          },
+          "padding": {
+            "amount": 0,
+            "units": "pixels"
+          },
+          "content_alignment": "near",
+          "content_cross_alignment": "center",
+          "children": [
+            {
+              "class_name": "column",
+              "box": {
+                "x": "32.0 pixels",
+                "width": "0.25 container",
+                "height": "1.0 container"
+              },
+              "children": [
+                {
+                  "class_name": "chaptertitle",
+                  "text": "Researcher Home",
+                  "box": {
+                    "width": "1.0 container",
+                    "height": "30 pixels"
+                  }
+                },
+                {
+                  "class_name": "paragraph",
+                  "text": "Black American Citizens create a historical resource of injustices to be used by Plaintiff Attorneys.",
+                  "box": {
+                    "width": "1.0 container",
+                    "height": "0.3 container"
+                  }
+                }
+              ]
+            },
+            {
+              "class_name": "column",
+              "box": {
+                "x": "48 pixels",
+                "width": "0.65 container",
+                "height": "0.8 container"
+              },
+              "view_style": {
+                "box_fill_brush": {
+                  "class_name": "solid_brush",
+                  "color": "211012AA"
+                },
+                "box_border_brush": {
+                  "class_name": "solid_brush",
+                  "color": "21101277"
+                },
+                "box_border_thickness": 8
+              },
+              "content_alignment": "near",
+              "content_cross_alignment": "near",
+              "children": [
+                {
+                  "class_name": "chaptertitle",
+                  "text": "A History of Injustice",
+                  "box": {
+                    "width": "1.0 container",
+                    "height": "30 pixels"
+                  }
+                },
+                {
+                  "class_name": "form",
+                  "name": "search_form",
+                  "model": {
+                    "name": "search_form",
+                    "defaults": {
+                      "container_box": {
+                        "width": "250 pixels",
+                        "height": "120 pixels"
+                      },
+                      "label_box": {
+                        "width": "200 pixels",
+                        "height": "25 pixels"
+                      },
+                      "field_box": {
+                        "width": "200 pixels",
+                        "height": "25 pixels"
+                      }
+                    },
+                    "fields": [
+                      {
+                        "json_field_name": "EventName",
+                        "label_text": "Name",
+                        "class_name": "edit",
+                        "tooltip_text": "The name of the event",
+                        "is_default_focus": true
+                      },
+                      {
+                        "json_field_name": "Description",
+                        "label_text": "Description",
+                        "class_name": "edit",
+                        "tooltip_text": "The Description of the event",
+                        "is_default_focus": false
+                      },
+                      {
+                        "json_field_name": "EventDate",
+                        "label_text": "Year",
+                        "class_name": "edit",
+                        "tooltip_text": "The year of the event",
+                        "is_default_focus": false
+                      }
+                    ],
+                    "data": []
+                  },
+                  "box": {
+                    "width": "1.0 container",
+                    "height": "100 pixels"
+                  }
+                },
+                {
+                  "class_name": "row",
+                  "box": {
+                    "width": "1.0 container",
+                    "height": "75 pixels"
+                  },
+                  "item_next_space": "10 pixels",
+                  "wrap": true,
+                  "children": [
+                    {
+                      "class_name": "push_button",
+                      "text": "Search",
+                      "box": {
+                        "width": {
+                          "amount": 100,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 40,
+                          "units": "pixels"
+                        }
+                      },
+                      "click_command": {
+                        "class_name": "search_objects_command",
+                        "search_class_name": "Cases",
+                        "form_name": "search_cases_form",
+                        "table_name": "case_list"
+                      }
+                    },
+                    {
+                      "class_name": "push_button",
+                      "text": "New Case",
+                      "box": {
+                        "width": {
+                          "amount": 100,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 40,
+                          "units": "pixels"
+                        }
+                      },
+                      "click_command": {
+                        "class_name": "create_object_command",
+                        "create_class_name": "Case",
+                        "form_name": "CaseDetail"
+                      }
+                    },
+                    {
+                      "class_name": "push_button",
+                      "text": "Home",
+                      "box": {
+                        "width": {
+                          "amount": 100,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 40,
+                          "units": "pixels"
+                        }
+                      },
+                      "click_command": {
+                        "class_name": "select_frame_command",
+                        "page_to_select": "home",
+                        "frame_to_load": "reparations_home_frame",
+                        "frame_contents_page": "sample_login"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "court_home",
+      "children": [
+        {
+          "class_name": "chaptertitle",
+          "text": "Reparations Court",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 34,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "chaptersubtitle",
+          "text": "The United States of America Will Hear You Now",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 30,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "paragraph",
+          "text": "Ensures the United States of America, the Federal Government, pays for the times it has not honored the guarantees it makes in the Constitution and Declaration of Independence.",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 6.2,
+              "units": "text"
+            }
+          }
+        },
+        {
+          "class_name": "row",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1,
+              "units": "container"
+            }
+          },
+          "wrap": true,
+          "children": [
+            {
+              "class_name": "push_button",
+              "text": "Home",
+              "box": {
+                "width": {
+                  "amount": 150,
+                  "units": "pixels"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              },
+              "margin": {
+                "amount": 20,
+                "units": "pixels"
+              },
+              "click_command": {
+                "class_name": "select_frame_command",
+                "page_to_select": "home",
+                "frame_to_load": "reparations_home_frame",
+                "frame_contents_page": "sample_login"
+              }
+            }
+
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "defense_home",
+      "children": [
+        {
+          "class_name": "chaptertitle",
+          "text": "Government Attorneys",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 34,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "chaptersubtitle",
+          "text": "Defend the Federal Government of United States of America",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 30,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "paragraph",
+          "text": "Government Attorneys can organize their defenses, settlements, and capitulations as the part of our American adversarial legal system.",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 6.2,
+              "units": "text"
+            }
+          }
+        },
+        {
+          "class_name": "row",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1,
+              "units": "container"
+            }
+          },
+          "wrap": true,
+          "children": [
+            {
+              "class_name": "push_button",
+              "text": "Home",
+              "box": {
+                "width": {
+                  "amount": 150,
+                  "units": "pixels"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              },
+              "margin": {
+                "amount": 20,
+                "units": "pixels"
+              },
+              "click_command": {
+                "class_name": "select_frame_command",
+                "page_to_select": "home",
+                "frame_to_load": "reparations_home_frame",
+                "frame_contents_page": "sample_login"
+              }
+            }
+
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "fund_home",
+      "children": [
+
+        {
+          "class_name": "chaptersubtitle",
+          "text": "Manage the Reparations Funds",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 30,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "paragraph",
+          "text": "Claims fund managers ensure that adequate insurance reserves are available.  Financed directly by the Federal Reserve Bank, the Claims Fund managers ensure a transparent state of finances in the claims fund and provides a valuable resource for policy makers and scientists for guidance and study.",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 6.2,
+              "units": "text"
+            }
+          }
+        },
+        {
+          "class_name": "row",
+          "box": {
+            "width": {
+              "amount": 1,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1,
+              "units": "container"
+            }
+          },
+          "wrap": true,
+          "children": [
+            {
+              "class_name": "push_button",
+              "text": "Home",
+              "box": {
+                "width": {
+                  "amount": 150,
+                  "units": "pixels"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              },
+              "margin": {
+                "amount": 20,
+                "units": "pixels"
+              },
+              "command": {
+                "class_name": "select_frame_command",
+                "page_to_select": "home",
+                "frame_to_load": "reparations_home_frame",
+                "frame_contents_page": "sample_login"
+              }
+            }
+
+          ]
+        }
+      ]
+    }
+  ]
+}
+

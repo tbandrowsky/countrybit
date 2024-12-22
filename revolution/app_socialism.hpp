@@ -1,14 +1,13 @@
 
-#ifndef APP_REPARATIONS_H
-#define APP_REPARATIONS_H
+#ifndef APP_CANDIDATE_H
+#define APP_CANDIDATE_H
 
 #include "resource.h"
 #include "corona.hpp"
 
 namespace corona
 {
-
-	void run_reparations_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
+	void run_socialism_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
 
 	/*
 
@@ -44,12 +43,11 @@ namespace corona
 
 	/* And now, this is the application */
 
-	void run_reparations_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
+	void run_socialism_application(HINSTANCE hInstance, LPSTR lpszCmdParam)
 	{
-
 		EnableGuiStdOuts();
 
-		comm_app_bus bus("Reparations", "Reparations", "reparations_");
+		comm_app_bus bus("socialism", "socialism", "socialism_");
 
 		bus.run_app_ui(hInstance, lpszCmdParam, false);
 

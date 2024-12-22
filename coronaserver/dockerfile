@@ -1,0 +1,21 @@
+# Use the official Windows Server Core image
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+# Set up environment variables
+ENV APP_HOME C:\\app
+ENV TEMP_DB C:\\tempdb
+
+# Create application and database directories
+RUN mkdir %APP_HOME% && mkdir %TEMP_DB%
+
+# Copy the application files to the container
+COPY .\distribution %APP_HOME%
+
+# Set the working directory
+WORKDIR %APP_HOME%
+
+# Expose the HTTP port
+EXPOSE 80
+
+# Run the application, with arguments coming on down
+ENTRYPOINT [ "cmd", "/c", "coronaserver.exe"]

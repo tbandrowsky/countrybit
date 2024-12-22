@@ -123,6 +123,7 @@ namespace corona {
 #include "corona-application.hpp"
 #include "corona-visual.hpp"
 #include "corona-control-data.hpp"
+#include "corona-interfaces.hpp"
 #include "corona-comm-bus-interface.hpp"
 #include "corona-express-record.hpp"
 
