@@ -367,35 +367,35 @@ namespace corona
 		{
 			return client.get_class(class_name);
 		}
-		virtual corona_client_response remote_put_class(std::shared_ptr<client_class>& _client)
+		virtual corona_client_response remote_put_class(json _class_definition)
 		{
-			return client.put_class(_client);
+			return client.put_class(_class_definition);
 		}
 		virtual corona_client_response remote_create_object(std::string class_name)
 		{
 			return client.create_object(class_name);
 		}
-		virtual corona_object_response remote_edit_object(std::string _class_name, int64_t _object_id, bool _include_children)
+		virtual corona_client_response remote_edit_object(std::string _class_name, int64_t _object_id, bool _include_children)
 		{
 			return client.edit_object(_class_name, _object_id, _include_children);
 		}
-		virtual corona_object_response remote_get_object(std::string _class_name, int64_t _object_id, bool _include_children)
+		virtual corona_client_response remote_get_object(std::string _class_name, int64_t _object_id, bool _include_children)
 		{
 			return client.get_object(_class_name, _object_id, _include_children);
 		}
-		virtual corona_object_response remote_put_object(json _object)
+		virtual corona_client_response remote_put_object(json _object)
 		{
 			return client.put_object(_object);
 		}
-		virtual corona_object_response remote_run_object(json _object)
+		virtual corona_client_response remote_run_object(json _object)
 		{
 			return client.run_object(_object);
 		}
-		virtual corona_object_response remote_delete_object(std::string _class_name, int64_t _object_id)
+		virtual corona_client_response remote_delete_object(std::string _class_name, int64_t _object_id)
 		{
 			return client.delete_object(_class_name, _object_id);
 		}
-		virtual corona_object_response remote_query_objects(json _query)
+		virtual corona_client_response remote_query_objects(json _query)
 		{
 			return client.query_objects(_query);
 		}
@@ -565,7 +565,6 @@ namespace corona
 				response = result.data;
 			}
 
-			timer tx;
 			log_command_stop("create_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
@@ -608,7 +607,9 @@ namespace corona
 			}
 			else
 			{
-				auto result = remote_get_object(object_information);
+				std::string class_name = object_information[class_name_field];
+				int64_t object_id = (int64_t)object_information[object_id_field];
+				auto result = remote_get_object(class_name, object_id, false);
 				if (!result.success) {
 					log_error(result, __FILE__, __LINE__);
 				}
@@ -631,7 +632,10 @@ namespace corona
 			}
 			else
 			{
-				auto result = remote_delete_object(object_information[class_name_field], (int64_t)object_information[object_id_field]);
+				std::string class_name = object_information[class_name_field];
+				int64_t object_id = (int64_t)object_information[object_id_field];
+
+				auto result = remote_delete_object(class_name, object_id);
 				if (!result.success) {
 					log_error(result, __FILE__, __LINE__);
 				}

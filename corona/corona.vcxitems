@@ -114,7 +114,4 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-publicity-stunts.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-express-table.hpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)corona-coronaclient.hpp" />
-  </ItemGroup>
 </Project>

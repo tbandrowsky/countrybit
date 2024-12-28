@@ -207,9 +207,6 @@ namespace corona {
 // but implemented using SQL Server tables
 #include "corona-sql.hpp"
 
-// the corona client is an http client for the corona server
-#include "corona-coronaclient.hpp"
-
 // the file monitor is a thing that lets you set up config files and watch for changes.
 // the bus makes use of these to do the React style insta-edit
 #include "corona-file-monitor.hpp"

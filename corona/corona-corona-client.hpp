@@ -498,52 +498,6 @@ namespace corona
 		}
 	};
 
-	class corona_object_response : public corona_client_response
-	{
-	public:
-		std::vector<client_object> objects;
-
-		corona_object_response& operator = (http_params& _params)
-		{
-			corona_client_response::operator=(_params);
-
-			if (data.array())
-			{
-				for (auto obj : data) {
-					client_object co;
-					co.data = obj;
-					objects.push_back(co);
-				}
-			}
-
-			return *this;
-		}
-	};
-
-
-	class corona_client_interface
-	{
-	public:
-
-		virtual corona_client_response register_user(std::string user_name, std::string email, std::string password1, std::string password2);
-		virtual corona_client_response confirm_user(std::string user_name, std::string confirmation_code);
-		virtual corona_client_response send_user(std::string user_name);
-		virtual corona_client_response login(std::string _user_name, std::string _password);
-		virtual corona_client_response login();
-		virtual corona_client_response set_password(std::string user_name, std::string validation_code, std::string password1, std::string password2);
-		virtual corona_client_response get_classes();
-		virtual corona_client_response get_class(std::string class_name);;
-		virtual corona_client_response put_class(std::shared_ptr<client_class>& _client);
-		virtual corona_object_response create_object(std::string _class_name);
-		virtual corona_object_response edit_object(std::string _class_name, int64_t _object_id, bool _object_id_field);
-		virtual corona_object_response get_object(std::string _class_name, int64_t _object_id, bool _include_children);
-		virtual corona_object_response put_object(json _object);
-		virtual corona_object_response run_object(json _object);
-		virtual corona_object_response delete_object(std::string _class_name, int64_t _object_id);
-		virtual corona_object_response query_objects(json _query);
-	};
-
-
 	class corona_client : public corona_client_interface
 	{
 	public:
@@ -562,7 +516,7 @@ namespace corona
 			;
 		}
 
-		corona_client_response register_user(std::string user_name, std::string email, std::string password1, std::string password2)
+		virtual corona_client_response register_user(std::string user_name, std::string email, std::string password1, std::string password2) override
 		{
 			corona_client_response result;
 
@@ -590,13 +544,12 @@ namespace corona
 			return result;
 		}
 
-		corona_client_response confirm_user(std::string user_name, std::string confirmation_code)
+		virtual corona_client_response confirm_user(std::string user_name, std::string confirmation_code) override
 		{
 			json_parser jp;
 
 			corona_client_response result;
 
-			json_parser jp;
 			http_client cc;
 
 			authorization_header = "";
@@ -618,7 +571,7 @@ namespace corona
 
 		}
 
-		corona_client_response send_user(std::string user_name)
+		virtual corona_client_response send_user(std::string user_name) override
 		{
 			corona_client_response result;
 
@@ -648,7 +601,7 @@ namespace corona
 		std::string user_password;
 		std::string token;
 
-		corona_client_response login(std::string _user_name, std::string _password)
+		virtual corona_client_response login(std::string _user_name, std::string _password) override
 		{
 			corona_client_response result;
 
@@ -660,7 +613,7 @@ namespace corona
 			return result;
 		}
 
-		corona_client_response login()
+		virtual corona_client_response login() override
 		{
 			corona_client_response result;
 
@@ -693,7 +646,7 @@ namespace corona
 			return result;
 		}
 
-		corona_client_response set_password(std::string user_name, std::string validation_code, std::string password1, std::string password2)
+		virtual corona_client_response set_password(std::string user_name, std::string validation_code, std::string password1, std::string password2) override
 		{
 			corona_client_response result;
 
@@ -719,7 +672,7 @@ namespace corona
 			return result;
 		}
 
-		corona_client_response get_classes()
+		virtual corona_client_response get_classes() override
 		{
 			corona_class_response result;
 
@@ -738,7 +691,7 @@ namespace corona
 			return result;
 		}
 
-		corona_client_response get_class(std::string class_name)
+		virtual corona_client_response get_class(std::string class_name) override
 		{
 			corona_class_response result;
 
@@ -759,7 +712,27 @@ namespace corona
 			return result;
 		}
 
-		corona_client_response put_class(std::shared_ptr<client_class>& _client)
+		virtual corona_client_response put_class(json _class_definition) override
+		{
+			corona_class_response result;
+			json_parser jp;
+			http_client cc;
+
+			std::string header = "Content-Type: application/json\r\n" + authorization_header;
+
+			json payload = jp.create_object();
+			payload.put_member("data", _class_definition);
+
+			std::string path = base_path + "/corona/classes/put/";
+
+			http_params params = cc.post(host.c_str(), port, path.c_str(), payload, header.c_str());
+
+			result = params;
+
+			return result;
+		}
+
+		virtual corona_client_response put_class(std::shared_ptr<client_class>& _client)
 		{
 			corona_class_response result;
 			json_parser jp;
@@ -781,9 +754,9 @@ namespace corona
 			return result;
 		}
 
-		corona_object_response create_object(std::string _class_name)
+		virtual corona_client_response create_object(std::string _class_name) override
 		{
-			corona_object_response result;
+			corona_client_response result;
 			json_parser jp;
 			http_client cc;
 
@@ -806,9 +779,9 @@ namespace corona
 		}
 
 
-		corona_object_response edit_object(std::string _class_name, int64_t _object_id, bool _object_id_field)
+		virtual corona_client_response edit_object(std::string _class_name, int64_t _object_id, bool _object_id_field) override
 		{
-			corona_object_response result;
+			corona_client_response result;
 			json_parser jp;
 			http_client cc;
 
@@ -832,9 +805,9 @@ namespace corona
 			return result;
 		}
 
-		corona_object_response get_object(std::string _class_name, int64_t _object_id, bool _include_children)
+		virtual corona_client_response get_object(std::string _class_name, int64_t _object_id, bool _include_children) override
 		{
-			corona_object_response result;
+			corona_client_response result;
 			json_parser jp;
 			http_client cc;
 
@@ -858,9 +831,9 @@ namespace corona
 			return result;
 		}
 
-		corona_object_response put_object(json _object)
+		virtual corona_client_response put_object(json _object) override
 		{
-			corona_object_response result;
+			corona_client_response result;
 			json_parser jp;
 			http_client cc;
 
@@ -878,9 +851,9 @@ namespace corona
 			return result;
 		}
 
-		corona_object_response run_object(json _object)
+		virtual corona_client_response run_object(json _object) override
 		{
-			corona_object_response result;
+			corona_client_response result;
 			json_parser jp;
 			http_client cc;
 
@@ -898,9 +871,9 @@ namespace corona
 			return result;
 		}
 
-		corona_object_response delete_object(std::string _class_name, int64_t _object_id)
+		virtual corona_client_response delete_object(std::string _class_name, int64_t _object_id) override
 		{
-			corona_object_response result;
+			corona_client_response result;
 			json_parser jp;
 			http_client cc;
 
@@ -923,9 +896,9 @@ namespace corona
 			return result;
 		}
 
-		corona_object_response query_objects(json _query)
+		virtual corona_client_response query_objects(json _query) override
 		{
-			corona_object_response result;
+			corona_client_response result;
 
 			json_parser jp;
 			http_client cc;
