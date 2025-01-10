@@ -2902,12 +2902,27 @@ namespace corona
 		return mp;
 	}
 
-	class json_parser
+	class parser_base
 	{
-	private:
+	public:
+		class parse_message
+		{
+		public:
+			int line;
+			int char_index;
+			std::string topic;
+			std::string error;
+		};
+
+		std::vector<parse_message> parse_errors;
 
 		int line_number = 1;
 		int char_index = 0;
+
+		bool has_errors()
+		{
+			return parse_errors.size() > 0;
+		}
 
 		json get_errors()
 		{
@@ -2925,25 +2940,257 @@ namespace corona
 				err.put_member("char", parse_error.char_index);
 				err.put_member("topic", parse_error.topic);
 				err.put_member("error", parse_error.error);
-				error_array.append_element( err);
+				error_array.append_element(err);
 			}
 
 			error_root.put_member("errors", error_array);
 			return error_root;
 		}
+		
+		void check_line(const char* nl)
+		{
+			char_index++;
+			if (*nl == '\r') {
+				line_number++;
+				char_index = 0;
+			}
+		}
+
+		void error(std::string _topic, std::string _message)
+		{
+			parse_message new_message = { line_number, char_index, _topic, _message };
+			parse_errors.push_back(new_message);
+		}
+
+		const char* eat_white(const char* _src)
+		{
+			if (not _src)
+				return _src;
+			while (std::isspace(*_src))
+				_src++;
+			return _src;
+		}
+
+		bool parse_symbol(std::string& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			std::string temp = "";
+			_src = eat_white(_src);
+			if (std::isalpha(*_src))
+			{
+				result = true;
+				while (isalnum(*_src))
+				{
+					check_line(_src);
+					temp += *_src;
+					_src++;
+				}
+				*_modified = _src;
+				_result = temp;
+			}
+			return result;
+		}
+
+		bool parse_member_type(std::string& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			std::string temp = "";
+			_src = eat_white(_src);
+			if (*_src == '$')
+			{
+				_src++;
+				result = true;
+				while (isalnum(*_src))
+				{
+					check_line(_src);
+					temp += *_src;
+					_src++;
+				}
+				*_modified = _src;
+				_result = temp;
+			}
+			return result;
+		}
+
+		bool parse_string(std::string& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			std::string temp = "";
+			_src = eat_white(_src);
+			if (*_src == '"')
+			{
+				_src++;
+				result = true;
+				bool parsing = false;
+				while (*_src != '"')
+				{
+					check_line(_src);
+					if (*_src < 0 or std::iscntrl(*_src))
+					{
+						_src++;
+						continue;
+					}
+					else if (*_src == '\\')
+					{
+						_src++;
+						switch (*_src)
+						{
+						case '"':
+							temp += '"';
+							break;
+						case '\\':
+							temp += '\\';
+							break;
+						case '/':
+							temp += '/';
+							break;
+						case 'b':
+							temp += 0x8;
+							break;
+						case 'f':
+							temp += 12;
+							break;
+						case 'n':
+							temp += 10;
+							break;
+						case 'r':
+							temp += 13;
+							break;
+						case 't':
+							temp += 9;
+							break;
+						case 'u':
+							break;
+						}
+					}
+					else
+					{
+						temp += *_src;
+					}
+					_src++;
+				}
+				_result = temp;
+				_src++;
+			}
+			*_modified = _src;
+			return result;
+		}
+
+		bool parse_number(double& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			_src = eat_white(_src);
+			if (isdigit(*_src) or *_src == '.' or *_src == '-')
+			{
+				std::string temp = "";
+				result = true;
+				while (isdigit(*_src) or *_src == '.' or *_src == '_' or *_src == '-')
+				{
+					check_line(_src);
+					if (*_src != '_') {
+						temp += *_src;
+					}
+					_src++;
+				}
+				_result = std::strtod(temp.c_str(), nullptr);
+				result = true;
+			}
+			*_modified = _src;
+			return result;
+		}
+
+		bool parse_int64(int64_t& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			_src = eat_white(_src);
+			if (isdigit(*_src) or *_src == '-')
+			{
+				std::string temp = "";
+				result = true;
+				while (isdigit(*_src) or *_src == '_' or *_src == '-')
+				{
+					check_line(_src);
+					if (*_src != '_') {
+						temp += *_src;
+					}
+					_src++;
+				}
+				_result = std::strtoll(temp.c_str(), nullptr, 10);
+				result = true;
+			}
+			*_modified = _src;
+			return result;
+		}
+
+		bool parse_boolean(double& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			_src = eat_white(_src);
+			if (isalpha(*_src))
+			{
+				std::string temp = "";
+				result = true;
+				while (isalnum(*_src) or *_src == '_')
+				{
+					check_line(_src);
+					temp += *_src;
+					_src++;
+				}
+				if (temp == "true")
+				{
+					_result = 1.0;
+					result = true;
+				}
+				else if (temp == "false")
+				{
+					_result = 0.0;
+					result = true;
+				}
+				else
+				{
+					result = false;
+				}
+
+			}
+			*_modified = _src;
+			return result;
+		}
+
+		bool parse_null(const char* _src, const char** _modified)
+		{
+			bool result = false;
+			_src = eat_white(_src);
+			if (isalpha(*_src))
+			{
+				std::string temp = "";
+				result = true;
+				while (isalnum(*_src) or *_src == '_')
+				{
+					check_line(_src);
+					temp += *_src;
+					_src++;
+				}
+				if (temp == "null")
+				{
+					result = true;
+				}
+				else
+				{
+					result = false;
+				}
+			}
+			*_modified = _src;
+			return result;
+		}
+
+
+	};
+
+	class json_parser : public parser_base
+	{
 
 	public:
 
-		class parse_message
-		{
-		public:
-			int line;
-			int char_index;
-			std::string topic;
-			std::string error;
-		};
-
-		std::vector<parse_message> parse_errors;
 
 		json from_double(double _d)
 		{
@@ -3130,225 +3377,6 @@ namespace corona
 				_object->members[_name] = modified_value;
 			}
 			return modified_value;
-		}
-
-	private:
-
-
-		void check_line(const char* nl)
-		{
-			char_index++;
-			if (*nl == '\r') {
-				line_number++;
-				char_index = 0;
-			}
-		}
-
-		void error(std::string _topic, std::string _message)
-		{
-			parse_message new_message = { line_number, char_index, _topic, _message };
-			parse_errors.push_back(new_message);
-		}
-
-		const char* eat_white(const char* _src)
-		{
-			if (not _src)
-				return _src;
-			while (std::isspace(*_src))
-				_src++;
-			return _src;
-		}
-
-		bool parse_member_type(std::string& _result, const char* _src, const char** _modified)
-		{
-			bool result = false;
-			std::string temp = "";
-			_src = eat_white(_src);
-			if (*_src == '$')
-			{
-				_src++;
-				result = true;
-				while (isalnum(*_src))
-				{
-					check_line(_src);
-					temp += *_src;
-					_src++;
-				}
-				*_modified = _src;
-				_result = temp;
-			}
-			return result;
-		}
-
-		bool parse_string(std::string& _result, const char* _src, const char** _modified)
-		{
-			bool result = false;
-			std::string temp = "";
-			_src = eat_white(_src);
-			if (*_src == '"')
-			{
-				_src++;
-				result = true;
-				bool parsing = false;
-				while (*_src != '"')
-				{
-					check_line(_src);
-					if (*_src < 0 or std::iscntrl(*_src))
-					{
-						_src++;
-						continue;
-					}
-					else if (*_src == '\\')
-					{
-						_src++;
-						switch (*_src)
-						{
-						case '"':
-							temp += '"';
-							break;
-						case '\\':
-							temp += '\\';
-							break;
-						case '/':
-							temp += '/';
-							break;
-						case 'b':
-							temp += 0x8;
-							break;
-						case 'f':
-							temp += 12;
-							break;
-						case 'n':
-							temp += 10;
-							break;
-						case 'r':
-							temp += 13;
-							break;
-						case 't':
-							temp += 9;
-							break;
-						case 'u':
-							break;
-						}
-					}
-					else
-					{
-						temp += *_src;
-					}
-					_src++;
-				}
-				_result = temp;
-				_src++;
-			}
-			*_modified = _src;
-			return result;
-		}
-
-		bool parse_number(double& _result, const char* _src, const char** _modified)
-		{
-			bool result = false;
-			_src = eat_white(_src);
-			if (isdigit(*_src) or *_src == '.' or *_src == '-')
-			{
-				std::string temp = "";
-				result = true;
-				while (isdigit(*_src) or *_src == '.' or *_src == '_' or *_src == '-')
-				{
-					check_line(_src);
-					if (*_src != '_') {
-						temp += *_src;
-					}
-					_src++;
-				}
-				_result = std::strtod(temp.c_str(), nullptr);
-				result = true;
-			}
-			*_modified = _src;
-			return result;
-		}
-
-		bool parse_int64(int64_t& _result, const char* _src, const char** _modified)
-		{
-			bool result = false;
-			_src = eat_white(_src);
-			if (isdigit(*_src) or *_src == '-')
-			{
-				std::string temp = "";
-				result = true;
-				while (isdigit(*_src) or *_src == '_' or *_src == '-')
-				{
-					check_line(_src);
-					if (*_src != '_') {
-						temp += *_src;
-					}
-					_src++;
-				}
-				_result = std::strtoll(temp.c_str(), nullptr, 10);
-				result = true;
-			}
-			*_modified = _src;
-			return result;
-		}
-
-		bool parse_boolean(double& _result, const char* _src, const char** _modified)
-		{
-			bool result = false;
-			_src = eat_white(_src);
-			if (isalpha(*_src))
-			{
-				std::string temp = "";
-				result = true;
-				while (isalnum(*_src) or *_src == '_')
-				{
-					check_line(_src);
-					temp += *_src;
-					_src++;
-				}
-				if (temp == "true") 
-				{
-					_result = 1.0;
-					result = true;
-				}
-				else if (temp == "false") 
-				{
-					_result = 0.0;
-					result = true;
-				}
-				else
-				{
-					result = false;
-				}
-				
-			}
-			*_modified = _src;
-			return result;
-		}
-
-		bool parse_null(const char* _src, const char** _modified)
-		{
-			bool result = false;
-			_src = eat_white(_src);
-			if (isalpha(*_src))
-			{
-				std::string temp = "";
-				result = true;
-				while (isalnum(*_src) or *_src == '_')
-				{
-					check_line(_src);
-					temp += *_src;
-					_src++;
-				}
-				if (temp == "null")
-				{
-					result = true;
-				}
-				else
-				{
-					result = false;
-				}
-			}
-			*_modified = _src;
-			return result;
 		}
 
 	public:

@@ -1,8 +1,8 @@
 #define APPLICATION_CANDIDATE 1
 #define APPLICATION_GUITAR 2
 #define APPLICATION_AURA 3
-#define APPLICATION_SOCIALISM 4
-#define APPLICATION_ID APPLICATION_SOCIALISM
+#define APPLICATION_REVOLUTION 4
+#define APPLICATION_ID APPLICATION_REVOLUTION
 
 
 #if APPLICATION_ID == APPLICATION_AURA
@@ -20,9 +20,9 @@
 #define application_function(a,b) corona::run_proposal_application(a,b);
 #endif
 
-#if APPLICATION_ID == APPLICATION_SOCIALISM
-#include "app_socialism.hpp"
-#define application_function(a,b) corona::run_reparations_application(a,b);
+#if APPLICATION_ID == APPLICATION_REVOLUTION
+#include "app_revolution.hpp"
+#define application_function(a,b) corona::run_revolution_application(a,b);
 #endif
 
 int __stdcall WinMain(HINSTANCE hInstance,

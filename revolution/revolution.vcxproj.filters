@@ -33,12 +33,12 @@
     <ClInclude Include="app_donation_finder.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="app_revolution.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="revolution.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="app_socialism.hpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -60,12 +60,12 @@
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="client.json" />
-    <CopyFileToFolders Include="reparations_pages.json" />
-    <CopyFileToFolders Include="reparations_styles.json" />
+    <CopyFileToFolders Include="revolution_pages.json" />
+    <CopyFileToFolders Include="revolution_styles.json" />
     <CopyFileToFolders Include="cockade.png">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="reparations_schema.json" />
+    <CopyFileToFolders Include="revolution_schema.json" />
     <CopyFileToFolders Include="config.json" />
     <CopyFileToFolders Include="candidate_pages.json" />
     <CopyFileToFolders Include="candidate_schema.json" />

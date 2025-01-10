@@ -1,0 +1,137 @@
+{
+  "schema_name": "Country Video Games Revolution",
+  "schema_description": "Schema for the Revolution Server.",
+  "schema_version": "1.0",
+  "schema_authors": [
+    "TJ Bandrowsky"
+  ],
+  "classes": [
+    {
+      "class_name": "item",
+      "class_description": "a component of an object",
+      "base_class_name": "sys_object",
+      "fields": {
+        "actor_id": "int64",
+        "item_number": "string",
+        "item_name": "string",
+        "item_description": "string",
+        "item_price": "double",
+        "item_qty": "double"
+      },
+      "indexes": {
+        "idx_item_actor": {
+          "index_keys": [
+            "actor_id"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "actor",
+      "class_description": "a thing that can have or create products",
+      "base_class_name": "sys_object",
+      "fields": {
+        "location_id": "int64",
+        "actor_name": "string",
+        "actor_health": "string",
+        "actor_description": "string",
+        "actor_shape": "string",
+        "coins": "double",
+        "items": {
+          "field_type": "array",
+          "child_objects": {
+            "item": {
+              "copy_values": {
+                "actor_id": "actor_id"
+              }
+            }
+          }
+        }
+      },
+      "indexes": {
+        "idx_actor_location": {
+          "index_keys": [ "location_id" ]
+        }
+      }
+    },
+    {
+      "class_name": "bank",
+      "class_description": "a character",
+      "base_class_name": "actor",
+      "fields": {
+        "coins_in_circulation": "double"
+      }
+    },
+    {
+      "class_name": "point2d",
+      "class_description": "a point",
+      "base_class_name": "content_box",
+      "fields": {
+        "x": "double",
+        "y": "double"
+      }
+    },
+    {
+      "class_name": "content_box",
+      "class_description": "an item on a slide show",
+      "base_class_name": "sys_object",
+      "fields": {
+        "background_border": "object",
+        "background_fill": "object"
+      }
+    },
+    {
+      "class_name": "shape_box",
+      "class_description": "text element",
+      "base_class_name": "content_box",
+      "fields": {
+         "background_border": "object",
+         "background_fill": "object"
+      }
+    },
+    {
+      "class_name": "text_box",
+      "class_description": "text element",
+      "base_class_name": "content_box",
+      "fields": {
+        "font_face": "string",
+        "font_size": "string",
+        "font_weight": "double",
+        "font_bold": "bool",
+        "font_italic": "bool",
+        "font_underline": "bool",
+        "font_strikethrough": "bool"
+      }
+    },
+    {
+      "class_name": "slide",
+      "class_description": "an item on a slide",
+      "base_class_name": "sys_object",
+      "fields": {
+        "presentation_id": "int64"
+      }
+    },
+    {
+      "class_name": "presentation",
+      "class_description": "a slide show, content",
+      "base_class_name": "item",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "library",
+      "class_description": "a character",
+      "base_class_name": "actor",
+      "fields": {
+        "coins_in_circulation": "double"
+      }
+    }
+  ],
+  "users": [
+  ],
+  "datasets": [
+    {
+    }
+  ]
+}

@@ -60,6 +60,81 @@ namespace corona
 		grant_own = 2
 	};
 
+	class child_object_definition 
+	{
+	public:
+		bool					 is_undefined;
+		bool					 is_array;
+		std::vector<std::string> allowed_bases;
+
+		child_object_definition()
+		{
+			is_undefined = true;
+			is_array = false;
+		}
+
+		child_object_definition(const child_object_definition& _src) = default;
+		child_object_definition(child_object_definition&& _src) = default;
+		child_object_definition& operator =(const child_object_definition& _src) = default;
+		child_object_definition& operator =(child_object_definition&& _src) = default;
+
+		static child_object_definition parse_child_object(const char* _src)
+		{
+			parser_base pb;
+			child_object_definition cod;
+
+			// parse symbol until end or [
+			// if there is a [
+			// if end, end 
+			// 
+			// parse classname until end or ] or ,
+			// if comma, add cn, reset classname
+			// if ] end declaration
+			// if end, end 
+
+			if ((not _src) or (*_src == 0))
+			{
+				return cod;
+			}
+
+			_src = pb.eat_white(_src);
+			if (*_src == '[') 
+			{
+				_src++;
+				cod.is_array = true;
+			}
+
+			_src = pb.eat_white(_src);
+			do 
+			{
+				std::string symbol_name;
+				bool success = pb.parse_symbol(symbol_name, _src, &_src);
+				if (success) 
+				{
+					cod.allowed_bases.push_back(symbol_name);
+				}
+				else 
+				{
+					pb.error("declaration", "bad symbol");
+				}
+				_src = pb.eat_white(_src);
+			} 
+			while (*_src and *_src != ']');
+
+			if (not cod.is_array and *_src == ']') 
+			{
+				pb.error("declaration", "invalid array terminator");
+			}
+
+			if (not pb.has_errors())
+			{
+				cod.is_undefined = false;
+			}
+
+			return cod;
+		}
+	};
+
 	class class_permissions {
 	public:
 		std::string		user_name;
@@ -340,7 +415,6 @@ namespace corona
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(json& _src) = 0;
 		virtual void copy(json& _dest, json& _src) = 0;
-		virtual void construct(json& _dest) = 0;
 		virtual json get_field(json& src) = 0;
 	};
 
@@ -646,7 +720,6 @@ namespace corona
 	{
 		std::string							child_class_name;
 		json								copy_values;
-		json								construct_values;
 
 	public:
 
@@ -664,39 +737,35 @@ namespace corona
 		{
 			_dest.put_member("child_class_name", child_class_name);
 			_dest.put_member("copy_values", copy_values);
-			_dest.put_member("construct_values", construct_values);
 		}
 
 		virtual void put_json(json& _src)  override
 		{
 			child_class_name = _src["child_class_name"];
 			copy_values = _src["copy_values"];
-			construct_values = _src["construct_values"];
+		}
+
+		virtual void put_child_object(std::string& _child_class_name, json& _copy_values)
+		{
+			child_class_name = _child_class_name;
+			copy_values = _copy_values;
 		}
 
 		virtual void copy(json& _dest, json& _src)  override
 		{
-			auto members = copy_values.get_members();
+			if (copy_values.object()) {
+				auto members = copy_values.get_members();
 
-			for (auto member : members) 
-			{
-				std::string _src_key = member.first;
-				std::string _dest_key = member.second;
-				if (not (_src_key.empty() or _dest_key.empty()))
+				for (auto member : members)
 				{
-					json value = _src[_src_key];
-					_dest.put_member(_dest_key, value);
+					std::string _src_key = member.first;
+					std::string _dest_key = member.second;
+					if (not (_src_key.empty() or _dest_key.empty()))
+					{
+						json value = _src[_src_key];
+						_dest.put_member(_dest_key, value);
+					}
 				}
-			}
-		}
-
-		virtual void construct(json& _dest)  override
-		{
-			auto members = construct_values.get_members();
-			for (auto member : members)
-			{
-				std::string _dest_key = member.first;
-				_dest.put_member(_dest_key, member.second);
 			}
 		}
 
@@ -737,6 +806,18 @@ namespace corona
 				json obj = jp.create_object();
 				ctor.second->get_json(obj);
 				_dest.put_member(ctor.first, obj);
+			}
+		}
+
+		virtual void put_child_object(child_object_definition& _cod)
+		{
+			base_constructors.clear();
+			all_constructors.clear();
+			for (auto class_name : _cod.allowed_bases) {
+				std::shared_ptr<child_bridge_implementation> new_bridge = std::make_shared<child_bridge_implementation>();
+				new_bridge->put_child_object(class_name, _cod.copy_values);
+				new_bridge->set_class_name(class_name);
+				base_constructors.insert_or_assign(class_name, new_bridge);
 			}
 		}
 
@@ -814,6 +895,9 @@ namespace corona
 			return result_array;
 		}
 
+
+
+
 	};
 
 	class array_field_options : public field_options_base
@@ -851,6 +935,12 @@ namespace corona
 			if (jctors.object()) {
 				bridges->put_json(jctors);
 			}
+		}
+
+		virtual void put_child_object(child_object_definition& _cod)
+		{
+			bridges = std::make_shared<child_bridges>();
+			bridges->put_child_object(_cod);
 		}
 
 		virtual void init_validation() override
@@ -962,6 +1052,12 @@ namespace corona
 			if (jctors.object()) {
 				bridges->put_json(jctors);
 			}
+		}
+
+		virtual void put_child_object(child_object_definition& _cod)
+		{
+			bridges = std::make_shared<child_bridges>();
+			bridges->put_child_object(_cod);
 		}
 
 		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions)
@@ -1471,14 +1567,14 @@ namespace corona
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src)
 		{
 
-			auto s = _src["field_type"];
+			std::string s = _src["field_type"];
 			auto aft = allowed_field_types.find(s);
 			if (aft != std::end(allowed_field_types)) {
 				field_type = aft->second;
 			}
 			field_name = _src["field_name"];
 
-			if (field_type == field_types::ft_object) 
+			if (field_type == field_types::ft_object)
 			{
 				options = std::make_shared<object_field_options>();
 				options->put_json(_src);
@@ -1521,6 +1617,26 @@ namespace corona
 			else if (field_type == field_types::ft_function)
 			{
 				;
+			}
+			else
+			{
+				child_object_definition cod = child_object_definition::parse_child_object(s.c_str());
+
+				if (not cod.is_undefined)
+				{
+					if (not cod.is_array)
+					{
+						auto obj_options = std::make_shared<object_field_options>();
+						obj_options->put_child_object(cod);
+						options = obj_options;
+					}
+					else 
+					{
+						auto arr_options = std::make_shared<array_field_options>();
+						arr_options->put_child_object(cod);
+						options = arr_options;
+					}
+				}
 			}
 		}
 

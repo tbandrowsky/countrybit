@@ -575,7 +575,7 @@
       <FileType>CppCode</FileType>
     </ClInclude>
     <ClInclude Include="app_donation_finder.hpp" />
-    <ClCompile Include="app_socialism.hpp" />
+    <ClInclude Include="app_revolution.hpp" />
     <ClCompile Include="revolution.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -605,7 +605,7 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="reparations_pages.json">
+    <CopyFileToFolders Include="revolution_pages.json">
       <FileType>Document</FileType>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
     </CopyFileToFolders>
@@ -620,11 +620,11 @@
       <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TreatOutputAsContent>
       <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</TreatOutputAsContent>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="reparations_schema.json">
+    <CopyFileToFolders Include="revolution_schema.json">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <FileType>Document</FileType>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="reparations_styles.json">
+    <CopyFileToFolders Include="revolution_styles.json">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <FileType>Document</FileType>
     </CopyFileToFolders>

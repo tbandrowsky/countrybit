@@ -178,6 +178,7 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
     </CopyFileToFolders>
     <None Include="packages.config" />
+    <None Include="revolution_schema.json" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="dockerfile" />

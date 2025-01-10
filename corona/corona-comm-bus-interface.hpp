@@ -277,7 +277,6 @@ namespace corona
 		virtual json put_object(corona_instance _instance, json object_information) = 0;
 		virtual json get_object(corona_instance _instance, json object_information) = 0;
 		virtual json delete_object(corona_instance _instance, json object_information) = 0;
-		virtual json pop_object(corona_instance _instance, json object_information) = 0;
 		virtual json query_objects(corona_instance _instance, json object_information) = 0;
 		virtual void error(json _error) = 0;
 

@@ -1,13 +1,13 @@
 
-#ifndef APP_CANDIDATE_H
-#define APP_CANDIDATE_H
+#ifndef APP_REVOLUTION_H
+#define APP_REVOLUTION_H
 
 #include "resource.h"
 #include "corona.hpp"
 
 namespace corona
 {
-	void run_socialism_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
+	void run_revolution_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
 
 	/*
 
@@ -43,11 +43,11 @@ namespace corona
 
 	/* And now, this is the application */
 
-	void run_socialism_application(HINSTANCE hInstance, LPSTR lpszCmdParam)
+	void run_revolution_application(HINSTANCE hInstance, LPSTR lpszCmdParam)
 	{
 		EnableGuiStdOuts();
 
-		comm_app_bus bus("socialism", "socialism", "socialism_");
+		comm_app_bus bus("revolution", "revolution", "revolution_");
 
 		bus.run_app_ui(hInstance, lpszCmdParam, false);
 
