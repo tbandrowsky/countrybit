@@ -126,7 +126,7 @@ namespace corona
 			std::string src_field;
 			std::shared_ptr<child_object_class> new_class = std::make_shared<child_object_class>();
 
-			while (status != parsing_complete)
+			while (status != parsing_complete and status != parsing_error)
 			{
 				_src = pb.eat_white(_src);
 
@@ -141,10 +141,12 @@ namespace corona
 						new_class->class_name = class_name;
 						if (*_src == ':')
 						{
+							_src++;
 							status = parsing_dst_field;
 						}
 						else if (*_src == ';')
 						{
+							_src++;
 							cod.child_classes.push_back(new_class);
 							new_class = std::make_shared<child_object_class>();
 							status = parsing_class_name;
@@ -152,11 +154,14 @@ namespace corona
 						else
 						{
 							pb.error("declaration", "syntax error after class name");
+							status = parsing_error;
 						}
 					}
 					else
 					{
 						pb.error("declaration", "invalid class name");
+						status = parsing_error;
+
 					}
 				}
 				else if (status == parsing_dst_field) 
@@ -165,15 +170,18 @@ namespace corona
 						_src = pb.eat_white(_src);
 						if (*_src == '=')
 						{
+							_src++;
 							status = parsing_src_field;
 						}
 						else if (*_src == ',')
 						{
+							_src++;
 							status = parsing_dst_field;
 							new_class->copy_values.insert_or_assign("object_id", dest_field);
 						}
 						else if (*_src == ';')
 						{
+							_src++;
 							status = parsing_dst_field;
 							new_class->copy_values.insert_or_assign("object_id", dest_field);
 							cod.child_classes.push_back(new_class);
@@ -181,11 +189,13 @@ namespace corona
 						else 
 						{
 							pb.error("declaration", "syntax error after dst field");
+							status = parsing_error;
 						}
 					}
 					else
 					{
 						pb.error("declaration", "invalid dest symbol");
+						status = parsing_error;
 					}
 				}
 				else if (status == parsing_src_field)
@@ -195,21 +205,25 @@ namespace corona
 						_src = pb.eat_white(_src);
 						if (*_src == ',')
 						{
+							_src++;
 							status = parsing_dst_field;
 						}
 						else if (*_src == ';')
 						{
+							_src++;
 							status = parsing_dst_field;
 							new_class->copy_values.insert_or_assign("object_id", dest_field);
 						}
 						else
 						{
 							pb.error("declaration", "syntax error after src field");
+							status = parsing_error;
 						}
 					}
 					else 
 					{
 						pb.error("declaration", "invalid src symbol");
+						status = parsing_error;
 					}
 				}
 			}
@@ -217,6 +231,7 @@ namespace corona
 			if (not cod.is_array and *_src == ']') 
 			{
 				pb.error("declaration", "invalid array terminator");
+				status = parsing_error;
 			}
 
 			if (not pb.has_errors())
