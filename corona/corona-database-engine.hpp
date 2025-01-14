@@ -60,12 +60,19 @@ namespace corona
 		grant_own = 2
 	};
 
+	class child_object_class
+	{
+	public:
+		std::string class_name;
+		std::map<std::string, std::string> copy_values;
+	};
+
 	class child_object_definition 
 	{
 	public:
 		bool					 is_undefined;
 		bool					 is_array;
-		std::vector<std::string> allowed_bases;
+		std::vector<std::shared_ptr<child_object_class>> child_classes;
 
 		child_object_definition()
 		{
@@ -104,22 +111,108 @@ namespace corona
 				cod.is_array = true;
 			}
 
-			_src = pb.eat_white(_src);
-			do 
+			enum parse_states {
+				parsing_class_name,
+				parsing_dst_field,
+				parsing_src_field,
+				parsing_complete,
+				parsing_error
+			} status;
+
+			status = parsing_class_name;
+
+			std::string class_name;
+			std::string dest_field;
+			std::string src_field;
+			std::shared_ptr<child_object_class> new_class = std::make_shared<child_object_class>();
+
+			while (status != parsing_complete)
 			{
-				std::string symbol_name;
-				bool success = pb.parse_symbol(symbol_name, _src, &_src);
-				if (success) 
-				{
-					cod.allowed_bases.push_back(symbol_name);
-				}
-				else 
-				{
-					pb.error("declaration", "bad symbol");
-				}
 				_src = pb.eat_white(_src);
-			} 
-			while (*_src and *_src != ']');
+
+				if (*_src == 0)
+				{
+					status = parsing_complete;
+				}
+				else if (status == parsing_class_name)
+				{
+					if (pb.parse_symbol(class_name, _src, &_src)) {
+						_src = pb.eat_white(_src);
+						new_class->class_name = class_name;
+						if (*_src == ':')
+						{
+							status = parsing_dst_field;
+						}
+						else if (*_src == ';')
+						{
+							cod.child_classes.push_back(new_class);
+							new_class = std::make_shared<child_object_class>();
+							status = parsing_class_name;
+						}
+						else
+						{
+							pb.error("declaration", "syntax error after class name");
+						}
+					}
+					else
+					{
+						pb.error("declaration", "invalid class name");
+					}
+				}
+				else if (status == parsing_dst_field) 
+				{
+					if (pb.parse_symbol(dest_field, _src, &_src)) {
+						_src = pb.eat_white(_src);
+						if (*_src == '=')
+						{
+							status = parsing_src_field;
+						}
+						else if (*_src == ',')
+						{
+							status = parsing_dst_field;
+							new_class->copy_values.insert_or_assign("object_id", dest_field);
+						}
+						else if (*_src == ';')
+						{
+							status = parsing_dst_field;
+							new_class->copy_values.insert_or_assign("object_id", dest_field);
+							cod.child_classes.push_back(new_class);
+						}
+						else 
+						{
+							pb.error("declaration", "syntax error after dst field");
+						}
+					}
+					else
+					{
+						pb.error("declaration", "invalid dest symbol");
+					}
+				}
+				else if (status == parsing_src_field)
+				{
+					if (pb.parse_symbol(src_field, _src, &_src)) {
+						new_class->copy_values.insert_or_assign(src_field, dest_field);
+						_src = pb.eat_white(_src);
+						if (*_src == ',')
+						{
+							status = parsing_dst_field;
+						}
+						else if (*_src == ';')
+						{
+							status = parsing_dst_field;
+							new_class->copy_values.insert_or_assign("object_id", dest_field);
+						}
+						else
+						{
+							pb.error("declaration", "syntax error after src field");
+						}
+					}
+					else 
+					{
+						pb.error("declaration", "invalid src symbol");
+					}
+				}
+			}
 
 			if (not cod.is_array and *_src == ']') 
 			{
@@ -134,6 +227,109 @@ namespace corona
 			return cod;
 		}
 	};
+
+	void test_parse_child_field(std::shared_ptr<test_set> _tests)
+	{
+		date_time st = date_time::now();
+		timer tx;
+		system_monitoring_interface::global_mon->log_function_start("parse_child_field", "start", st, __FILE__, __LINE__);
+
+		child_object_definition cd;
+		bool result;
+
+		const char *case1 = "class1";
+		cd = child_object_definition::parse_child_object(case1);
+		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == case1 and cd.child_classes[0]->copy_values.size()==0;
+		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
+
+		const char* case2 = "class2:target";
+		cd = child_object_definition::parse_child_object(case2);
+		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == case2 and cd.child_classes[0]->copy_values.contains("target");
+		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
+
+		const char* case3 = "class2:target = src";
+		cd = child_object_definition::parse_child_object(case3);
+		result = not cd.is_undefined and cd.child_classes.size() == 1 
+			and cd.child_classes[0]->class_name == "class2"
+			and cd.child_classes[0]->copy_values.contains("target")
+			and cd.child_classes[0]->copy_values["target"] == "src";
+		_tests->test({ std::format("child object {0}", case3), result , __FILE__, __LINE__ });
+
+		const char *case4 = "class1:target1;class2:target2 = src2;";
+		cd = child_object_definition::parse_child_object(case4);
+		result = not cd.is_undefined and cd.child_classes.size() == 2
+			and cd.child_classes[0]->class_name == "class1"
+			and cd.child_classes[1]->class_name == "class2"
+			and cd.child_classes[0]->copy_values.contains("target1")
+			and cd.child_classes[1]->copy_values.contains("target2")
+			and cd.child_classes[0]->copy_values["target1"] == "src1"
+			and cd.child_classes[1]->copy_values["target2"] == "src2";
+		_tests->test({ std::format("child object {0}", case4), result , __FILE__, __LINE__ });
+
+		const char* case5 = "class2:target";
+		cd = child_object_definition::parse_child_object(case5);
+		result = not cd.is_undefined 
+			and cd.child_classes.size() == 1 
+			and cd.child_classes[0]->class_name == "class2" 
+			and cd.child_classes[0]->copy_values.contains("target");
+		_tests->test({ std::format("child object {0}", case5), result , __FILE__, __LINE__ });
+
+		const char* case6 = "class2:target = src";
+		cd = child_object_definition::parse_child_object(case6);
+		result = not cd.is_undefined and cd.child_classes.size() == 1 
+			and cd.child_classes[0]->class_name == "class2"
+			and cd.child_classes[0]->copy_values.contains("target")
+			and cd.child_classes[0]->copy_values["target"] == "src";
+		_tests->test({ std::format("child object {0}", case6), result , __FILE__, __LINE__ });
+
+		const char* acase1 = "[ class1 ]";
+		cd = child_object_definition::parse_child_object(case1);
+		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == case1 and cd.child_classes[0]->copy_values.size() == 0;
+		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
+
+		const char* acase2 = "[ class2:target ]";
+		cd = child_object_definition::parse_child_object(case2);
+		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == case2 and cd.child_classes[0]->copy_values.contains("target");
+		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
+
+		const char* acase3 = "[ class2:target = src ]";
+		cd = child_object_definition::parse_child_object(case3);
+		result = not cd.is_undefined and cd.child_classes.size() == 1
+			and cd.child_classes[0]->class_name == "class2"
+			and cd.child_classes[0]->copy_values.contains("target")
+			and cd.child_classes[0]->copy_values["target"] == "src";
+		_tests->test({ std::format("child object {0}", case3), result , __FILE__, __LINE__ });
+
+		const char* acase4 = "[ class1:target1;class2:target2 = src2 ]";
+		cd = child_object_definition::parse_child_object(case4);
+		result = not cd.is_undefined and cd.child_classes.size() == 2
+			and cd.child_classes[0]->class_name == "class1"
+			and cd.child_classes[1]->class_name == "class2"
+			and cd.child_classes[0]->copy_values.contains("target1")
+			and cd.child_classes[1]->copy_values.contains("target2")
+			and cd.child_classes[0]->copy_values["target1"] == "src1"
+			and cd.child_classes[1]->copy_values["target2"] == "src2";
+		_tests->test({ std::format("child object {0}", case4), result , __FILE__, __LINE__ });
+
+		const char* acase5 = "[ class2:target ]";
+		cd = child_object_definition::parse_child_object(acase5);
+		result = not cd.is_undefined
+			and cd.child_classes.size() == 1
+			and cd.child_classes[0]->class_name == "class2"
+			and cd.child_classes[0]->copy_values.contains("target");
+		_tests->test({ std::format("child object {0}", acase5), result , __FILE__, __LINE__ });
+
+		const char* acase6 = "[ class2:target = src ]";
+		cd = child_object_definition::parse_child_object(acase6);
+		result = not cd.is_undefined 
+			and cd.child_classes.size() == 1 
+			and cd.child_classes[0]->class_name == "class2" 
+			and cd.child_classes[0]->copy_values.contains("target") 
+			and cd.child_classes[0]->copy_values["target"] == "src";
+		_tests->test({ std::format("child object {0}", acase6), result , __FILE__, __LINE__ });
+
+		system_monitoring_interface::global_mon->log_function_stop("parse_child_field", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+	}
 
 	class class_permissions {
 	public:
@@ -792,7 +988,6 @@ namespace corona
 
 	};
 
-
 	class child_bridges: public child_bridges_interface
 	{
 	public:
@@ -813,11 +1008,18 @@ namespace corona
 		{
 			base_constructors.clear();
 			all_constructors.clear();
-			for (auto class_name : _cod.allowed_bases) {
+			for (auto class_def : _cod.child_classes) {
 				std::shared_ptr<child_bridge_implementation> new_bridge = std::make_shared<child_bridge_implementation>();
-				new_bridge->put_child_object(class_name, _cod.copy_values);
-				new_bridge->set_class_name(class_name);
-				base_constructors.insert_or_assign(class_name, new_bridge);
+				json_parser jp;
+				json copy_values = jp.create_object();
+				for (auto pair : class_def->copy_values)
+				{
+					copy_values.put_member(pair.first, pair.second);
+				}
+				
+				new_bridge->put_child_object(class_def->class_name, copy_values);
+				new_bridge->set_class_name(class_def->class_name);
+				base_constructors.insert_or_assign(class_def->class_name, new_bridge);
 			}
 		}
 

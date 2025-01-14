@@ -2979,7 +2979,7 @@ namespace corona
 			if (std::isalpha(*_src))
 			{
 				result = true;
-				while (isalnum(*_src))
+				while (isalnum(*_src) || *_src == '.')
 				{
 					check_line(_src);
 					temp += *_src;

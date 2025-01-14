@@ -168,6 +168,9 @@ namespace corona
 			testo = tm.create_test_set("file block", dependencies);
 			test_file_block(testo, app);
 
+			testo = tm.create_test_set("child_field", dependencies);
+			test_parse_child_field(testo);
+
 			dependencies = { "file block", "object" };
 			testo = tm.create_test_set("file", dependencies);
 			test_file(testo, app);
