@@ -50,12 +50,12 @@
       }
     },
     {
-      "class_name": "box",
+      "class_name": "shape",
       "class_description": "an item on a slide show",
       "base_class_name": "sys_object",
       "fields": {
         "content_name": "string",
-        "parent_box_id": "int64",
+        "parent_shape_id": "int64",
         "border_brush": "string",
         "background_brush": "string",
         "x": "string",
@@ -70,23 +70,23 @@
     {
       "class_name": "polygon",
       "class_description": "an item on a slide show",
-      "base_class_name": "box",
+      "base_class_name": "shape",
       "fields": {
-        "points": "[draw_point:parent_polygon_id]"
+        "points": "[point:parent_polygon_id]"
       }
     },
     {
       "class_name": "layout",
       "class_description": "items on a slide organized into a layout",
-      "base_class_name": "box",
+      "base_class_name": "shape",
       "fields": {
-        "children": "[content_box:parent_box_id]"
+        "children": "[shape:parent_shape_id]"
       }
     },
     {
       "class_name": "row",
       "class_description": "items on a slide organized into a row",
-      "base_class_name": "layout_box",
+      "base_class_name": "layout_shape",
       "fields": {
 
       }
@@ -94,7 +94,7 @@
     {
       "class_name": "column",
       "class_description": "items on a slide organized into a row",
-      "base_class_name": "layout_box",
+      "base_class_name": "layout_shape",
       "fields": {
 
       }
@@ -102,7 +102,7 @@
     {
       "class_name": "absolute",
       "class_description": "items on a slide organized into a row",
-      "base_class_name": "layout_box",
+      "base_class_name": "layout_shape",
       "fields": {
 
       }
@@ -110,7 +110,7 @@
     {
       "class_name": "text",
       "class_description": "text element",
-      "base_class_name": "box",
+      "base_class_name": "shape",
       "fields": {
         "text": "string",
         "font_face": "string",
@@ -125,7 +125,7 @@
     {
       "class_name": "image",
       "class_description": "image element",
-      "base_class_name": "box",
+      "base_class_name": "shape",
       "fields": {
         "image_file_name": "string",
         "image_mime_type": "string"
@@ -134,19 +134,9 @@
     {
       "class_name": "slide",
       "class_description": "an page in a presentation",
-      "base_class_name": "box",
+      "base_class_name": "absolute",
       "fields": {
         "parent_presentation_id": "int64"
-      }
-    },
-    {
-      "class_name": "presentation_category",
-      "class_description": "classification of the presentation",
-      "base_class_name": "sys_object",
-      "fields": {
-        "category_name": "string",
-        "category_description": "string",
-        "presentations": "[presentation:category_id]"
       }
     },
     {
@@ -155,21 +145,22 @@
       "base_class_name": "sys_object",
       "fields": {
         "actor_id": "int64",
-        "category_id": "int64",
         "presentation_name": "string",
         "presentation_description": "string",
         "slides": "[slide:presentation_id]"
       }
     },
     {
-      "class_name": "location",
+      "class_name": "place",
       "class_description": "a place that has actors and jobs",
       "base_class_name": "sys_object",
       "fields": {
-        "location_name": "string",
-        "location_description": "string",
-        "actors": "[actor:location_id]",
-        "jobs": "[job:location_id]"
+        "place_name": "string",
+        "place_description": "string",
+        "parent_place_id": "int64",
+        "actors": "[actor:place_id]",
+        "jobs": "[job:place_id]",
+        "places": "[place:parent_place_id]"
       }
     },
     {
@@ -177,52 +168,57 @@
       "class_description": "a job of some kind",
       "base_class_name": "sys_object",
       "fields": {
-        "actor_id": "int64",
-        "category_id": "int64",
+        "parent_object_id": "int64",
         "job_name": "string",
         "job_description": "string",
-        "location": "location:job_id"
+        "place": "place:job_id"
       }
     },
     {
       "class_name": "bank",
       "class_description": "banks pay people and sell things",
-      "base_class_name": "location",
+      "base_class_name": "place",
       "fields": {
+        "bank_name": "string",
+        "bank_description": "string"
       }
     },
     {
       "class_name": "library",
       "class_description": "libraries hold media types",
-      "base_class_name": "location",
+      "base_class_name": "place",
       "fields": {
+        "library_name": "string",
+        "library_description": "string"
       }
     },
     {
       "class_name": "school",
       "class_description": "schools have teachers and quizzes",
-      "base_class_name": "location",
+      "base_class_name": "place",
       "fields": {
+        "school_name": "string",
+        "school_description": "string"
       }
     },
     {
       "class_name": "factory",
       "class_description": "a place where goods and materials are transformed into other products",
-      "base_class_name": "location",
+      "base_class_name": "place",
       "fields": {
       }
     },
     {
       "class_name": "farm",
       "class_description": "a place where food is grown and livestock raised",
-      "base_class_name": "location",
+      "base_class_name": "place",
       "fields": {
       }
     },
     {
       "class_name": "mine",
       "class_description": "a place to get raw materials from the ground",
-      "base_class_name": "location",
+      "base_class_name": "place",
       "fields": {
       }
     },
@@ -231,17 +227,53 @@
       "class_description": "a thing that can have or create products",
       "base_class_name": "sys_object",
       "fields": {
-        "location_id": "int64",
+        "place_id": "int64",
         "actor_name": "string",
         "actor_description": "string",
-        "jobs": "[job:actor_id]",
-        "items": "[parse_base:parent_actor_id]"
+        "jobs": "[job:parent_object_id]",
+        "tools": "[tool:parent_object_id]"
       },
       "indexes": {
-        "idx_actor_location": {
-          "index_keys": [ "location_id" ]
+        "idx_actor_place": {
+          "index_keys": [ "place_id" ]
         }
       }
+    },
+    {
+      "class_name": "actor",
+      "class_description": "a thing that can have or create products",
+      "base_class_name": "sys_object",
+      "fields": {
+        "place_id": "int64",
+        "actor_name": "string",
+        "actor_description": "string",
+        "jobs": "[job:parent_object_id]",
+        "tools": "[tool:parent_object_id]"
+      },
+      "indexes": {
+        "idx_actor_place": {
+          "index_keys": [ "place_id" ]
+        }
+      }
+    },
+    {
+      "class_name": "player",
+      "class_description": "a human being playing the game",
+      "base_class_name": "sys_object",
+      "fields": {
+        "user_id": "int64",
+        "jobs": "[job:parent_object_id]",
+        "tools": "[tool:parent_object_id]"
+      },
+      "indexes": {
+        "idx_actor_place": {
+          "index_keys": [ "place_id" ]
+        }
+      }
+    },
+    {
+      "class_name": "game"
+
     }
   ],
   "users": [
