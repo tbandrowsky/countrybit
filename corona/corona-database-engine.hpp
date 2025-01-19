@@ -151,6 +151,11 @@ namespace corona
 							new_class = std::make_shared<child_object_class>();
 							status = parsing_class_name;
 						}
+						else if (*_src == 0 || *_src == ']')
+						{
+							cod.child_classes.push_back(new_class);
+							status = parsing_complete;
+						}
 						else
 						{
 							pb.error("declaration", "syntax error after class name");
@@ -177,14 +182,21 @@ namespace corona
 						{
 							_src++;
 							status = parsing_dst_field;
-							new_class->copy_values.insert_or_assign("object_id", dest_field);
+							new_class->copy_values.insert_or_assign(dest_field, "object_id");
 						}
 						else if (*_src == ';')
 						{
 							_src++;
-							status = parsing_dst_field;
-							new_class->copy_values.insert_or_assign("object_id", dest_field);
+							status = parsing_class_name;
+							new_class->copy_values.insert_or_assign(dest_field, "object_id");
 							cod.child_classes.push_back(new_class);
+							new_class = std::make_shared<child_object_class>();
+						}
+						else if (*_src == 0 || *_src == ']')
+						{
+							new_class->copy_values.insert_or_assign(dest_field, "object_id");
+							cod.child_classes.push_back(new_class);
+							status = parsing_complete;
 						}
 						else 
 						{
@@ -201,7 +213,7 @@ namespace corona
 				else if (status == parsing_src_field)
 				{
 					if (pb.parse_symbol(src_field, _src, &_src)) {
-						new_class->copy_values.insert_or_assign(src_field, dest_field);
+						new_class->copy_values.insert_or_assign(dest_field, src_field);
 						_src = pb.eat_white(_src);
 						if (*_src == ',')
 						{
@@ -211,8 +223,14 @@ namespace corona
 						else if (*_src == ';')
 						{
 							_src++;
-							status = parsing_dst_field;
-							new_class->copy_values.insert_or_assign("object_id", dest_field);
+							status = parsing_class_name;
+							new_class->copy_values.insert_or_assign(dest_field, src_field);
+						}
+						else if (*_src == 0 || *_src == ']')
+						{
+							new_class->copy_values.insert_or_assign(dest_field, src_field);
+							cod.child_classes.push_back(new_class);
+							status = parsing_complete;
 						}
 						else
 						{
@@ -257,15 +275,15 @@ namespace corona
 		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == case1 and cd.child_classes[0]->copy_values.size()==0;
 		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
 
-		const char* case2 = "class2:target";
+		const char* case2 = "class1:target";
 		cd = child_object_definition::parse_child_object(case2);
-		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == case2 and cd.child_classes[0]->copy_values.contains("target");
+		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == "class1" and cd.child_classes[0]->copy_values.contains("target");
 		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
 
-		const char* case3 = "class2:target = src";
+		const char* case3 = "class1:target = src";
 		cd = child_object_definition::parse_child_object(case3);
 		result = not cd.is_undefined and cd.child_classes.size() == 1 
-			and cd.child_classes[0]->class_name == "class2"
+			and cd.child_classes[0]->class_name == "class1"
 			and cd.child_classes[0]->copy_values.contains("target")
 			and cd.child_classes[0]->copy_values["target"] == "src";
 		_tests->test({ std::format("child object {0}", case3), result , __FILE__, __LINE__ });
@@ -281,30 +299,14 @@ namespace corona
 			and cd.child_classes[1]->copy_values["target2"] == "src2";
 		_tests->test({ std::format("child object {0}", case4), result , __FILE__, __LINE__ });
 
-		const char* case5 = "class2:target";
-		cd = child_object_definition::parse_child_object(case5);
-		result = not cd.is_undefined 
-			and cd.child_classes.size() == 1 
-			and cd.child_classes[0]->class_name == "class2" 
-			and cd.child_classes[0]->copy_values.contains("target");
-		_tests->test({ std::format("child object {0}", case5), result , __FILE__, __LINE__ });
-
-		const char* case6 = "class2:target = src";
-		cd = child_object_definition::parse_child_object(case6);
-		result = not cd.is_undefined and cd.child_classes.size() == 1 
-			and cd.child_classes[0]->class_name == "class2"
-			and cd.child_classes[0]->copy_values.contains("target")
-			and cd.child_classes[0]->copy_values["target"] == "src";
-		_tests->test({ std::format("child object {0}", case6), result , __FILE__, __LINE__ });
-
 		const char* acase1 = "[ class1 ]";
 		cd = child_object_definition::parse_child_object(case1);
-		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == case1 and cd.child_classes[0]->copy_values.size() == 0;
+		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == "class1" and cd.child_classes[0]->copy_values.size() == 0;
 		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
 
 		const char* acase2 = "[ class2:target ]";
 		cd = child_object_definition::parse_child_object(case2);
-		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == case2 and cd.child_classes[0]->copy_values.contains("target");
+		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == "class2" and cd.child_classes[0]->copy_values.contains("target");
 		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
 
 		const char* acase3 = "[ class2:target = src ]";
@@ -969,8 +971,8 @@ namespace corona
 
 				for (auto member : members)
 				{
-					std::string _src_key = member.first;
-					std::string _dest_key = member.second;
+					std::string _dest_key = member.first;
+					std::string _src_key = member.second;
 					if (not (_src_key.empty() or _dest_key.empty()))
 					{
 						json value = _src[_src_key];
@@ -989,8 +991,8 @@ namespace corona
 
 			for (auto member : members)
 			{
-				std::string _src_key = member.first;
-				std::string _dest_key = member.second;
+				std::string _dest_key = member.first;
+				std::string _src_key = member.second;
 				if (not (_src_key.empty() or _dest_key.empty()))
 				{
 					json value = _src[_src_key];

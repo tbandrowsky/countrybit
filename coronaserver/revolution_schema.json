@@ -7,23 +7,223 @@
   ],
   "classes": [
     {
-      "class_name": "item",
-      "class_description": "a component of an object",
+      "class_name": "comment",
+      "class_description": "a comment",
+      "base_class_name": "sys_object",
+      "fields": {
+        "parent_object_id": "int64",
+        "text": "string"
+      },
+      "indexes": {
+        "idx_comment_parent": {
+          "index_keys": [ "parent_object_id" ]
+        }
+      }
+    },
+    {
+      "class_name": "tool",
+      "class_description": "a tool",
+      "base_class_name": "sys_object",
+      "fields": {
+        "parent_object_id": "int64",
+        "text": "string"
+      },
+      "indexes": {
+        "idx_tool_parent": {
+          "index_keys": [ "parent_object_id" ]
+        }
+      }
+    },
+    {
+      "class_name": "point",
+      "class_description": "a point",
+      "base_class_name": "sys_object",
+      "fields": {
+        "parent_polygon_id": "int64",
+        "x": "double",
+        "y": "double"
+      },
+      "indexes": {
+        "idx_point_parent_polygon": {
+          "index_keys": [ "parent_polygon_id" ]
+        }
+      }
+    },
+    {
+      "class_name": "box",
+      "class_description": "an item on a slide show",
+      "base_class_name": "sys_object",
+      "fields": {
+        "content_name": "string",
+        "parent_box_id": "int64",
+        "border_brush": "string",
+        "background_brush": "string",
+        "x": "string",
+        "y": "string",
+        "width": "string",
+        "height": "string",
+        "padding": "string",
+        "margin": "string",
+        "layer": "string"
+      }
+    },
+    {
+      "class_name": "polygon",
+      "class_description": "an item on a slide show",
+      "base_class_name": "box",
+      "fields": {
+        "points": "[draw_point:parent_polygon_id]"
+      }
+    },
+    {
+      "class_name": "layout",
+      "class_description": "items on a slide organized into a layout",
+      "base_class_name": "box",
+      "fields": {
+        "children": "[content_box:parent_box_id]"
+      }
+    },
+    {
+      "class_name": "row",
+      "class_description": "items on a slide organized into a row",
+      "base_class_name": "layout_box",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "column",
+      "class_description": "items on a slide organized into a row",
+      "base_class_name": "layout_box",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "absolute",
+      "class_description": "items on a slide organized into a row",
+      "base_class_name": "layout_box",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "text",
+      "class_description": "text element",
+      "base_class_name": "box",
+      "fields": {
+        "text": "string",
+        "font_face": "string",
+        "font_size": "double",
+        "font_weight": "double",
+        "font_bold": "bool",
+        "font_italic": "bool",
+        "font_underline": "bool",
+        "font_strikethrough": "bool"
+      }
+    },
+    {
+      "class_name": "image",
+      "class_description": "image element",
+      "base_class_name": "box",
+      "fields": {
+        "image_file_name": "string",
+        "image_mime_type": "string"
+      }
+    },
+    {
+      "class_name": "slide",
+      "class_description": "an page in a presentation",
+      "base_class_name": "box",
+      "fields": {
+        "parent_presentation_id": "int64"
+      }
+    },
+    {
+      "class_name": "presentation_category",
+      "class_description": "classification of the presentation",
+      "base_class_name": "sys_object",
+      "fields": {
+        "category_name": "string",
+        "category_description": "string",
+        "presentations": "[presentation:category_id]"
+      }
+    },
+    {
+      "class_name": "presentation",
+      "class_description": "a slide show, content",
       "base_class_name": "sys_object",
       "fields": {
         "actor_id": "int64",
-        "item_number": "string",
-        "item_name": "string",
-        "item_description": "string",
-        "item_price": "double",
-        "item_qty": "double"
-      },
-      "indexes": {
-        "idx_item_actor": {
-          "index_keys": [
-            "actor_id"
-          ]
-        }
+        "category_id": "int64",
+        "presentation_name": "string",
+        "presentation_description": "string",
+        "slides": "[slide:presentation_id]"
+      }
+    },
+    {
+      "class_name": "location",
+      "class_description": "a place that has actors and jobs",
+      "base_class_name": "sys_object",
+      "fields": {
+        "location_name": "string",
+        "location_description": "string",
+        "actors": "[actor:location_id]",
+        "jobs": "[job:location_id]"
+      }
+    },
+    {
+      "class_name": "job",
+      "class_description": "a job of some kind",
+      "base_class_name": "sys_object",
+      "fields": {
+        "actor_id": "int64",
+        "category_id": "int64",
+        "job_name": "string",
+        "job_description": "string",
+        "location": "location:job_id"
+      }
+    },
+    {
+      "class_name": "bank",
+      "class_description": "banks pay people and sell things",
+      "base_class_name": "location",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "library",
+      "class_description": "libraries hold media types",
+      "base_class_name": "location",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "school",
+      "class_description": "schools have teachers and quizzes",
+      "base_class_name": "location",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "factory",
+      "class_description": "a place where goods and materials are transformed into other products",
+      "base_class_name": "location",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "farm",
+      "class_description": "a place where food is grown and livestock raised",
+      "base_class_name": "location",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "mine",
+      "class_description": "a place to get raw materials from the ground",
+      "base_class_name": "location",
+      "fields": {
       }
     },
     {
@@ -33,98 +233,14 @@
       "fields": {
         "location_id": "int64",
         "actor_name": "string",
-        "actor_health": "string",
         "actor_description": "string",
-        "actor_shape": "string",
-        "coins": "double",
-        "items": {
-          "field_type": "array",
-          "child_objects": {
-            "item": {
-              "copy_values": {
-                "actor_id": "actor_id"
-              }
-            }
-          }
-        }
+        "jobs": "[job:actor_id]",
+        "items": "[parse_base:parent_actor_id]"
       },
       "indexes": {
         "idx_actor_location": {
           "index_keys": [ "location_id" ]
         }
-      }
-    },
-    {
-      "class_name": "bank",
-      "class_description": "a character",
-      "base_class_name": "actor",
-      "fields": {
-        "coins_in_circulation": "double"
-      }
-    },
-    {
-      "class_name": "point2d",
-      "class_description": "a point",
-      "base_class_name": "content_box",
-      "fields": {
-        "x": "double",
-        "y": "double"
-      }
-    },
-    {
-      "class_name": "content_box",
-      "class_description": "an item on a slide show",
-      "base_class_name": "sys_object",
-      "fields": {
-        "background_border": "object",
-        "background_fill": "object"
-      }
-    },
-    {
-      "class_name": "shape_box",
-      "class_description": "text element",
-      "base_class_name": "content_box",
-      "fields": {
-         "background_border": "object",
-         "background_fill": "object"
-      }
-    },
-    {
-      "class_name": "text_box",
-      "class_description": "text element",
-      "base_class_name": "content_box",
-      "fields": {
-        "font_face": "string",
-        "font_size": "string",
-        "font_weight": "double",
-        "font_bold": "bool",
-        "font_italic": "bool",
-        "font_underline": "bool",
-        "font_strikethrough": "bool"
-      }
-    },
-    {
-      "class_name": "slide",
-      "class_description": "an item on a slide",
-      "base_class_name": "sys_object",
-      "fields": {
-        "presentation_id": "int64"
-      }
-    },
-    {
-      "class_name": "presentation",
-      "class_description": "a slide show, content",
-      "base_class_name": "item",
-      "fields": {
-
-      }
-    },
-    {
-      "class_name": "library",
-      "class_description": "a character",
-      "base_class_name": "actor",
-      "fields": {
-        "coins_in_circulation": "double"
       }
     }
   ],
