@@ -7,29 +7,37 @@
   ],
   "classes": [
     {
+      "class_name": "player",
+      "class_description": "a user in the revolution",
+      "base_class_name": "sys_user",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "special_action_group",
+      "class_description": "a team of users to serve a goal",
+      "base_class_name": "sys_object",
+      "fields": {
+        "mission": "string",
+        "members" : ""
+
+      }
+    },
+    {
       "class_name": "comment",
       "class_description": "a comment",
       "base_class_name": "sys_object",
       "fields": {
+        "player": "player_id",
         "parent_object_id": "int64",
         "text": "string"
       },
       "indexes": {
         "idx_comment_parent": {
           "index_keys": [ "parent_object_id" ]
-        }
-      }
-    },
-    {
-      "class_name": "tool",
-      "class_description": "a tool",
-      "base_class_name": "sys_object",
-      "fields": {
-        "parent_object_id": "int64",
-        "text": "string"
-      },
-      "indexes": {
-        "idx_tool_parent": {
+        },
+        "idx_comment_player": {
           "index_keys": [ "parent_object_id" ]
         }
       }
@@ -123,6 +131,14 @@
       }
     },
     {
+      "class_name": "link",
+      "class_description": "a link",
+      "base_class_name": "text",
+      "fields": {
+        "url": "string"
+      }
+    },
+    {
       "class_name": "image",
       "class_description": "image element",
       "base_class_name": "shape",
@@ -144,136 +160,177 @@
       "class_description": "a slide show, content",
       "base_class_name": "sys_object",
       "fields": {
-        "actor_id": "int64",
+        "parent_object": "int64",
         "presentation_name": "string",
         "presentation_description": "string",
         "slides": "[slide:presentation_id]"
       }
     },
     {
-      "class_name": "place",
-      "class_description": "a place that has actors and jobs",
-      "base_class_name": "sys_object",
-      "fields": {
-        "place_name": "string",
-        "place_description": "string",
-        "parent_place_id": "int64",
-        "actors": "[actor:place_id]",
-        "jobs": "[job:place_id]",
-        "places": "[place:parent_place_id]"
-      }
-    },
-    {
-      "class_name": "job",
-      "class_description": "a job of some kind",
-      "base_class_name": "sys_object",
-      "fields": {
-        "parent_object_id": "int64",
-        "job_name": "string",
-        "job_description": "string",
-        "place": "place:job_id"
-      }
-    },
-    {
-      "class_name": "bank",
-      "class_description": "banks pay people and sell things",
+      "class_name": "front",
+      "class_description": "an area of competitive activity",
       "base_class_name": "place",
       "fields": {
-        "bank_name": "string",
-        "bank_description": "string"
+        "front_name": "string",
+        "front_description": "string",
+        "stories": "[presentation:parent_object]"
       }
     },
     {
-      "class_name": "library",
-      "class_description": "libraries hold media types",
-      "base_class_name": "place",
+      "class_name": "elect",
+      "class_description": "an election to win",
+      "base_class_name": "front",
       "fields": {
-        "library_name": "string",
-        "library_description": "string"
+        "resources": "[presentation:parent_object]"
       }
     },
     {
-      "class_name": "school",
-      "class_description": "schools have teachers and quizzes",
-      "base_class_name": "place",
+      "class_name": "official",
+      "class_description": "a public official",
+      "base_class_name": "object",
       "fields": {
-        "school_name": "string",
-        "school_description": "string"
+        "parent_election": "int64",
+        "incumbent": "bool",
+        "first_name": "string",
+        "last_name": "string",
+        "contact_url": "string",
+        "contact_email": "string",
+        "address1": "string",
+        "address2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "general_resources": "[presentation:parent_object]"
       }
     },
-    {
-      "class_name": "factory",
-      "class_description": "a place where goods and materials are transformed into other products",
-      "base_class_name": "place",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "farm",
-      "class_description": "a place where food is grown and livestock raised",
-      "base_class_name": "place",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "mine",
-      "class_description": "a place to get raw materials from the ground",
-      "base_class_name": "place",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "actor",
-      "class_description": "a thing that can have or create products",
-      "base_class_name": "sys_object",
-      "fields": {
-        "place_id": "int64",
-        "actor_name": "string",
-        "actor_description": "string",
-        "jobs": "[job:parent_object_id]",
-        "tools": "[tool:parent_object_id]"
-      },
-      "indexes": {
-        "idx_actor_place": {
-          "index_keys": [ "place_id" ]
-        }
-      }
-    },
-    {
-      "class_name": "actor",
-      "class_description": "a thing that can have or create products",
-      "base_class_name": "sys_object",
-      "fields": {
-        "place_id": "int64",
-        "actor_name": "string",
-        "actor_description": "string",
-        "jobs": "[job:parent_object_id]",
-        "tools": "[tool:parent_object_id]"
-      },
-      "indexes": {
-        "idx_actor_place": {
-          "index_keys": [ "place_id" ]
-        }
-      }
-    },
-    {
-      "class_name": "player",
-      "class_description": "a human being playing the game",
-      "base_class_name": "sys_object",
-      "fields": {
-        "user_id": "int64",
-        "jobs": "[job:parent_object_id]",
-        "tools": "[tool:parent_object_id]"
-      },
-      "indexes": {
-        "idx_actor_place": {
-          "index_keys": [ "place_id" ]
-        }
-      }
-    },
-    {
-      "class_name": "game"
 
+    {
+      "class_name": "elect",
+      "class_description": "an election to win",
+      "base_class_name": "front",
+      "fields": {
+        "general_resources": "[presentation:parent_object]",
+        "federal_links": "[presentation:parent_object]",
+        "state_links": "[presentation:parent_object]",
+        "candidates": "[official:parent_election]"
+      }
+    },
+    {
+      "class_name": "elect_president",
+      "class_description": "elect a president",
+      "base_class_name": "front",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "elect_senate",
+      "class_description": "elect a us senator",
+      "base_class_name": "front",
+      "fields": {
+        "state": "string"
+      }
+    },
+    {
+      "class_name": "elect_congress",
+      "class_description": "elect a us congress",
+      "base_class_name": "front",
+      "fields": {
+        "state": "string",
+        "district": "string"
+      }
+    },
+    {
+      "class_name": "elect_governor",
+      "class_description": "elect a governor",
+      "base_class_name": "front",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "elect_state_rep",
+      "class_description": "elect a state representative",
+      "base_class_name": "front",
+      "fields": {
+        "state": "string",
+        "district": "string"
+      }
+    },
+    {
+      "class_name": "elect_state_senator",
+      "class_description": "elect a state senator",
+      "base_class_name": "front",
+      "fields": {
+        "state": "string",
+        "district": "string"
+      }
+    },
+    {
+      "class_name": "elect_mayor",
+      "class_description": "elect a mayor",
+      "base_class_name": "front",
+      "fields": {
+        "state": "string",
+        "city": "string"
+      }
+    },
+    {
+      "class_name": "elect_county",
+      "class_description": "elect a county",
+      "base_class_name": "front",
+      "fields": {
+        "state": "string",
+        "county": "string",
+        "title": "string"
+      }
+    },
+
+
+    {
+      "class_name": "invent",
+      "class_description": "replace offshored jobs with american automation",
+      "base_class_name": "front",
+      "fields": {
+        "job_title": "string",
+        "job_description": "string",
+        "replacement_requirements": "[presentation:parent_object]",
+        "replacement_design": "[presentation:parent_object]",
+        "replacement_fabrication": "[presentation:parent_object]",
+        "replacement_name": "string",
+        "parent_invention": "int64",
+        "gap_inventions": "[invent:parent_invention]"
+      }
+    },
+
+
+    {
+      "class_name": "bond",
+      "class_description": "building a national spirit",
+      "base_class_name": "front",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "train",
+      "class_description": "improve your effectiveness",
+      "base_class_name": "front",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "govern",
+      "class_description": "explore a government with voluntary insurances",
+      "base_class_name": "front",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "control",
+      "class_description": "control of sea, land and space",
+      "base_class_name": "front",
+      "fields": {
+      }
     }
   ],
   "users": [
