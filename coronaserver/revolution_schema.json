@@ -9,9 +9,9 @@
     {
       "class_name": "player",
       "class_description": "a user in the revolution",
-      "base_class_name": "sys_user",
+      "base_class_name": "sys_object",
       "fields": {
-
+        "parent_user" :  "sys_user"
       }
     },
     {

@@ -3744,6 +3744,377 @@ namespace corona
 				return result;
 			}
 
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_actor",
+	"base_class_name" : "sys_object",
+	"class_description" : "An item participating in a game",
+	"fields" : {		
+			"actor_name" : "string",
+			"actor_description" : "string",
+			"parent_game_user" : "int64",
+			"parent_place" : "int64",
+			"parent_actor" : "int64"
+		}
+	},
+	"indexes" : {
+		"idx_actor_game_user" : { 
+				"index_keys" : [ "parent_game_user" ]
+		},
+		"idx_actor_place" : { 
+				"index_keys" : [ "parent_place" ]
+		},
+		"idx_actor_actor" : { 
+				"index_keys" : [ "parent_actor" ]
+		}
+	}
+}
+)");
+
+			created_classes.put_member("sys_actor", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_actor"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_actor after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_money",
+	"base_class_name" : "sys_actor",
+	"class_description" : "money",
+	"fields" : {		
+			"currency" : "string",
+			"amount" : "double"
+	},
+
+}
+)");
+
+			created_classes.put_member("sys_money", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_money"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_money after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_good",
+	"base_class_name" : "sys_actor",
+	"class_description" : "Something worth money",
+	"fields" : {		
+			"purchase_price" : "string",
+			"purchase_amount" : "double"
+	}
+}
+)");
+
+			created_classes.put_member("sys_good", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_good"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_good after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_food",
+	"base_class_name" : "sys_good",
+	"class_description" : "a good you can eat",
+	"fields" : {		
+	}
+}
+)");
+
+
+			created_classes.put_member("sys_food", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_food"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_food after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_cure",
+	"base_class_name" : "sys_good",
+	"class_description" : "something that cures you",
+	"fields" : {		
+	}
+}
+)");
+
+
+			created_classes.put_member("sys_cure", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_cure"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_cure after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_harm",
+	"base_class_name" : "sys_good",
+	"class_description" : "something that harms you",
+	"fields" : {		
+	}
+}
+)");
+
+
+			created_classes.put_member("sys_harm", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_harm"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_harm after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_creator",
+	"base_class_name" : "sys_good",
+	"class_description" : "something that creates",
+	"fields" : {
+
+	}
+}
+)");
+
+
+			created_classes.put_member("sys_creator", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_creator"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_creator after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_place",
+	"base_class_name" : "sys_object",
+	"class_description" : "a place is a part of a game that has its own",
+	"fields" : {		
+			"place_name" : "string",
+			"place_description" : "string",
+			"parent_game" : "int64",
+			"parent_scenario" : "int64",
+			"places" : "[sys_place:parent_place]",
+			"actors" : "[sys_actor:parent_place]"
+	}
+}
+)");
+
+			created_classes.put_member("sys_place", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_place"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_place after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_game",
+	"base_class_name" : "sys_object",
+	"class_description" : "a game is an instance of a scenario that users belong to and has actors and places",
+	"fields" : {		
+			"game_name" : "string",
+			"game_description" : "string",
+			"places" : "[sys_place:parent_game]",
+			"users" : "[sys_game_user:parent_game]"
+	}
+}
+)");
+
+			created_classes.put_member("sys_game", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_game"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_game_play after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_game_user",
+	"base_class_name" : "sys_object",
+	"class_description" : "an instance of a scenario",
+	"fields" : {		
+			"parent_game" : "int64",
+			"parent_user" : "int64",
+			"actor" : "sys_actor:parent_game_user"
+	},
+    "indexes": {
+		"idx_game_user_game": {
+			"index_keys": [ "parent_game" ]
+		},
+		"idx_game_user_user": {
+			"index_keys": [ "parent_user" ]
+		}
+    }
+}
+)");
+			created_classes.put_member("sys_game_user", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_game_user"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_game_user after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_scenario",
+	"base_class_name" : "sys_object",
+	"class_description" : "A scenario a user can be engaged in",
+	"fields" : {		
+			"scenario_name" : "string",
+			"scenario_description" : "string",
+			"scenario_instances" : "string",
+			"scenario_authors" : "array",
+			"scenario_view_url" : "string",
+			"scenario_module_url" : "string",
+			"scenario_module_type" : "string",
+			"places" : "[sys_place:parent_scenario]"
+		}
+	}
+}
+)");
+
+			created_classes.put_member("sys_scenario", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_scenario"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_scenario after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+
+
 			response =  create_class(R"(
 {	
 	"base_class_name" : "sys_object",
@@ -3764,7 +4135,8 @@ namespace corona
 			"team_name" : "string",
 			"validation_code" : "string",
 			"confirmed_code" : "number",
-			"workflow_objects" : "object"
+			"workflow_objects" : "object",
+			"actors" : "
 	}
 }
 )");

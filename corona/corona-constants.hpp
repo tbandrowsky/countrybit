@@ -583,6 +583,8 @@ namespace corona
 	const std::string user_city_field = "city";
 	const std::string user_state_field = "state";
 	const std::string user_zip_field = "zip";
+	const std::string user_children_field = "children";
+	const std::string user_contacts_field = "contacts";
 	const std::string user_password_field = "password";
 
 	const std::string authorization_field = "authorization";
