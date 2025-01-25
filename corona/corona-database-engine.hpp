@@ -3828,10 +3828,12 @@ namespace corona
 	"base_class_name" : "sys_actor",
 	"class_description" : "Something worth money",
 	"fields" : {		
-			"purchase_price" : "string",
-			"purchase_amount" : "double"
+			"good_sku" : "string",
+			"good_quantity" : "double",
+			"good_quantity_units" : "double",
+			"purchase_currency" : "string",
+			"purchase_amount" : "double"			
 	}
-}
 )");
 
 			created_classes.put_member("sys_good", true);
@@ -4111,8 +4113,6 @@ namespace corona
 
 				return result;
 			}
-
-
 
 
 			response =  create_class(R"(

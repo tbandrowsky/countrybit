@@ -7,42 +7,6 @@
   ],
   "classes": [
     {
-      "class_name": "player",
-      "class_description": "a user in the revolution",
-      "base_class_name": "sys_object",
-      "fields": {
-        "parent_user" :  "sys_user"
-      }
-    },
-    {
-      "class_name": "special_action_group",
-      "class_description": "a team of users to serve a goal",
-      "base_class_name": "sys_object",
-      "fields": {
-        "mission": "string",
-        "members" : ""
-
-      }
-    },
-    {
-      "class_name": "comment",
-      "class_description": "a comment",
-      "base_class_name": "sys_object",
-      "fields": {
-        "player": "player_id",
-        "parent_object_id": "int64",
-        "text": "string"
-      },
-      "indexes": {
-        "idx_comment_parent": {
-          "index_keys": [ "parent_object_id" ]
-        },
-        "idx_comment_player": {
-          "index_keys": [ "parent_object_id" ]
-        }
-      }
-    },
-    {
       "class_name": "point",
       "class_description": "a point",
       "base_class_name": "sys_object",
@@ -131,6 +95,41 @@
       }
     },
     {
+      "class_name": "title",
+      "class_description": "title text",
+      "base_class_name": "text",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "subtitle",
+      "class_description": "sub title text",
+      "base_class_name": "text",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "chaptertitle",
+      "class_description": "chapter title text",
+      "base_class_name": "text",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "chaptersubtitle",
+      "class_description": "chapter subtitle text",
+      "base_class_name": "text",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "paragraph",
+      "class_description": "title text",
+      "base_class_name": "text",
+      "fields": {
+      }
+    },
+    {
       "class_name": "link",
       "class_description": "a link",
       "base_class_name": "text",
@@ -152,18 +151,18 @@
       "class_description": "an page in a presentation",
       "base_class_name": "absolute",
       "fields": {
-        "parent_presentation_id": "int64"
+        "parent_presentation": "int64"
       }
     },
     {
       "class_name": "presentation",
       "class_description": "a slide show, content",
-      "base_class_name": "sys_object",
+      "base_class_name": "sys_actor",
       "fields": {
         "parent_object": "int64",
         "presentation_name": "string",
         "presentation_description": "string",
-        "slides": "[slide:presentation_id]"
+        "slides": "[slide:parent_presentation]"
       }
     },
     {
@@ -173,21 +172,48 @@
       "fields": {
         "front_name": "string",
         "front_description": "string",
-        "stories": "[presentation:parent_object]"
+        "documents": "[presentation:parent_object]"
       }
     },
     {
-      "class_name": "elect",
-      "class_description": "an election to win",
+      "class_name": "book",
+      "class_description": "a collection of presentations",
+      "base_class_name": "sys_good",
+      "fields": {
+        "book_name": "string",
+        "book_description": "string",
+        "book_authors": "string",
+        "book_isbn": "string",
+        "book_url": "string",
+        "book_presentations": "[presentation:parent_object]",
+        "creation_time_window": "string"
+      }
+    },
+    {
+      "class_name": "library",
+      "class_description": "a resource for truth",
       "base_class_name": "front",
       "fields": {
-        "resources": "[presentation:parent_object]"
+        "books": "[book:library]"
       }
     },
+
     {
-      "class_name": "official",
-      "class_description": "a public official",
-      "base_class_name": "object",
+      "class_name": "decision",
+      "class_description": "an election decision",
+      "base_class_name": "sys_actor",
+      "fields": {
+        "question": "string",
+        "description": "string",
+        "about": "[presentation:parent_object_id]",
+        "votes": "[vote:decision]"
+      }
+    },
+
+    {
+      "class_name": "election_person",
+      "class_description": "election_person",
+      "base_class_name": "sys_actor",
       "fields": {
         "parent_election": "int64",
         "incumbent": "bool",
@@ -200,19 +226,26 @@
         "city": "string",
         "state": "string",
         "zip": "string",
-        "general_resources": "[presentation:parent_object]"
+        "about": "[presentation:parent_object]",
+        "election_candidate": "int64",
+        "election_incumbent": "int64"
+      },
+      "indexes": {
+        "idx_person_election_candidate": {
+          "index_keys": [ "election_candidate" ]
+        },
+        "idx_person_election_incumbent": {
+          "index_keys": [ "election_incumbent" ]
+        }
       }
     },
-
     {
-      "class_name": "elect",
+      "class_name": "election",
       "class_description": "an election to win",
       "base_class_name": "front",
       "fields": {
-        "general_resources": "[presentation:parent_object]",
-        "federal_links": "[presentation:parent_object]",
-        "state_links": "[presentation:parent_object]",
-        "candidates": "[official:parent_election]"
+        "candidates": "[sys_election_player:election_candidate]",
+        "incumbent": "sys_election_player:election_incumbent"
       }
     },
     {
@@ -220,7 +253,6 @@
       "class_description": "elect a president",
       "base_class_name": "front",
       "fields": {
-
       }
     },
     {
@@ -285,32 +317,106 @@
         "title": "string"
       }
     },
+    {
+      "class_name": "invested_product",
+      "class_description": "a product invested in",
+      "base_class_name": "sys_actor",
+      "fields": {
+        "investment_id": "int64",
+        "investment_product_name": "string",
+        "investment_product_description": "string",
+        "investment_amount": "double",
+        "investment_currency": "double"
+      },
+      "indexes": {
+        "invested_product_investment": {
+          "index_keys": "investment_id"
+        }
+      }
+    },
+    {
+      "class_name": "invested_good_subscription",
+      "class_description": "a good an investor can subscribe to",
+      "base_class_name": "invested_product",
+      "fields": {
+        "subscribed_goods": "[sys_good]",
+        "delivered_goods": "[sys_good]"
+      }
+    },
+    {
+      "class_name": "invested_software_support",
+      "class_description": "paying for features or supporting the cause",
+      "base_class_name": "invested_product",
+      "fields": {
+        "request_name": "string",
+        "request_charter": "string",
+        "request_description": "string",
+        "request_details": "[presentation:parent_object]",
+        "request_accepted_delivery_date": "datetime",
+        "request_accepted_signature": "string",
+        "request_accepted_date": "datetime",
+        "request_accepted_user_id": "int64",
+        "delivery_signature": "string",
+        "delivery_date": "datetime"
+      }
+    },
+    {
+      "class_name": "investment",
+      "class_description": "someone who has made a real investment in the revolution",
+      "base_class_name": "sys_actor",
+      "fields": {
+        "investor_alias": "string",
+        "investor_description": "string",
+        "investment_amount": "double",
+        "investment_currency": "double",
+        "investment_expectations": "[presentation:parent_object]",
+        "investment_products": "[invested_product:investment_id]",
+        "investment_front": "int64"
+      },
+      "indexes": {
+        "invest_front_investment": {
+          "index_keys" : ["investment_front"]
+        }
+      }
+    },
+    {
+      "class_name": "invest_front",
+      "class_description": "attract investors",
+      "base_class_name": "front",
+      "fields": {
+        "investments": "[investment:investment_front_id]"
+      }
+    },
 
 
     {
-      "class_name": "invent",
-      "class_description": "replace offshored jobs with american automation",
+      "class_name": "invention",
+      "class_description": "new innovations to free offshore labor",
       "base_class_name": "front",
       "fields": {
-        "job_title": "string",
-        "job_description": "string",
-        "replacement_requirements": "[presentation:parent_object]",
-        "replacement_design": "[presentation:parent_object]",
-        "replacement_fabrication": "[presentation:parent_object]",
-        "replacement_name": "string",
+        "invention_title": "string",
+        "invention_description": "string",
+        "invention_job_automated": "string",
+        "invention_solution": "[presentation:parent_object]",
+        "invention_requirements": "[presentation:parent_object]",
+        "invention_design": "[presentation:parent_object]",
+        "invention_fabrication": "[presentation:parent_object]",
+        "invention_name": "string",
         "parent_invention": "int64",
-        "gap_inventions": "[invent:parent_invention]"
+        "child_inventions": "[invent:parent_invention]"
       }
     },
-
 
     {
-      "class_name": "bond",
-      "class_description": "building a national spirit",
+      "class_name": "invention_front",
+      "class_description": "create new inventions",
       "base_class_name": "front",
       "fields": {
+        "inventions": "[invention:parent_invention]"
       }
     },
+
+
     {
       "class_name": "train",
       "class_description": "improve your effectiveness",
@@ -318,6 +424,15 @@
       "fields": {
       }
     },
+
+    {
+      "class_name": "training",
+      "class_description": "improve your effectiveness with simulation",
+      "base_class_name": "front",
+      "fields": {
+      }
+    },
+
     {
       "class_name": "govern",
       "class_description": "explore a government with voluntary insurances",
