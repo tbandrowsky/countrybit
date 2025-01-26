@@ -387,8 +387,6 @@
         "investments": "[investment:investment_front_id]"
       }
     },
-
-
     {
       "class_name": "invention",
       "class_description": "new innovations to free offshore labor",
