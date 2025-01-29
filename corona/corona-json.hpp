@@ -613,6 +613,96 @@ namespace corona
 
 	};
 
+	class json_reference : public json_value
+	{
+	public:
+		object_reference_type value;
+
+		virtual std::string to_key()
+		{
+			return std::format("{0}:{1}", value.class_name, value.object_id);
+		}
+
+		virtual std::string to_json()
+		{
+			return std::format("{0}:{1}", value.class_name, value.object_id);
+		}
+
+		virtual std::string to_json_typed()
+		{
+			return get_type_prefix() + " " + to_json();
+		}
+		virtual std::stringstream& serialize(std::stringstream& _src)
+		{
+			_src << to_json_typed();
+			return _src;
+
+		}
+
+		virtual bool is_empty()
+		{
+			return false;
+		}
+
+		virtual std::string format(std::string _format)
+		{
+			return std::format("{0}", to_key());
+		}
+
+		virtual std::string to_string()
+		{
+			return std::format("{}", to_key());
+		}
+
+		virtual void from_string(const std::string_view& _src)
+		{
+			std::string temp(_src);
+			auto arr = split(temp, ':');
+			if (arr.size() > 0)
+				value.class_name = arr[0];
+			if (arr.size() > 1)
+				value.object_id = strtol(arr[1].c_str(), nullptr, 10);
+		}
+
+		virtual field_types get_field_type()
+		{
+			return field_types::ft_reference;
+		}
+
+		virtual std::string get_type_prefix()
+		{
+			return "$reference";
+		}
+
+		virtual std::shared_ptr<json_value> clone()
+		{
+			auto t = std::make_shared<json_reference>();
+			t->value = value;
+			t->comparison_index = comparison_index;
+			return t;
+		}
+
+		virtual int64_t to_int64()
+		{
+			return value.object_id;
+		}
+		virtual date_time to_datetime()
+		{
+			date_time dt;
+			return dt;
+		}
+		virtual bool to_bool()
+		{
+			return value.object_id != 0 and not value.class_name.empty();
+		}
+		virtual double to_double()
+		{
+			return value.object_id;
+		}
+
+	};
+
+
 	class json_string : public json_value
 	{
 	public:
@@ -1013,6 +1103,10 @@ namespace corona
 			return std::dynamic_pointer_cast<json_int64>(value_base);
 		}
 
+		std::shared_ptr<json_reference> reference_impl() const {
+			return std::dynamic_pointer_cast<json_reference>(value_base);
+		}
+
 		std::shared_ptr<json_datetime> datetime_impl()  const {
 			return std::dynamic_pointer_cast<json_datetime>(value_base);
 		}
@@ -1371,6 +1465,11 @@ namespace corona
 			return string_impl() != nullptr;
 		}
 
+		bool reference()  const
+		{
+			return reference_impl() != nullptr;
+		}
+
 		bool array()  const
 		{
 			return array_impl() != nullptr;
@@ -1459,6 +1558,15 @@ namespace corona
 				return value_base->to_string();
 			else
 				return "";
+		}
+
+		operator object_reference_type() const
+		{
+			auto value_ref = reference_impl();
+			if (value_ref)
+				return value_ref->value;
+			else
+				return object_reference_type();
 		}
 
 		explicit operator bool() const
@@ -1872,6 +1980,17 @@ namespace corona
 			return *this;
 		}
 
+		json put_member_reference(std::string _key, object_reference_type _ref)
+		{
+			if (not object_impl()) {
+				throw std::logic_error("Not an object");
+			}
+			auto new_member = std::make_shared<json_reference>();
+			new_member->value = _ref;
+			object_impl()->members[_key] = new_member;
+			return *this;
+		}
+
 		json put_member_double(std::string _key, double _value)
 		{
 			if (not object_impl()) {
@@ -2174,6 +2293,23 @@ namespace corona
 			else if (_element.is_string()) {
 				std::string d = _element;
 				put_element(_index, d);
+			}
+			return *this;
+		}
+
+		json put_element(int _index, object_reference_type _value)
+		{
+			if (not array_impl()) {
+				throw std::logic_error("Not an array");
+			}
+			auto new_member = std::make_shared<json_reference>();
+			new_member->value = _value;
+
+			if (_index < 0 or _index >= array_impl()->elements.size()) {
+				array_impl()->elements.push_back(new_member);
+			}
+			else {
+				array_impl()->elements[_index] = new_member;
 			}
 			return *this;
 		}
@@ -3076,6 +3212,33 @@ namespace corona
 			return result;
 		}
 
+		bool parse_reference(object_reference_type& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			_src = eat_white(_src);
+			if (isalnum(*_src))
+			{
+				_result.class_name = "";
+				result = true;
+				while (isalnum(*_src) or *_src == '_')
+				{
+					check_line(_src);
+					if (*_src != '_') {
+						_result.class_name += *_src;
+					}
+					_src++;
+				}
+				_src = eat_white(_src);
+				if (*_src == ':')
+					_src++;
+				_src = eat_white(_src);
+				result = parse_int64(_result.object_id, _src, &_src);
+			}
+			*_modified = _src;
+			return result;
+		}
+
+
 		bool parse_number(double& _result, const char* _src, const char** _modified)
 		{
 			bool result = false;
@@ -3471,6 +3634,18 @@ namespace corona
 					{
 						auto js = std::make_shared<json_string>();
 						js->value = new_string_value;
+						_value = js;
+						*_modified = new_src;
+						return result;
+					}
+				}
+				else if (member_type == "reference")
+				{
+					object_reference_type ort;
+					if (parse_reference(ort, _src, &new_src))
+					{
+						auto js = std::make_shared<json_reference>();
+						js->value = ort;
 						_value = js;
 						*_modified = new_src;
 						return result;

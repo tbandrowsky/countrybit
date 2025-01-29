@@ -72,6 +72,17 @@ namespace corona
 		relative_ptr_type	  row_id;
 	};
 
+	struct object_reference_type
+	{
+		std::string class_name;
+		int64_t		object_id;
+
+		operator bool()
+		{
+			return not class_name.empty() and object_id > 0;
+		}
+	};
+
 	int64_t giga_to_bytes(int _ct)
 	{
 		int64_t t = _ct;
@@ -603,6 +614,7 @@ namespace corona
 		ft_wildcard = 'w',
 		ft_double = 'd',
 		ft_int64 = 'i',
+		ft_reference = 'r',
 		ft_string = 's',
 		ft_bool = 'b',
 		ft_datetime = 't',
@@ -636,6 +648,7 @@ namespace corona
 { "double", field_types::ft_double },
 { "number", field_types::ft_double },
 { "int64", field_types::ft_int64 },
+{ "reference", field_types::ft_reference },
 { "string", field_types::ft_string },
 { "bool", field_types::ft_bool },
 { "datetime", field_types::ft_datetime },

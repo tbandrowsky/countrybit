@@ -85,7 +85,7 @@ namespace corona
 		child_object_definition& operator =(const child_object_definition& _src) = default;
 		child_object_definition& operator =(child_object_definition&& _src) = default;
 
-		static child_object_definition parse_child_object(const char* _src)
+		static child_object_definition parse_definition(const char* _src)
 		{
 			parser_base pb;
 			child_object_definition cod;
@@ -261,6 +261,49 @@ namespace corona
 		}
 	};
 
+	class reference_definition
+	{
+	public:
+		bool is_undefined;
+		std::string base_class;
+
+		reference_definition()
+		{
+			is_undefined = true;
+		}
+
+		reference_definition(const reference_definition& _src) = default;
+		reference_definition(reference_definition&& _src) = default;
+		reference_definition& operator =(const reference_definition& _src) = default;
+		reference_definition& operator =(reference_definition&& _src) = default;
+
+		static reference_definition parse_definition(const char* _src)
+		{
+			parser_base pb;
+			reference_definition cod;
+
+			_src = pb.eat_white(_src);
+
+			if (_src[0] == '-' and _src[1] == '>') {
+				_src += 2;
+				_src = pb.eat_white(_src);
+				cod.base_class = _src;
+				cod.is_undefined = not cod.base_class.empty();
+			}
+			else 
+			{
+				pb.error("reference", "reference field definitions must have form ->class_name");
+			}
+
+			if (not pb.has_errors())
+			{
+				cod.is_undefined = false;
+			}
+
+			return cod;
+		}
+	};
+
 	void test_parse_child_field(std::shared_ptr<test_set> _tests)
 	{
 		date_time st = date_time::now();
@@ -271,17 +314,17 @@ namespace corona
 		bool result;
 
 		const char *case1 = "class1";
-		cd = child_object_definition::parse_child_object(case1);
+		cd = child_object_definition::parse_definition(case1);
 		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == case1 and cd.child_classes[0]->copy_values.size()==0;
 		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
 
 		const char* case2 = "class1:target";
-		cd = child_object_definition::parse_child_object(case2);
+		cd = child_object_definition::parse_definition(case2);
 		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == "class1" and cd.child_classes[0]->copy_values.contains("target");
 		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
 
 		const char* case3 = "class1:target = src";
-		cd = child_object_definition::parse_child_object(case3);
+		cd = child_object_definition::parse_definition(case3);
 		result = not cd.is_undefined and cd.child_classes.size() == 1 
 			and cd.child_classes[0]->class_name == "class1"
 			and cd.child_classes[0]->copy_values.contains("target")
@@ -289,7 +332,7 @@ namespace corona
 		_tests->test({ std::format("child object {0}", case3), result , __FILE__, __LINE__ });
 
 		const char *case4 = "class1:target1;class2:target2 = src2;";
-		cd = child_object_definition::parse_child_object(case4);
+		cd = child_object_definition::parse_definition(case4);
 		result = not cd.is_undefined and cd.child_classes.size() == 2
 			and cd.child_classes[0]->class_name == "class1"
 			and cd.child_classes[1]->class_name == "class2"
@@ -300,17 +343,17 @@ namespace corona
 		_tests->test({ std::format("child object {0}", case4), result , __FILE__, __LINE__ });
 
 		const char* acase1 = "[ class1 ]";
-		cd = child_object_definition::parse_child_object(case1);
+		cd = child_object_definition::parse_definition(case1);
 		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == "class1" and cd.child_classes[0]->copy_values.size() == 0;
 		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
 
 		const char* acase2 = "[ class2:target ]";
-		cd = child_object_definition::parse_child_object(case2);
+		cd = child_object_definition::parse_definition(case2);
 		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == "class2" and cd.child_classes[0]->copy_values.contains("target");
 		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
 
 		const char* acase3 = "[ class2:target = src ]";
-		cd = child_object_definition::parse_child_object(case3);
+		cd = child_object_definition::parse_definition(case3);
 		result = not cd.is_undefined and cd.child_classes.size() == 1
 			and cd.child_classes[0]->class_name == "class2"
 			and cd.child_classes[0]->copy_values.contains("target")
@@ -318,7 +361,7 @@ namespace corona
 		_tests->test({ std::format("child object {0}", case3), result , __FILE__, __LINE__ });
 
 		const char* acase4 = "[ class1:target1;class2:target2 = src2 ]";
-		cd = child_object_definition::parse_child_object(case4);
+		cd = child_object_definition::parse_definition(case4);
 		result = not cd.is_undefined and cd.child_classes.size() == 2
 			and cd.child_classes[0]->class_name == "class1"
 			and cd.child_classes[1]->class_name == "class2"
@@ -329,7 +372,7 @@ namespace corona
 		_tests->test({ std::format("child object {0}", case4), result , __FILE__, __LINE__ });
 
 		const char* acase5 = "[ class2:target ]";
-		cd = child_object_definition::parse_child_object(acase5);
+		cd = child_object_definition::parse_definition(acase5);
 		result = not cd.is_undefined
 			and cd.child_classes.size() == 1
 			and cd.child_classes[0]->class_name == "class2"
@@ -337,7 +380,7 @@ namespace corona
 		_tests->test({ std::format("child object {0}", acase5), result , __FILE__, __LINE__ });
 
 		const char* acase6 = "[ class2:target = src ]";
-		cd = child_object_definition::parse_child_object(acase6);
+		cd = child_object_definition::parse_definition(acase6);
 		result = not cd.is_undefined 
 			and cd.child_classes.size() == 1 
 			and cd.child_classes[0]->class_name == "class2" 
@@ -1124,6 +1167,7 @@ namespace corona
 	public:
 
 		std::shared_ptr<child_bridges> bridges;
+		field_types fundamental_type;
 
 		array_field_options() = default;
 		array_field_options(const array_field_options& _src) = default;
@@ -1156,8 +1200,32 @@ namespace corona
 			}
 		}
 
-		virtual void put_child_object(child_object_definition& _cod)
+		virtual void put_definition(child_object_definition& _cod)
 		{
+			if (_cod.child_classes.size() == 1) 
+			{
+				std::string class_name = _cod.child_classes[0]->class_name;
+				if (class_name == "string")
+				{
+					fundamental_type = field_types::ft_string;
+				}
+				else if (class_name == "number")
+				{
+					fundamental_type = field_types::ft_double;
+				}
+				else if (class_name == "datetime")
+				{
+					fundamental_type = field_types::ft_datetime;
+				}
+				else if (class_name == "reference")
+				{
+					fundamental_type = field_types::ft_reference;
+				}
+				else if ((class_name == "float" || class_name == "double"))
+				{
+					fundamental_type = field_types::ft_double;
+				}
+			}
 			bridges = std::make_shared<child_bridges>();
 			bridges->put_child_object(_cod);
 		}
@@ -1205,14 +1273,63 @@ namespace corona
 								ve.field_name = _field_name;
 								ve.filename = __FILE__;
 								ve.line_number = __LINE__;
-								ve.message = "Child objects were specified for this array, but this is not an object.";
+								ve.message = "elements of this array must be objects.";
 								_validation_errors.push_back(ve);
 								return false;
 
 							}
 						}
-						else {
-							return true;
+						else if (fundamental_type == field_types::ft_string) 
+						{
+							bool acceptable = obj.is_string();
+							if (not acceptable) {
+								validation_error ve;
+								ve.class_name = _class_name;
+								ve.field_name = _field_name;
+								ve.filename = __FILE__;
+								ve.line_number = __LINE__;
+								ve.message = "Element must be a string.";
+								_validation_errors.push_back(ve);
+							}
+						}
+						else if (fundamental_type == field_types::ft_int64)
+						{
+							bool acceptable = obj.is_int64();
+							if (not acceptable) {
+								validation_error ve;
+								ve.class_name = _class_name;
+								ve.field_name = _field_name;
+								ve.filename = __FILE__;
+								ve.line_number = __LINE__;
+								ve.message = "Element must be a int64.";
+								_validation_errors.push_back(ve);
+							}
+						}
+						else if (fundamental_type == field_types::ft_double)
+						{
+							bool acceptable = obj.is_double();
+							if (not acceptable) {
+								validation_error ve;
+								ve.class_name = _class_name;
+								ve.field_name = _field_name;
+								ve.filename = __FILE__;
+								ve.line_number = __LINE__;
+								ve.message = "Element must be a double.";
+								_validation_errors.push_back(ve);
+							}
+						}
+						else if (fundamental_type == field_types::ft_datetime)
+						{
+							bool acceptable = obj.is_int64();
+							if (not acceptable) {
+								validation_error ve;
+								ve.class_name = _class_name;
+								ve.field_name = _field_name;
+								ve.filename = __FILE__;
+								ve.line_number = __LINE__;
+								ve.message = "Element must be a datetime.";
+								_validation_errors.push_back(ve);
+							}
 						}
 					}
 				}
@@ -1273,7 +1390,7 @@ namespace corona
 			}
 		}
 
-		virtual void put_child_object(child_object_definition& _cod)
+		virtual void put_definition(child_object_definition& _cod)
 		{
 			bridges = std::make_shared<child_bridges>();
 			bridges->put_child_object(_cod);
@@ -1487,6 +1604,80 @@ namespace corona
 					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
 					ve.message = std::format("Value '{0}' must be between {1} and {2}", chumpy, min_value, max_value);
+					_validation_errors.push_back(ve);
+					return false;
+				};
+			}
+			return false;
+		}
+
+	};
+
+	class reference_field_options : public field_options_base
+	{
+	public:
+		std::string reference_class;
+		std::map<std::string, bool> reference_class_descendants;
+
+		reference_field_options() = default;
+		reference_field_options(const reference_field_options& _src) = default;
+		reference_field_options(reference_field_options&& _src) = default;
+		reference_field_options& operator = (const reference_field_options& _src) = default;
+		reference_field_options& operator = (reference_field_options&& _src) = default;
+		virtual ~reference_field_options() = default;
+
+		virtual void get_json(json& _dest)
+		{
+			field_options_base::get_json(_dest);
+			_dest.put_member("ref_class", reference_class);
+		}
+
+		virtual void put_definition(reference_definition& _rd)
+		{
+			reference_class = _rd.base_class;
+			reference_class_descendants.clear();
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_options_base::put_json(_src);
+			reference_class = _src["ref_class"];
+			reference_class_descendants.clear();
+		}
+
+		virtual void init_validation(corona_database_interface* _db, class_permissions _permissions)
+		{
+			reference_class_descendants.clear();
+			auto ci = _db->read_lock_class(reference_class);
+			if (ci) {
+				auto descendants = ci->get_descendants();
+				for (auto descendant : descendants) {
+					reference_class_descendants.insert_or_assign(descendant.first, true);
+				}
+			}
+		}
+
+		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
+		{
+			if (field_options_base::accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test)) {
+				bool is_legit = true;
+				object_reference_type chumpy = (object_reference_type)_object_to_test;
+
+				if (chumpy and reference_class_descendants.contains(chumpy.class_name))
+				{
+					is_legit = true;
+				}
+				else
+				{
+					is_legit = false;
+				}
+				if (not is_legit) {
+					validation_error ve;
+					ve.class_name = _class_name;
+					ve.field_name = _field_name;
+					ve.filename = __FILE__;
+					ve.line_number = __LINE__;
+					ve.message = std::format("Value '{0}' must be derived from {1}", chumpy, reference_class);
 					_validation_errors.push_back(ve);
 					return false;
 				};
@@ -1839,20 +2030,29 @@ namespace corona
 			}
 			else
 			{
-				child_object_definition cod = child_object_definition::parse_child_object(s.c_str());
+				reference_definition rd = reference_definition::parse_definition(s.c_str());
+
+				if (not rd.is_undefined)
+				{
+					auto obj_options = std::make_shared<reference_field_options>();
+					obj_options->put_definition(rd);
+					options = obj_options;
+				}
+
+				child_object_definition cod = child_object_definition::parse_definition(s.c_str());
 
 				if (not cod.is_undefined)
 				{
 					if (not cod.is_array)
 					{
 						auto obj_options = std::make_shared<object_field_options>();
-						obj_options->put_child_object(cod);
+						obj_options->put_definition(cod);
 						options = obj_options;
 					}
 					else 
 					{
 						auto arr_options = std::make_shared<array_field_options>();
-						arr_options->put_child_object(cod);
+						arr_options->put_definition(cod);
 						options = arr_options;
 					}
 				}

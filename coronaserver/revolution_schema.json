@@ -6,6 +6,26 @@
     "TJ Bandrowsky"
   ],
   "classes": [
+
+    {
+      "class_name": "human_actor",
+      "class_description": "human actor",
+      "base_class_name": "sys_actor",
+      "fields": {
+        "first_name": "string",
+        "last_name": "string",
+        "contact_url": "string",
+        "contact_email": "string",
+        "address1": "string",
+        "address2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "about": "[presentation:parent_object]"
+      }
+    },
+
+
     {
       "class_name": "point",
       "class_description": "a point",
@@ -157,7 +177,7 @@
     {
       "class_name": "presentation",
       "class_description": "a slide show, content",
-      "base_class_name": "sys_actor",
+      "base_class_name": "sys_good",
       "fields": {
         "parent_object": "int64",
         "presentation_name": "string",
@@ -165,16 +185,56 @@
         "slides": "[slide:parent_presentation]"
       }
     },
+
+    {
+      "class_name": "answer_option",
+      "class_description": "a question on an exam",
+      "base_class_name": "sys_object",
+      "fields": {
+        "question_id": "int64",
+        "correct": "bool",
+        "teachback": "string"
+      }
+    },
+    {
+      "class_name": "test_question",
+      "class_description": "a question on an exam",
+      "base_class_name": "sys_object",
+      "fields": {
+        "question": "string",
+        "answer_options": "[string]"
+      }
+    },
+    {
+      "class_name": "test_answer",
+      "class_description": "an answer to a question by a user",
+      "base_class_name": "presentation",
+      "fields": {
+        "question": "string",
+        "answer_options": "[string]"
+      }
+    },
+    {
+      "class_name": "course",
+      "class_description": "a course, with exams",
+      "base_class_name": "presentation",
+      "fields": {
+
+      }
+    },
+
     {
       "class_name": "front",
       "class_description": "an area of competitive activity",
-      "base_class_name": "place",
+      "base_class_name": "sys_place",
       "fields": {
         "front_name": "string",
         "front_description": "string",
         "documents": "[presentation:parent_object]"
       }
     },
+
+
     {
       "class_name": "book",
       "class_description": "a collection of presentations",
@@ -186,27 +246,53 @@
         "book_isbn": "string",
         "book_url": "string",
         "book_presentations": "[presentation:parent_object]",
+        "book_academy": "int64",
         "creation_time_window": "string"
+      },
+      "indexes": {
+        "idx_book_academy": {
+          "index_fields": [ "book_academy" ]
+        }
       }
     },
     {
-      "class_name": "library",
-      "class_description": "a resource for truth",
+      "class_name": "academy",
+      "class_description": "a collection of books and tests",
       "base_class_name": "front",
       "fields": {
-        "books": "[book:library]"
+        "creation_time_window": "string",
+        "books": "[book]"
       }
     },
 
     {
-      "class_name": "decision",
-      "class_description": "an election decision",
+      "class_name": "vote_option",
+      "class_description": "one or more choices for a decision",
       "base_class_name": "sys_actor",
+      "fields": {
+        "parent_decision": "int64",
+        "option": "string"
+      }
+    },
+    {
+      "class_name": "vote",
+      "class_description": "an election selection of a decision",
+      "base_class_name": "sys_actor",
+      "fields": {
+        "parent_decision": "int64",
+        "choice": "->vote_choice"
+      }
+    },
+    {
+      "class_name": "election_decision",
+      "class_description": "an election decision",
+      "base_class_name": "sys_place",
       "fields": {
         "question": "string",
         "description": "string",
+        "choices": "[vote_option:parent_decision]",
         "about": "[presentation:parent_object_id]",
-        "votes": "[vote:decision]"
+        "votes": "[vote:parent_decision]"
       }
     },
 
@@ -240,9 +326,9 @@
       }
     },
     {
-      "class_name": "election",
+      "class_name": "election_campaign",
       "class_description": "an election to win",
-      "base_class_name": "front",
+      "base_class_name": "election_decision",
       "fields": {
         "candidates": "[sys_election_player:election_candidate]",
         "incumbent": "sys_election_player:election_incumbent"
@@ -251,14 +337,14 @@
     {
       "class_name": "elect_president",
       "class_description": "elect a president",
-      "base_class_name": "front",
+      "base_class_name": "election_campaign",
       "fields": {
       }
     },
     {
       "class_name": "elect_senate",
       "class_description": "elect a us senator",
-      "base_class_name": "front",
+      "base_class_name": "election_campaign",
       "fields": {
         "state": "string"
       }
@@ -266,7 +352,7 @@
     {
       "class_name": "elect_congress",
       "class_description": "elect a us congress",
-      "base_class_name": "front",
+      "base_class_name": "election_campaign",
       "fields": {
         "state": "string",
         "district": "string"
@@ -275,7 +361,7 @@
     {
       "class_name": "elect_governor",
       "class_description": "elect a governor",
-      "base_class_name": "front",
+      "base_class_name": "election_campaign",
       "fields": {
 
       }
@@ -283,7 +369,7 @@
     {
       "class_name": "elect_state_rep",
       "class_description": "elect a state representative",
-      "base_class_name": "front",
+      "base_class_name": "election_campaign",
       "fields": {
         "state": "string",
         "district": "string"
@@ -292,7 +378,7 @@
     {
       "class_name": "elect_state_senator",
       "class_description": "elect a state senator",
-      "base_class_name": "front",
+      "base_class_name": "election_campaign",
       "fields": {
         "state": "string",
         "district": "string"
@@ -301,7 +387,7 @@
     {
       "class_name": "elect_mayor",
       "class_description": "elect a mayor",
-      "base_class_name": "front",
+      "base_class_name": "election_campaign",
       "fields": {
         "state": "string",
         "city": "string"
@@ -310,13 +396,22 @@
     {
       "class_name": "elect_county",
       "class_description": "elect a county",
-      "base_class_name": "front",
+      "base_class_name": "election_campaign",
       "fields": {
         "state": "string",
         "county": "string",
         "title": "string"
       }
     },
+    {
+      "class_name": "elections_front",
+      "class_description": "elect the revolution",
+      "base_class_name": "front",
+      "fields": {
+        "elections": "[election_campaign:investment_front_id]"
+      }
+    },
+
     {
       "class_name": "invested_product",
       "class_description": "a product invested in",
@@ -329,9 +424,21 @@
         "investment_currency": "double"
       },
       "indexes": {
-        "invested_product_investment": {
+        "idx_invested_product_investment": {
           "index_keys": "investment_id"
         }
+      }
+    },
+    {
+      "class_name": "invested_treaty",
+      "class_description": "an alliance between the investor and the revolution",
+      "base_class_name": "invested_product",
+      "fields": {
+        "for_revolution": "string",
+        "for_investor": "string",
+        "terms": "string",
+        "effective": "datetime",
+        "expiration": "datetime"
       }
     },
     {
@@ -371,11 +478,12 @@
         "investment_currency": "double",
         "investment_expectations": "[presentation:parent_object]",
         "investment_products": "[invested_product:investment_id]",
-        "investment_front": "int64"
+        "investment_front": "int64",
+        "investment_decision": "election_decision"
       },
       "indexes": {
         "invest_front_investment": {
-          "index_keys" : ["investment_front"]
+          "index_keys": [ "investment_front" ]
         }
       }
     },
@@ -387,10 +495,12 @@
         "investments": "[investment:investment_front_id]"
       }
     },
+
+
     {
       "class_name": "invention",
-      "class_description": "new innovations to free offshore labor",
-      "base_class_name": "front",
+      "class_description": "automation of a job",
+      "base_class_name": "sys_actor",
       "fields": {
         "invention_title": "string",
         "invention_description": "string",
@@ -404,10 +514,9 @@
         "child_inventions": "[invent:parent_invention]"
       }
     },
-
     {
       "class_name": "invention_front",
-      "class_description": "create new inventions",
+      "class_description": "improve our movement by automating theirs",
       "base_class_name": "front",
       "fields": {
         "inventions": "[invention:parent_invention]"
@@ -415,34 +524,197 @@
     },
 
 
+
     {
-      "class_name": "train",
-      "class_description": "improve your effectiveness",
-      "base_class_name": "front",
+      "class_name": "risk",
+      "class_description": "a risk of an accident along with its repair",
+      "base_class_name": "sys_actor",
+      "fields": {
+        "about": "[presentation:parent_object]",
+        "damage": "string",
+        "repair": "string",
+        "cost": "string",
+        "probability_second": "double",
+        "cool_down": "double",
+        "damage_control": "int64"
+      },
+      "indexes": {
+        "idx_damage_control_risk": {
+          "index_keys": [ "damage_control" ]
+        }
+      }
+    },
+    {
+      "class_name": "risk_trauma",
+      "class_description": "improve our movement by automating theirs",
+      "base_class_name": "repair_risk",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_infection",
+      "class_description": "viral, bacterial infections",
+      "base_class_name": "repair_risk",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_lifelong",
+      "class_description": "lifelong injury",
+      "base_class_name": "repair_risk",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_old_age",
+      "class_description": "the risk of living past your usefulness",
+      "base_class_name": "repair_risk",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_natural_disaster",
+      "class_description": "natural disaster insurance including colossal human screwups",
+      "base_class_name": "repair_risk",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_accidents",
+      "class_description": "risk of minor screwups damaging your property",
+      "base_class_name": "repair_risk",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_sabotage",
+      "class_description": "risk of people intentually stealing or damaging your property",
+      "base_class_name": "repair_risk",
       "fields": {
       }
     },
 
     {
-      "class_name": "training",
-      "class_description": "improve your effectiveness with simulation",
+      "class_name": "risk_management",
+      "class_description": "voluntary insurances",
       "base_class_name": "front",
       "fields": {
+        "reserves": "[sys_money]",
+        "insurances": "[repair_risk:repair_risk]"
       }
     },
 
+    {
+      "class_name": "borders",
+      "class_description": "an area where the actor must control",
+      "base_class_name": "sys_place",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "health_",
+      "class_description": "health interventions",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "crimefighting",
+      "class_description": "crime protections",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "firefighting",
+      "class_description": "fire prevention and mitigation",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "floodfighting",
+      "class_description": "flood prevention and mitigation",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "quakefighting",
+      "class_description": "quake prevention and mitigation",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "spacefighting",
+      "class_description": "impact preventation, exploration, and mitigation",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "seafighting",
+      "class_description": "fighting on the seas, against other craft or just bad seas",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "airfighting",
+      "class_description": "fighting things in the air or just bad air",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "landfighting",
+      "class_description": "all the land that rightfully belongs to us",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "spiritfighting",
+      "class_description": "keeping the forces of darkness at bay",
+      "base_class_name": "boundary",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "border_control",
+      "class_description": "keep the invaders away and allies in play",
+      "base_class_name": "front",
+      "fields": {
+        "borders": "[ boundary ]"
+      }
+    },
+
+    {
+      "class_name": "justice_case",
+      "class_description": "just a bunch of political prisoners being",
+      "base_class_name": "sys_place",
+      "fields": {
+        "plaintiff": "string",
+        "defendant": "string"
+      }
+    },
+
+    {
+      "class_name": "justice_front",
+      "class_description": "just a bunch of political prisoners being",
+      "base_class_name": "front",
+      "fields": {
+
+      }
+    },
     {
       "class_name": "govern",
-      "class_description": "explore a government with voluntary insurances",
-      "base_class_name": "front",
+      "class_description": "provisionary revolution government",
+      "base_class_name": "sys_scenario",
       "fields": {
-      }
-    },
-    {
-      "class_name": "control",
-      "class_description": "control of sea, land and space",
-      "base_class_name": "front",
-      "fields": {
+        "aims": "presentation:parent_object",
+        "fronts": "[ front ]"
       }
     }
   ],
