@@ -225,11 +225,13 @@ namespace corona
 							_src++;
 							status = parsing_class_name;
 							new_class->copy_values.insert_or_assign(dest_field, src_field);
+							cod.child_classes.push_back(new_class);
 						}
 						else if (*_src == 0 || *_src == ']')
 						{
 							new_class->copy_values.insert_or_assign(dest_field, src_field);
 							cod.child_classes.push_back(new_class);
+							new_class = std::make_shared<child_object_class>();
 							status = parsing_complete;
 						}
 						else
@@ -338,7 +340,7 @@ namespace corona
 			and cd.child_classes[1]->class_name == "class2"
 			and cd.child_classes[0]->copy_values.contains("target1")
 			and cd.child_classes[1]->copy_values.contains("target2")
-			and cd.child_classes[0]->copy_values["target1"] == "src1"
+			and cd.child_classes[0]->copy_values["target1"] == "object_id"
 			and cd.child_classes[1]->copy_values["target2"] == "src2";
 		_tests->test({ std::format("child object {0}", case4), result , __FILE__, __LINE__ });
 
@@ -348,28 +350,31 @@ namespace corona
 		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
 
 		const char* acase2 = "[ class2:target ]";
-		cd = child_object_definition::parse_definition(case2);
-		result = not cd.is_undefined and cd.child_classes.size() == 1 and cd.child_classes[0]->class_name == "class2" and cd.child_classes[0]->copy_values.contains("target");
-		_tests->test({ std::format("child object {0}", case1), result , __FILE__, __LINE__ });
+		cd = child_object_definition::parse_definition(acase2);
+		result = not cd.is_undefined 
+			and cd.child_classes.size() == 1 
+			and cd.child_classes[0]->class_name == "class2" 
+			and cd.child_classes[0]->copy_values.contains("target");
+		_tests->test({ std::format("child object {0}", acase2), result , __FILE__, __LINE__ });
 
 		const char* acase3 = "[ class2:target = src ]";
-		cd = child_object_definition::parse_definition(case3);
+		cd = child_object_definition::parse_definition(acase3);
 		result = not cd.is_undefined and cd.child_classes.size() == 1
 			and cd.child_classes[0]->class_name == "class2"
 			and cd.child_classes[0]->copy_values.contains("target")
 			and cd.child_classes[0]->copy_values["target"] == "src";
-		_tests->test({ std::format("child object {0}", case3), result , __FILE__, __LINE__ });
+		_tests->test({ std::format("child object {0}", acase3), result , __FILE__, __LINE__ });
 
 		const char* acase4 = "[ class1:target1;class2:target2 = src2 ]";
-		cd = child_object_definition::parse_definition(case4);
+		cd = child_object_definition::parse_definition(acase4);
 		result = not cd.is_undefined and cd.child_classes.size() == 2
 			and cd.child_classes[0]->class_name == "class1"
 			and cd.child_classes[1]->class_name == "class2"
 			and cd.child_classes[0]->copy_values.contains("target1")
 			and cd.child_classes[1]->copy_values.contains("target2")
-			and cd.child_classes[0]->copy_values["target1"] == "src1"
+			and cd.child_classes[0]->copy_values["target1"] == "object_id"
 			and cd.child_classes[1]->copy_values["target2"] == "src2";
-		_tests->test({ std::format("child object {0}", case4), result , __FILE__, __LINE__ });
+		_tests->test({ std::format("child object {0}", acase4), result , __FILE__, __LINE__ });
 
 		const char* acase5 = "[ class2:target ]";
 		cd = child_object_definition::parse_definition(acase5);
@@ -1677,7 +1682,7 @@ namespace corona
 					ve.field_name = _field_name;
 					ve.filename = __FILE__;
 					ve.line_number = __LINE__;
-					ve.message = std::format("Value '{0}' must be derived from {1}", chumpy, reference_class);
+					ve.message = std::format("Value '{0}' must be derived from {1}", (std::string)chumpy, reference_class);
 					_validation_errors.push_back(ve);
 					return false;
 				};
@@ -2624,6 +2629,10 @@ namespace corona
 				for (auto jfield : jfield_members) {
 					std::shared_ptr<field_implementation> field = std::make_shared<field_implementation>();
 					field->set_field_type(field_types::ft_none);
+
+					child_object_definition cod;
+					reference_definition  rd;
+
 					if (jfield.second.object()) 
 					{
 						field->put_json(_errors, jfield.second);
@@ -2633,6 +2642,25 @@ namespace corona
 						auto fi = allowed_field_types.find(jfield.second);
 						if (fi != std::end(allowed_field_types)) {
 							field->set_field_type( fi->second);
+						}
+						else {
+							auto parse_temp = (std::string)jfield.second;
+							cod = child_object_definition::parse_definition(parse_temp.c_str());
+							if (cod.is_undefined)
+							{
+								rd = reference_definition::parse_definition(parse_temp.c_str());
+								if (not rd.is_undefined) {
+									field->set_field_type(field_types::ft_reference);
+								}
+							}
+							else if (cod.is_array)
+							{
+								field->set_field_type(field_types::ft_array);
+							}
+							else
+							{
+								field->set_field_type(field_types::ft_object);
+							}
 						}
 					}
 					else
@@ -3949,7 +3977,7 @@ namespace corona
 {
 	"class_name" : "sys_actor",
 	"base_class_name" : "sys_object",
-	"class_description" : "An item participating in a game",
+	"class_description" : "An item participating in a game.  Basically, anything on the screen you can interact with",
 	"fields" : {		
 			"actor_name" : "string",
 			"actor_description" : "string",
@@ -3995,6 +4023,39 @@ namespace corona
 {
 	"class_name" : "sys_money",
 	"base_class_name" : "sys_actor",
+	"class_description" : "money and how you got it",
+	"fields" : {		
+			"currency" : "string",
+			"amount" : "double",
+			"how_obtained" : "string",
+			"" : ""
+	},
+
+}
+)");
+
+			created_classes.put_member("sys_money", true);
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_money"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_money after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				return result;
+			}
+
+
+			response = create_class(R"(
+{
+	"class_name" : "sys_achievement",
+	"base_class_name" : "sys_actor",
 	"class_description" : "money",
 	"fields" : {		
 			"currency" : "string",
@@ -4020,6 +4081,8 @@ namespace corona
 
 				return result;
 			}
+
+
 
 
 			response = create_class(R"(
@@ -4182,6 +4245,7 @@ namespace corona
 			"place_description" : "string",
 			"parent_game" : "int64",
 			"parent_scenario" : "int64",
+			"parent_place" : "int64",
 			"places" : "[sys_place:parent_place]",
 			"actors" : "[sys_actor:parent_place]"
 	}
@@ -4248,7 +4312,7 @@ namespace corona
 	"class_description" : "an instance of a scenario",
 	"fields" : {		
 			"parent_game" : "int64",
-			"parent_user" : "int64",
+			"parent_user" : "->sys_user",
 			"actor" : "sys_actor:parent_game_user"
 	},
     "indexes": {

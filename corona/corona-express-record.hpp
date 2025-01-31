@@ -124,6 +124,127 @@ namespace corona
 
 	};
 
+	struct xreference
+	{
+		field_types ft;
+		int64_t object_id;
+		int32_t length;
+		const char* data;
+		size_t size_bytes;
+
+		xreference()
+		{
+			ft = field_types::ft_reference;
+			data = nullptr;
+			length = 0;
+			size_bytes = 0;
+		}
+
+		xreference(const char* _src, size_t _offset)
+		{
+			ft = (field_types)_src[_offset];
+			_offset++;
+			int64_t* oi = (int64_t*)(&_src[_offset]);
+			_offset += sizeof(int64_t);
+			int32_t* l = (int*)(&_src[_offset]);
+			length = *l;
+			_offset += sizeof(int32_t);
+			data = &_src[_offset];
+			_offset += length;
+			size_bytes = packed_field_type_size + sizeof(int32_t) + length;
+		}
+
+		xreference(const xreference& _src)
+		{
+			ft = _src.ft;
+			data = _src.data;
+			length = _src.length;
+			size_bytes = _src.size_bytes;
+		}
+
+		xreference& operator = (const xreference& _src)
+		{
+			ft = _src.ft;
+			data = _src.data;
+			length = _src.length;
+			size_bytes = _src.size_bytes;
+			return *this;
+		}
+
+		xreference(xreference&& _src)
+		{
+			ft = _src.ft;
+			data = _src.data;
+			length = _src.length;
+			size_bytes = _src.size_bytes;
+		}
+
+		xreference& operator = (xreference&& _src)
+		{
+			ft = _src.ft;
+			data = _src.data;
+			length = _src.length;
+			size_bytes = _src.size_bytes;
+			return *this;
+		}
+
+		int size() const
+		{
+			return size_bytes;
+		}
+
+
+		std::string to_string() const
+		{
+			return data;
+		}
+
+		operator object_reference_type()
+		{
+			object_reference_type ort;
+			ort.class_name = data;
+			ort.object_id = object_id;
+			return ort;
+		}
+
+		static bool get(const std::vector<char>& _src, size_t* _offset, xreference& _dest)
+		{
+			size_t ofs = *_offset;
+			if (ofs >= _src.size())
+				return false;
+			const char* s = _src.data() + ofs;
+			field_types ft = *((field_types*)s);
+			s++;
+			_dest.object_id = *((int64_t*)s);
+			s+=sizeof(int64_t);
+			int32_t sz = *((int32_t*)s);
+			s += sizeof(int32_t);
+			_dest.data = s;
+			*_offset += sz;
+			return true;
+		}
+
+		static int emplace(const object_reference_type& _src, std::vector<char>& _dest)
+		{
+			char ft = (char)field_types::ft_reference;
+			_dest.push_back(ft);
+
+			int64_t i = _src.object_id;
+			char* x = (char*)&i;
+			_dest.insert(_dest.end(), x, x + sizeof(i));
+
+			int32_t l = _src.class_name.size() + 1;
+			x = (char*)&l;
+			_dest.insert(_dest.end(), x, x + sizeof(l));
+
+			_dest.insert(_dest.end(), _src.class_name.begin(), _src.class_name.end());
+			int return_value;
+			return_value = std::distance(_dest.begin(), _dest.end());
+			return return_value;
+		}
+	};
+
+
 	template <typename data_type, field_types field_type>
 	class xpoco
 	{
@@ -328,6 +449,16 @@ namespace corona
 		else return std::weak_ordering::greater;
 	}
 
+	std::weak_ordering xcompare(const xstring& _itemb, const xreference& _itema)
+	{
+		int64_t dp = strtoll(_itemb.data, nullptr, 10);
+		if (_itema.object_id > dp)
+			return std::weak_ordering::greater;
+		else if (_itema.object_id == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::less;
+	}
+
 
 	// xint64_t
 	std::weak_ordering xcompare(const xint64_t& _itema, const xint64_t& _itemb)
@@ -368,6 +499,16 @@ namespace corona
 		else return std::weak_ordering::greater;
 	}
 
+	std::weak_ordering xcompare(const xint64_t& _itemb, const xreference& _itema)
+	{
+		if (_itema.object_id > _itemb.data)
+			return std::weak_ordering::greater;
+		else if (_itema.object_id == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::less;
+	}
+
+
 
 	// xdouble
 	std::weak_ordering xcompare(const xdouble& _itema, const xdouble& _itemb)
@@ -407,6 +548,15 @@ namespace corona
 		else if (_itema.data == dp)
 			return std::weak_ordering::equivalent;
 		else return std::weak_ordering::greater;
+	}
+
+	std::weak_ordering xcompare(const xdouble& _itemb, const xreference& _itema)
+	{
+		if (_itema.object_id > _itemb.data)
+			return std::weak_ordering::greater;
+		else if (_itema.object_id == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::less;
 	}
 
 	// xdatetime
@@ -450,6 +600,70 @@ namespace corona
 			return std::weak_ordering::equivalent;
 		else return std::weak_ordering::greater;
 	}
+
+	std::weak_ordering xcompare(const xdatetime& _itema, const xreference& _itemb)
+	{
+		int64_t dp = _itema.data.get_time_t();
+		if (_itema.data < dp)
+			return std::weak_ordering::less;
+		else if (_itema.data == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
+	}
+
+	// references
+
+	std::weak_ordering xcompare(const xreference& _itema, const xint64_t& _itemb)
+	{
+		if (_itema.object_id < _itemb.data)
+			return std::weak_ordering::less;
+		else if (_itema.object_id == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
+	}
+
+	std::weak_ordering xcompare(const xreference& _itema, const xstring& _itemb)
+	{
+		int64_t dp = strtoll(_itemb.data, nullptr, 10);
+		if (_itema.object_id < dp)
+			return std::weak_ordering::less;
+		else if (_itema.object_id == dp)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
+	}
+
+	std::weak_ordering xcompare(const xreference& _itema, const xdouble& _itemb)
+	{
+		if (_itema.object_id < _itemb.data)
+			return std::weak_ordering::less;
+		else if (_itema.object_id == _itemb.data)
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
+	}
+
+	std::weak_ordering xcompare(const xreference& _itema, const xdatetime& _itemb)
+	{
+		int64_t dp = _itemb.data.get_time_t();
+		if (_itema.object_id < _itemb.data)
+			return std::weak_ordering::less;
+		else if (_itema.object_id == _itemb.data.get_time_t())
+			return std::weak_ordering::equivalent;
+		else return std::weak_ordering::greater;
+	}
+
+	std::weak_ordering xcompare(const xreference& _itema, const xreference& _itemb)
+	{
+		if (_itema.object_id < _itemb.object_id) {
+			return std::weak_ordering::less;
+		}
+		else if (_itema.object_id == _itemb.object_id)
+		{
+			// I'll get away with this for now because I know that there is one object_id_counter
+			return std::weak_ordering::equivalent;
+		}
+		else return std::weak_ordering::greater;
+	}
+
 
 	// wildcards are always equal.
 
@@ -532,6 +746,19 @@ namespace corona
 			return success;
 		}
 
+		template <> bool on_get_json<xreference>(json& _dest, const std::string& _key, size_t* _offset) const
+		{
+			xreference temp;
+			bool success = xreference::get(record_bytes, _offset, temp);
+			if (success) {
+				object_reference_type ort;
+				ort.class_name = temp.data;
+				ort.object_id = temp.object_id;
+				_dest.put_member(_key, ort);
+			}
+			return success;
+		}
+
 		template <> bool on_get_json<xint64_t>(json& _dest, const std::string& _key, size_t* _offset) const
 		{
 			xint64_t temp;
@@ -555,10 +782,25 @@ namespace corona
 			xstring::emplace_as(_src.get_field_type(), temp, record_bytes);
 		}
 
+		void emplace(const object_reference_type& _src)
+		{
+			xreference temp;
+			temp.object_id = _src.object_id;
+			temp.length = _src.class_name.length() + 1;
+			temp.data = _src.class_name.c_str();
+			xreference::emplace(temp, record_bytes);
+		}
+
 		template <typename xtype, typename native_type> void emplace(json& _src)
 		{
 			native_type temp = (native_type)(_src);
 			xtype::emplace(temp, record_bytes);
+		}
+
+		template <> void emplace<xreference,object_reference_type>(json& _src)
+		{
+			object_reference_type temp = (object_reference_type)(_src);
+			xreference::emplace(temp, record_bytes);
 		}
 
 		template <> void emplace<xwildcard, int>(json& _src)
@@ -628,6 +870,11 @@ namespace corona
 						field_comparer<compare_fn, xint64_t, xdatetime> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
+					else if (other_ft == field_types::ft_reference)
+					{
+						field_comparer<compare_fn, xint64_t, xreference> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
 					else if (other_ft == field_types::ft_wildcard)
 					{
 						field_comparer<compare_fn, xint64_t, xwildcard> comparer;
@@ -654,6 +901,11 @@ namespace corona
 					else if (other_ft == field_types::ft_datetime)
 					{
 						field_comparer<compare_fn, xstring, xdatetime> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_reference)
+					{
+						field_comparer<compare_fn, xstring, xreference> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 					else if (other_ft == field_types::ft_wildcard)
@@ -684,6 +936,11 @@ namespace corona
 						field_comparer<compare_fn, xdouble, xdatetime> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
+					else if (other_ft == field_types::ft_reference)
+					{
+						field_comparer<compare_fn, xdouble, xreference> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
 					else if (other_ft == field_types::ft_wildcard)
 					{
 						field_comparer<compare_fn, xdouble, xwildcard> comparer;
@@ -712,12 +969,50 @@ namespace corona
 						field_comparer<compare_fn, xdatetime, xdatetime> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
+					else if (other_ft == field_types::ft_reference)
+					{
+						field_comparer<compare_fn, xdatetime, xreference> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
 					else if (other_ft == field_types::ft_wildcard)
 					{
 						field_comparer<compare_fn, xdatetime, xwildcard> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 				}
+				else if (this_ft == field_types::ft_reference)
+				{
+					if (other_ft == field_types::ft_int64)
+					{
+						field_comparer<compare_fn, xreference, xint64_t> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_string)
+					{
+						field_comparer<compare_fn, xreference, xstring> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_double)
+					{
+						field_comparer<compare_fn, xreference, xdouble> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_datetime)
+					{
+						field_comparer<compare_fn, xreference, xdatetime> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_reference)
+					{
+						field_comparer<compare_fn, xreference, xreference> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_wildcard)
+					{
+						field_comparer<compare_fn, xreference, xwildcard> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					}
 				else if (this_ft == field_types::ft_wildcard)
 				{
 					if (other_ft == field_types::ft_int64)
@@ -738,6 +1033,11 @@ namespace corona
 					else if (other_ft == field_types::ft_datetime)
 					{
 						field_comparer<compare_fn, xwildcard, xdatetime> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_reference)
+					{
+						field_comparer<compare_fn, xwildcard, xreference> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 					else if (other_ft == field_types::ft_wildcard)
@@ -929,6 +1229,9 @@ namespace corona
 				case field_types::ft_int64:
 					emplace<xint64_t, int64_t>(m);
 					break;
+				case field_types::ft_reference:
+					emplace<xreference, object_reference_type>(m);
+					break;
 				default:
 					has_wildcard = true;
 					emplace<xwildcard, int>(m);
@@ -965,6 +1268,9 @@ namespace corona
 					break;
 				case field_types::ft_wildcard:
 					on_to_string<xwildcard>(temp, &this_offset);
+					break;
+				case field_types::ft_reference:
+					on_to_string<xreference>(temp, &this_offset);
 					break;
 				case field_types::ft_array:
 					on_to_string<xstring>(temp, &this_offset);
@@ -1012,6 +1318,9 @@ namespace corona
 					break;
 				case field_types::ft_datetime:
 					on_get_json<xdatetime>(_dest, *ki, &this_offset);
+					break;
+				case field_types::ft_reference:
+					on_get_json<xreference>(_dest, *ki, &this_offset);
 					break;
 				case field_types::ft_wildcard:
 					on_get_json<xwildcard>(_dest, *ki, &this_offset);

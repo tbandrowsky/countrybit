@@ -8,25 +8,6 @@
   "classes": [
 
     {
-      "class_name": "human_actor",
-      "class_description": "human actor",
-      "base_class_name": "sys_actor",
-      "fields": {
-        "first_name": "string",
-        "last_name": "string",
-        "contact_url": "string",
-        "contact_email": "string",
-        "address1": "string",
-        "address2": "string",
-        "city": "string",
-        "state": "string",
-        "zip": "string",
-        "about": "[presentation:parent_object]"
-      }
-    },
-
-
-    {
       "class_name": "point",
       "class_description": "a point",
       "base_class_name": "sys_object",
@@ -187,13 +168,16 @@
     },
 
     {
-      "class_name": "answer_option",
-      "class_description": "a question on an exam",
+      "class_name": "test_question_answer",
+      "class_description": "one of the presented answers to a multiple choice question",
       "base_class_name": "sys_object",
       "fields": {
-        "question_id": "int64",
+        "test_question_id": "int64",
+        "short_answer": "string",
+        "about_answer": "presentation:parent_object",
         "correct": "bool",
-        "teachback": "string"
+        "teachback": "string",
+        "order": "number"
       }
     },
     {
@@ -201,19 +185,41 @@
       "class_description": "a question on an exam",
       "base_class_name": "sys_object",
       "fields": {
-        "question": "string",
-        "answer_options": "[string]"
+        "question_text": "string",
+        "question_answers": "[test_question_answer:test_question_id]"
       }
     },
     {
-      "class_name": "test_answer",
+      "class_name": "test_key",
       "class_description": "an answer to a question by a user",
       "base_class_name": "presentation",
       "fields": {
-        "question": "string",
-        "answer_options": "[string]"
+        "test_name": "string",
+        "test_description": "string",
+        "test_questions": "[string]"
       }
     },
+    {
+      "class_name": "test_key",
+      "class_description": "an answer to a question by a user",
+      "base_class_name": "presentation",
+      "fields": {
+        "test_name": "string",
+        "test_description": "string",
+        "test_questions": "[string]"
+      }
+    },
+    {
+      "class_name": "test",
+      "class_description": "a test taken by a user",
+      "base_class_name": "presentation",
+      "fields": {
+        "actor": "->sys_actor",
+        "test": "->sys_",
+        "answers": "string"
+      }
+    },
+
     {
       "class_name": "course",
       "class_description": "a course, with exams",

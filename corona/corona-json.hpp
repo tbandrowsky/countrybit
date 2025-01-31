@@ -1947,6 +1947,17 @@ namespace corona
 			return *this;
 		}
 
+		json put_member(std::string _key, object_reference_type _value)
+		{
+			if (not object_impl()) {
+				throw std::logic_error("Not an object");
+			}
+			auto new_member = std::make_shared<json_reference>();
+			new_member->value = _value;
+			object_impl()->members[_key] = new_member;
+			return *this;
+		}
+
 		json put_member(std::string _key, std::string_view _value)
 		{
 			if (not object_impl()) {

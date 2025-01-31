@@ -81,6 +81,41 @@ namespace corona
 		{
 			return not class_name.empty() and object_id > 0;
 		}
+
+		object_reference_type& operator = (std::string& _src)
+		{
+			std::regex ortexpr("([A-Za-z0-9\_]+)([:])([0-9]+)", std::regex_constants::syntax_option_type::ECMAScript);
+
+			std::smatch results;
+			class_name = "";
+			object_id = 0;
+
+			if (std::regex_match(_src, results, ortexpr)) {
+				int count = 0;
+				for (auto result : results)
+				{
+					std::string text = result.str();
+					switch (count)
+					{
+					case 0:
+						class_name = text;
+						break;
+					case 1:
+						object_id = std::strtoll(text.c_str(), nullptr, 10);
+						break;
+					}
+					count++;
+				}
+			}
+
+
+			return *this;
+		}
+
+		operator std::string()
+		{
+			return std::format("{0}:{1}", class_name, object_id);
+		}
 	};
 
 	int64_t giga_to_bytes(int _ct)
