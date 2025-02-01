@@ -3126,7 +3126,7 @@ namespace corona
 			if (std::isalpha(*_src))
 			{
 				result = true;
-				while (isalnum(*_src) || *_src == '.')
+				while (isalnum(*_src) || *_src == '.' || *_src == '_')
 				{
 					check_line(_src);
 					temp += *_src;

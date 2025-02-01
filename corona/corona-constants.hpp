@@ -1002,7 +1002,6 @@ namespace corona
 			for (auto& b : buffers) {
 				total += b.get_size();
 			}
-			size_t end_buffer = total;
 			total++;
 			buffer consolidated(total);
 			char* t = consolidated.get_ptr();

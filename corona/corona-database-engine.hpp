@@ -1199,6 +1199,8 @@ namespace corona
 			field_options_base::put_json(_src);
 
 			json jctors = _src["child_objects"];
+			json fte = _src["fundamental_type"];
+
 			bridges = std::make_shared<child_bridges>();
 			if (jctors.object()) {
 				bridges->put_json(jctors);
@@ -2687,7 +2689,7 @@ namespace corona
 						validation_error ve;
 						ve.class_name = class_name;
 						ve.field_name = field->get_field_name();
-						ve.message = "Invalid field type";
+						ve.message = "Invalid field type '" + (std::string)jfield.second;
 						ve.filename = __FILE__;
 						ve.line_number = __LINE__;
 						_errors.push_back(ve);
@@ -3150,7 +3152,8 @@ namespace corona
 					}
 				}
 			}
-			else {
+			else 
+			{
 				_exists = false;
 			}
 
@@ -4026,11 +4029,8 @@ namespace corona
 	"class_description" : "money and how you got it",
 	"fields" : {		
 			"currency" : "string",
-			"amount" : "double",
-			"how_obtained" : "string",
-			"" : ""
-	},
-
+			"amount" : "double"
+	}
 }
 )");
 
@@ -4399,9 +4399,8 @@ namespace corona
 			"team_name" : "string",
 			"validation_code" : "string",
 			"confirmed_code" : "number",
-			"workflow_objects" : "object",
-			"actors" : "
-	}
+			"workflow_objects" : "object"
+}
 }
 )");
 
@@ -5114,7 +5113,7 @@ private:
 			read_scope_lock my_lock(class_lock);
 			auto cache_hit = class_cache.find(_class_name);
 			if (cache_hit != std::end(class_cache)) {
-				cd = class_cache[_class_name];
+				cd = cache_hit->second;
 			}
 			return cd;
 		}
