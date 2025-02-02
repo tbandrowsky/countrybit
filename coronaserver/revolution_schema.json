@@ -166,13 +166,12 @@
         "slides": "[slide:parent_presentation]"
       }
     },
-
     {
-      "class_name": "test_question_answer",
+      "class_name": "challenge_question_answer",
       "class_description": "one of the presented answers to a multiple choice question",
       "base_class_name": "sys_object",
       "fields": {
-        "test_question_id": "int64",
+        "question_id": "int64",
         "short_answer": "string",
         "about_answer": "presentation:parent_object",
         "correct": "bool",
@@ -181,51 +180,91 @@
       }
     },
     {
-      "class_name": "test_question",
+      "class_name": "challenge_question",
       "class_description": "a question on an exam",
       "base_class_name": "sys_object",
       "fields": {
         "question_text": "string",
-        "question_answers": "[test_question_answer:test_question_id]"
+        "question_answers": "[test_question_answer:question_id]",
+        "challenge_id": "int64"
+      },
+      "indexes": {
+        "idx_challenge_question": {
+          "index_keys": [ "challenge_id" ]
+        }
       }
     },
     {
-      "class_name": "test_key",
-      "class_description": "an answer to a question by a user",
-      "base_class_name": "presentation",
+      "class_name": "challenge",
+      "class_description": "a task the produces personal growth when complete",
+      "base_class_name": "sys_object",
       "fields": {
-        "test_name": "string",
-        "test_description": "string",
-        "test_questions": "[string]"
+        "challenge_name": "string",
+        "challenge_description": "string",
+        "challenge_presentation": "->presentation",
+        "challenge_questions": "[challenge_question:challenge_id]"
       }
     },
-    {
-      "class_name": "test_key",
-      "class_description": "an answer to a question by a user",
-      "base_class_name": "presentation",
-      "fields": {
-        "test_name": "string",
-        "test_description": "string",
-        "test_questions": "[string]"
-      }
-    },
-    {
-      "class_name": "test",
-      "class_description": "a test taken by a user",
-      "base_class_name": "presentation",
-      "fields": {
-        "actor": "->sys_actor",
-        "test": "->sys_",
-        "answers": "string"
-      }
-    },
-
     {
       "class_name": "course",
-      "class_description": "a course, with exams",
-      "base_class_name": "presentation",
+      "class_description": "a course, is a list of challenges, each has a training and an exam",
+      "base_class_name": "sys_object",
       "fields": {
-
+        "about": "presentation:parent_object",
+        "academy_id": "int64",
+        "prerequisites": "[course]",
+        "challenges": "[challenge]"
+      },
+      "indexes": {
+        "idx_course_academy": "academy_id"
+      }
+    },
+    {
+      "class_name": "response_answer",
+      "class_description": "the answer to a challenge by a user",
+      "base_class_name": "sys_object",
+      "fields": {
+        "challenge_task_id": "int64",
+        "course": "->course",
+        "question": "->challenge_question",
+        "answer": "->challenge_question_answer"
+      },
+      "indexes": {
+        "idx_challenge_task": {
+          "index_keys": [ "challenge_task_id" ]
+        }
+      }
+    },
+    {
+      "class_name": "response",
+      "class_description": "the answer to a challenge by a user",
+      "base_class_name": "sys_object",
+      "fields": {
+        "challenge": "->challenge",
+        "study_id": "int64",
+        "results": "[challenge_task_answer:response_answer]"
+      },
+      "indexes": {
+        "response_study": {
+          "index_keys": [ "study_id" ]
+        }
+      }
+    },
+    {
+      "class_name": "study",
+      "class_description": "a course, with exams",
+      "base_class_name": "sys_object",
+      "fields": {
+        "course": "->course",
+        "response": "->study",
+        "grade": "double",
+        "passed": "bool",
+        "academy_id": "int64"
+      },
+      "indexes": {
+        "idx_study_academy": {
+          "index_fields": [ "academy_id" ]
+        }
       }
     },
 
@@ -239,7 +278,6 @@
         "documents": "[presentation:parent_object]"
       }
     },
-
 
     {
       "class_name": "book",
@@ -267,7 +305,9 @@
       "base_class_name": "front",
       "fields": {
         "creation_time_window": "string",
-        "books": "[book]"
+        "books": "[book]",
+        "courses": "[course:academy_id]",
+        "studies": "[study:academy_id]"
       }
     },
 
@@ -553,55 +593,135 @@
     {
       "class_name": "risk_trauma",
       "class_description": "improve our movement by automating theirs",
-      "base_class_name": "repair_risk",
+      "base_class_name": "risk",
       "fields": {
       }
     },
     {
       "class_name": "risk_infection",
       "class_description": "viral, bacterial infections",
-      "base_class_name": "repair_risk",
+      "base_class_name": "risk",
       "fields": {
       }
     },
     {
-      "class_name": "risk_lifelong",
+      "class_name": "risk_lifelong",  
       "class_description": "lifelong injury",
-      "base_class_name": "repair_risk",
+      "base_class_name": "risk",
       "fields": {
       }
     },
     {
-      "class_name": "risk_old_age",
-      "class_description": "the risk of living past your usefulness",
-      "base_class_name": "repair_risk",
+      "class_name": "risk_age",
+      "class_description": "the risk of living past your means",
+      "base_class_name": "risk",
       "fields": {
       }
     },
     {
       "class_name": "risk_natural_disaster",
       "class_description": "natural disaster insurance including colossal human screwups",
-      "base_class_name": "repair_risk",
+      "base_class_name": "risk",
       "fields": {
       }
     },
     {
       "class_name": "risk_accidents",
       "class_description": "risk of minor screwups damaging your property",
-      "base_class_name": "repair_risk",
+      "base_class_name": "risk",
       "fields": {
       }
     },
     {
       "class_name": "risk_sabotage",
       "class_description": "risk of people intentually stealing or damaging your property",
-      "base_class_name": "repair_risk",
+      "base_class_name": "risk",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_war",
+      "class_description": "risk of being attacked as an act of war",
+      "base_class_name": "risk",
       "fields": {
       }
     },
 
     {
-      "class_name": "risk_management",
+      "class_name": "protection",
+      "class_description": "an area of responsibility of protection for the government.  actors get jobs to correct them.",
+      "base_class_name": "sys_place",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "health_protection",
+      "class_description": "health interventions",
+      "base_class_name": "protection",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "crime_protection",
+      "class_description": "crime protections",
+      "base_class_name": "protection",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "fire_protection",
+      "class_description": "fire prevention and mitigation",
+      "base_class_name": "protection",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "flood_protection",
+      "class_description": "flood prevention and mitigation",
+      "base_class_name": "protection",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "quake_protection",
+      "class_description": "quake prevention and mitigation",
+      "base_class_name": "protection",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "space_protection",
+      "class_description": "impact preventation, exploration, and mitigation",
+      "base_class_name": "protection",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "sea_protection",
+      "class_description": "fighting on the seas, against other craft or just bad seas",
+      "base_class_name": "protection",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "land_protection",
+      "class_description": "fighting things in the air or just bad air",
+      "base_class_name": "protection",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "spirit_protection",
+      "class_description": "keeping the forces of darkness at bay",
+      "base_class_name": "protection",
+      "fields": {
+      }
+    },
+
+
+
+    {
+      "class_name": "insurance",
       "class_description": "voluntary insurances",
       "base_class_name": "front",
       "fields": {
@@ -610,91 +730,6 @@
       }
     },
 
-    {
-      "class_name": "borders",
-      "class_description": "an area where the actor must control",
-      "base_class_name": "sys_place",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "health_",
-      "class_description": "health interventions",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "crimefighting",
-      "class_description": "crime protections",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "firefighting",
-      "class_description": "fire prevention and mitigation",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "floodfighting",
-      "class_description": "flood prevention and mitigation",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "quakefighting",
-      "class_description": "quake prevention and mitigation",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "spacefighting",
-      "class_description": "impact preventation, exploration, and mitigation",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "seafighting",
-      "class_description": "fighting on the seas, against other craft or just bad seas",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "airfighting",
-      "class_description": "fighting things in the air or just bad air",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "landfighting",
-      "class_description": "all the land that rightfully belongs to us",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "spiritfighting",
-      "class_description": "keeping the forces of darkness at bay",
-      "base_class_name": "boundary",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "border_control",
-      "class_description": "keep the invaders away and allies in play",
-      "base_class_name": "front",
-      "fields": {
-        "borders": "[ boundary ]"
-      }
-    },
 
     {
       "class_name": "justice_case",
@@ -702,16 +737,16 @@
       "base_class_name": "sys_place",
       "fields": {
         "plaintiff": "string",
-        "defendant": "string"
+        "defendant": "string",
+        "justice_id": "int64"
       }
     },
-
     {
       "class_name": "justice_front",
-      "class_description": "just a bunch of political prisoners being",
+      "class_description": "a court or set of courts",
       "base_class_name": "front",
       "fields": {
-
+        "cases": "[justice_case:justice_id]"
       }
     },
     {
