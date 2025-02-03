@@ -557,6 +557,7 @@
         "invention_fabrication": "[presentation:parent_object]",
         "invention_name": "string",
         "parent_invention": "int64",
+        "suggested_courses": "[]",
         "child_inventions": "[invent:parent_invention]"
       }
     },
@@ -582,7 +583,8 @@
         "cost": "string",
         "probability_second": "double",
         "cool_down": "double",
-        "damage_control": "int64"
+        "damage_control": "int64",
+        "suggested_course": "->course"
       },
       "indexes": {
         "idx_damage_control_risk": {
@@ -605,28 +607,29 @@
       }
     },
     {
-      "class_name": "risk_lifelong",  
+      "class_name": "risk_lifelong",
       "class_description": "lifelong injury",
       "base_class_name": "risk",
       "fields": {
       }
     },
     {
-      "class_name": "risk_age",
+      "class_name": "risk_oldage",
       "class_description": "the risk of living past your means",
       "base_class_name": "risk",
       "fields": {
       }
     },
+
     {
-      "class_name": "risk_natural_disaster",
+      "class_name": "risk_disaster",
       "class_description": "natural disaster insurance including colossal human screwups",
       "base_class_name": "risk",
       "fields": {
       }
     },
     {
-      "class_name": "risk_accidents",
+      "class_name": "risk_accident",
       "class_description": "risk of minor screwups damaging your property",
       "base_class_name": "risk",
       "fields": {
@@ -648,76 +651,22 @@
     },
 
     {
-      "class_name": "protection",
-      "class_description": "an area of responsibility of protection for the government.  actors get jobs to correct them.",
-      "base_class_name": "sys_place",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "health_protection",
-      "class_description": "health interventions",
-      "base_class_name": "protection",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "crime_protection",
-      "class_description": "crime protections",
-      "base_class_name": "protection",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "fire_protection",
-      "class_description": "fire prevention and mitigation",
-      "base_class_name": "protection",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "flood_protection",
-      "class_description": "flood prevention and mitigation",
-      "base_class_name": "protection",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "quake_protection",
-      "class_description": "quake prevention and mitigation",
-      "base_class_name": "protection",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "space_protection",
-      "class_description": "impact preventation, exploration, and mitigation",
-      "base_class_name": "protection",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "sea_protection",
-      "class_description": "fighting on the seas, against other craft or just bad seas",
-      "base_class_name": "protection",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "land_protection",
-      "class_description": "fighting things in the air or just bad air",
-      "base_class_name": "protection",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "spirit_protection",
-      "class_description": "keeping the forces of darkness at bay",
-      "base_class_name": "protection",
-      "fields": {
-      }
+      "class_name": "event",
+      "class_description": "when a risk actually takes place, damaging some people",
+      "base_class_name": "sys_object",
+      "parent_event": "->insurance_event",
+      "risks": "[reference]"
     },
 
+    {
+      "class_name": "insurance_policy",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "front",
+      "fields": {
+        "premium": "[sys_money]",
+        "risk": "[repair_risk:repair_risk]"
+      }
+    },
 
 
     {
@@ -729,7 +678,6 @@
         "insurances": "[repair_risk:repair_risk]"
       }
     },
-
 
     {
       "class_name": "justice_case",
