@@ -964,6 +964,124 @@
     },
 
     {
+      "class_name": "permit_application",
+      "base_class_name": "sys_object",
+      "parent": "permit",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "permit_review",
+      "base_class_name": "sys_object",
+      "parent": "permit",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "permit_approval",
+      "base_class_name": "sys_object",
+      "parent": "permit",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "permit_rejection",
+      "base_class_name": "sys_object",
+      "parent": "permit",
+      "fields": {
+      }
+    },
+
+    {
+      "class_name": "permit",
+      "base_class_name": "sys_object",
+      "parents": "permitting",
+      "fields": {
+        "permit_name": "string",
+        "permit_description": "string",
+        "application": "permit_application",
+        "review": "permit_review",
+        "approval": "permit_approval",
+        "rejection": "permit_rejection"
+      }
+    },
+
+    {
+      "class_name": "permitting",
+      "base_class_name": "front",
+      "fields": {
+        "office_name": "string",
+        "office_description": "string",
+        "store": "[store]",
+        "permits": "[permit]"
+      }
+    },
+
+    {
+      "class_name": "resource",
+      "base_class_name": "sys_actor",
+      "parents": "resources",
+      "fields": {
+        "resource_name": "string",
+        "resource_description": "string",
+        "about": "[presentation:sys_object]",
+        "products": "[sys_good]"
+      }
+    },
+
+    {
+      "class_name": "earth_resource",
+      "base_class_name": "resource",
+      "parents": "resources",
+      "fields": {
+        "about": "[presentation:sys_object]",
+        "products": "[sys_good]"
+      }
+    },
+
+    {
+      "class_name": "land",
+      "base_class_name": "earth_resource",
+      "fields": {
+        "lot": "string",
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string"
+      }
+    },
+
+    {
+      "class_name": "water",
+      "base_class_name": "earth_resource",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "air",
+      "base_class_name": "earth_resource",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "space",
+      "base_class_name": "resource",
+      "fields": {
+      }
+    },
+
+    {
+      "class_name": "resources",
+      "base_class_name": "front",
+      "fields": {
+        "office_name": "string",
+        "office_description": "string",
+        "resources": "[resource]"
+      }
+    },
+
+    {
       "class_name": "government",
       "class_description": "revolution government",
       "base_class_name": "sys_scenario",
