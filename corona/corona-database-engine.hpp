@@ -2649,6 +2649,12 @@ namespace corona
 
 			jfields = _src["fields"];
 
+			if (jfields.empty())
+			{
+				json_parser jp;
+				jfields = jp.create_object();
+			}
+
 			for (auto parent : parents)
 			{
 				if (jfields.has_member(parent)) {
@@ -2742,6 +2748,12 @@ namespace corona
 			indexes.clear();
 			jindexes = _src["indexes"];
 
+			if (jindexes.empty())
+			{
+				json_parser jp;
+				jindexes = jp.create_object();
+			}
+
 			for (auto parent : parents)
 			{
 				std::string index_name = std::format("idx_{0}_{0}", class_name, parent);
@@ -2751,12 +2763,11 @@ namespace corona
 				else 
 				{
 					json_parser jp;
-					json new_index = jp.parse_object(std::format(
-R"(
-{{
-	"index_keys" :[ "{0}" ]
-}}
-)", parent));
+					json new_index = jp.create_object();
+					new_index.put_member("index_name", index_name);
+					json new_index_keys = jp.create_array();
+					new_index_keys.push_back(parent);
+					new_index.put_member("index_keys", new_index_keys);
 					jindexes.put_member(index_name, new_index);
 				}
 			}

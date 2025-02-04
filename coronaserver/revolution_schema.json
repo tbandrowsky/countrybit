@@ -727,11 +727,6 @@
         "deductible": "double",
         "attachment_point": "double",
         "limit": "double"
-      },
-      "indexes": {
-        "idx_coverage_policy": {
-          "index_keys": [ "policy_id" ]
-        }
       }
     },
 
@@ -884,9 +879,6 @@
         "evidence": "[case_evidence:case]",
         "settlement": "case_settlement:case",
         "verdict": "case_verdict:case"
-      },
-      "indexes": {
-        "idx_case_court": "court_id"
       }
     },
     {
