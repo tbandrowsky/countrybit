@@ -6,6 +6,7 @@
     "TJ Bandrowsky"
   ],
   "classes": [
+
     {
       "class_name": "point",
       "class_description": "a point",
@@ -249,6 +250,7 @@
       "class_name": "book",
       "class_description": "a collection of presentations",
       "base_class_name": "sys_good",
+      "parents": [ "academy" ],
       "fields": {
         "book_name": "string",
         "book_description": "string",
@@ -257,14 +259,10 @@
         "book_url": "string",
         "book_presentations": "[presentation:sys_object]",
         "book_academy": "int64",
-        "creation_time_window": "string"
-      },
-      "indexes": {
-        "idx_book_academy": {
-          "index_fields": [ "book_academy" ]
-        }
+        "book_creation": "string"
       }
     },
+
     {
       "class_name": "academy",
       "class_description": "a collection of books and tests",
@@ -279,11 +277,10 @@
 
     {
       "class_name": "vote",
-      "class_description": "an election selection of a decision",
+      "class_description": "an election selection",
       "base_class_name": "sys_actor",
-      "parents": [ "sys_actor", "ballot_option", "ballot", "decision" ],
+      "parents": [ "sys_actor", "ballot_option", "ballot_question", "ballot" ],
       "fields": {
-        "parent_decision": "int64",
         "options": "[ ballot_option:ballot ]"
       }
     },
@@ -314,6 +311,7 @@
       "class_name": "ballot",
       "class_description": "a ballot for an election",
       "base_class_name": "sys_actor",
+      "parents": [ "ballot" ],
       "fields": {
         "questions": "[ ballot_question:ballot ]",
         "votes": "[ vote:decision ]"
@@ -342,601 +340,640 @@
     {
       "class_name": "election",
       "class_description": "an election to choose candidates",
-      "base_class_name": "decision",
+      "base_class_name": "sys_place",
+      "parents": "[sys_object]",
       "fields": {
-        "questions": "[candidate:election]"
+        "ballot": "[ballot:election]"
       }
     },
 
     {
-
-
+      "class_name": "elect_president",
+      "class_description": "elect a president",
+      "base_class_name": "election",
+      "fields": {
+      }
     },
-      {
-        "class_name": "elect_president",
-        "class_description": "elect a president",
-        "base_class_name": "election_campaign",
-        "fields": {
-        }
-      },
-      {
-        "class_name": "elect_senate",
-        "class_description": "elect a us senator",
-        "base_class_name": "election_campaign",
-        "fields": {
-          "state": "string"
-        }
-      },
-      {
-        "class_name": "elect_congress",
-        "class_description": "elect a us congress",
-        "base_class_name": "election_campaign",
-        "fields": {
-          "state": "string",
-          "district": "string"
-        }
-      },
-      {
-        "class_name": "elect_governor",
-        "class_description": "elect a governor",
-        "base_class_name": "election_campaign",
-        "fields": {
+    {
+      "class_name": "elect_senate",
+      "class_description": "elect a us senator",
+      "base_class_name": "election",
+      "fields": {
+        "state": "string"
+      }
+    },
+    {
+      "class_name": "elect_congress",
+      "class_description": "elect a us congress",
+      "base_class_name": "election",
+      "fields": {
+        "state": "string",
+        "district": "string"
+      }
+    },
+    {
+      "class_name": "elect_governor",
+      "class_description": "elect a governor",
+      "base_class_name": "election",
+      "fields": {
 
-        }
-      },
-      {
-        "class_name": "elect_state_rep",
-        "class_description": "elect a state representative",
-        "base_class_name": "election_campaign",
-        "fields": {
-          "state": "string",
-          "district": "string"
-        }
-      },
-      {
-        "class_name": "elect_state_senator",
-        "class_description": "elect a state senator",
-        "base_class_name": "election_campaign",
-        "fields": {
-          "state": "string",
-          "district": "string"
-        }
-      },
-      {
-        "class_name": "elect_mayor",
-        "class_description": "elect a mayor",
-        "base_class_name": "election_campaign",
-        "fields": {
-          "state": "string",
-          "city": "string"
-        }
-      },
-      {
-        "class_name": "elect_county",
-        "class_description": "elect a county",
-        "base_class_name": "election_campaign",
-        "fields": {
-          "state": "string",
-          "county": "string",
-          "title": "string"
-        }
-      },
-      {
-        "class_name": "elections_front",
-        "class_description": "elect the revolution",
-        "base_class_name": "front",
-        "fields": {
-          "elections": "[election_campaign:investment_front_id]"
-        }
-      },
+      }
+    },
+    {
+      "class_name": "elect_state_rep",
+      "class_description": "elect a state representative",
+      "base_class_name": "election",
+      "fields": {
+        "state": "string",
+        "district": "string"
+      }
+    },
+    {
+      "class_name": "elect_state_senator",
+      "class_description": "elect a state senator",
+      "base_class_name": "election",
+      "fields": {
+        "state": "string",
+        "district": "string"
+      }
+    },
+    {
+      "class_name": "elect_mayor",
+      "class_description": "elect a mayor",
+      "base_class_name": "election",
+      "fields": {
+        "state": "string",
+        "city": "string"
+      }
+    },
+    {
+      "class_name": "elect_county",
+      "class_description": "elect a county",
+      "base_class_name": "election",
+      "fields": {
+        "state": "string",
+        "county": "string",
+        "title": "string"
+      }
+    },
 
-      {
-        "class_name": "invested_product",
-        "class_description": "a product invested in",
-        "base_class_name": "sys_good",
-        "fields": {
-          "investment_id": "int64"
-        },
-        "indexes": {
-          "idx_invested_product_investment": {
-            "index_keys": "investment_id"
-          }
-        }
-      },
-      {
-        "class_name": "invested_treaty",
-        "class_description": "an alliance between the investor and the revolution",
-        "base_class_name": "invested_product",
-        "fields": {
-          "for_revolution": "string",
-          "for_investor": "string",
-          "terms": "string",
-          "effective": "datetime",
-          "expiration": "datetime"
-        }
-      },
-      {
-        "class_name": "invested_subscription",
-        "class_description": "a good an investor can subscribe to",
-        "base_class_name": "invested_product",
-        "fields": {
-          "subscribed_goods": "[sys_good]",
-          "delivered_goods": "[sys_good]"
-        }
-      },
-      {
-        "class_name": "invested_software_support",
-        "class_description": "paying for features or supporting the cause",
-        "base_class_name": "invested_product",
-        "fields": {
-          "request_name": "string",
-          "request_charter": "string",
-          "request_description": "string",
-          "request_details": "[presentation:sys_object]",
-          "request_accepted_delivery_date": "datetime",
-          "request_accepted_signature": "string",
-          "request_accepted_date": "datetime",
-          "request_accepted_user_id": "int64",
-          "delivery_signature": "string",
-          "delivery_date": "datetime"
-        }
-      },
+    {
+      "class_name": "political_front",
+      "class_description": "elect the revolution",
+      "base_class_name": "front",
+      "fields": {
+        "elections": "[election:investment_front_id]"
+      }
+    },
 
-      {
-        "class_name": "investment",
-        "class_description": "someone who has made a real investment in the revolution",
-        "base_class_name": "sys_actor",
-        "fields": {
-          "investor_alias": "string",
-          "investor_description": "string",
-          "investment_amount": "double",
-          "investment_currency": "double",
-          "investment_expectations": "[presentation:sys_object]",
-          "investment_products": "[invested_product:investment_id]",
-          "parent_front": "int64",
-          "investment_decision": "election_decision"
-        },
-        "indexes": {
-          "invest_front_investment": {
-            "index_keys": [ "parent_front" ]
-          }
-        }
-      },
 
-      {
-        "class_name": "investment_front",
-        "class_description": "attract investors",
-        "base_class_name": "front",
-        "fields": {
-          "investments": "[investment:parent_front]"
-        }
-      },
+    {
+      "class_name": "invested_product",
+      "class_description": "a product invested in",
+      "base_class_name": "sys_good",
+      "parents": [ "investment" ],
+      "fields": {
 
-      {
-        "class_name": "invention",
-        "class_description": "automation of a job",
-        "base_class_name": "sys_good",
-        "fields": {
-          "invention_title": "string",
-          "invention_description": "string",
-          "invention_job_automated": "string",
-          "invention_design": "[presentation:sys_object]",
-          "invention_name": "string",
-          "parent_invention_front": "string",
-          "parent_invention": "int64",
-          "courses": "[reference]",
-          "child_inventions": "[invention:parent_invention]"
-        }
-      },
-      {
-        "class_name": "invention_front",
-        "class_description": "improve our movement by automating theirs",
-        "base_class_name": "front",
-        "fields": {
-          "inventions": "[invention:parent_invention]"
-        }
-      },
+      }
+    },
+    {
+      "class_name": "invested_treaty",
+      "class_description": "an alliance between the investor and the revolution",
+      "base_class_name": "invested_product",
+      "fields": {
+        "for_revolution": "string",
+        "for_investor": "string",
+        "terms": "string",
+        "effective": "datetime",
+        "expiration": "datetime"
+      }
+    },
+    {
+      "class_name": "invested_subscription",
+      "class_description": "a good an investor can subscribe to",
+      "base_class_name": "invested_product",
+      "fields": {
+        "subscribed_goods": "[sys_good]",
+        "delivered_goods": "[sys_good]"
+      }
+    },
+    {
+      "class_name": "invested_software",
+      "class_description": "paying for features or supporting the cause",
+      "base_class_name": "invested_product",
+      "fields": {
+        "request_name": "string",
+        "request_charter": "string",
+        "request_description": "string",
+        "request_details": "[presentation:sys_object]",
+        "request_accepted_delivery_date": "datetime",
+        "request_accepted_signature": "string",
+        "request_accepted_date": "datetime",
+        "request_accepted_user_id": "int64",
+        "delivery_signature": "string",
+        "delivery_date": "datetime"
+      }
+    },
 
-      {
-        "class_name": "risk",
-        "class_description": "a risk of an accident along with its repair",
-        "base_class_name": "sys_actor",
-        "fields": {
-          "about": "[presentation:sys_object]",
-          "damage": "string",
-          "repair": "string",
-          "cost": "string",
-          "probability_second": "double",
-          "cool_down": "double",
-          "suggested_course": "->course",
-          "parent_insurance": "int64"
-        },
-        "indexes": {
-          "idx_risk_insurance": {
-            "index_keys": [ "parent_insurance" ]
-          }
-        }
-      },
-      {
-        "class_name": "risk_health",
-        "class_description": "improve our movement by automating theirs",
-        "base_class_name": "risk",
-        "fields": {
-        }
-      },
-      {
-        "class_name": "risk_trauma",
-        "class_description": "improve our movement by automating theirs",
-        "base_class_name": "risk_health",
-        "fields": {
-        }
-      },
-      {
-        "class_name": "risk_infection",
-        "class_description": "viral, bacterial infections",
-        "base_class_name": "risk_health",
-        "fields": {
-        }
-      },
-      {
-        "class_name": "risk_lifelong",
-        "class_description": "lifelong injury",
-        "base_class_name": "risk_health",
-        "fields": {
-        }
-      },
-      {
-        "class_name": "risk_oldage",
-        "class_description": "the risk of living past your means",
-        "base_class_name": "risk_health",
-        "fields": {
-        }
-      },
-      {
-        "class_name": "risk_property",
-        "class_description": "natural disaster insurance including colossal human screwups",
-        "base_class_name": "risk",
-        "fields": {
-        }
-      },
-      {
-        "class_name": "risk_disaster",
-        "class_description": "natural disaster insurance including colossal human screwups",
-        "base_class_name": "risk_property",
-        "fields": {
-        }
-      },
-      {
-        "class_name": "risk_accident",
-        "class_description": "risk of minor screwups damaging your property",
-        "base_class_name": "risk_property",
-        "fields": {
-        }
-      },
-      {
-        "class_name": "risk_activism",
-        "class_description": "risk of being attacked as an act of theft or war",
-        "base_class_name": "risk_property",
-        "fields": {
-        }
-      },
+    {
+      "class_name": "investment",
+      "class_description": "someone who has made a real investment in the revolution",
+      "base_class_name": "sys_actor",
+      "parents": [ "exchange" ],
+      "fields": {
+        "investor_alias": "string",
+        "investor_description": "string",
+        "investment": "sys_money",
+        "investment_expectations": "[presentation:sys_object]",
+        "investment_products": "[invested_product:investment]",
+        "investment_decision": "election"
+      }
+    },
+    {
+      "class_name": "exchange",
+      "class_description": "a place for investors to invest",
+      "base_class_name": "front",
+      "fields": {
+        "investments": "[investment:exchange]"
+      }
+    },
 
-      {
-        "class_name": "event",
-        "class_description": "when a risk actually takes place, damaging some people",
-        "base_class_name": "sys_object",
-        "fields": {
-          "event_name": "string",
-          "event_description": "string",
-          "event_about": "presentation:sys_object",
-          "parent_event": "int64",
-          "risk_occurred": "->risk",
-          "children": "[event:parent_event]",
-          "parent_insurance": "int64"
-        }
+    {
+      "class_name": "invention",
+      "class_description": "automation of a job",
+      "base_class_name": "sys_good",
+      "parents": [ "workshop" ],
+      "fields": {
+        "invention_title": "string",
+        "invention_description": "string",
+        "invention_job_automated": "string",
+        "invention_design": "[presentation:sys_object]",
+        "invention_name": "string",
+        "parent_invention_front": "string",
+        "parent_invention": "int64",
+        "courses": "[reference]",
+        "components": "[sys_good]"
+      }
+    },
+
+    {
+      "class_name": "workshop",
+      "class_description": "improve our movement by automating theirs",
+      "base_class_name": "front",
+      "fields": {
+        "inventions": "[invention:parent_invention]"
+      }
+    },
+
+    {
+      "class_name": "risk",
+      "class_description": "a risk of an accident along with its repair",
+      "base_class_name": "sys_actor",
+      "parents": [ "insurance" ],
+      "fields": {
+        "about": "[presentation:sys_object]",
+        "damage": "string",
+        "repair": "string",
+        "cost": "string",
+        "probability_second": "double",
+        "cool_down": "double",
+        "suggested_course": "->course"
+      }
+    },
+    {
+      "class_name": "risk_health",
+      "class_description": "improve our movement by automating theirs",
+      "base_class_name": "risk",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_trauma",
+      "class_description": "improve our movement by automating theirs",
+      "base_class_name": "risk_health",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_infection",
+      "class_description": "viral, bacterial infections",
+      "base_class_name": "risk_health",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_lifelong",
+      "class_description": "lifelong injury",
+      "base_class_name": "risk_health",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_oldage",
+      "class_description": "the risk of living past your means",
+      "base_class_name": "risk_health",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_property",
+      "class_description": "natural disaster insurance including colossal human screwups",
+      "base_class_name": "risk",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_disaster",
+      "class_description": "natural disaster insurance including colossal human screwups",
+      "base_class_name": "risk_property",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_accident",
+      "class_description": "risk of minor screwups damaging your property",
+      "base_class_name": "risk_property",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "risk_activism",
+      "class_description": "risk of being attacked as an act of theft or war",
+      "base_class_name": "risk_property",
+      "fields": {
+      }
+    },
+
+    {
+      "class_name": "event_risk",
+      "class_description": "when a risky thing happens",
+      "base_class_name": "sys_object",
+      "parents": [ "risk", "event" ],
+      "fields": {
+      }
+    },
+
+    {
+      "class_name": "event",
+      "class_description": "when one or more risks occur, with damages",
+      "base_class_name": "sys_object",
+      "parents": [ "insurance" ],
+      "fields": {
+        "event_name": "string",
+        "event_description": "string",
+        "event_about": "presentation:sys_object",
+        "risk_events": "[risk_event:event]"
+      }
+    },
+
+    {
+      "class_name": "covered",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "sys_good",
+      "parents": [ "coverage", "policy" ],
+      "fields": {
+        "covered_name": "string",
+        "covered_group_name": "string"
+      }
+    },
+
+    {
+      "class_name": "genetic_code",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "sys_object",
+      "fields": {
+        "genetic_name": "string",
+        "genetic_description": "string"
+      }
+    },
+
+    {
+      "class_name": "fitness_code",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "sys_object",
+      "fields": {
+        "fitness_name": "string",
+        "fitness_description": "string"
+      }
+    },
+
+    {
+      "class_name": "covered_person",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "covered",
+      "fields": {
+        "first_name": "string",
+        "last_name": "string",
+        "age": "double",
+        "sex": "string",
+        "fitness_code": "->fitness_code",
+        "genetic_code": "->genetic_code"
+      }
+    },
+
+    {
+      "class_name": "construction_code",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "sys_object",
+      "fields": {
+        "construction_code": "string",
+        "construction_name": "string",
+        "construction_description": "string",
+        "katrisk_code": "string",
+        "air_code": "string",
+        "rms_code": "string"
+      }
+    },
+
+    {
+      "class_name": "occupancy_code",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "sys_object",
+      "fields": {
+        "occupancy_code": "string",
+        "occupancy_name": "string",
+        "occupancy_description": "string",
+        "katrisk_code": "string",
+        "air_code": "string",
+        "rms_code": "string"
+      }
+    },
+
+    {
+      "class_name": "covered_building",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "covered",
+      "fields": {
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zipcode": "string",
+        "value": "double",
+        "year_built": "int64",
+        "construction_code": "->construction_code",
+        "occupancy_code": "->occupancy_code"
+      }
+    },
+
+    {
+      "class_name": "coverage",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "sys_good",
+      "parents": [ "policy" ],
+      "fields": {
+        "risk": "->risk",
+        "covered": "->covered",
+        "deductible": "double",
+        "attachment_point": "double",
+        "limit": "double"
       },
-
-      {
-        "class_name": "covered",
-        "class_description": "voluntary insurance policy",
-        "base_class_name": "sys_good",
-        "fields": {
-          "covered_name": "string",
-          "covered_group_name": "string"
+      "indexes": {
+        "idx_coverage_policy": {
+          "index_keys": [ "policy_id" ]
         }
+      }
+    },
+
+    {
+      "class_name": "policy",
+      "class_description": "voluntary insurance policy",
+      "base_class_name": "sys_good",
+      "parents": "insurance",
+
+      "fields": {
+        "coverages": "[coverage:policy]",
+        "claims": "[claim:policy]"
+      }
+    },
+
+    {
+      "class_name": "damage",
+      "class_description": "covered damaged by an event, submitted as part of a claim",
+      "base_class_name": "sys_object",
+      "fields": {
+        "covered": "->covered",
+        "evidence": "[presentation:sys_object]"
+      }
+    },
+
+    {
+      "class_name": "adjust",
+      "class_description": "covered damaged by an event, submitted as part of a claim",
+      "base_class_name": "sys_object",
+      "fields": {
+        "damage": "->damage",
+        "evidence": "[presentation:sys_object]"
+      }
+    },
+
+    {
+      "class_name": "repair",
+      "class_description": "covered damaged by an event, submitted as part of a claim",
+      "base_class_name": "sys_object",
+      "fields": {
+        "adjust": "->adjust",
+        "amount": "sys_money"
+      }
+    },
+
+    {
+      "class_name": "denial",
+      "class_description": "covered damaged by an event, submitted as part of a claim",
+      "base_class_name": "sys_object",
+      "fields": {
+        "adjust": "->adjust"
+      }
+    },
+
+    {
+      "class_name": "claim",
+      "description": "a demand for repair of property or person injured by an event",
+      "base_class_name": "sys_object",
+      "parents": [ "policy" ],
+      "fields": {
+        "event": "->event",
+        "policy": "->policy",
+        "damage": "->damage",
+        "adjust": "->adjust",
+        "repair": "->repair",
+        "denial": "->denial"
+      }
+    },
+
+    {
+      "class_name": "insurance",
+      "class_description": "voluntary insurances",
+      "base_class_name": "front",
+      "fields": {
+        "reserves": "[sys_money]",
+        "risks": "[risk]",
+        "policies": "[policy:parent_insurance]",
+        "events": "[event:parent_insurance]",
+        "claims": "[claim:parent_insurance]"
+      }
+    },
+
+    {
+      "class_name": "case_person",
+      "class_description": "a person participating in the justice system",
+      "base_class_name": "sys_actor",
+      "parents": [ "case" ],
+      "fields": {
+        "first_name": "string",
+        "last_name": "string",
+        "contact_url": "string",
+        "contact_email": "string",
+        "address1": "string",
+        "address2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "about": "[presentation:sys_object]"
+      }
+    },
+    {
+      "class_name": "case_complaint",
+      "class_description": "the basic complaint in the case",
+      "base_class_name": "sys_object",
+      "parents": "case",
+      "fields": {
+        "complaint_name": "string",
+        "complaint_description": "string",
+        "story": "presentation:sys_object"
+      }
+    },
+    {
+      "class_name": "case_evidence",
+      "class_description": "a confrontation being mitigated by the judicial system",
+      "base_class_name": "sys_object",
+      "parents": "case",
+      "fields": {
+        "evidence_name": "string",
+        "evidence_description": "string",
+        "story": "presentation:sys_object"
+      }
+    },
+    {
+      "class_name": "case_settlement",
+      "class_description": "a confrontation being mitigated by the judicial system",
+      "base_class_name": "sys_object",
+      "parents": "case",
+      "fields": {
+        "settlement_name": "string",
+        "settlement_description": "string",
+        "story": "presentation:sys_object"
+      }
+    },
+    {
+      "class_name": "case_verdict",
+      "class_description": "a confrontation being mitigated by the judicial system",
+      "base_class_name": "election",
+      "parents": "case",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "case",
+      "class_description": "a confrontation being mitigated by the judicial system",
+      "base_class_name": "sys_place",
+      "parents": [ "court" ],
+      "fields": {
+        "complaint": "[case_complaint:case]",
+        "evidence": "[case_evidence:case]",
+        "settlement": "case_settlement:case",
+        "verdict": "case_verdict:case"
       },
-      {
-        "class_name": "genetic_code",
-        "class_description": "voluntary insurance policy",
-        "base_class_name": "sys_object",
-        "fields": {
-          "genetic_name": "string",
-          "genetic_description": "string"
-        }
-      },
+      "indexes": {
+        "idx_case_court": "court_id"
+      }
+    },
+    {
+      "class_name": "court",
+      "class_description": "a court or set of courts",
+      "base_class_name": "front",
+      "fields": {
+        "cases": "[case:court]"
+      }
+    },
+    {
+      "class_name": "product",
+      "class_description": "something someone can make, grow, or assemble",
+      "base_class_name": "sys_good",
+      "parents": [ "work", "sys_actor" ],
+      "fields": {
 
-      {
-        "class_name": "fitness_code",
-        "class_description": "voluntary insurance policy",
-        "base_class_name": "sys_object",
-        "fields": {
-          "fitness_name": "string",
-          "fitness_description": "string"
-        }
-      },
+      }
+    },
 
-      {
-        "class_name": "covered_person",
-        "class_description": "voluntary insurance policy",
-        "base_class_name": "covered",
-        "fields": {
-          "first_name": "string",
-          "last_name": "string",
-          "age": "double",
-          "sex": "string",
-          "fitness_code": "->fitness_code",
-          "genetic_code": "->genetic_code"
-        }
-      },
+    {
+      "class_name": "job",
+      "class_description": "a task selectable by someone to produce a good",
+      "base_class_name": "sys_front",
+      "parents": [ "course", "government" ],
+      "fields": {
+        "job_name": "string",
+        "job_description": "string",
+        "good_produced": "[product]"
+      }
+    },
 
-      {
-        "class_name": "construction_code",
-        "class_description": "voluntary insurance policy",
-        "base_class_name": "covered",
-        "fields": {
-          "construction_code": "string",
-          "construction_name": "string",
-          "construction_description": "string",
-          "katrisk_code": "string",
-          "air_code": "string",
-          "rms_code": "string"
-        }
-      },
+    {
+      "class_name": "work",
+      "class_description": "producing a good for money",
+      "base_class_name": "sys_object",
+      "parents": [ "job", "sys_actor", "government" ],
+      "fields": {
+        "goods": "[sys_good]",
+        "delivery_class": "[sys_actor]"
+      }
+    },
 
-      {
-        "class_name": "occupancy_code",
-        "class_description": "voluntary insurance policy",
-        "base_class_name": "sys_object",
-        "fields": {
-          "occupancy_code": "string",
-          "occupancy_name": "string",
-          "occupancy_description": "string",
-          "katrisk_code": "string",
-          "air_code": "string",
-          "rms_code": "string"
-        }
-      },
+    {
+      "class_name": "transaction",
+      "base_class_name": "sys_object",
+      "parents": [ "bank" ],
+      "fields": {
+        "goods": "[sys_good]",
+        "from": "->sys_actor",
+        "to": "->sys_actor",
+        "amount": "sys_money"
+      }
+    },
+    {
+      "class_name": "store",
+      "base_class_name": "sys_object",
+      "parents": [ "bank" ],
+      "fields": {
+        "store_name": "string",
+        "description_name": "string",
+        "goods": "[sys_good]"
+      }
+    },
 
-      {
-        "class_name": "covered_building",
-        "class_description": "voluntary insurance policy",
-        "base_class_name": "sys_good",
-        "fields": {
-          "street1": "string",
-          "street2": "string",
-          "city": "string",
-          "state": "string",
-          "zipcode": "string",
-          "value": "double",
-          "year_built": "int64",
-          "construction_code": "->construction_code",
-          "occupancy_code": "->occupancy_code"
-        }
-      },
+    {
+      "class_name": "bank",
+      "base_class_name": "front",
+      "fields": {
+        "bank_name": "string",
+        "bank_description": "string",
+        "store": "[store]",
+        "transactions": "[transaction]"
+      }
+    },
 
-      {
-        "class_name": "coverage",
-        "class_description": "voluntary insurance policy",
-        "base_class_name": "sys_good",
-        "fields": {
-          "risk": "->risk",
-          "deductible": "double",
-          "attachment_point": "double",
-          "limit": "double",
-          "policy_id": "int64"
-
-        },
-        "indexes": {
-          "idx_coverage_policy": {
-            "index_keys": [ "policy_id" ]
-          }
-        }
-      },
-
-      {
-        "class_name": "policy",
-        "class_description": "voluntary insurance policy",
-        "base_class_name": "sys_good",
-        "fields": {
-          "coverages": "[insurance_coverage:policy_id]",
-          "insurance_front": "int64"
-        },
-        "indexes": {
-          "idx_policy_insurance": {
-            "index_keys": "[insurance_front]"
-          }
-        }
-      },
-
-      {
-        "class_name": "damage",
-        "class_description": "covered damaged by an event, submitted as part of a claim",
-        "base_class_name": "sys_object",
-        "fields": {
-          "covered": "->covered",
-          "evidence": "[presentation:sys_object]"
-        }
-      },
-
-      {
-        "class_name": "adjust",
-        "class_description": "covered damaged by an event, submitted as part of a claim",
-        "base_class_name": "sys_object",
-        "fields": {
-          "damage": "->damage",
-          "evidence": "[presentation:sys_object]"
-        }
-      },
-
-      {
-        "class_name": "repair",
-        "class_description": "covered damaged by an event, submitted as part of a claim",
-        "base_class_name": "sys_object",
-        "fields": {
-          "adjust": "->adjust",
-          "amount": "[sys_object]"
-        }
-      },
-
-      {
-        "class_name": "denial",
-        "class_description": "covered damaged by an event, submitted as part of a claim",
-        "base_class_name": "sys_object",
-        "fields": {
-          "adjust": "->adjust"
-        }
-      },
-
-      {
-        "class_name": "claim",
-        "description": "a demand for repair of property or person injured by an event",
-        "base_class_name": "sys_object",
-        "fields": {
-          "event": "->event",
-          "policy": "->policy",
-          "damage": "->damage",
-          "adjust": "->adjust",
-          "repair": "->repair",
-          "denial": "->denial"
-        }
-      },
-
-      {
-        "class_name": "insurance",
-        "class_description": "voluntary insurances",
-        "base_class_name": "front",
-        "fields": {
-          "reserves": "[sys_money]",
-          "risks": "[risk]",
-          "policies": "[policy:parent_insurance]",
-          "events": "[event:parent_insurance]",
-          "claims": "[claim:parent_insurance]"
-        }
-      },
-
-      {
-        "class_name": "justice_person",
-        "class_description": "a person participating in the justice system",
-        "base_class_name": "sys_actor",
-        "fields": {
-          "parent_court": "int64",
-          "incumbent": "bool",
-          "first_name": "string",
-          "last_name": "string",
-          "contact_url": "string",
-          "contact_email": "string",
-          "address1": "string",
-          "address2": "string",
-          "city": "string",
-          "state": "string",
-          "zip": "string",
-          "about": "[presentation:sys_object]"
-        },
-        "indexes": {
-          "idx_person_court": {
-            "index_keys": [ "election_candidate" ]
-          }
-        }
-      },
-      {
-        "class_name": "case_complaint",
-        "class_description": "the basic complaint in the case",
-        "base_class_name": "sys_place",
-        "fields": {
-          "case_name": "string",
-          "case_description": "string",
-          "complaint": "presentation:sys_object",
-          "court_id": "int64"
-        },
-        "indexes": {
-          "idx_case_complaint_court": {
-            "index_keys": [ "court_id" ]
-          }
-        },
-        {
-          "class_name": "case_evidence",
-          "class_description": "a confrontation being mitigated by the judicial system",
-          "base_class_name": "sys_place",
-          "fields": {
-            "case_name": "string",
-            "case_description": "string",
-            "court_id": "int64"
-          },
-          "indexes": {
-            "idx_case_evidence_court": {
-              "index_keys": [ "court_id" ]
-            }
-          },
-          {
-            "class_name": "case_settlement",
-            "class_description": "a confrontation being mitigated by the judicial system",
-            "base_class_name": "sys_place",
-            "fields": {
-              "settlement_name": "string",
-              "settlement_description": "string",
-              "court_id": "int64"
-            },
-            "indexes": {
-              "idx_case_settlement_court": {
-                "index_keys": [ "court_id" ]
-              }
-            },
-
-            {
-              "class_name": "case_decision",
-              "class_description": "a confrontation being mitigated by the judicial system",
-              "base_class_name": "election_decision",
-              "fields": {
-                "court_id": "int64"
-              },
-              "indexes": {
-                "idx_case_decision": {
-                  "index_keys": [ "court_id" ]
-                }
-              },
-
-              {
-                "class_name": "court_case",
-                "class_description": "a confrontation being mitigated by the judicial system",
-                "base_class_name": "sys_place",
-                "fields": {
-                  "case_name": "string",
-                  "case_description": "string",
-                  "court_id": "int64"
-                },
-                "indexes": {
-                  "idx_case_court": "court_id"
-                }
-              },
-
-              {
-                "class_name": "court",
-                "class_description": "a court or set of courts",
-                "base_class_name": "front",
-                "fields": {
-                  "cases": "[court_case:court_id]"
-                }
-              },
-
-              {
-                "class_name": "govern",
-                "class_description": "provisionary revolution government",
-                "base_class_name": "sys_scenario",
-                "fields": {
-                  "aims": "presentation:sys_object",
-                  "fronts": "[ front ]"
-                }
-              }
+    {
+      "class_name": "government",
+      "class_description": "revolution government",
+      "base_class_name": "sys_scenario",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "about": "presentation:sys_object",
+        "fronts": "[ front ]"
+      }
+    }
   ],
   "users": [
 
