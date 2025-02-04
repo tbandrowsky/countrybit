@@ -2046,22 +2046,24 @@ namespace corona
 					obj_options->put_definition(rd);
 					options = obj_options;
 				}
+				else {
 
-				child_object_definition cod = child_object_definition::parse_definition(s.c_str());
+					child_object_definition cod = child_object_definition::parse_definition(s.c_str());
 
-				if (not cod.is_undefined)
-				{
-					if (not cod.is_array)
+					if (not cod.is_undefined)
 					{
-						auto obj_options = std::make_shared<object_field_options>();
-						obj_options->put_definition(cod);
-						options = obj_options;
-					}
-					else 
-					{
-						auto arr_options = std::make_shared<array_field_options>();
-						arr_options->put_definition(cod);
-						options = arr_options;
+						if (not cod.is_array)
+						{
+							auto obj_options = std::make_shared<object_field_options>();
+							obj_options->put_definition(cod);
+							options = obj_options;
+						}
+						else
+						{
+							auto arr_options = std::make_shared<array_field_options>();
+							arr_options->put_definition(cod);
+							options = arr_options;
+						}
 					}
 				}
 			}
@@ -2518,6 +2520,13 @@ namespace corona
 			_dest.put_member("base_class_name", base_class_name);
 			_dest.put_member_i64("table_location", table_location);
 
+			json ja = jp.create_array();
+			for (auto p : parents)
+			{
+				ja.push_back(p);
+			}
+			_dest.put_member("parents", ja);
+
 			if (table_fields.size() > 0) {
 				json jtable_fields = jp.create_array();
 				for (auto tf : table_fields) {
@@ -2585,12 +2594,13 @@ namespace corona
 
 			if (jparents.is_string())
 			{
-				parents.push_back((std::string)jparents);
+				std::string jparento = (std::string)jparents;
+				parents.push_back(jparento);
 			}
 			else if (jparents.array())
 			{
 				for (auto jparent : jparents) {
-					parents.push_back((std::string)(jparents));
+					parents.push_back((std::string)(jparent));
 				}
 			}
 
@@ -2661,7 +2671,8 @@ namespace corona
 					continue;
 				}
 				else {
-					jfields.put_member((std::string)parent, std::string("int64"));
+					std::string parent_name = (std::string)parent;
+					jfields.put_member(parent_name, std::string("int64"));
 				}
 			}
 
@@ -4887,7 +4898,16 @@ private:
 			json_parser jp;
 			json empty;
 			std::string decoded_token = base64_decode(_encoded_token);
-			json token = jp.parse_object(decoded_token);
+			json token;
+
+			try 
+			{
+				token = jp.parse_object(decoded_token);
+			}
+			catch (std::exception)
+			{
+				return empty;
+			}
 
 			if (not token.object())
 			{
