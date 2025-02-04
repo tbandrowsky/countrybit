@@ -774,6 +774,7 @@ namespace corona
 		virtual std::map<std::string, bool>  const&		get_ancestors()  const = 0;
 		virtual std::map<std::string, bool>  &			update_descendants() = 0;
 		virtual std::map<std::string, bool>  &			update_ancestors()  = 0;
+		virtual std::vector<std::string>				get_parents() const = 0;
 		virtual std::shared_ptr<xtable_interface>		get_table(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<sql_table>				get_stable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
@@ -2267,6 +2268,7 @@ namespace corona
 		std::string class_description;
 		std::string base_class_name;
 		std::vector<std::string> table_fields;
+		std::vector<std::string> parents;
 		std::map<std::string, std::shared_ptr<field_interface>> fields;
 		std::map<std::string, std::shared_ptr<index_interface>> indexes;
 		std::map<std::string, bool> ancestors;
@@ -2386,6 +2388,11 @@ namespace corona
 		{
 			base_class_name = _base_class_name;
 			return *this;
+		}
+
+		virtual std::vector<std::string> get_parents() const override
+		{
+			return parents;
 		}
 
 		virtual std::vector<std::string> get_table_fields() const override
@@ -2572,6 +2579,21 @@ namespace corona
 			class_description = _src["class_description"];
 			base_class_name = _src["base_class_name"];
 			table_location = (int64_t)_src["table_location"];
+
+			parents.clear();
+			json jparents = _src["parents"];
+
+			if (jparents.is_string())
+			{
+				parents.push_back((std::string)jparents);
+			}
+			else if (jparents.array())
+			{
+				for (auto jparent : jparents) {
+					parents.push_back((std::string)(jparents));
+				}
+			}
+
 			if (table_location <= 0)
 				table_location = null_row;
 
@@ -2624,7 +2646,18 @@ namespace corona
 			}
 
 			fields.clear();
+
 			jfields = _src["fields"];
+
+			for (auto parent : parents)
+			{
+				if (jfields.has_member(parent)) {
+					continue;
+				}
+				else {
+					jfields.put_member((std::string)parent, std::string("int64"));
+				}
+			}
 
 			if (jfields.object()) {
 				auto jfield_members = jfields.get_members();
@@ -2708,6 +2741,26 @@ namespace corona
 
 			indexes.clear();
 			jindexes = _src["indexes"];
+
+			for (auto parent : parents)
+			{
+				std::string index_name = std::format("idx_{0}_{0}", class_name, parent);
+				if (jindexes.has_member(index_name)) {
+					continue;
+				}
+				else 
+				{
+					json_parser jp;
+					json new_index = jp.parse_object(std::format(
+R"(
+{{
+	"index_keys" :[ "{0}" ]
+}}
+)", parent));
+					jindexes.put_member(index_name, new_index);
+				}
+			}
+
 			if (jindexes.object()) {
 				auto jindex_members = jindexes.get_members();
 				for (auto jindex : jindex_members) {
