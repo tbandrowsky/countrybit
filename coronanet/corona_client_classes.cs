@@ -1,4 +1,5 @@
-﻿using System;
+﻿using coronanet;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Security.Cryptography.X509Certificates;
@@ -58,7 +59,7 @@ namespace coronanet
 
     public class FieldOptions
     {
-        ;
+        publiic bool Required { get; set; }
     }
 
     public class ArrayFieldOptions : FieldOptions
@@ -96,6 +97,11 @@ namespace coronanet
     {
         public DateTime MinValue { get; set; };
         public DateTime MaxValue { get; set; };
+    }
+
+    public class ReferenceFieldOptions : FieldOptions
+    {
+        public List<string> AllowedClasses { get; set; }
     }
 
     public class QueryFromClass
@@ -234,12 +240,57 @@ namespace coronanet
 
     public class CoronaField
     {
+        public FieldTypes FieldTypes { get; set; }
+        public string FieldName { get; set; }   
+        public string FieldDescription { get; set; }
+    }
 
+    public class CoronaStringField : CoronaField
+    {
+        public StringFieldOptions Options { get; set; }
+    }
 
+    public class CoronaDoubleField : CoronaField
+    {
+        public StringFieldOptions Options { get; set; }
+    }
+
+    public class CoronaIntField : CoronaField
+    {
+        public IntFieldOptions Options { get; set; }
+    }
+
+    public class CoronaDateTimeField : CoronaField
+    {
+        public DateTimeFieldOptions Options { get; set; }
+    }
+
+    public class CoronaObjectField : CoronaField
+    {
+        public ObjectFieldOptions Options { get; set; }
+    }
+
+    public class CoronaArrayField : CoronaField
+    {
+        public ArrayFieldOptions Options { get; set; }
+    }
+
+    public class CoronaReferenceField : CoronaField
+    {
+        public ReferenceFieldOptions Options { get; set; }
+    }
+
+    public class CoronaIndex
+    {
+        public 
     }
 
     public class CoronaClass
     {
+        public string ClassName { get; set; }
+        public string ClassDescription { get; set; }
+        public string BaseClassName { get; set; }
 
+        public Dictionary<string,CoronaField> Fields { get; set; }
     }
 }

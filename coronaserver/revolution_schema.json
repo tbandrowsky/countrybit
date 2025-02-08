@@ -242,7 +242,8 @@
       "fields": {
         "about": "[presentation:sys_object]",
         "required_for": "[course:course]",
-        "challenges": "[challenge:course]"
+        "challenges": "[challenge:course]",
+        "jobs": "[job:course]"
       }
     },
 
@@ -418,14 +419,37 @@
     },
 
     {
-      "class_name": "political_front",
-      "class_description": "elect the revolution",
-      "base_class_name": "front",
+      "class_name": "meeting_participant",
+      "class_description": "a participant",
+      "base_class_name": "sys_object",
+      "parents": [ "meeting" ],
       "fields": {
-        "elections": "[election:investment_front_id]"
+        "invitee": "->sys_actor",
+        "attended": "bool"
+      }
+    },
+    {
+      "class_name": "meeting",
+      "class_description": "elect the revolution",
+      "base_class_name": "sys_object",
+      "parents": [ "activism_front" ],
+      "fields": {
+        "when": "datetime",
+        "subject": "string",
+        "minutes": "string",
+        "participants": "[meeting_participant:meeting]"
       }
     },
 
+    {
+      "class_name": "activism_front",
+      "class_description": "elect the revolution",
+      "base_class_name": "front",
+      "fields": {
+        "elections": "[election:activism_front]",
+        "meetings": "[meeting:activism_front]"
+      }
+    },
 
     {
       "class_name": "invested_product",
@@ -509,8 +533,6 @@
         "invention_job_automated": "string",
         "invention_design": "[presentation:sys_object]",
         "invention_name": "string",
-        "parent_invention_front": "string",
-        "parent_invention": "int64",
         "courses": "[reference]",
         "components": "[sys_good]"
       }
@@ -521,7 +543,7 @@
       "class_description": "improve our movement by automating theirs",
       "base_class_name": "front",
       "fields": {
-        "inventions": "[invention:parent_invention]"
+        "inventions": "[invention:workshop]"
       }
     },
 
@@ -902,7 +924,7 @@
     {
       "class_name": "job",
       "class_description": "a task selectable by someone to produce a good",
-      "base_class_name": "sys_front",
+      "base_class_name": "front",
       "parents": [ "course", "government" ],
       "fields": {
         "job_name": "string",

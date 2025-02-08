@@ -62,6 +62,7 @@ namespace corona
 		std::shared_ptr<corona_database>	local_db;
 		std::shared_ptr<application>		app;
 		std::shared_ptr<file>				db_file;
+		json								abbreviations;
 
 		corona_client						client;
 
@@ -270,13 +271,35 @@ namespace corona
 
 				log_job_start("poll_pages", "apply pages", t, __FILE__, __LINE__);
 
+				abbreviations = jp.create_object();
+
 				// to do, at some point create a merge method in json proper.
 				json combined;
 				if (styles_json.object() and pages_json.object())
 				{
 					combined = styles_json.clone();
+
 					json jsrcstyles = pages_json["styles"].clone();
 					json jdststyles = combined["styles"];
+
+					json jsrcstyles = pages_json["styles"].clone();
+					json jdststyles = combined["styles"];
+
+					json jabbreviations = pages_json["abbreviations"].clone();
+					if (jabbreviations.object()) {
+						auto jams = jabbreviations.get_members();
+						for (auto m : jams) {
+							abbreviations.put_member(m.first, m.second);
+						}
+					}
+
+					jabbreviations = combined["abbreviations"].clone();
+					if (jabbreviations.object()) {
+						auto jams = jabbreviations.get_members();
+						for (auto m : jams) {
+							abbreviations.put_member(m.first, m.second);
+						}
+					}
 
 					if (jsrcstyles.array() and jdststyles.array())
 					{
@@ -290,13 +313,49 @@ namespace corona
 					json jsrcpages = pages_json["pages"].clone();
 					json jdstpages = combined["pages"];
 
-					if (jsrcpages.array() and jdstpages.array())
+					if (jsrcpages.array())
 					{
-						jdstpages.append_array(jsrcpages);
-					}
-					else if (jsrcpages.array())
-					{
-						combined.put_member_array("pages", jsrcpages);
+						json jpages_expanded_array = jp.create_array();
+
+						for (auto jpage : jsrcpages)
+						{
+							if (jpage.object()) {
+								jpage.apply_abbreviations(abbreviations);
+								std::string class_name = jpage[class_name_field];
+								std::string file_name = jpage["file_name"];
+								if (class_name == "import") 
+								{
+									json_parser jpx;
+									std::string src_page = read_all_string(file_name);
+									json expanded_page = jpx.parse_object(src_page);
+
+									if (expanded_page.error()) 
+									{
+										auto errs = jpx.get_errors();
+										log_error(errs, __FILE__, __LINE__);
+									}
+									else
+									{
+										jpages_expanded_array.append_element(expanded_page);
+										std::string story = std::format("imported page {0}", file_name);
+										log_information(story, __FILE__, __LINE__);
+									}
+								}
+								else
+								{
+									jpages_expanded_array.append_element(jpage);
+								}
+							}
+						}
+
+						if (jdstpages.array())
+						{
+							jdstpages.append_array(jpages_expanded_array);
+						}
+						else
+						{
+							combined.put_member_array("pages", jpages_expanded_array);
+						}
 					}
 
 					json jsrcstartup = pages_json["startup"].clone();
@@ -779,6 +838,7 @@ namespace corona
 			date_time dt = date_time::now();
 			log_function_start("load_pages", "", dt);
 			run_ui([this, _pages, _select_default]() ->void {
+
 				timer tx;
 				date_time dt = date_time::now();
 				std::stringstream page_message;

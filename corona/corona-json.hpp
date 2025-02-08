@@ -118,6 +118,7 @@ namespace corona
 		{
 			return 0.0;
 		}
+
 	};
 
 	enum base_scales {
@@ -895,7 +896,6 @@ namespace corona
 		{
 			return 0.0;
 		}
-
 
 	};
 
@@ -2863,6 +2863,33 @@ namespace corona
 			}
 
 			return result_item;
+		}
+
+		void apply_abbreviations(json _abbreviations)
+		{
+			if (not _abbreviations.object())
+				return;
+
+			auto abbrev = _abbreviations.object_impl();
+
+			if (object())
+			{
+				for (auto member : object_impl()->members)
+				{
+					auto ifound = abbrev->members.find(member.first);
+					if (ifound != std::end(abbrev->members)) {
+						member.second = ifound->second;
+					}
+				}
+			}
+			else if (array())
+			{
+				for (auto element : array_impl()->elements)
+				{
+					json temp(element);
+					temp.apply_abbreviations(_abbreviations);
+				}
+			}
 		}
 
 		json update(std::function<json&(json& _item)> _transform)
