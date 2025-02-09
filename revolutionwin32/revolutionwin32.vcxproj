@@ -605,13 +605,19 @@
     <None Include="revolution_court.json" />
     <None Include="revolution_court_cases.json" />
     <None Include="revolution_exchange.json" />
+    <None Include="revolution_exchange_investment.json" />
     <None Include="revolution_fakenews.json" />
     <None Include="revolution_government.json" />
     <None Include="revolution_home.json" />
     <None Include="revolution_insurance.json" />
+    <None Include="revolution_insurance_risk.json" />
+    <None Include="revolution_investment_software.json" />
+    <None Include="revolution_investment_subscription.json" />
+    <None Include="revolution_investment_treaty.json" />
     <None Include="revolution_pages.json" />
     <None Include="revolution_styles.json" />
     <None Include="revolution_workshop.json" />
+    <None Include="revolution_workshop_invention.json" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="revolution_activism_elections.json" />
