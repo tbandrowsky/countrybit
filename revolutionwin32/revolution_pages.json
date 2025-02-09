@@ -91,6 +91,22 @@
     },
     {
       "class_name": "import",
+      "file_name": "revolution_user_login.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_register.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_code.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_code.json"
+    },
+    {
+      "class_name": "import",
       "file_name": "revolution_academy.json"
     },
     {

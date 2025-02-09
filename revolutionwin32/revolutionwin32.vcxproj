@@ -598,9 +598,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="revolution_acacemy.json" />
+    <None Include="revolution_academy_books.json" />
+    <None Include="revolution_academy_courses.json" />
     <None Include="revolution_activism.json" />
     <None Include="revolution_bank.json" />
     <None Include="revolution_court.json" />
+    <None Include="revolution_court_cases.json" />
     <None Include="revolution_exchange.json" />
     <None Include="revolution_fakenews.json" />
     <None Include="revolution_government.json" />
@@ -609,6 +612,10 @@
     <None Include="revolution_pages.json" />
     <None Include="revolution_styles.json" />
     <None Include="revolution_workshop.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="revolution_activism_elections.json" />
+    <Text Include="revolution_activism_meetings.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
