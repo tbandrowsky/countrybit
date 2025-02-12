@@ -157,13 +157,23 @@
       }
     },
     {
-      "class_name": "slide",
+      "class_name": "layer",
       "class_description": "an page in a presentation",
       "base_class_name": "absolute",
+      "parents": [ "slide" ],
+      "fields": {
+        "layer_name": "string",
+        "layer_order": "int64"
+      }
+    },
+    {
+      "class_name": "slide",
+      "class_description": "an page in a presentation",
+      "base_class_name": "sys_object",
       "parents": [ "presentation" ],
       "fields": {
         "slide_name": "string",
-        "parent_presentation": "int64"
+        "layers": "[layer:slide]"
       }
     },
     {
@@ -521,7 +531,6 @@
         "investments": "[investment:exchange]"
       }
     },
-
     {
       "class_name": "invention",
       "class_description": "automation of a job",
@@ -559,6 +568,7 @@
         "cost": "string",
         "probability_second": "double",
         "cool_down": "double",
+        "insta_cash": "double",
         "suggested_course": "->course"
       }
     },
@@ -832,9 +842,18 @@
     },
 
     {
-      "class_name": "case_person",
+      "class_name": "case_story",
       "class_description": "a person participating in the justice system",
       "base_class_name": "sys_actor",
+      "parents": [ "case" ],
+      "fields": {
+        "about": "[presentation:sys_object]"
+      }
+    },
+    {
+      "class_name": "case_person",
+      "class_description": "a person participating in the justice system",
+      "base_class_name": "case_story",
       "parents": [ "case" ],
       "fields": {
         "first_name": "string",
@@ -852,7 +871,7 @@
     {
       "class_name": "case_complaint",
       "class_description": "the basic complaint in the case",
-      "base_class_name": "sys_object",
+      "base_class_name": "case_story",
       "parents": "case",
       "fields": {
         "complaint_name": "string",
@@ -863,7 +882,7 @@
     {
       "class_name": "case_evidence",
       "class_description": "a confrontation being mitigated by the judicial system",
-      "base_class_name": "sys_object",
+      "base_class_name": "case_story",
       "parents": "case",
       "fields": {
         "evidence_name": "string",
@@ -874,7 +893,7 @@
     {
       "class_name": "case_settlement",
       "class_description": "a confrontation being mitigated by the judicial system",
-      "base_class_name": "sys_object",
+      "base_class_name": "case_story",
       "parents": "case",
       "fields": {
         "settlement_name": "string",
@@ -885,10 +904,32 @@
     {
       "class_name": "case_verdict",
       "class_description": "a confrontation being mitigated by the judicial system",
-      "base_class_name": "election",
+      "base_class_name": "case_story",
       "parents": "case",
       "fields": {
-
+        "petition_title": "string",
+        "petition_rebuttal": "presentation:sys_object"
+      }
+    },
+    {
+      "class_name": "case_petition",
+      "class_description": "asking the court for something in  case",
+      "base_class_name": "case_story",
+      "parents": "case",
+      "fields": {
+        "petition_title": "string",
+        "petition_rebuttal": "presentation:sys_object"
+      }
+    },
+    {
+      "class_name": "case_rebuttal",
+      "class_description": "asking the court for something in  case",
+      "base_class_name": "case_story",
+      "parents": "case",
+      "fields": {
+        "petition": "->case_petition",
+        "rebuttal_title": "string",
+        "rebuttal": "presentation:sys_object"
       }
     },
     {
@@ -897,10 +938,7 @@
       "base_class_name": "sys_place",
       "parents": [ "court" ],
       "fields": {
-        "complaint": "[case_complaint:case]",
-        "evidence": "[case_evidence:case]",
-        "settlement": "case_settlement:case",
-        "verdict": "case_verdict:case"
+        "history": "[case_story:case]"
       }
     },
     {
@@ -911,25 +949,70 @@
         "cases": "[case:court]"
       }
     },
-    {
-      "class_name": "product",
-      "class_description": "something someone can make, grow, or assemble",
-      "base_class_name": "sys_good",
-      "parents": [ "work", "sys_actor" ],
-      "fields": {
 
+    {
+      "class_name": "product_story",
+      "class_description": "a task selectable by someone to produce a good",
+      "base_class_name": "front",
+      "parents": [ "product" ],
+      "fields": {
+        "quantity": "int64",
+        "amount": "sys_money"
       }
     },
 
     {
-      "class_name": "job",
+      "class_name": "product_job",
       "class_description": "a task selectable by someone to produce a good",
-      "base_class_name": "front",
-      "parents": [ "course", "government" ],
+      "base_class_name": "product_story",
       "fields": {
         "job_name": "string",
         "job_description": "string",
-        "good_produced": "[product]"
+        "course": "->course"
+      }
+    },
+
+    {
+      "class_name": "product_work",
+      "class_description": "a task selectable by someone to produce a good",
+      "base_class_name": "product_story",
+      "fields": {
+        "job": "->product_job",
+        "hours": "int64",
+        "paid": "sys_money",
+        "actor": "sys_actor",
+        "remaining" :  "int64"
+      }
+    },
+    {
+      "class_name": "product_purchase",
+      "class_description": "a task selectable by someone to produce a good",
+      "base_class_name": "product_story",
+      "fields": {
+        "job": "->product_job",
+        "paid": "sys_money",
+        "purchased_from": "sys_actor",
+        "sold_to": "sys_actor"
+      }
+    },
+
+    {
+      "class_name": "product_store",
+      "class_description": "a task selectable by someone to produce a good",
+      "base_class_name": "product_story",
+      "fields": {
+      }
+    },
+
+    {
+      "class_name": "product",
+      "class_description": "something someone can make, grow, or assemble",
+      "base_class_name": "sys_good",
+      "parents": [ "store" ],
+      "fields": {
+
+        "jostpr"
+
       }
     },
 
@@ -937,9 +1020,9 @@
       "class_name": "work",
       "class_description": "producing a good for money",
       "base_class_name": "sys_object",
-      "parents": [ "job", "sys_actor", "government" ],
+      "parents": [ "job", "sys_actor" ],
       "fields": {
-        "goods": "[sys_good]",
+        "goods": "[product:work]",
         "delivery_class": "[sys_actor]"
       }
     },
