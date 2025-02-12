@@ -995,57 +995,24 @@
         "sold_to": "sys_actor"
       }
     },
-
-    {
-      "class_name": "product_store",
-      "class_description": "a task selectable by someone to produce a good",
-      "base_class_name": "product_story",
-      "fields": {
-      }
-    },
-
     {
       "class_name": "product",
       "class_description": "something someone can make, grow, or assemble",
       "base_class_name": "sys_good",
       "parents": [ "store" ],
       "fields": {
-
-        "jostpr"
-
+        "production" :  "[product_story:product]"
       }
     },
 
-    {
-      "class_name": "work",
-      "class_description": "producing a good for money",
-      "base_class_name": "sys_object",
-      "parents": [ "job", "sys_actor" ],
-      "fields": {
-        "goods": "[product:work]",
-        "delivery_class": "[sys_actor]"
-      }
-    },
-
-    {
-      "class_name": "transaction",
-      "base_class_name": "sys_object",
-      "parents": [ "bank" ],
-      "fields": {
-        "goods": "[sys_good]",
-        "from": "->sys_actor",
-        "to": "->sys_actor",
-        "amount": "sys_money"
-      }
-    },
     {
       "class_name": "store",
       "base_class_name": "sys_object",
-      "parents": [ "bank" ],
+      "parents": [ "front" ],
       "fields": {
         "store_name": "string",
-        "description_name": "string",
-        "goods": "[sys_good]"
+        "store_description": "string",
+        "products": "[product]"
       }
     },
 
