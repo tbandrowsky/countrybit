@@ -640,6 +640,10 @@
     <None Include="revolution_presentation.json" />
     <None Include="revolution_presentation_slide.json" />
     <None Include="revolution_presentation_slide_layer.json" />
+    <None Include="revolution_store.json" />
+    <None Include="revolution_store_product.json" />
+    <None Include="revolution_store_product_purchase.json" />
+    <None Include="revolution_store_product_work.json" />
     <None Include="revolution_styles.json" />
     <None Include="revolution_workshop.json" />
     <None Include="revolution_workshop_invention.json" />
@@ -650,6 +654,7 @@
     <Text Include="revolution_activism_elections.json" />
     <Text Include="revolution_activism_meetings.json" />
     <Text Include="revolution_insurance_policy_claim.json" />
+    <Text Include="revolution_store_product_job.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -938,7 +938,7 @@
       "base_class_name": "sys_place",
       "parents": [ "court" ],
       "fields": {
-        "history": "[case_story:case]"
+        "case_history": "[case_story:case]"
       }
     },
     {
@@ -981,7 +981,7 @@
         "hours": "int64",
         "paid": "sys_money",
         "actor": "sys_actor",
-        "remaining" :  "int64"
+        "remaining": "int64"
       }
     },
     {
@@ -1001,14 +1001,13 @@
       "base_class_name": "sys_good",
       "parents": [ "store" ],
       "fields": {
-        "production" :  "[product_story:product]"
+        "product_history": "[product_story:product]"
       }
     },
 
     {
       "class_name": "store",
-      "base_class_name": "sys_object",
-      "parents": [ "front" ],
+      "base_class_name": "front",
       "fields": {
         "store_name": "string",
         "store_description": "string",
@@ -1021,36 +1020,50 @@
       "base_class_name": "front",
       "fields": {
         "bank_name": "string",
-        "bank_description": "string",
-        "store": "[store]",
-        "transactions": "[transaction]"
+        "bank_description": "string"
+      }
+    },
+
+    {
+      "class_name": "permit_story",
+      "base_class_name": "sys_object",
+      "parent": "permit",
+      "fields": {
+      }
+    },
+
+    {
+      "class_name": "permit_election",
+      "base_class_name": "permit_story",
+      "fields": {
+        "election" : "election"
       }
     },
 
     {
       "class_name": "permit_application",
-      "base_class_name": "sys_object",
+      "base_class_name": "permit_story",
       "parent": "permit",
       "fields": {
       }
     },
     {
       "class_name": "permit_review",
-      "base_class_name": "sys_object",
+      "base_class_name": "permit_story",
       "parent": "permit",
       "fields": {
       }
     },
     {
       "class_name": "permit_approval",
-      "base_class_name": "sys_object",
+      "base_class_name": "permit_story",
       "parent": "permit",
       "fields": {
       }
     },
     {
       "class_name": "permit_rejection",
-      "base_class_name": "sys_object",
+      "base_class_name": "permit_story",
       "parent": "permit",
       "fields": {
       }
@@ -1063,10 +1076,7 @@
       "fields": {
         "permit_name": "string",
         "permit_description": "string",
-        "application": "permit_application",
-        "review": "permit_review",
-        "approval": "permit_approval",
-        "rejection": "permit_rejection"
+        "permit_history" : "[permiit_story:permit]"
       }
     },
 
@@ -1076,7 +1086,6 @@
       "fields": {
         "office_name": "string",
         "office_description": "string",
-        "store": "[store]",
         "permits": "[permit]"
       }
     },
