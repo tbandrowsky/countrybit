@@ -99,11 +99,15 @@
     },
     {
       "class_name": "import",
-      "file_name": "revolution_user_code.json"
+      "file_name": "revolution_user_sendcode.json"
     },
     {
       "class_name": "import",
-      "file_name": "revolution_user_code.json"
+      "file_name": "revolution_user_password.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_settings.json"
     },
     {
       "class_name": "import",
@@ -111,11 +115,103 @@
     },
     {
       "class_name": "import",
+      "file_name": "revolution_academy_book.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_academy_books.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_academy_course.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_academy_courses.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_activism.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_activism_election.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_activism_elections.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_activism_meeting.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_activism_meetings.json"
+    },
+    {
+      "class_name": "import",
       "file_name": "revolution_bank.json"
     },
     {
       "class_name": "import",
+      "file_name": "revolution_bank_transaction.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_bank_transactions.json"
+    },
+    {
+      "class_name": "import",
       "file_name": "revolution_court.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case_complaint.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case_evidence.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case_hearing.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case_person.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case_petition_ruling.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case_petitions.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case_rebuttal.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case_settlement.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_case_verdict.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_court_cases.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_exchange_investment.json"
     },
     {
       "class_name": "import",
@@ -131,11 +227,131 @@
     },
     {
       "class_name": "import",
-      "file_name": "revolution_workshop.json"
+      "file_name": "revolution_insurance.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_home.json"
     },
     {
       "class_name": "import",
       "file_name": "revolution_insurance.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_insurance_covered_building.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_insurance_covered_person.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_insurance_event.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_insurance_policy.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_insurance_policy_claim.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_insurance_policy_coverage.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_insurance_risk.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_investment_software.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_investment_softwares.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_investment_subscription.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_investment_subscriptions.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_investment_treaties.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_investment_treaty.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_presentation.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_presentation_slide.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_presentation_slide_layer.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_store.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_store_product.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_store_product_job.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_store_product_purchase.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_store_product_work.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_login.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_password.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_register.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_sendcode.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_settings.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_workshop.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_workshop_invention.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_workshop_inventions.json"
     },
     {
       "class_name": "page",

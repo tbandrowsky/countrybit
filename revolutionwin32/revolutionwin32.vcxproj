@@ -605,6 +605,8 @@
     <None Include="revolution_activism.json" />
     <None Include="revolution_activism_meeting.json" />
     <None Include="revolution_bank.json" />
+    <None Include="revolution_bank_transaction.json" />
+    <None Include="revolution_bank_transactions.json" />
     <None Include="revolution_court.json" />
     <None Include="revolution_court_case.json" />
     <None Include="revolution_court_cases.json" />
@@ -645,6 +647,11 @@
     <None Include="revolution_store_product_purchase.json" />
     <None Include="revolution_store_product_work.json" />
     <None Include="revolution_styles.json" />
+    <None Include="revolution_user_login.json" />
+    <None Include="revolution_user_password.json" />
+    <None Include="revolution_user_register.json" />
+    <None Include="revolution_user_sendcode.json" />
+    <None Include="revolution_user_settings.json" />
     <None Include="revolution_workshop.json" />
     <None Include="revolution_workshop_invention.json" />
     <None Include="revolution_activism_election.json" />
