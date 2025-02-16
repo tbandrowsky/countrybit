@@ -279,6 +279,7 @@ namespace corona
 		virtual json delete_object(corona_instance _instance, json object_information) = 0;
 		virtual json query_objects(corona_instance _instance, json object_information) = 0;
 		virtual void error(json _error) = 0;
+		virtual std::string generate_code(const std::string& _str) = 0;
 
 		virtual void when(UINT topic, std::function<void()> _runnable) = 0;
 		virtual void when(std::string _topic, std::function<void()> _runnable) = 0;

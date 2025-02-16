@@ -182,14 +182,22 @@ namespace corona {
 
 // cryptography implements windows crypto services, and
 // is used for both hashing and encryption.
-
 #include "corona-cryptography.hpp"
 
 // query implements a linq like predicate object graph for everywhere
 #include "corona-query.hpp"
 
-// query implements a linq like predicate object graph for everywhere
+// cheesy infix parser to be used 
 #include "corona-expressions.hpp"
+
+// this is the code generator.  It lets you create an object database 
+// consisting of multiple classes
+#include "corona-code-generate.hpp"
+
+// this is the code generator.  It lets you create an object database 
+// consisting of multiple classes
+#include "corona-database-engine.hpp"
+
 
 // the data block allows for serialization and deserialization of resizable objects to and from a file.
 #include "corona-data-block.hpp"

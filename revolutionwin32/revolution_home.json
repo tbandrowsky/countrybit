@@ -1,0 +1,60 @@
+
+{
+  "class_name": "page",
+  "page_name": "home",
+  "default": true,
+  "children": [
+    {
+      "class_name": "column",
+      "box": "full_container",
+      "padding": "0 pixels",
+      "content_alignment": "near",
+      "content_cross_alignment": "center",
+      "children": [
+        {
+          "class_name": "caption_bar",
+          "corporate_name": "country video games",
+          "image_file": "cockade.png",
+          "title_name": "Revolution",
+          "subtitle_name": "Country Video Games",
+          "title_start": "0.28 container",
+          "box": {
+            "width": "1.0 container",
+            "height": "100 pixels"
+          }
+        },
+        {
+          "class_name": "column",
+          "box": {
+            "width": "0.9 container",
+            "height": "0.8 container"
+          },
+          "view_style": {
+            "box_fill_brush": {
+              "class_name": "solid_brush",
+              "color": "211012AA"
+            },
+            "box_border_brush": {
+              "class_name": "solid_brush",
+              "color": "21101277"
+            },
+            "box_border_thickness": 8
+          },
+          "padding": {
+            "amount": 10,
+            "units": "pixels"
+          },
+          "content_alignment": "near",
+          "content_cross_alignment": "near",
+          "children": [
+            {
+              "class_name": "frame",
+              "name": "revolution_home_frame",
+              "box": "full_container"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

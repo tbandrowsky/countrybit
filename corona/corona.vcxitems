@@ -113,5 +113,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-app-bus.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-publicity-stunts.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-express-table.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-code-generate.hpp" />
   </ItemGroup>
 </Project>

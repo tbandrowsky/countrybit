@@ -353,6 +353,7 @@ namespace corona
 			_dest.put_member("class_name", "create_object_command"sv);
 			_dest.put_member("create_class_name", create_class_name);
 			_dest.put_member("form_name", form_name);
+
 			_dest.put_member_i64("instance", (int64_t)instance);
 		}
 
@@ -372,6 +373,65 @@ namespace corona
 			create_class_name = _src["create_class_name"];
 			form_name = _src["form_name"];
 			instance = (corona_instance)((int64_t)_src["instance"]);
+		}
+
+	};
+
+	class corona_create_object_frame_command : public corona_bus_command
+	{
+	public:
+		std::string	create_class_name;
+		std::string	page_to_select;
+		std::string	frame_to_load;
+		std::string	frame_contents_page;
+		std::string	form_to_load;
+		corona_instance instance;
+		corona_client_response response;
+
+		virtual json execute()
+		{
+			json obj;
+			obj = bus->create_object(instance, create_class_name);
+			if (not obj.empty()) {
+				bus->select_page(page_to_select, frame_to_load, frame_contents_page, form_to_load, obj);
+			}
+			return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "create_object_frame_command"sv);
+			_dest.put_member("create_class_name", create_class_name);
+			_dest.put_member("page_to_select", page_to_select);
+			_dest.put_member("frame_to_load", frame_to_load);
+			_dest.put_member("frame_contents_page", frame_contents_page);
+			_dest.put_member("form_to_load", form_to_load);
+
+			_dest.put_member_i64("instance", (int64_t)instance);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { "create_class_name", "form_name" })) {
+				system_monitoring_interface::global_mon->log_warning("create_object_command missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			create_class_name = _src["create_class_name"];
+			instance = (corona_instance)((int64_t)_src["instance"]);
+			page_to_select = _src["page_to_select"];
+			frame_to_load = _src["frame_to_load"];
+			frame_contents_page = _src["frame_contents_page"];
+			form_to_load = _src["form_to_load"];
+
 		}
 
 	};
@@ -1005,6 +1065,56 @@ namespace corona
 		}
 	};
 
+	class corona_generate_code_command : public corona_bus_command
+	{
+	public:
+		std::string		edit_target;
+		std::string		code_type;
+
+		virtual json execute()
+		{
+			json obj;
+			control_base* cb = {};
+			if (not edit_target.empty())
+				cb = bus->find_control(edit_target);
+			json data;
+			if (cb) {
+				std::string text = bus->generate_code(code_type);
+				edit_control* ec = dynamic_cast<edit_control *>(cb);
+				if (ec) {
+					ec->set_text(text);
+				}
+			}
+			return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "select_frame_command"sv);
+			_dest.put_member("edit_target", edit_target);
+			_dest.put_member("code_type", code_type);		
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { "frame_contents_page", "frame_to_load" })) {
+				system_monitoring_interface::global_mon->log_warning("select_frame_command missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			edit_target = _src["edit_target"];
+			code_type = _src["code_type"];
+		}
+	};
+
 	void get_json(json& _dest, std::shared_ptr<corona_bus_command>& _src)
 	{
 		json_parser jp;
@@ -1072,6 +1182,11 @@ namespace corona
 				_dest = std::make_shared<corona_create_object_command>();
 				_dest->put_json(_src);
 			}
+			else if (class_name == "create_object_frame_command")
+			{
+				_dest = std::make_shared<corona_create_object_frame_command>();
+				_dest->put_json(_src);
+			}
 			else if (class_name == "select_object_page_command")
 			{
 				_dest = std::make_shared<corona_select_object_page_command>();
@@ -1115,6 +1230,11 @@ namespace corona
 			else if (class_name == "select_frame_command")
 			{
 				_dest = std::make_shared<corona_select_frame_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "generate_code")
+			{
+				_dest = std::make_shared<corona_generate_code_command>();
 				_dest->put_json(_src);
 			}
 		}

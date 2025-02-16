@@ -597,7 +597,8 @@
     </Natvis>
   </ItemGroup>
   <ItemGroup>
-    <None Include="revolution_acacemy.json" />
+    <None Include="corona_generator.json" />
+    <None Include="revolution_academy.json" />
     <None Include="revolution_academy_book.json" />
     <None Include="revolution_academy_books.json" />
     <None Include="revolution_academy_course.json" />
@@ -642,6 +643,7 @@
     <None Include="revolution_presentation.json" />
     <None Include="revolution_presentation_slide.json" />
     <None Include="revolution_presentation_slide_layer.json" />
+    <None Include="revolution_root.json" />
     <None Include="revolution_store.json" />
     <None Include="revolution_store_product.json" />
     <None Include="revolution_store_product_purchase.json" />

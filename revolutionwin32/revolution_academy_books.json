@@ -1,0 +1,152 @@
+{
+  "class_name": "page",
+  "page_name": "academy_books",
+  "children": [
+    {
+      "class_name": "column",
+      "box": "search_box",
+      "children": [
+        {
+          "class_name": "chaptertitle",
+          "text": "Academy Library",
+          "box": "chaptertitle_box"
+        },
+        {
+          "class_name": "chaptersubtitle",
+          "text": "Book Search",
+          "box": "chaptersubtitle_box"
+        },
+        {
+          "class_name": "form",
+          "name": "search_form",
+          "model": {
+            "name": "search_form",
+            "defaults": {
+              "container_box": "edit_container_box",
+              "label_box": "edit_label_box",
+              "field_box": "edit_field_box"
+            },
+            "fields": [
+              {
+                "json_field_name": "actor_name",
+                "label_text": "Title",
+                "class_name": "edit",
+                "tooltip_text": "Name of book",
+                "is_default_focus": true
+              },
+              {
+                "json_field_name": "actor_description",
+                "label_text": "Description",
+                "class_name": "edit",
+                "tooltip_text": "Description of book",
+                "is_default_focus": false
+              },
+              {
+                "json_field_name": "author_last_name",
+                "label_text": "Author",
+                "class_name": "edit",
+                "tooltip_text": "Author",
+                "is_default_focus": false
+              },
+              {
+                "json_field_name": "author_first_name",
+                "label_text": "Author",
+                "class_name": "edit",
+                "tooltip_text": "Author",
+                "is_default_focus": false
+              },
+              {
+                "class_name": "push_button",
+                "text": "Search",
+                "box": {
+                  "width": {
+                    "amount": 100,
+                    "units": "pixels"
+                  },
+                  "height": {
+                    "amount": 40,
+                    "units": "pixels"
+                  }
+                },
+                "click_command": {
+                  "class_name": "search_objects_command",
+                  "search_class_name": "Events",
+                  "form_name": "search_form",
+                  "table_name": "search_list"
+                }
+              }
+            ],
+            "data": []
+          },
+          "box": {
+            "width": "1.0 container",
+            "height": "200 pixels"
+          }
+        },
+        {
+          "class_name": "push_button",
+          "text": "New Book",
+          "box": {
+            "width": {
+              "amount": 100,
+              "units": "pixels"
+            },
+            "height": {
+              "amount": 40,
+              "units": "pixels"
+            }
+          },
+          "click_command": {
+            "class_name": "create_object_command",
+            "create_class_name": "book",
+            "form_name": "search_form",
+            "table_name": "search_list"
+          }
+        }
+      ]
+    },
+    {
+      "class_name": "column",
+      "box": {
+        "x": "48 pixels",
+        "width": "0.65 container",
+        "height": "0.8 container"
+      },
+      "view_style": {
+        "box_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "211012AA"
+        },
+        "box_border_brush": {
+          "class_name": "solid_brush",
+          "color": "21101277"
+        },
+        "box_border_thickness": 8
+      },
+      "content_alignment": "near",
+      "content_cross_alignment": "near",
+      "children": [
+        {
+          "class_name": "chaptertitle",
+          "text": "Event Detail",
+          "box": {
+            "width": "1.0 container",
+            "height": "30 pixels"
+          }
+        },
+        {
+          "class_name": "row",
+          "box": {
+            "width": "1.0 container",
+            "height": "75 pixels"
+          },
+          "item_next_space": "10 pixels",
+          "wrap": true,
+          "children": [
+          ]
+        }
+      ]
+    }
+
+  ]
+},
