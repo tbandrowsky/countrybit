@@ -2865,6 +2865,17 @@ namespace corona
 			return result_item;
 		}
 
+		std::string apply_template(std::string _src)
+		{
+			if (object())
+			{
+				for (auto member : object_impl()->members) {
+					_src = replace(_src, member.first, member.second->to_string());
+				}
+			}
+			return _src;
+		}
+
 		void apply_abbreviations(json _abbreviations)
 		{
 			if (not _abbreviations.object())

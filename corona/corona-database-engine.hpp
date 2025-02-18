@@ -7802,6 +7802,115 @@ private:
 			return false;
 		}
 	}
+
+	json corona_uwp_generator::generate(corona_database_interface* _database, const corona_code_generate_request& _request)
+	{
+		json_parser jp;
+
+		json result;
+		auto rdlock = _database->read_lock_class(_request.class_name);
+
+		if (rdlock)
+		{
+			std::string uwp_page_template = R"(
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+            <TextBlock>$SEARCH_PAGE_TITLE$</TextBlock>
+            <TextBlock>$SEARCH_SUBTITLE_TITLE$</TextBlock>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="0">
+            <TextBlock>Search</TextBlock>
+            <TextBlock></TextBlock>
+$SEARCH_FIELDS$
+            <Button x:Name="btnSearch">Search</Button>
+$CREATE_COMMANDS$
+        </StackPanel>
+        <controls:DataGrid AutoGenerateColumns="False" ItemsSource="{Binding Items}" Grid.Row="1" Grid.Column="1">
+            <controls:DataGrid.Columns>
+$RESULT_GRID_COLUMNS$
+            </controls:DataGrid.Columns>
+        </controls:DataGrid>
+        <StackPanel Grid.Row="1" Grid.Column="0">
+            <TextBlock>Search</TextBlock>
+            <TextBlock></TextBlock>
+$SEARCH_FIELDS$
+            <Button x:Name="btnSearch">Search</Button>
+$CREATE_COMMANDS$
+        </StackPanel>
+    </Grid>					
+
+)";
+
+			std::ostringstream search_fields;
+
+			for (auto fld : _request.search_fields)
+			{
+				auto cfld = rdlock->get_field(fld);
+				if (cfld) {
+					json template_variables = jp.create_object();
+					template_variables.put_member("$PLACEHOLDER_TEXT$", cfld->get_field_name());
+					template_variables.put_member("$CONTROL_NAME$", cfld->get_field_name());
+
+					std::string result = template_variables.apply_template(search_field_template);
+					search_fields << result << std::endl;
+				}
+			}
+
+			std::ostringstream list_columns;
+
+			std::string results_grid_column = R"(
+	<controls:DataGridTextColumn Header = "$HEADER_NAME$" Binding = "{Binding $CONTROL_NAME$}" / >
+)";
+
+			for (auto fld : _request.list_columns)
+			{
+				auto cfld = rdlock->get_field(fld);
+				if (cfld) {
+					json template_variables = jp.create_object();
+					template_variables.put_member("$HEADER_NAME$", cfld->get_field_name());
+					template_variables.put_member("$CONTROL_NAME$", cfld->get_field_name());
+
+					std::string result = template_variables.apply_template(results_grid_column);
+					list_columns << result << std::endl;
+				}
+			}
+
+			std::string search_field_template = R"(
+	<TextBlock>Label</TextBlock>
+		<TextBox PlaceholderText="$PLACEHOLDER_TEXT$" Binding = "{Binding $CONTROL_NAME$}></TextBox>
+    <TextBlock></TextBlock>
+)";
+
+			std::ostringstream edit_fields;
+
+			for (auto fld : _request.edit_fields)
+			{
+				auto cfld = rdlock->get_field(fld);
+				if (cfld) {
+					json template_variables = jp.create_object();
+					template_variables.put_member("$HEADER_NAME$", cfld->get_field_name());
+					template_variables.put_member("$CONTROL_NAME$", cfld->get_field_name());
+
+					std::string result = template_variables.apply_template(results_grid_column);
+					list_columns << result << std::endl;
+				}
+			}
+
+			std::string search_create_command = R"(
+	<Button x:Name="btnCreate">New {$CLASS_NAME$}</Button>
+)";
+
+		}
+		return result;
+	}
 }
 
 #endif

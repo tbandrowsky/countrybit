@@ -4,11 +4,42 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:revolutionuwp"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+            <TextBlock>Title Text</TextBlock>
+            <TextBlock>Subtitle Text</TextBlock>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="0">
+            <TextBlock>Search</TextBlock>
+            <TextBlock></TextBlock>
 
+            <TextBlock>Label</TextBlock>
+            <TextBox PlaceholderText="Text"></TextBox>
+            <TextBlock></TextBlock>
+
+            <TextBlock>Label</TextBlock>
+            <TextBox PlaceholderText="Text"></TextBox>
+            <TextBlock></TextBlock>
+
+            <Button x:Name="btnSearch">Search</Button>
+        </StackPanel>
+        <controls:DataGrid AutoGenerateColumns="False" ItemsSource="{Binding Items}" Grid.Row="1" Grid.Column="1">
+            <controls:DataGrid.Columns>
+                <controls:DataGridTextColumn Header="Name" Binding="{Binding Name}" />
+                <controls:DataGridTextColumn Header="Description" Binding="{Binding Description}" />
+            </controls:DataGrid.Columns>
+        </controls:DataGrid>
     </Grid>
 </Page>

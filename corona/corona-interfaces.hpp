@@ -4,6 +4,7 @@
 
 namespace corona
 {
+
 	class corona_client_response
 	{
 	public:
