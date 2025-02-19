@@ -7884,8 +7884,8 @@ $CREATE_COMMANDS$
 			}
 
 			std::string search_field_template = R"(
-	<TextBlock>Label</TextBlock>
-		<TextBox PlaceholderText="$PLACEHOLDER_TEXT$" Binding = "{Binding $CONTROL_NAME$}></TextBox>
+	<TextBlock>$CONTROL_LABEL$</TextBlock>
+		<TextBox PlaceholderText="$CONTROL_PLACEHOLDER" Binding = "{Binding $CONTROL_NAME$}></TextBox>
     <TextBlock></TextBlock>
 )";
 
@@ -7896,7 +7896,8 @@ $CREATE_COMMANDS$
 				auto cfld = rdlock->get_field(fld);
 				if (cfld) {
 					json template_variables = jp.create_object();
-					template_variables.put_member("$HEADER_NAME$", cfld->get_field_name());
+					template_variables.put_member("$CONTROL_LABEL$", cfld->get_field_name());
+					template_variables.put_member("$CONTROL_PLACEHOLDER$", cfld->get_field_name());
 					template_variables.put_member("$CONTROL_NAME$", cfld->get_field_name());
 
 					std::string result = template_variables.apply_template(results_grid_column);
