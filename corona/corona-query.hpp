@@ -979,6 +979,63 @@ namespace corona
 		}
 	};
 
+	class filter_none : public query_condition
+	{
+	public:
+
+		virtual std::string term_name() { return "none"; }
+		std::vector<std::shared_ptr<query_condition>> conditions;
+
+		virtual bool accepts(query_context_base* _qcb, json _src)
+		{
+			return not std::any_of(conditions.begin(), conditions.end(), [_qcb, _src](std::shared_ptr<query_condition>& _condition)-> bool
+				{
+					return _condition->accepts(_qcb, _src);
+				});
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+			query_condition::get_json(_dest);
+			using namespace std::literals;
+			_dest.put_member("class_name", "none"sv);
+			json jconditions = jp.create_array();
+			for (auto cond : conditions) {
+				json jcond = jp.create_object();
+				cond->get_json(jcond);
+			}
+			_dest.put_member("conditions", jconditions);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { "class_name", "conditions" })) {
+				system_monitoring_interface::global_mon->log_warning("filter missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			query_condition::put_json(_src);
+
+			json_parser jp;
+			json jconditions = _src["conditions"];
+			conditions.clear();
+
+			for (auto jcondition : jconditions)
+			{
+				std::shared_ptr<query_condition> new_condition;
+				corona::put_json(new_condition, jcondition);
+				conditions.push_back(new_condition);
+			}
+		}
+	};
+
 	class query_project : public query_stage {
 	public:
 
@@ -1191,6 +1248,11 @@ namespace corona
 			else if (class_name == "all")
 			{
 				_dest = std::make_shared<filter_all>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "none")
+			{
+				_dest = std::make_shared<filter_none>();
 				_dest->put_json(_src);
 			}
 			else if (class_name == "contains")

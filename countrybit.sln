@@ -9,7 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coronaserver", "coronaserve
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "colorparty", "colorpartysetup\colorparty.wapproj", "{E649FCC8-26F5-49D9-A1AD-A1973EBDC890}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "coronautil", "coronautil\coronautil.csproj", "{B91B2013-D2D7-491D-94F3-B51C26760F0A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "coronautil", "coronautil\coronautil.csproj", "{B91B2013-D2D7-491D-94F3-B51C26760F0A}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "coronanet", "coronanet\coronanet.shproj", "{10A8678B-BCCC-43FA-BEC8-5C6049E14DC9}"
 EndProject
@@ -17,7 +17,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "revolutionwin32", "revoluti
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "revolutionwinui (Package)", "revolutionwinui\revolutionwinui (Package)\revolutionwinui (Package).wapproj", "{90DE1348-CDC3-4CAB-BCB5-FDD4C608940E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "revolutionwinui", "revolutionwinui\revolutionwinui\revolutionwinui.csproj", "{27121AE6-477C-45DF-A8B1-EE7DF83F8BDE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "revolutionwinui", "revolutionwinui\revolutionwinui\revolutionwinui.csproj", "{27121AE6-477C-45DF-A8B1-EE7DF83F8BDE}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coronawinui", "coronawinui\coronawinui.vcxproj", "{21CE3FC4-15C6-4390-98AB-9725D80298BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -323,6 +325,46 @@ Global
 		{27121AE6-477C-45DF-A8B1-EE7DF83F8BDE}.RelWithDebInfo|x64.Build.0 = Release|x64
 		{27121AE6-477C-45DF-A8B1-EE7DF83F8BDE}.RelWithDebInfo|x86.ActiveCfg = Release|x86
 		{27121AE6-477C-45DF-A8B1-EE7DF83F8BDE}.RelWithDebInfo|x86.Build.0 = Release|x86
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|Any CPU.Build.0 = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|ARM.ActiveCfg = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|ARM.Build.0 = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|ARM64.Build.0 = Debug|ARM64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|x64.ActiveCfg = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|x64.Build.0 = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|x86.ActiveCfg = Debug|Win32
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Debug|x86.Build.0 = Debug|Win32
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|Any CPU.ActiveCfg = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|Any CPU.Build.0 = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|ARM.ActiveCfg = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|ARM.Build.0 = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|ARM64.ActiveCfg = Debug|ARM64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|ARM64.Build.0 = Debug|ARM64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|x64.ActiveCfg = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|x64.Build.0 = Debug|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|x86.ActiveCfg = Debug|Win32
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.MinSizeRel|x86.Build.0 = Debug|Win32
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|Any CPU.ActiveCfg = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|Any CPU.Build.0 = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|ARM.ActiveCfg = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|ARM.Build.0 = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|ARM64.ActiveCfg = Release|ARM64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|ARM64.Build.0 = Release|ARM64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|x64.ActiveCfg = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|x64.Build.0 = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|x86.ActiveCfg = Release|Win32
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.Release|x86.Build.0 = Release|Win32
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|Any CPU.ActiveCfg = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|Any CPU.Build.0 = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|ARM.ActiveCfg = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|ARM.Build.0 = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|ARM64.ActiveCfg = Release|ARM64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|ARM64.Build.0 = Release|ARM64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|x64.ActiveCfg = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|x64.Build.0 = Release|x64
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|x86.ActiveCfg = Release|Win32
+		{21CE3FC4-15C6-4390-98AB-9725D80298BB}.RelWithDebInfo|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

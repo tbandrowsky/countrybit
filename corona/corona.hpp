@@ -190,10 +190,6 @@ namespace corona {
 // cheesy infix parser to be used 
 #include "corona-expressions.hpp"
 
-// this is the code generator.  it takes a class definition and lets you
-// generate code for it for various clients
-#include "corona-code-generate.hpp"
-
 // this is the database engine and it lets you create an object database 
 // consisting of multiple classes
 #include "corona-database-engine.hpp"

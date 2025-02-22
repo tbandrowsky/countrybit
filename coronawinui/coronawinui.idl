@@ -1,0 +1,190 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+namespace CoronaWinUi
+{
+    enum FieldTypes
+    {
+        FieldNone,
+        FieldDouble,
+        FieldInt64,
+        FieldString,
+        FieldDateTime,
+        FieldObject,
+        FieldArray,
+        FieldReference,
+        FieldFunction,
+        FieldQuery,
+        FieldBlob
+    };
+
+    interface IFieldOptions
+    {
+
+    };
+
+    runtimeclass DoubleFieldOptions : IFieldOptions
+    {
+        Double MinValue;
+        Double MaxValue;
+        String Message;
+    };
+
+    runtimeclass Int64FieldOptions : IFieldOptions
+    {
+        Int64  MinValue;
+        Int64  MaxValue;
+        String Message;
+    };
+
+    runtimeclass DateTimeFieldOptions : IFieldOptions
+    {
+        DateTime  MinValue;
+        DateTime  MaxValue;
+        DateTime  Message;
+    };
+
+    runtimeclass ArrayFieldOptions : IFieldOptions
+    {
+        FieldTypes                                     FundamentalType;
+        Windows.Foundation.Collections.IVector<String> AllowedBaseClasses;
+        Windows.Foundation.Collections.IVector<String> AllowedClasses;
+    };
+
+    runtimeclass ObjectFieldOptions : IFieldOptions
+    {
+        FieldTypes                                     FundamentalType;
+        Windows.Foundation.Collections.IVector<String> AllowedBaseClasses;
+        Windows.Foundation.Collections.IVector<String> AllowedClasses;
+    };
+
+    runtimeclass BasicFilter
+    {
+        String FieldName;
+        String FieldValue;
+    }
+
+    runtimeclass QueryFrom 
+    {
+        String ClassName;
+        String Name;
+        Windows.Foundation.Collections.IVector<BasicFilter> Filters;
+    }
+
+    interface IQueryStage
+    {
+        String StageName;
+    }
+
+    interface IQueryCondition
+    {
+        String ClassName;
+    }
+
+    runtimeclass QueryConditionLt : IQueryCondition
+    {
+        String ValuePath;
+        String Value;
+    }  
+
+    runtimeclass QueryConditionLtEq: IQueryCondition
+    {
+        String ValuePath;
+        String Value;
+    }  
+
+    runtimeclass QueryConditionEq: IQueryCondition
+    {
+        String ValuePath;
+        String Value;
+    }  
+
+    runtimeclass QueryConditionGtEq: IQueryCondition
+    {
+        String ValuePath;
+        String Value;
+    }  
+
+    runtimeclass QueryConditionContains: IQueryCondition
+    {
+        String ValuePath;
+        String Value;
+    }  
+
+    runtimeclass QueryConditionAll: IQueryCondition
+    {
+        String ValuePath;
+        String Value;
+        Windows.Foundation.Collections.IVector<ICondition> Conditions;
+    }
+
+    runtimeclass QueryConditionAny: IQueryCondition
+    {
+        String ValuePath;
+        String Value;
+        Windows.Foundation.Collections.IVector<ICondition> Conditions;
+    }  
+
+    runtimeclass QueryConditionNone: IQueryCondition
+    {
+        Windows.Foundation.Collections.IVector<ICondition> Conditions;
+    }  
+
+    runtimeclass QueryFilter: IQueryStage
+    {
+        IQueryCondition Condition;
+    }
+
+    runtimeclass QueryJoin: IQueryStage
+    {
+        String Source1;
+        String Source2;
+        String ResultName1;
+        String ResultName2;
+        Windows.Foundation.Collections.IVector<String> Keys;
+    }
+
+    runtimeclass QueryProjectField
+    {
+        String FieldName;
+        String ValuePath;
+    }
+
+    runtimeclass QueryProject: IQueryStage
+    {
+        String SourceName;
+        Windows.Foundation.Collections.IVector<QueryProjectField> Projection;
+    }
+
+    runtimeclass Query
+    {
+        QueryFrom From;
+        Windows.Foundation.Collections.IVector<IQueryStage> Stages;
+    }
+    
+    runtimeclass QueryFieldOptions : IFieldOptions
+    {
+        Query QueryBody;
+    };
+
+    runtimeclass FieldDefinition
+    {
+        FieldTypes              FieldType;
+        String                  FieldName;
+        String                  FieldDescription;
+        IFieldOptions           FieldOptions;
+    };
+
+    runtimeclass ClassDefinition
+    {
+        String ClassName;
+        String ClassDescription;
+        Windows.Foundation.Collections.IVector<FieldDefinition> Fields;
+    };
+
+    runtimeclass ClassDefinition
+    {
+        Windows.Foundation.Collections.IVector<FieldDefinition> Fields;
+    };
+
+}
