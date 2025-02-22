@@ -10,7 +10,7 @@ namespace corona
 		std::string class_name;
 		std::vector<std::string> search_fields;
 		std::vector<std::string> list_columns;
-		std::vector<std::string> edit_fields;
+		std::map<std::string, bool> ignore_edit_fields;
 
 		corona_code_generate_request(const corona_code_generate_request& _src) = default;
 		corona_code_generate_request(corona_code_generate_request&& _src) = default;
@@ -26,7 +26,7 @@ namespace corona
 		virtual json generate(corona_database_interface* _database, const corona_code_generate_request& _request) = 0;
 	};
 
-	class corona_uwp_generator : public corona_code_generator_base
+	class corona_winui_generator : public corona_code_generator_base
 	{
 	public:
 		virtual json generate(corona_database_interface* _database, const corona_code_generate_request& _request) override;

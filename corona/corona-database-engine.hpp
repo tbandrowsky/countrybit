@@ -7803,20 +7803,23 @@ private:
 		}
 	}
 
-	json corona_uwp_generator::generate(corona_database_interface* _database, const corona_code_generate_request& _request)
+	json corona_winui_generator::generate(corona_database_interface* _database, const corona_code_generate_request& _request)
 	{
 		json_parser jp;
-
 		json result;
+
 		auto rdlock = _database->read_lock_class(_request.class_name);
+
+		std::map<std::string, bool> ignore_fields;
 
 		if (rdlock)
 		{
-			std::string uwp_page_template = R"(
+			std::string page_template = R"(
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"></ColumnDefinition>
-            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="1*"></ColumnDefinition>
+			<ColumnDefinition Width="1*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"></RowDefinition>
@@ -7838,15 +7841,10 @@ $CREATE_COMMANDS$
 $RESULT_GRID_COLUMNS$
             </controls:DataGrid.Columns>
         </controls:DataGrid>
-        <StackPanel Grid.Row="1" Grid.Column="0">
-            <TextBlock>Search</TextBlock>
-            <TextBlock></TextBlock>
-$SEARCH_FIELDS$
-            <Button x:Name="btnSearch">Search</Button>
-$CREATE_COMMANDS$
+        <StackPanel Grid.Row="1" Grid.Column="2">
+$CLASS_PANELS$
         </StackPanel>
-    </Grid>					
-
+    </Grid>
 )";
 
 			std::ostringstream search_fields;
@@ -7883,11 +7881,46 @@ $CREATE_COMMANDS$
 				}
 			}
 
-			std::string search_field_template = R"(
+			auto& descendants = rdlock->get_descendants();
+
+			std::string edit_field_template = R"(
 	<TextBlock>$CONTROL_LABEL$</TextBlock>
 		<TextBox PlaceholderText="$CONTROL_PLACEHOLDER" Binding = "{Binding $CONTROL_NAME$}></TextBox>
     <TextBlock></TextBlock>
 )";
+
+			for (auto descendant : descendants)
+			{
+				std::vector<std::shared_ptr<field_interface>> fields;
+
+				if (descendant.first == _request.class_name) 
+				{
+					auto cflds = rdlock->get_fields();
+
+					for (auto cfld : cflds)
+					{
+						std::string gfn = cfld->get_field_name();
+						if (not _request.ignore_edit_fields.contains(gfn)) 
+						{
+							fields.push_back(cfld);
+						}
+					}
+				}
+				else 
+				{
+					auto class_lock = _database->read_lock_class(descendant.first);
+					auto cflds = rdlock->get_fields();
+
+					for (auto cfld : cflds)
+					{
+						std::string gfn = cfld->get_field_name();
+						if (not _request.ignore_edit_fields.contains(gfn))
+						{
+							fields.push_back(cfld);
+						}
+					}
+				}
+			}
 
 			std::ostringstream edit_fields;
 
