@@ -9,10 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coronaserver", "coronaserve
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "colorparty", "colorpartysetup\colorparty.wapproj", "{E649FCC8-26F5-49D9-A1AD-A1973EBDC890}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "coronautil", "coronautil\coronautil.csproj", "{B91B2013-D2D7-491D-94F3-B51C26760F0A}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "coronanet", "coronanet\coronanet.shproj", "{10A8678B-BCCC-43FA-BEC8-5C6049E14DC9}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "revolutionwin32", "revolutionwin32\revolutionwin32.vcxproj", "{F7EC08EB-7E3D-4B1F-975A-6338E0BD5867}"
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "revolutionwinui (Package)", "revolutionwinui\revolutionwinui (Package)\revolutionwinui (Package).wapproj", "{90DE1348-CDC3-4CAB-BCB5-FDD4C608940E}"
@@ -145,46 +141,6 @@ Global
 		{E649FCC8-26F5-49D9-A1AD-A1973EBDC890}.RelWithDebInfo|x86.ActiveCfg = Release|x86
 		{E649FCC8-26F5-49D9-A1AD-A1973EBDC890}.RelWithDebInfo|x86.Build.0 = Release|x86
 		{E649FCC8-26F5-49D9-A1AD-A1973EBDC890}.RelWithDebInfo|x86.Deploy.0 = Release|x86
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|ARM.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|ARM64.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|x64.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Debug|x86.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|Any CPU.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|Any CPU.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|ARM.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|ARM.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|ARM64.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|ARM64.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|x64.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|x64.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|x86.ActiveCfg = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.MinSizeRel|x86.Build.0 = Debug|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|ARM.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|ARM.Build.0 = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|ARM64.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|ARM64.Build.0 = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|x64.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|x64.Build.0 = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|x86.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.Release|x86.Build.0 = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|Any CPU.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|ARM.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|ARM.Build.0 = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|ARM64.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|ARM64.Build.0 = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|x86.ActiveCfg = Release|Any CPU
-		{B91B2013-D2D7-491D-94F3-B51C26760F0A}.RelWithDebInfo|x86.Build.0 = Release|Any CPU
 		{F7EC08EB-7E3D-4B1F-975A-6338E0BD5867}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{F7EC08EB-7E3D-4B1F-975A-6338E0BD5867}.Debug|Any CPU.Build.0 = Debug|x64
 		{F7EC08EB-7E3D-4B1F-975A-6338E0BD5867}.Debug|ARM.ActiveCfg = Debug|x64
@@ -373,7 +329,6 @@ Global
 		SolutionGuid = {BA47BF18-71C4-44D3-A412-2F875C556B7D}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		coronanet\coronanet.projitems*{10a8678b-bccc-43fa-bec8-5c6049e14dc9}*SharedItemsImports = 13
 		corona\corona.vcxitems*{452d538a-8559-48cc-8acc-a8dff6cec6b5}*SharedItemsImports = 4
 		corona\corona.vcxitems*{c12de1f8-9a25-4e3b-af11-93f4b3aceee9}*SharedItemsImports = 9
 		corona\corona.vcxitems*{f7ec08eb-7e3d-4b1f-975a-6338e0bd5867}*SharedItemsImports = 4
