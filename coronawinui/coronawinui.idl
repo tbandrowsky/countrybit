@@ -164,7 +164,7 @@ namespace CoronaWinUi
     
     runtimeclass QueryFieldOptions : IFieldOptions
     {
-        Query QueryBody ;
+        Query QueryBody;
     };
 
     runtimeclass FieldDefinition
@@ -192,23 +192,30 @@ namespace CoronaWinUi
         Windows.Foundation.Collections.IVector<String> AncestorClasses ;
     };
 
+    interface IBaseRequest
+    {
+        String Token;
+    };
+
     interface IBaseResponse
     {
         bool   Success ;
         String Message ;
         Double ExecutionTimeSeconds ;
+        String Token;
     };
 
-    interface ICoronaObject
+    interface ICoronaObject requires DynamicObject,INotifyPropertyChanged
     {
-        int64 ObjectId ;
-        DateTime Created ;
-        String CreatedBy ;
-        DateTime Updated ;
-        String UpdatedBy ;
+
     }
 
-    runtimeclass CoronaUser : ICoronaObject
+    runtimeclass CoronaObject : DynamicObject,INotifyPropertyChanged
+    {
+
+    }
+
+    runtimeclass CoronaUser : CoronaObject
     {
         String UserName ;
         String Email ;
@@ -231,7 +238,7 @@ namespace CoronaWinUi
         String Password2 ;
     };
     runtimeclass CreateUserResponse : IBaseResponse {
-        CoronaUser Data ;
+        CoronaUser Data;
     }
 
     runtimeclass LoginUserRequest {
@@ -269,7 +276,7 @@ namespace CoronaWinUi
 
 
     runtimeclass GetClassesRequest {
-        ;
+        
     }
     runtimeclass GetClassesResponse : IBaseResponse{
         Windows.Foundation.Collections.IVector<ClassDefinition> Classes;
@@ -279,63 +286,73 @@ namespace CoronaWinUi
         ClassDefinition ClassDef;
     }
     runtimeclass PutClassesResponse: IBaseResponse {
-        ;
+        
     }
 
-    runtimeclass GetObjectsRequest {
-        ;
+    runtimeclass GetObjectsRequest 
+    {
+        String ClassName;
+        Int64  ObjectId;
     }
-    runtimeclass GetObjectsResponse : IBaseResponse{
-        ;
+
+    runtimeclass GetObjectsResponse : IBaseResponse
+    {
+        Windows.Foundation.Collections.IVector<CoronaObject> Objects;
     }
 
     runtimeclass PutObjectsRequest {
-        ;
+        Windows.Foundation.Collections.IVector<CoronaObject> Objects;
     }
+
     runtimeclass PutObjectsResponse : IBaseResponse{
-        ;
+        Windows.Foundation.Collections.IVector<CoronaObject> Objects;
     }
 
     runtimeclass QueryObjectsRequest {
-        ;
+        Query QueryBody;
     }
     runtimeclass QueryObjectsResponse : IBaseResponse{
-        ;
+        Windows.Foundation.Collections.IVector<CoronaObject> Objects;
     }
 
     runtimeclass DeleteObjectsRequest {
-        ;
+        Windows.Foundation.Collections.IVector<CoronaObject> Objects;
+
     }
     runtimeclass DeleteObjectsResponse : IBaseResponse{
-        ;
+        
     }
 
     runtimeclass CreateObjectsRequest {
-        ;
+        String ClassName;
     }
     runtimeclass CreateObjectsResponse : IBaseResponse{
-        ;
+        Windows.Foundation.Collections.IVector<CoronaObject> Objects;
     }
 
-    runtimeclass EditObjectRequest {
-        ;
+    runtimeclass EditObjectRequest : GetObjectRequest {
+        
     }
     runtimeclass EditObjectResponse : IBaseResponse{
-        ;
+        CoronaObject Object;
     }
 
     runtimeclass RunObjectRequest {
-        ;
+        CoronaObject Object;
     }
     runtimeclass RunObjectResponse : IBaseResponse{
-        ;
+        CoronaObject Object;
     }
 
     runtimeclass CopyObjectRequest {
-        ;
+        GetObjectRequest SrcObject;
+        String SrcPath;
+        GetObjectRequest DstObject;
+        String DstPath;
     }
+
     runtimeclass CopyObjectResponse : IBaseResponse{
-        ;
+        CoronaObject Object;
     }
 
     interface ICoronaClient
@@ -343,21 +360,21 @@ namespace CoronaWinUi
         bool Open();
         bool Close();
         
-        Windows.Foundation.IAsyncOperation<CreateUserResponse> CreateUser(CreateUserRequest);
-        Windows.Foundation.IAsyncOperation<LoginUserResponse> LoginUser(LoginUserRequest);
-        Windows.Foundation.IAsyncOperation<ConfirmUserResponse> ConfirmUser(ConfirmUserRequest);
-        Windows.Foundation.IAsyncOperation<SendUserResponse> SendUser(SendUserRequest);
-        Windows.Foundation.IAsyncOperation<PasswordUserResponse> PasswordUser(PasswordUserRequest);
-        Windows.Foundation.IAsyncOperation<GetClassesResponse> GetClasses(GetClassesRequest);
-        Windows.Foundation.IAsyncOperation<PutClassesResponse> PutClasses(PutClassesRequest);
-        Windows.Foundation.IAsyncOperation<GetObjectsResponse> GetObjects(GetObjectsRequest);
-        Windows.Foundation.IAsyncOperation<PutObjectsResponse> PutObjects(PutObjectsRequest);
-        Windows.Foundation.IAsyncOperation<QueryObjectsResponse> QueryObjects(QueryObjectsRequest);
-        Windows.Foundation.IAsyncOperation<DeleteObjectsResponse> DeleteObjects(DeleteObjectsRequest);
-        Windows.Foundation.IAsyncOperation<CreateObjectResponse> CreateObject(CreateObjectRequest);
-        Windows.Foundation.IAsyncOperation<EditObjectResponse> EditObject(EditObjectRequest);
-        Windows.Foundation.IAsyncOperation<RunObjectRequest> RunObject(RunObjectRequest);
-        Windows.Foundation.IAsyncOperation<CopyObjectRequest> CopyObject(CopyObjectRequest);
+        IAsyncOperation<CreateUserResponse> CreateUser(CreateUserRequest);
+        IAsyncOperation<LoginUserResponse> LoginUser(LoginUserRequest);
+        IAsyncOperation<ConfirmUserResponse> ConfirmUser(ConfirmUserRequest);
+        IAsyncOperation<SendUserResponse> SendUser(SendUserRequest);
+        IAsyncOperation<PasswordUserResponse> PasswordUser(PasswordUserRequest);
+        IAsyncOperation<GetClassesResponse> GetClasses(GetClassesRequest);
+        IAsyncOperation<PutClassesResponse> PutClasses(PutClassesRequest);
+        IAsyncOperation<GetObjectsResponse> GetObjects(GetObjectsRequest);
+        IAsyncOperation<PutObjectsResponse> PutObjects(PutObjectsRequest);
+        IAsyncOperation<QueryObjectsResponse> QueryObjects(QueryObjectsRequest);
+        IAsyncOperation<DeleteObjectsResponse> DeleteObjects(DeleteObjectsRequest);
+        IAsyncOperation<CreateObjectResponse> CreateObject(CreateObjectRequest);
+        IAsyncOperation<EditObjectResponse> EditObject(EditObjectRequest);
+        IAsyncOperation<RunObjectRequest> RunObject(RunObjectRequest);
+        IAsyncOperation<CopyObjectRequest> CopyObject(CopyObjectRequest);
         
     }
 
