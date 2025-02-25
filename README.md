@@ -6,7 +6,7 @@ Corona is designed to be a low code database and forms visualization stack that 
 
 This is designed to do experimental real time modelling with forms built up as quickly as possible and then refined as needed by either editing mark up or editing C++ code to create new controls.
 
-## corona_express_table is the Active Branch
+## master is the Active Branch
 
 Visual Studio Solution Structure as follows.
 
@@ -15,8 +15,9 @@ Visual Studio Solution Structure as follows.
 
 3.  colorparty - Color Party application package for Microsoft Store
 
-4.  revolution - Main client EXE projects.  All the EXEs start out from Revolution, each has its own app_file that is conditionally compiled based on what product you are building for.
-				This is more for gaming and experimentation at Country Video games.  
+3.  coronawinui - Win/RT client component for corona.  The idea is to drop this control into a nuget and we'll let anyone have apps with a local database and remote detabase, including our own Revolution.
+
+4.  revolution* - Main client EXE projects.  Revolution Win32 is the smallest possible client, and is built around Win32 native controls.  RevolutionWinUI is really the most active thing, as I love the MVVM of WinUI.
 
 ## Getting Started, Windows Server
 
