@@ -164,7 +164,7 @@ namespace CoronaWinUi
     
     runtimeclass QueryFieldOptions : IFieldOptions
     {
-        Query QueryBody ;
+        Query QueryBody;
     };
 
     runtimeclass FieldDefinition
@@ -192,11 +192,17 @@ namespace CoronaWinUi
         Windows.Foundation.Collections.IVector<String> AncestorClasses ;
     };
 
+    interface IBaseRequest
+    {
+        String Token;
+    };
+
     interface IBaseResponse
     {
         bool   Success ;
         String Message ;
         Double ExecutionTimeSeconds ;
+        String Token;
     };
 
     interface ICoronaBaseObject
@@ -222,7 +228,12 @@ namespace CoronaWinUi
     {
     };
 
-    runtimeclass CoronaUser : ICoronaObject
+    runtimeclass CoronaObject : DynamicObject,INotifyPropertyChanged
+    {
+
+    }
+
+    runtimeclass CoronaUser : CoronaObject
     {
         String UserName ;
         String Email ;
@@ -246,7 +257,7 @@ namespace CoronaWinUi
     };
 
     runtimeclass CreateUserResponse : IBaseResponse {
-        CoronaUser Data ;
+        CoronaUser Data;
     }
 
     runtimeclass LoginUserRequest {
@@ -292,7 +303,7 @@ namespace CoronaWinUi
     }
 
     runtimeclass GetClassesRequest {
-        ;
+        
     }
     runtimeclass GetClassesResponse : IBaseResponse{
         Windows.Foundation.Collections.IVector<ClassDefinition> Classes;
@@ -305,29 +316,33 @@ namespace CoronaWinUi
         CoronaObject Data;
     }
 
-    runtimeclass GetObjectsRequest {
-        ;
+    runtimeclass GetObjectsRequest 
+    {
+        String ClassName;
+        Int64  ObjectId;
     }
     runtimeclass GetObjectsResponse : IBaseResponse{
         CoronaObject Data;
     }
 
     runtimeclass PutObjectsRequest {
-        ;
+        Windows.Foundation.Collections.IVector<CoronaObject> Objects;
     }
+
     runtimeclass PutObjectsResponse : IBaseResponse{
         CoronaObject Data;
     }
 
     runtimeclass QueryObjectsRequest {
-        ;
+        Query QueryBody;
     }
     runtimeclass QueryObjectsResponse : IBaseResponse{
         CoronaBaseObject Data;
     }
 
     runtimeclass DeleteObjectsRequest {
-        ;
+        Windows.Foundation.Collections.IVector<CoronaObject> Objects;
+
     }
     runtimeclass DeleteObjectsResponse : IBaseResponse{
         CoronaObject Data;
@@ -366,6 +381,7 @@ namespace CoronaWinUi
         CopyObjectPath      Dest;
         CopyObjectPath      Transform;
     }
+
     runtimeclass CopyObjectResponse : IBaseResponse{
         CoronaObject Data;
     }
