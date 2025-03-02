@@ -199,14 +199,28 @@ namespace CoronaWinUi
         Double ExecutionTimeSeconds ;
     };
 
-    interface ICoronaObject
+    interface ICoronaBaseObject
     {
-        int64 ObjectId ;
-        DateTime Created ;
-        String CreatedBy ;
-        DateTime Updated ;
-        String UpdatedBy ;
-    }
+        JsonObject Data;
+    };
+
+    interface ICoronaObject : ICoronaBaseObject
+    {
+        String ClassName;
+        int64 ObjectId;
+        DateTime Created;
+        String CreatedBy;
+        DateTime Updated;
+        String UpdatedBy;
+    };
+
+    runtimeclass CoronaBaseObject : ICoronaBaseObject
+    {
+    };
+
+    runtimeclass CoronaObject : ICoronaObject
+    {
+    };
 
     runtimeclass CoronaUser : ICoronaObject
     {
@@ -217,7 +231,7 @@ namespace CoronaWinUi
         String City ;
         String State ;
         String Zip ;
-    }
+    };
 
     runtimeclass CreateUserRequest {
         String Username ;
@@ -230,6 +244,7 @@ namespace CoronaWinUi
         String Password1 ;
         String Password2 ;
     };
+
     runtimeclass CreateUserResponse : IBaseResponse {
         CoronaUser Data ;
     }
@@ -268,6 +283,14 @@ namespace CoronaWinUi
     }
 
 
+
+    runtimeclass GetClassRequest {
+        String ClassName;
+    }
+    runtimeclass GetClassResponse : IBaseResponse{
+        Windows.Foundation.Collections.IVector<ClassDefinition> Classes;
+    }
+
     runtimeclass GetClassesRequest {
         ;
     }
@@ -279,63 +302,72 @@ namespace CoronaWinUi
         ClassDefinition ClassDef;
     }
     runtimeclass PutClassesResponse: IBaseResponse {
-        ;
+        CoronaObject Data;
     }
 
     runtimeclass GetObjectsRequest {
         ;
     }
     runtimeclass GetObjectsResponse : IBaseResponse{
-        ;
+        CoronaObject Data;
     }
 
     runtimeclass PutObjectsRequest {
         ;
     }
     runtimeclass PutObjectsResponse : IBaseResponse{
-        ;
+        CoronaObject Data;
     }
 
     runtimeclass QueryObjectsRequest {
         ;
     }
     runtimeclass QueryObjectsResponse : IBaseResponse{
-        ;
+        CoronaBaseObject Data;
     }
 
     runtimeclass DeleteObjectsRequest {
         ;
     }
     runtimeclass DeleteObjectsResponse : IBaseResponse{
-        ;
+        CoronaObject Data;
     }
 
     runtimeclass CreateObjectsRequest {
-        ;
+        String ClassName;
     }
     runtimeclass CreateObjectsResponse : IBaseResponse{
-        ;
+        CoronaObject Data;
     }
 
     runtimeclass EditObjectRequest {
-        ;
+        String ClassName;
+        int64  ObjectId;
     }
     runtimeclass EditObjectResponse : IBaseResponse{
-        ;
+        CoronaObject Data;
     }
 
     runtimeclass RunObjectRequest {
-        ;
+        CoronaObject Data;
     }
     runtimeclass RunObjectResponse : IBaseResponse{
-        ;
+        CoronaObject Data;
+    }
+
+    runtimeclass CopyObjectPath 
+    {
+        String ClassName;
+        String Path;
     }
 
     runtimeclass CopyObjectRequest {
-        ;
+        CopyObjectPath      Source;
+        CopyObjectPath      Dest;
+        CopyObjectPath      Transform;
     }
     runtimeclass CopyObjectResponse : IBaseResponse{
-        ;
+        CoronaObject Data;
     }
 
     interface ICoronaClient
@@ -348,6 +380,7 @@ namespace CoronaWinUi
         Windows.Foundation.IAsyncOperation<ConfirmUserResponse> ConfirmUser(ConfirmUserRequest);
         Windows.Foundation.IAsyncOperation<SendUserResponse> SendUser(SendUserRequest);
         Windows.Foundation.IAsyncOperation<PasswordUserResponse> PasswordUser(PasswordUserRequest);
+        Windows.Foundation.IAsyncOperation<GetClassResponse> GetClass(GetClassRequest);
         Windows.Foundation.IAsyncOperation<GetClassesResponse> GetClasses(GetClassesRequest);
         Windows.Foundation.IAsyncOperation<PutClassesResponse> PutClasses(PutClassesRequest);
         Windows.Foundation.IAsyncOperation<GetObjectsResponse> GetObjects(GetObjectsRequest);
