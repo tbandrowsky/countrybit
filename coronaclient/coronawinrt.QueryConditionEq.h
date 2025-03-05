@@ -1,0 +1,22 @@
+#pragma once
+#include "coronawinrt.QueryConditionEq.g.h"
+#include "coronawinrt.QueryCondition.h"
+
+namespace winrt::coronawinrt::implementation
+{
+    struct QueryConditionEq : QueryConditionEqT<QueryConditionEq, coronawinrt::implementation::QueryCondition>
+    {
+        QueryConditionEq() = default;
+
+        hstring ValuePath();
+        void ValuePath(hstring const& value);
+        hstring Value();
+        void Value(hstring const& value);
+    };
+}
+namespace winrt::coronawinrt::factory_implementation
+{
+    struct QueryConditionEq : QueryConditionEqT<QueryConditionEq, implementation::QueryConditionEq>
+    {
+    };
+}

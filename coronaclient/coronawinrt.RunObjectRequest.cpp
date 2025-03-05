@@ -1,0 +1,15 @@
+#include "pch.h"
+#include "coronawinrt.RunObjectRequest.h"
+#include "coronawinrt.RunObjectRequest.g.cpp"
+
+namespace winrt::coronawinrt::implementation
+{
+    winrt::coronawinrt::CoronaObject RunObjectRequest::Data()
+    {
+        throw hresult_not_implemented();
+    }
+    void RunObjectRequest::Data(winrt::coronawinrt::CoronaObject const& value)
+    {
+        throw hresult_not_implemented();
+    }
+}

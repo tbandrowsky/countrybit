@@ -1,0 +1,20 @@
+#pragma once
+#include "coronawinrt.GetClassesResponse.g.h"
+#include "coronawinrt.BaseResponse.h"
+
+namespace winrt::coronawinrt::implementation
+{
+    struct GetClassesResponse : GetClassesResponseT<GetClassesResponse, coronawinrt::implementation::BaseResponse>
+    {
+        GetClassesResponse() = default;
+
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::ClassDefinition> Classes();
+        void Classes(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::ClassDefinition> const& value);
+    };
+}
+namespace winrt::coronawinrt::factory_implementation
+{
+    struct GetClassesResponse : GetClassesResponseT<GetClassesResponse, implementation::GetClassesResponse>
+    {
+    };
+}

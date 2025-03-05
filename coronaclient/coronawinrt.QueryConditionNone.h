@@ -1,0 +1,20 @@
+#pragma once
+#include "coronawinrt.QueryConditionNone.g.h"
+#include "coronawinrt.QueryCondition.h"
+
+namespace winrt::coronawinrt::implementation
+{
+    struct QueryConditionNone : QueryConditionNoneT<QueryConditionNone, coronawinrt::implementation::QueryCondition>
+    {
+        QueryConditionNone() = default;
+
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryCondition> Conditions();
+        void Conditions(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryCondition> const& value);
+    };
+}
+namespace winrt::coronawinrt::factory_implementation
+{
+    struct QueryConditionNone : QueryConditionNoneT<QueryConditionNone, implementation::QueryConditionNone>
+    {
+    };
+}
