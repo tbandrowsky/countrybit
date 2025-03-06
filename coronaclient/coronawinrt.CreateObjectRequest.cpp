@@ -7,10 +7,10 @@ namespace winrt::coronawinrt::implementation
 {
     hstring CreateObjectRequest::ClassName()
     {
-        throw hresult_not_implemented();
+        return class_name;
     }
     void CreateObjectRequest::ClassName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        class_name = value;
     }
 }

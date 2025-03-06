@@ -6,6 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     struct CopyObjectRequest : CopyObjectRequestT<CopyObjectRequest, coronawinrt::implementation::BaseRequest>
     {
+        CopyObjectPath source;
+        CopyObjectPath dest;
+        CopyObjectPath transform;
+
         CopyObjectRequest() = default;
 
         winrt::coronawinrt::CopyObjectPath Source();

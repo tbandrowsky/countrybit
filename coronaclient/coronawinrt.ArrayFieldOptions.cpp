@@ -7,26 +7,38 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::coronawinrt::FieldTypes ArrayFieldOptions::FundamentalType()
     {
-        throw hresult_not_implemented();
+        return fundamental_type;
     }
     void ArrayFieldOptions::FundamentalType(winrt::coronawinrt::FieldTypes const& value)
     {
-        throw hresult_not_implemented();
+        fundamental_type = value;
     }
     winrt::Windows::Foundation::Collections::IVector<hstring> ArrayFieldOptions::AllowedBaseClasses()
     {
-        throw hresult_not_implemented();
+        return allowed_base_classes;
     }
     void ArrayFieldOptions::AllowedBaseClasses(winrt::Windows::Foundation::Collections::IVector<hstring> const& value)
     {
-        throw hresult_not_implemented();
+        allowed_base_classes = value;
     }
     winrt::Windows::Foundation::Collections::IVector<hstring> ArrayFieldOptions::AllowedClasses()
     {
-        throw hresult_not_implemented();
+        return allowed_classes;
     }
     void ArrayFieldOptions::AllowedClasses(winrt::Windows::Foundation::Collections::IVector<hstring> const& value)
     {
-        throw hresult_not_implemented();
+        allowed_classes = value;
+    }
+}
+
+void* winrt_make_coronawinrt_ArrayFieldOptions()
+{
+    return winrt::detach_abi(winrt::make<winrt::coronawinrt::factory_implementation::ArrayFieldOptions>());
+}
+WINRT_EXPORT namespace winrt::coronawinrt
+{
+    ArrayFieldOptions::ArrayFieldOptions() :
+        ArrayFieldOptions(make<coronawinrt::implementation::ArrayFieldOptions>())
+    {
     }
 }

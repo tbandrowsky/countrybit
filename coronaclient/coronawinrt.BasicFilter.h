@@ -5,6 +5,9 @@ namespace winrt::coronawinrt::implementation
 {
     struct BasicFilter : BasicFilterT<BasicFilter>
     {
+        hstring field_name;
+        hstring field_value;
+
         BasicFilter() = default;
 
         hstring FieldName();

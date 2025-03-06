@@ -5,6 +5,11 @@ namespace winrt::coronawinrt::implementation
 {
     struct BaseResponse : BaseResponseT<BaseResponse>
     {
+        hstring message;
+        hstring token;
+        bool success;
+        double execution_time_seconds;
+
         BaseResponse() = default;
 
         hstring Message();

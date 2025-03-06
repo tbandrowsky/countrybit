@@ -5,6 +5,9 @@ namespace winrt::coronawinrt::implementation
 {
     struct CopyObjectPath : CopyObjectPathT<CopyObjectPath>
     {
+        hstring class_name;
+        hstring path;
+
         CopyObjectPath() = default;
 
         hstring ClassName();

@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     hstring BaseRequest::Token()
     {
-        throw hresult_not_implemented();
+        return token;
     }
     void BaseRequest::Token(hstring const& value)
     {
-        throw hresult_not_implemented();
+        token = value;
     }
 }

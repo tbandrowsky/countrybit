@@ -9,6 +9,13 @@ namespace winrt::coronawinrt::implementation
     {
         CoronaObject() = default;
 
+        hstring class_name;
+        int64_t object_id;
+        winrt::Windows::Foundation::DateTime created;
+        hstring created_by;
+        winrt::Windows::Foundation::DateTime updated;
+        hstring updated_by;
+
         hstring ClassName();
         void ClassName(hstring const& value);
         int64_t ObjectId();

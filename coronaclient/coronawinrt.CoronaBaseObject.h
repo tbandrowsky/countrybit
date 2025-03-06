@@ -6,6 +6,7 @@ namespace winrt::coronawinrt::implementation
 {
     struct CoronaBaseObject : CoronaBaseObjectT<CoronaBaseObject>
     {
+        hstring raw_json;
         CoronaBaseObject() = default;
 
         hstring RawJson();

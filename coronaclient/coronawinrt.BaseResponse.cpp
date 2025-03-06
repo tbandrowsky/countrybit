@@ -7,34 +7,34 @@ namespace winrt::coronawinrt::implementation
 {
     hstring BaseResponse::Message()
     {
-        throw hresult_not_implemented();
+        return message;
     }
     void BaseResponse::Message(hstring const& value)
     {
-        throw hresult_not_implemented();
+        message = value;
     }
     hstring BaseResponse::Token()
     {
-        throw hresult_not_implemented();
+        return token;
     }
     void BaseResponse::Token(hstring const& value)
     {
-        throw hresult_not_implemented();
+        token = value;
     }
     bool BaseResponse::Success()
     {
-        throw hresult_not_implemented();
+        return success;
     }
     void BaseResponse::Success(bool value)
     {
-        throw hresult_not_implemented();
+        success = value;
     }
     double BaseResponse::ExecutionTimeSeconds()
     {
-        throw hresult_not_implemented();
+        return execution_time_seconds;
     }
     void BaseResponse::ExecutionTimeSeconds(double value)
     {
-        throw hresult_not_implemented();
+        execution_time_seconds = value;
     }
 }

@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct CreateObjectRequest : CreateObjectRequestT<CreateObjectRequest, coronawinrt::implementation::BaseRequest>
     {
+        hstring class_name;
+
         CreateObjectRequest() = default;
 
         hstring ClassName();

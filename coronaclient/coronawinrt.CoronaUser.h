@@ -8,6 +8,14 @@ namespace winrt::coronawinrt::implementation
     {
         CoronaUser() = default;
 
+        hstring user_name;
+        hstring email;
+        hstring address1;
+        hstring address2;
+        hstring city;
+        hstring state;
+        hstring zip;
+
         hstring UserName();
         void UserName(hstring const& value);
         hstring Email();

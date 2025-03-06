@@ -6,58 +6,58 @@ namespace winrt::coronawinrt::implementation
 {
     hstring CoronaUser::UserName()
     {
-        throw hresult_not_implemented();
+        return user_name;
     }
     void CoronaUser::UserName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        user_name = value;
     }
     hstring CoronaUser::Email()
     {
-        throw hresult_not_implemented();
+        return email;
     }
     void CoronaUser::Email(hstring const& value)
     {
-        throw hresult_not_implemented();
+        email = value;
     }
     hstring CoronaUser::Address1()
     {
-        throw hresult_not_implemented();
+        return address1;
     }
     void CoronaUser::Address1(hstring const& value)
     {
-        throw hresult_not_implemented();
+        address1 = value;
     }
     hstring CoronaUser::Address2()
     {
-        throw hresult_not_implemented();
+        return address2;
     }
     void CoronaUser::Address2(hstring const& value)
     {
-        throw hresult_not_implemented();
+        address2 = value;
     }
     hstring CoronaUser::City()
     {
-        throw hresult_not_implemented();
+        return city;
     }
     void CoronaUser::City(hstring const& value)
     {
-        throw hresult_not_implemented();
+        city = value;
     }
     hstring CoronaUser::State()
     {
-        throw hresult_not_implemented();
+        return state;
     }
     void CoronaUser::State(hstring const& value)
     {
-        throw hresult_not_implemented();
+        state = value;
     }
     hstring CoronaUser::Zip()
     {
-        throw hresult_not_implemented();
+        return zip;
     }
     void CoronaUser::Zip(hstring const& value)
     {
-        throw hresult_not_implemented();
+        zip = value;
     }
 }

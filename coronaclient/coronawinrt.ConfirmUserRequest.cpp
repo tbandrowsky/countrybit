@@ -6,18 +6,18 @@ namespace winrt::coronawinrt::implementation
 {
     hstring ConfirmUserRequest::Email()
     {
-        throw hresult_not_implemented();
+        return email;
     }
     void ConfirmUserRequest::Email(hstring const& value)
     {
-        throw hresult_not_implemented();
+        email = value;
     }
     hstring ConfirmUserRequest::ValidationCode()
     {
-        throw hresult_not_implemented();
+        return validation_code;
     }
     void ConfirmUserRequest::ValidationCode(hstring const& value)
     {
-        throw hresult_not_implemented();
+        validation_code = value;
     }
 }

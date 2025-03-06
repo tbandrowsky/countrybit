@@ -6,6 +6,9 @@ namespace winrt::coronawinrt::implementation
 {
     struct EditObjectRequest : EditObjectRequestT<EditObjectRequest, coronawinrt::implementation::BaseRequest>
     {
+        hstring class_name;
+        int64_t object_id;
+
         EditObjectRequest() = default;
 
         hstring ClassName();

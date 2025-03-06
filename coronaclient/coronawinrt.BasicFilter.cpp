@@ -7,18 +7,18 @@ namespace winrt::coronawinrt::implementation
 {
     hstring BasicFilter::FieldName()
     {
-        throw hresult_not_implemented();
+        return field_name;
     }
     void BasicFilter::FieldName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        field_name = value;
     }
     hstring BasicFilter::FieldValue()
     {
-        throw hresult_not_implemented();
+        return field_value;
     }
     void BasicFilter::FieldValue(hstring const& value)
     {
-        throw hresult_not_implemented();
+        field_value = value;
     }
 }

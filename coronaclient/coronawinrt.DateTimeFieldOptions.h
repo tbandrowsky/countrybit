@@ -6,6 +6,11 @@ namespace winrt::coronawinrt::implementation
 {
     struct DateTimeFieldOptions : DateTimeFieldOptionsT<DateTimeFieldOptions, coronawinrt::implementation::FieldOptions>
     {
+
+        winrt::Windows::Foundation::DateTime min_value;
+        winrt::Windows::Foundation::DateTime max_value;
+        hstring message;
+
         DateTimeFieldOptions() = default;
 
         winrt::Windows::Foundation::DateTime MinValue();

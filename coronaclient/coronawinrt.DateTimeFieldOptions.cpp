@@ -6,26 +6,26 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::Windows::Foundation::DateTime DateTimeFieldOptions::MinValue()
     {
-        throw hresult_not_implemented();
+        return min_value;
     }
     void DateTimeFieldOptions::MinValue(winrt::Windows::Foundation::DateTime const& value)
     {
-        throw hresult_not_implemented();
+        min_value = value;
     }
     winrt::Windows::Foundation::DateTime DateTimeFieldOptions::MaxValue()
     {
-        throw hresult_not_implemented();
+        return max_value;
     }
     void DateTimeFieldOptions::MaxValue(winrt::Windows::Foundation::DateTime const& value)
     {
-        throw hresult_not_implemented();
+        max_value = value;
     }
     hstring DateTimeFieldOptions::Message()
     {
-        throw hresult_not_implemented();
+        return message;
     }
     void DateTimeFieldOptions::Message(hstring const& value)
     {
-        throw hresult_not_implemented();
+        message = value;
     }
 }

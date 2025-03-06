@@ -6,26 +6,26 @@ namespace winrt::coronawinrt::implementation
 {
     double DoubleFieldOptions::MinValue()
     {
-        throw hresult_not_implemented();
+        return min_value;
     }
     void DoubleFieldOptions::MinValue(double value)
     {
-        throw hresult_not_implemented();
+        min_value = value;
     }
     double DoubleFieldOptions::MaxValue()
     {
-        throw hresult_not_implemented();
+        return max_value;
     }
     void DoubleFieldOptions::MaxValue(double value)
     {
-        throw hresult_not_implemented();
+        max_value = value;
     }
     hstring DoubleFieldOptions::Message()
     {
-        throw hresult_not_implemented();
+        return message;
     }
     void DoubleFieldOptions::Message(hstring const& value)
     {
-        throw hresult_not_implemented();
+        message = value;
     }
 }

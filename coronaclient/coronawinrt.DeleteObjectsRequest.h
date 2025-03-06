@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct DeleteObjectsRequest : DeleteObjectsRequestT<DeleteObjectsRequest, coronawinrt::implementation::BaseRequest>
     {
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaObject> objects;
+
         DeleteObjectsRequest() = default;
 
         winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaObject> Objects();

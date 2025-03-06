@@ -8,6 +8,8 @@ namespace winrt::coronawinrt::implementation
 
         hstring Token();
         void Token(hstring const& value);
+
+        hstring token;
     };
 }
 namespace winrt::coronawinrt::factory_implementation

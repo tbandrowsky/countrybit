@@ -6,50 +6,50 @@ namespace winrt::coronawinrt::implementation
 {
     hstring CoronaObject::ClassName()
     {
-        throw hresult_not_implemented();
+        return class_name;
     }
     void CoronaObject::ClassName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        class_name = value;
     }
     int64_t CoronaObject::ObjectId()
     {
-        throw hresult_not_implemented();
+        return object_id;
     }
     void CoronaObject::ObjectId(int64_t value)
     {
-        throw hresult_not_implemented();
+        object_id = value;
     }
     winrt::Windows::Foundation::DateTime CoronaObject::Created()
     {
-        throw hresult_not_implemented();
+        return created;
     }
     void CoronaObject::Created(winrt::Windows::Foundation::DateTime const& value)
     {
-        throw hresult_not_implemented();
+        created = value;
     }
     hstring CoronaObject::CreatedBy()
     {
-        throw hresult_not_implemented();
+        return created_by;
     }
     void CoronaObject::CreatedBy(hstring const& value)
     {
-        throw hresult_not_implemented();
+        created_by = value;
     }
     winrt::Windows::Foundation::DateTime CoronaObject::Updated()
     {
-        throw hresult_not_implemented();
+        return updated;
     }
     void CoronaObject::Updated(winrt::Windows::Foundation::DateTime const& value)
     {
-        throw hresult_not_implemented();
+        updated = value;
     }
     hstring CoronaObject::UpdatedBy()
     {
-        throw hresult_not_implemented();
+        return updated_by;
     }
     void CoronaObject::UpdatedBy(hstring const& value)
     {
-        throw hresult_not_implemented();
+        updated_by = value;
     }
 }

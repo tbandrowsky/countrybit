@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaObject> DeleteObjectsRequest::Objects()
     {
-        throw hresult_not_implemented();
+        return objects;
     }
     void DeleteObjectsRequest::Objects(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaObject> const& value)
     {
-        throw hresult_not_implemented();
+        objects = value;
     }
 }

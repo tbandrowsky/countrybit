@@ -6,58 +6,58 @@ namespace winrt::coronawinrt::implementation
 {
     hstring ClassDefinition::ClassName()
     {
-        throw hresult_not_implemented();
+        return class_name;
     }
     void ClassDefinition::ClassName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        class_name = value;
     }
     hstring ClassDefinition::ClassDescription()
     {
-        throw hresult_not_implemented();
+        return class_description;
     }
     void ClassDefinition::ClassDescription(hstring const& value)
     {
-        throw hresult_not_implemented();
+        class_description = value;
     }
     hstring ClassDefinition::BaseClassName()
     {
-        throw hresult_not_implemented();
+        return base_class_name;
     }
     void ClassDefinition::BaseClassName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        base_class_name = value;
     }
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::FieldDefinition> ClassDefinition::Fields()
     {
-        throw hresult_not_implemented();
+        return fields;
     }
     void ClassDefinition::Fields(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::FieldDefinition> const& value)
     {
-        throw hresult_not_implemented();
+        fields = value;
     }
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::IndexDefinition> ClassDefinition::Indexes()
     {
-        throw hresult_not_implemented();
+        return indexes;
     }
     void ClassDefinition::Indexes(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::IndexDefinition> const& value)
     {
-        throw hresult_not_implemented();
+        indexes = value;
     }
     winrt::Windows::Foundation::Collections::IVector<hstring> ClassDefinition::DescendantClasses()
     {
-        throw hresult_not_implemented();
+        return descendant_classes;
     }
     void ClassDefinition::DescendantClasses(winrt::Windows::Foundation::Collections::IVector<hstring> const& value)
     {
-        throw hresult_not_implemented();
+        descendant_classes = value;
     }
     winrt::Windows::Foundation::Collections::IVector<hstring> ClassDefinition::AncestorClasses()
     {
-        throw hresult_not_implemented();
+        return ancestor_classes;
     }
     void ClassDefinition::AncestorClasses(winrt::Windows::Foundation::Collections::IVector<hstring> const& value)
     {
-        throw hresult_not_implemented();
+        ancestor_classes = value;
     }
 }

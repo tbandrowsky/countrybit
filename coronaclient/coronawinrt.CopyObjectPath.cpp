@@ -7,18 +7,18 @@ namespace winrt::coronawinrt::implementation
 {
     hstring CopyObjectPath::ClassName()
     {
-        throw hresult_not_implemented();
+        return class_name;
     }
     void CopyObjectPath::ClassName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        class_name = value;
     }
     hstring CopyObjectPath::Path()
     {
-        throw hresult_not_implemented();
+        return path;
     }
     void CopyObjectPath::Path(hstring const& value)
     {
-        throw hresult_not_implemented();
+        path = value;
     }
 }

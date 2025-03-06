@@ -1,12 +1,21 @@
 #pragma once
 #include "coronawinrt.ClassDefinition.g.h"
 
+namespace winrtf = winrt::Windows::Foundation::Collections;
 
 namespace winrt::coronawinrt::implementation
 {
     struct ClassDefinition : ClassDefinitionT<ClassDefinition>
     {
         ClassDefinition() = default;
+
+        hstring class_name;
+        hstring class_description;
+        hstring base_class_name;
+        winrtf::IVector<winrt::coronawinrt::FieldDefinition> fields;
+        winrtf::IVector<winrt::coronawinrt::IndexDefinition> indexes;
+        winrtf::IVector<hstring> descendant_classes;
+        winrtf::IVector<hstring> ancestor_classes;
 
         hstring ClassName();
         void ClassName(hstring const& value);

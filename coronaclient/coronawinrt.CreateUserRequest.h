@@ -6,6 +6,16 @@ namespace winrt::coronawinrt::implementation
 {
     struct CreateUserRequest : CreateUserRequestT<CreateUserRequest, coronawinrt::implementation::BaseRequest>
     {
+        hstring username;
+        hstring email;
+        hstring address1;
+        hstring address2;
+        hstring city;
+        hstring state;
+        hstring zip;
+        hstring password1;
+        hstring password2;
+
         CreateUserRequest() = default;
 
         hstring Username();

@@ -6,74 +6,74 @@ namespace winrt::coronawinrt::implementation
 {
     hstring CreateUserRequest::Username()
     {
-        throw hresult_not_implemented();
+        return username;;
     }
     void CreateUserRequest::Username(hstring const& value)
     {
-        throw hresult_not_implemented();
+        username = value;
     }
     hstring CreateUserRequest::Email()
     {
-        throw hresult_not_implemented();
+        return email;
     }
     void CreateUserRequest::Email(hstring const& value)
     {
-        throw hresult_not_implemented();
+        email = value;
     }
     hstring CreateUserRequest::Address1()
     {
-        throw hresult_not_implemented();
+        return address1;
     }
     void CreateUserRequest::Address1(hstring const& value)
     {
-        throw hresult_not_implemented();
+        address1 = value;
     }
     hstring CreateUserRequest::Address2()
     {
-        throw hresult_not_implemented();
+        return address2;
     }
     void CreateUserRequest::Address2(hstring const& value)
     {
-        throw hresult_not_implemented();
+        address2 = value;
     }
     hstring CreateUserRequest::City()
     {
-        throw hresult_not_implemented();
+        return city;
     }
     void CreateUserRequest::City(hstring const& value)
     {
-        throw hresult_not_implemented();
+        city = value;
     }
     hstring CreateUserRequest::State()
     {
-        throw hresult_not_implemented();
+        return state;
     }
     void CreateUserRequest::State(hstring const& value)
     {
-        throw hresult_not_implemented();
+        state = value;
     }
     hstring CreateUserRequest::Zip()
     {
-        throw hresult_not_implemented();
+        return zip;
     }
     void CreateUserRequest::Zip(hstring const& value)
     {
-        throw hresult_not_implemented();
+        zip = value;
     }
     hstring CreateUserRequest::Password1()
     {
-        throw hresult_not_implemented();
+        return password1;
     }
     void CreateUserRequest::Password1(hstring const& value)
     {
-        throw hresult_not_implemented();
+        password1 = value;
     }
     hstring CreateUserRequest::Password2()
     {
-        throw hresult_not_implemented();
+        return password2;
     }
     void CreateUserRequest::Password2(hstring const& value)
     {
-        throw hresult_not_implemented();
+        password2 = value;
     }
 }

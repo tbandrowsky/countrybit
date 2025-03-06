@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct CopyObjectResponse : CopyObjectResponseT<CopyObjectResponse, coronawinrt::implementation::BaseResponse>
     {
+        winrt::coronawinrt::CoronaObject data;
+
         CopyObjectResponse() = default;
 
         winrt::coronawinrt::CoronaObject Data();

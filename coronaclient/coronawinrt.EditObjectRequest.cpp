@@ -6,18 +6,18 @@ namespace winrt::coronawinrt::implementation
 {
     hstring EditObjectRequest::ClassName()
     {
-        throw hresult_not_implemented();
+        return class_name;
     }
     void EditObjectRequest::ClassName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        class_name = value;
     }
     int64_t EditObjectRequest::ObjectId()
     {
-        throw hresult_not_implemented();
+        return object_id;
     }
     void EditObjectRequest::ObjectId(int64_t value)
     {
-        throw hresult_not_implemented();
+        object_id = value;
     }
 }

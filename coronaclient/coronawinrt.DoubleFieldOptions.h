@@ -8,6 +8,10 @@ namespace winrt::coronawinrt::implementation
     {
         DoubleFieldOptions() = default;
 
+        double min_value;
+        double max_value;
+        hstring message;
+
         double MinValue();
         void MinValue(double value);
         double MaxValue();

@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     hstring CoronaBaseObject::RawJson()
     {
-        throw hresult_not_implemented();
+        return raw_json;
     }
     void CoronaBaseObject::RawJson(hstring const& value)
     {
-        throw hresult_not_implemented();
+        raw_json = value;
     }
 }

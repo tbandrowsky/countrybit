@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::coronawinrt::CoronaUser ConfirmUserResponse::Data()
     {
-        throw hresult_not_implemented();
+        return data;
     }
     void ConfirmUserResponse::Data(winrt::coronawinrt::CoronaUser const& value)
     {
-        throw hresult_not_implemented();
+        data = value;
     }
 }

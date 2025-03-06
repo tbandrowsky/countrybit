@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct CreateObjectResponse : CreateObjectResponseT<CreateObjectResponse, coronawinrt::implementation::BaseResponse>
     {
+        CoronaObject data;
+
         CreateObjectResponse() = default;
 
         winrt::coronawinrt::CoronaObject Data();
