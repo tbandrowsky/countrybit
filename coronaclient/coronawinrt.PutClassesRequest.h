@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct PutClassesRequest : PutClassesRequestT<PutClassesRequest, coronawinrt::implementation::BaseRequest>
     {
+        winrt::coronawinrt::ClassDefinition class_def;
+
         PutClassesRequest() = default;
 
         winrt::coronawinrt::ClassDefinition ClassDef();

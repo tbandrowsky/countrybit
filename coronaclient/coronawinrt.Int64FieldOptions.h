@@ -6,6 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     struct Int64FieldOptions : Int64FieldOptionsT<Int64FieldOptions, coronawinrt::implementation::FieldOptions>
     {
+        int64_t min_value;
+        int64_t max_value;
+        hstring message;
+
         Int64FieldOptions() = default;
 
         int64_t MinValue();

@@ -6,18 +6,18 @@ namespace winrt::coronawinrt::implementation
 {
     hstring IndexDefinition::IndexName()
     {
-        throw hresult_not_implemented();
+        return index_name;
     }
     void IndexDefinition::IndexName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        index_name = value;
     }
     winrt::Windows::Foundation::Collections::IVector<hstring> IndexDefinition::IndexKeys()
     {
-        throw hresult_not_implemented();
+        return index_keys;
     }
     void IndexDefinition::IndexKeys(winrt::Windows::Foundation::Collections::IVector<hstring> const& value)
     {
-        throw hresult_not_implemented();
+        index_keys = value;
     }
 }

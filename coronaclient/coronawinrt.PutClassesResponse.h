@@ -7,6 +7,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct PutClassesResponse : PutClassesResponseT<PutClassesResponse, coronawinrt::implementation::BaseResponse>
     {
+        winrt::coronawinrt::CoronaObject data;
+
         PutClassesResponse() = default;
 
         winrt::coronawinrt::CoronaObject Data();

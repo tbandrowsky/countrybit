@@ -8,6 +8,9 @@ namespace winrt::coronawinrt::implementation
     {
         LoginUserRequest() = default;
 
+        hstring user_name;
+        hstring password;
+
         hstring UserName();
         void UserName(hstring const& value);
         hstring Password();

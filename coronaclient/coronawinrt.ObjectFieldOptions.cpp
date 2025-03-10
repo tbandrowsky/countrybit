@@ -6,26 +6,26 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::coronawinrt::FieldTypes ObjectFieldOptions::FundamentalType()
     {
-        throw hresult_not_implemented();
+        return fundamental_type;
     }
     void ObjectFieldOptions::FundamentalType(winrt::coronawinrt::FieldTypes const& value)
     {
-        throw hresult_not_implemented();
+        fundamental_type = value;
     }
     winrt::Windows::Foundation::Collections::IVector<hstring> ObjectFieldOptions::AllowedBaseClasses()
     {
-        throw hresult_not_implemented();
+        return allowed_base_classes;
     }
     void ObjectFieldOptions::AllowedBaseClasses(winrt::Windows::Foundation::Collections::IVector<hstring> const& value)
     {
-        throw hresult_not_implemented();
+        allowed_base_classes = value;
     }
     winrt::Windows::Foundation::Collections::IVector<hstring> ObjectFieldOptions::AllowedClasses()
     {
-        throw hresult_not_implemented();
+        return allowed_classes;
     }
     void ObjectFieldOptions::AllowedClasses(winrt::Windows::Foundation::Collections::IVector<hstring> const& value)
     {
-        throw hresult_not_implemented();
+        allowed_classes = value;
     }
 }

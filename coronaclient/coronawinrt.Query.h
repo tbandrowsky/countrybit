@@ -5,6 +5,9 @@ namespace winrt::coronawinrt::implementation
 {
     struct Query : QueryT<Query>
     {
+        winrt::coronawinrt::QueryFrom from;
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryStage> stages;
+
         Query() = default;
 
         winrt::coronawinrt::QueryFrom From();

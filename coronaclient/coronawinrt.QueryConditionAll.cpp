@@ -6,26 +6,26 @@ namespace winrt::coronawinrt::implementation
 {
     hstring QueryConditionAll::ValuePath()
     {
-        throw hresult_not_implemented();
+        return value_path;
     }
     void QueryConditionAll::ValuePath(hstring const& value)
     {
-        throw hresult_not_implemented();
+        value_path = value;
     }
     hstring QueryConditionAll::Value()
     {
-        throw hresult_not_implemented();
+        return value;
     }
     void QueryConditionAll::Value(hstring const& value)
     {
-        throw hresult_not_implemented();
+        this->value = value;
     }
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryCondition> QueryConditionAll::Conditions()
     {
-        throw hresult_not_implemented();
+        return conditions;
     }
     void QueryConditionAll::Conditions(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryCondition> const& value)
     {
-        throw hresult_not_implemented();
+        conditions = value;
     }
 }

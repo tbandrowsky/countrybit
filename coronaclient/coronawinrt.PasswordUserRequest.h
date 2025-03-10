@@ -8,6 +8,11 @@ namespace winrt::coronawinrt::implementation
     {
         PasswordUserRequest() = default;
 
+        hstring user_name;
+        hstring validation_code;
+        hstring password1;
+        hstring password2;
+
         hstring UserName();
         void UserName(hstring const& value);
         hstring ValidationCode();

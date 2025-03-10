@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct GetObjectResponse : GetObjectResponseT<GetObjectResponse, coronawinrt::implementation::BaseResponse>
     {
+        winrt::coronawinrt::CoronaObject data;
+
         GetObjectResponse() = default;
 
         winrt::coronawinrt::CoronaObject Data();

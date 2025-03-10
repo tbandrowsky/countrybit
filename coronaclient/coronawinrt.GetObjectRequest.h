@@ -8,6 +8,9 @@ namespace winrt::coronawinrt::implementation
     {
         GetObjectRequest() = default;
 
+        hstring class_name;
+        int64_t object_id;
+
         hstring ClassName();
         void ClassName(hstring const& value);
         int64_t ObjectId();

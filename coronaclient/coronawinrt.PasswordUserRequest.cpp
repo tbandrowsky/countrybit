@@ -6,34 +6,34 @@ namespace winrt::coronawinrt::implementation
 {
     hstring PasswordUserRequest::UserName()
     {
-        throw hresult_not_implemented();
+        return user_name;
     }
     void PasswordUserRequest::UserName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        user_name = value;
     }
     hstring PasswordUserRequest::ValidationCode()
     {
-        throw hresult_not_implemented();
+        return validation_code;
     }
     void PasswordUserRequest::ValidationCode(hstring const& value)
     {
-        throw hresult_not_implemented();
+        validation_code = value;
     }
     hstring PasswordUserRequest::Password1()
     {
-        throw hresult_not_implemented();
+        return password1;
     }
     void PasswordUserRequest::Password1(hstring const& value)
     {
-        throw hresult_not_implemented();
+        password1 = value;
     }
     hstring PasswordUserRequest::Password2()
     {
-        throw hresult_not_implemented();
+        return password2;
     }
     void PasswordUserRequest::Password2(hstring const& value)
     {
-        throw hresult_not_implemented();
+        password2 = value;
     }
 }

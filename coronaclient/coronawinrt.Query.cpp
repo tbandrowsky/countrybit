@@ -6,18 +6,18 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::coronawinrt::QueryFrom Query::From()
     {
-        throw hresult_not_implemented();
+        return from;
     }
     void Query::From(winrt::coronawinrt::QueryFrom const& value)
     {
-        throw hresult_not_implemented();
+        from = value;
     }
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryStage> Query::Stages()
     {
-        throw hresult_not_implemented();
+        return stages;
     }
     void Query::Stages(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryStage> const& value)
     {
-        throw hresult_not_implemented();
+        throw stages = value;
     }
 }

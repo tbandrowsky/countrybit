@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     hstring GetClassesRequest::ClassName()
     {
-        throw hresult_not_implemented();
+        return class_name;
     }
     void GetClassesRequest::ClassName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        class_name = value;
     }
 }

@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct LoginUserResponse : LoginUserResponseT<LoginUserResponse, coronawinrt::implementation::BaseResponse>
     {
+        winrt::coronawinrt::CoronaUser data;
+
         LoginUserResponse() = default;
 
         winrt::coronawinrt::CoronaUser Data();

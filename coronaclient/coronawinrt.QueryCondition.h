@@ -5,6 +5,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryCondition : QueryConditionT<QueryCondition>
     {
+        hstring class_name;
+
         QueryCondition() = default;
 
         hstring ClassName();

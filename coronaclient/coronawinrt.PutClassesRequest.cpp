@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::coronawinrt::ClassDefinition PutClassesRequest::ClassDef()
     {
-        throw hresult_not_implemented();
+        return class_def;
     }
     void PutClassesRequest::ClassDef(winrt::coronawinrt::ClassDefinition const& value)
     {
-        throw hresult_not_implemented();
+        class_def = value;
     }
 }

@@ -6,34 +6,34 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::coronawinrt::FieldTypes FieldDefinition::FieldType()
     {
-        throw hresult_not_implemented();
+        return field_type;
     }
     void FieldDefinition::FieldType(winrt::coronawinrt::FieldTypes const& value)
     {
-        throw hresult_not_implemented();
+        field_type = value;
     }
     hstring FieldDefinition::FieldName()
     {
-        throw hresult_not_implemented();
+        return field_name;
     }
     void FieldDefinition::FieldName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        field_name = value;
     }
     hstring FieldDefinition::FieldDescription()
     {
-        throw hresult_not_implemented();
+        return field_description;
     }
     void FieldDefinition::FieldDescription(hstring const& value)
     {
-        throw hresult_not_implemented();
+        field_description = value;
     }
     winrt::coronawinrt::FieldOptions FieldDefinition::FieldOptions()
     {
-        throw hresult_not_implemented();
+        field_options = value;
     }
     void FieldDefinition::FieldOptions(winrt::coronawinrt::FieldOptions const& value)
     {
-        throw hresult_not_implemented();
+        return field_options;
     }
 }

@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaObject> PutObjectsResponse::Data()
     {
-        throw hresult_not_implemented();
+        return data;
     }
     void PutObjectsResponse::Data(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaObject> const& value)
     {
-        throw hresult_not_implemented();
+        data = value;
     }
 }

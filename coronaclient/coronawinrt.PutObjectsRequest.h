@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct PutObjectsRequest : PutObjectsRequestT<PutObjectsRequest, coronawinrt::implementation::BaseRequest>
     {
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaObject> data;
+
         PutObjectsRequest() = default;
 
         winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaObject> Data();

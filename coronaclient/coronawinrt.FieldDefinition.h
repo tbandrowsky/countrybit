@@ -7,6 +7,11 @@ namespace winrt::coronawinrt::implementation
     {
         FieldDefinition() = default;
 
+        winrt::coronawinrt::FieldTypes field_type;
+        hstring field_name;
+        hstring field_description;
+        winrt::coronawinrt::FieldOptions field_options;
+
         winrt::coronawinrt::FieldTypes FieldType();
         void FieldType(winrt::coronawinrt::FieldTypes const& value);
         hstring FieldName();

@@ -6,6 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryConditionAll : QueryConditionAllT<QueryConditionAll, coronawinrt::implementation::QueryCondition>
     {
+        hstring value_path;
+        hstring value;
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryCondition> conditions;
+
         QueryConditionAll() = default;
 
         hstring ValuePath();

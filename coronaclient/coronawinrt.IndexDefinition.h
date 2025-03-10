@@ -5,6 +5,9 @@ namespace winrt::coronawinrt::implementation
 {
     struct IndexDefinition : IndexDefinitionT<IndexDefinition>
     {
+        hstring index_name;
+        winrt::Windows::Foundation::Collections::IVector<hstring> index_keys;
+
         IndexDefinition() = default;
 
         hstring IndexName();

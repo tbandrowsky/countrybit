@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct GetClassesRequest : GetClassesRequestT<GetClassesRequest, coronawinrt::implementation::BaseRequest>
     {
+        hstring class_name;
+
         GetClassesRequest() = default;
 
         hstring ClassName();

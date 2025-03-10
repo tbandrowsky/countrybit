@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     hstring QueryCondition::ClassName()
     {
-        throw hresult_not_implemented();
+        return class_name;
     }
     void QueryCondition::ClassName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        class_name = value;
     }
 }

@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct EditObjectResponse : EditObjectResponseT<EditObjectResponse, coronawinrt::implementation::BaseResponse>
     {
+        winrt::coronawinrt::CoronaObject data;
+
         EditObjectResponse() = default;
 
         winrt::coronawinrt::CoronaObject Data();

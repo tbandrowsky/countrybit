@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::ClassDefinition> GetClassesResponse::Classes()
     {
-        throw hresult_not_implemented();
+        return classes;
     }
     void GetClassesResponse::Classes(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::ClassDefinition> const& value)
     {
-        throw hresult_not_implemented();
+        classes = value;
     }
 }

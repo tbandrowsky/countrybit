@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct GetClassResponse : GetClassResponseT<GetClassResponse, coronawinrt::implementation::BaseResponse>
     {
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::ClassDefinition> classes;
+
         GetClassResponse() = default;
 
         winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::ClassDefinition> Classes();
