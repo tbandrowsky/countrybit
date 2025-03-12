@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::coronawinrt::Query QueryFieldOptions::QueryBody()
     {
-        throw hresult_not_implemented();
+        return query_body;
     }
     void QueryFieldOptions::QueryBody(winrt::coronawinrt::Query const& value)
     {
-        throw hresult_not_implemented();
+        query_body = value;
     }
 }

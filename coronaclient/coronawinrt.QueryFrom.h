@@ -5,6 +5,11 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryFrom : QueryFromT<QueryFrom>
     {
+        hstring class_name;
+        hstring name;
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::BasicFilter> filters;
+
+
         QueryFrom() = default;
 
         hstring ClassName();

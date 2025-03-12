@@ -6,26 +6,26 @@ namespace winrt::coronawinrt::implementation
 {
     hstring QueryFrom::ClassName()
     {
-        throw hresult_not_implemented();
+        return class_name;
     }
     void QueryFrom::ClassName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        class_name = value;
     }
     hstring QueryFrom::Name()
     {
-        throw hresult_not_implemented();
+        return name;
     }
     void QueryFrom::Name(hstring const& value)
     {
-        throw hresult_not_implemented();
+        name = value;
     }
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::BasicFilter> QueryFrom::Filters()
     {
-        throw hresult_not_implemented();
+        return filters;
     }
     void QueryFrom::Filters(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::BasicFilter> const& value)
     {
-        throw hresult_not_implemented();
+        filters = value;
     }
 }

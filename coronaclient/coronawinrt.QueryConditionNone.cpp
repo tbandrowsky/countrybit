@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryCondition> QueryConditionNone::Conditions()
     {
-        throw hresult_not_implemented();
+        return conditions;
     }
     void QueryConditionNone::Conditions(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryCondition> const& value)
     {
-        throw hresult_not_implemented();
+        conditions = value;
     }
 }

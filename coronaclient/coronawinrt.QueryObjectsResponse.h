@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryObjectsResponse : QueryObjectsResponseT<QueryObjectsResponse, coronawinrt::implementation::BaseResponse>
     {
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaBaseObject> data;
+
         QueryObjectsResponse() = default;
 
         winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::CoronaBaseObject> Data();

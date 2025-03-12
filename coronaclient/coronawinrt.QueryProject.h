@@ -6,6 +6,9 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryProject : QueryProjectT<QueryProject>
     {
+        hstring source_name;
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryProjectField> projection;
+
         QueryProject() = default;
 
         hstring SourceName();

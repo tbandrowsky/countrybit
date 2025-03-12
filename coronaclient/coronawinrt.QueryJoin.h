@@ -8,16 +8,11 @@ namespace winrt::coronawinrt::implementation
     {
         QueryJoin() = default;
 
-        hstring Source1();
-        void Source1(hstring const& value);
-        hstring Source2();
-        void Source2(hstring const& value);
-        hstring ResultName1();
-        void ResultName1(hstring const& value);
-        hstring ResultName2();
-        void ResultName2(hstring const& value);
-        winrt::Windows::Foundation::Collections::IVector<hstring> Keys();
-        void Keys(winrt::Windows::Foundation::Collections::IVector<hstring> const& value);
+        hstring source1;
+        hstring source2;
+        hstring result_name1;
+        hstring result_name2;
+        winrt::Windows::Foundation::Collections::IVector<hstring> keys;
     };
 }
 namespace winrt::coronawinrt::factory_implementation

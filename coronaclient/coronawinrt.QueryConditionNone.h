@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryConditionNone : QueryConditionNoneT<QueryConditionNone, coronawinrt::implementation::QueryCondition>
     {
+        winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryCondition> conditions;
+
         QueryConditionNone() = default;
 
         winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryCondition> Conditions();

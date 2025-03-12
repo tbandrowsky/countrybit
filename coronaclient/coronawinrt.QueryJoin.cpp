@@ -6,42 +6,42 @@ namespace winrt::coronawinrt::implementation
 {
     hstring QueryJoin::Source1()
     {
-        throw hresult_not_implemented();
+        return source1;
     }
     void QueryJoin::Source1(hstring const& value)
     {
-        throw hresult_not_implemented();
+        source1 = value;
     }
     hstring QueryJoin::Source2()
     {
-        throw hresult_not_implemented();
+        return source2;
     }
     void QueryJoin::Source2(hstring const& value)
     {
-        throw hresult_not_implemented();
+        source2 = value;
     }
     hstring QueryJoin::ResultName1()
     {
-        throw hresult_not_implemented();
+        return result_name1;
     }
     void QueryJoin::ResultName1(hstring const& value)
     {
-        throw hresult_not_implemented();
+        result_name1 = value;
     }
     hstring QueryJoin::ResultName2()
     {
-        throw hresult_not_implemented();
+        return result_name2;
     }
     void QueryJoin::ResultName2(hstring const& value)
     {
-        throw hresult_not_implemented();
+        result_name2 = value;
     }
     winrt::Windows::Foundation::Collections::IVector<hstring> QueryJoin::Keys()
     {
-        throw hresult_not_implemented();
+        return keys;
     }
     void QueryJoin::Keys(winrt::Windows::Foundation::Collections::IVector<hstring> const& value)
     {
-        throw hresult_not_implemented();
+        keys = value;
     }
 }

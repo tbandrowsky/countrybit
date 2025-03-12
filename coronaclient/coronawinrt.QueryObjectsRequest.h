@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryObjectsRequest : QueryObjectsRequestT<QueryObjectsRequest, coronawinrt::implementation::BaseRequest>
     {
+        winrt::coronawinrt::Query query_body;
+
         QueryObjectsRequest() = default;
 
         winrt::coronawinrt::Query QueryBody();

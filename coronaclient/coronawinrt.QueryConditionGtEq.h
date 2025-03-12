@@ -6,6 +6,9 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryConditionGtEq : QueryConditionGtEqT<QueryConditionGtEq, coronawinrt::implementation::QueryCondition>
     {
+        hstring value_path;
+        hstring value;
+
         QueryConditionGtEq() = default;
 
         hstring ValuePath();

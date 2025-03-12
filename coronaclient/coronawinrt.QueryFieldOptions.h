@@ -6,6 +6,9 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryFieldOptions : QueryFieldOptionsT<QueryFieldOptions, coronawinrt::implementation::FieldOptions>
     {
+
+        winrt::coronawinrt::Query query_body;
+
         QueryFieldOptions() = default;
 
         winrt::coronawinrt::Query QueryBody();

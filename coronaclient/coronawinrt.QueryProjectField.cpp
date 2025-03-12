@@ -6,18 +6,18 @@ namespace winrt::coronawinrt::implementation
 {
     hstring QueryProjectField::FieldName()
     {
-        throw hresult_not_implemented();
+        return field_name;
     }
     void QueryProjectField::FieldName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        field_name = value;
     }
     hstring QueryProjectField::ValuePath()
     {
-        throw hresult_not_implemented();
+        return value_path;
     }
     void QueryProjectField::ValuePath(hstring const& value)
     {
-        throw hresult_not_implemented();
+        value_path = value;
     }
 }

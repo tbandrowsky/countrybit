@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::coronawinrt::QueryCondition QueryFilter::Condition()
     {
-        throw hresult_not_implemented();
+        return condition;
     }
     void QueryFilter::Condition(winrt::coronawinrt::QueryCondition const& value)
     {
-        throw hresult_not_implemented();
+        condition = value;
     }
 }

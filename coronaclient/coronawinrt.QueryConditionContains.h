@@ -6,6 +6,9 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryConditionContains : QueryConditionContainsT<QueryConditionContains, coronawinrt::implementation::QueryCondition>
     {
+        hstring value_path;
+        hstring value;
+
         QueryConditionContains() = default;
 
         hstring ValuePath();

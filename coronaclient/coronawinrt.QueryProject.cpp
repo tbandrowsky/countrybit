@@ -6,18 +6,18 @@ namespace winrt::coronawinrt::implementation
 {
     hstring QueryProject::SourceName()
     {
-        throw hresult_not_implemented();
+        return source_name;
     }
     void QueryProject::SourceName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        source_name = value;
     }
     winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryProjectField> QueryProject::Projection()
     {
-        throw hresult_not_implemented();
+        return projection;
     }
     void QueryProject::Projection(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::QueryProjectField> const& value)
     {
-        throw hresult_not_implemented();
+        projection = value;
     }
 }

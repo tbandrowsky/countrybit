@@ -6,18 +6,18 @@ namespace winrt::coronawinrt::implementation
 {
     hstring QueryConditionEq::ValuePath()
     {
-        throw hresult_not_implemented();
+        return value_path;
     }
     void QueryConditionEq::ValuePath(hstring const& value)
     {
-        throw hresult_not_implemented();
+        value_path = value;
     }
     hstring QueryConditionEq::Value()
     {
-        throw hresult_not_implemented();
+        return value;
     }
     void QueryConditionEq::Value(hstring const& value)
     {
-        throw hresult_not_implemented();
+        this->value = value;
     }
 }

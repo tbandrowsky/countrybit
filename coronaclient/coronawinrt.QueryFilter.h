@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryFilter : QueryFilterT<QueryFilter, coronawinrt::implementation::QueryStage>
     {
+        winrt::coronawinrt::QueryCondition condition;
+
         QueryFilter() = default;
 
         winrt::coronawinrt::QueryCondition Condition();
