@@ -6,6 +6,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct SendUserRequest : SendUserRequestT<SendUserRequest, coronawinrt::implementation::BaseRequest>
     {
+        hstring email;
+
         SendUserRequest() = default;
 
         hstring Email();

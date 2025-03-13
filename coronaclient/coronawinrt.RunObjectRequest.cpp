@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     winrt::coronawinrt::CoronaObject RunObjectRequest::Data()
     {
-        throw hresult_not_implemented();
+        return data;
     }
     void RunObjectRequest::Data(winrt::coronawinrt::CoronaObject const& value)
     {
-        throw hresult_not_implemented();
+        data = value;
     }
 }

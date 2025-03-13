@@ -7,6 +7,10 @@ namespace winrt::coronawinrt::implementation
     {
         RemoteCoronaClient() = default;
 
+        hstring server_host_name;
+        int32_t server_port;
+        hstring server_url;
+
         hstring ServerHostName();
         void ServerHostName(hstring const& value);
         int32_t ServerPort();

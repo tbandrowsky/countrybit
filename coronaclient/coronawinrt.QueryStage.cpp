@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     hstring QueryStage::StageName()
     {
-        throw hresult_not_implemented();
+        return stage_name;
     }
     void QueryStage::StageName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        stage_name = value;
     }
 }

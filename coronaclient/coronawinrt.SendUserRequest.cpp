@@ -6,10 +6,10 @@ namespace winrt::coronawinrt::implementation
 {
     hstring SendUserRequest::Email()
     {
-        throw hresult_not_implemented();
+        return email;
     }
     void SendUserRequest::Email(hstring const& value)
     {
-        throw hresult_not_implemented();
+        email = value;
     }
 }

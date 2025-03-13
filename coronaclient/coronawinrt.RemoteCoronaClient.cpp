@@ -6,27 +6,27 @@ namespace winrt::coronawinrt::implementation
 {
     hstring RemoteCoronaClient::ServerHostName()
     {
-        throw hresult_not_implemented();
+        return server_host_name;
     }
     void RemoteCoronaClient::ServerHostName(hstring const& value)
     {
-        throw hresult_not_implemented();
+        server_host_name = value;
     }
     int32_t RemoteCoronaClient::ServerPort()
     {
-        throw hresult_not_implemented();
+        return server_port;
     }
     void RemoteCoronaClient::ServerPort(int32_t value)
     {
-        throw hresult_not_implemented();
+        server_port = value;
     }
     hstring RemoteCoronaClient::ServerUrl()
     {
-        throw hresult_not_implemented();
+        return server_url;
     }
     void RemoteCoronaClient::ServerUrl(hstring const& value)
     {
-        throw hresult_not_implemented();
+        server_url = value;
     }
     winrt::Windows::Foundation::IAsyncOperation<winrt::coronawinrt::CreateUserResponse> RemoteCoronaClient::CreateUser(winrt::coronawinrt::CreateUserRequest request)
     {

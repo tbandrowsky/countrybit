@@ -5,6 +5,8 @@ namespace winrt::coronawinrt::implementation
 {
     struct QueryStage : QueryStageT<QueryStage>
     {
+        hstring stage_name;
+
         QueryStage() = default;
 
         hstring StageName();
