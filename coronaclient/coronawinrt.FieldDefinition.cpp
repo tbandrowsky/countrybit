@@ -30,10 +30,10 @@ namespace winrt::coronawinrt::implementation
     }
     winrt::coronawinrt::FieldOptions FieldDefinition::FieldOptions()
     {
-        field_options = value;
+        return field_options;
     }
     void FieldDefinition::FieldOptions(winrt::coronawinrt::FieldOptions const& value)
     {
-        return field_options;
+        field_options = value; 
     }
 }

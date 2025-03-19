@@ -105,6 +105,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="coronaclient.h" />
     <ClInclude Include="coronawinrt.ArrayFieldOptions.h" />
     <ClInclude Include="coronawinrt.BaseRequest.h" />
     <ClInclude Include="coronawinrt.BaseResponse.h" />

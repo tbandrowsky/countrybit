@@ -30,15 +30,3 @@ namespace winrt::coronawinrt::implementation
         allowed_classes = value;
     }
 }
-
-void* winrt_make_coronawinrt_ArrayFieldOptions()
-{
-    return winrt::detach_abi(winrt::make<winrt::coronawinrt::factory_implementation::ArrayFieldOptions>());
-}
-WINRT_EXPORT namespace winrt::coronawinrt
-{
-    ArrayFieldOptions::ArrayFieldOptions() :
-        ArrayFieldOptions(make<coronawinrt::implementation::ArrayFieldOptions>())
-    {
-    }
-}

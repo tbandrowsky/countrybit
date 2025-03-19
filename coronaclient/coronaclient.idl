@@ -510,6 +510,13 @@ namespace coronawinrt
     {
         LocalCoronaClient();
 
+        String ApplicationName;
+        String ApplicationFolderName;
+        String ConfigFileNameBase;
+
+        Windows.Foundation.IAsyncOperation<BaseResponse> Open();
+        Windows.Foundation.IAsyncOperation<BaseResponse> Close();
+
         Windows.Foundation.IAsyncOperation<CreateUserResponse> CreateUser(CreateUserRequest request);
         Windows.Foundation.IAsyncOperation<LoginUserResponse> LoginUser(LoginUserRequest request);
         Windows.Foundation.IAsyncOperation<ConfirmUserResponse> ConfirmUser(ConfirmUserRequest request);
