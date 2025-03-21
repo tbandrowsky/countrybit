@@ -207,11 +207,12 @@ namespace corona {
 // a json object table here has a simpler key
 #include "corona-json-object-table.hpp"
 
+// this is a client for send grid
+#include "corona-sendgrid-client.hpp"
+
 // this is the database engine and it lets you create an object database 
 // consisting of multiple classes
 #include "corona-database-engine.hpp"
-
-
 
 // the file monitor is a thing that lets you set up config files and watch for changes.
 // the bus makes use of these to do the React style insta-edit
@@ -259,9 +260,6 @@ namespace corona {
 #include "corona-presentation.hpp"
 #include "corona-directapplication.hpp"
 
-// this is a client for send grid
-#include "corona-sendgrid-client.hpp"
-
 // the easiest way to let an application be a web service.
 // this little bad boy uses the Windows HTTP Server stack 
 // and so yes a corona applications cheesy web server is 
@@ -270,9 +268,6 @@ namespace corona {
 // https works.
 #include "corona-httpserver.hpp"
 
-// this is the database engine.  It lets you create an object database 
-// consisting of multiple classes
-#include "corona-database-engine.hpp"
 
 // this is the http client to the corona service
 #include "corona-corona-client.hpp"

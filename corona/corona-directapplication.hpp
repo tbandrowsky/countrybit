@@ -1601,7 +1601,7 @@ namespace corona
 
 		HANDLE hfind = INVALID_HANDLE_VALUE;
 
-		hfind = ::FindFirstFile(searchPath, &findData);
+		hfind = ::FindFirstFileA(searchPath, &findData);
 		if (hfind != INVALID_HANDLE_VALUE) {
 			do
 			{
@@ -1617,12 +1617,12 @@ namespace corona
 					char recurseBuff[MAX_PATH + 8];
 					strncpy_s(recurseBuff, _path, MAX_PATH);
 					recurseBuff[MAX_PATH] = 0;
-					::PathAddBackslash(recurseBuff);
-					::PathAppend(recurseBuff, findData.cFileName);
+					::PathAddBackslashA(recurseBuff);
+					::PathAppendA(recurseBuff, findData.cFileName);
 					addComboItem(ddlControlId, recurseBuff, 0);
 					addFoldersToCombo(ddlControlId, recurseBuff);
 				}
-			} while (FindNextFile(hfind, &findData) != 0);
+			} while (FindNextFileA(hfind, &findData) != 0);
 		}
 
 	}
@@ -1673,7 +1673,7 @@ namespace corona
 
 		HANDLE hfind = INVALID_HANDLE_VALUE;
 
-		hfind = ::FindFirstFile(searchPath, &findData);
+		hfind = ::FindFirstFileA(searchPath, &findData);
 		if (hfind != INVALID_HANDLE_VALUE) {
 			do
 			{
@@ -1689,12 +1689,12 @@ namespace corona
 					char recurseBuff[MAX_PATH + 8];
 					strncpy_s(recurseBuff, _path, MAX_PATH);
 					recurseBuff[MAX_PATH] = 0;
-					::PathAddBackslash(recurseBuff);
-					::PathAppend(recurseBuff, findData.cFileName);
+					::PathAddBackslashA(recurseBuff);
+					::PathAppendA(recurseBuff, findData.cFileName);
 					addComboItem(ddlControlId, recurseBuff, 0);
 					addFoldersToCombo(ddlControlId, recurseBuff);
 				}
-			} while (FindNextFile(hfind, &findData) != 0);
+			} while (FindNextFileA(hfind, &findData) != 0);
 		}
 	}
 
@@ -1749,7 +1749,7 @@ namespace corona
 		lvitem.iItem = ListView_GetItemCount(control);
 		lvitem.pszText = (LPSTR)_text;
 		lvitem.lParam = _data;
-		bool success = ::SendMessage(control, LVM_INSERTITEMA, 0, (LPARAM)&lvitem);
+		bool success = ::SendMessageA(control, LVM_INSERTITEMA, 0, (LPARAM)&lvitem);
 	}
 
 	void directApplicationWin32::addListViewColumn(int ddlControlId,
@@ -1767,14 +1767,14 @@ namespace corona
 		lvitem.cchTextMax = 0;
 		lvitem.fmt = LVCFMT_LEFT;
 		lvitem.cx = _width;
-		bool success = ::SendMessage(control, LVM_INSERTCOLUMNA, column_id, (LPARAM)&lvitem);
+		bool success = ::SendMessageA(control, LVM_INSERTCOLUMNA, column_id, (LPARAM)&lvitem);
 	}
 
 	void directApplicationWin32::addListViewRow(int ddlControlId, LPARAM _data, const std::vector<std::string>& _items)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 
-		LVITEM lvitem;
+		LVITEMA lvitem;
 		ZeroMemory(&lvitem, sizeof(lvitem));
 		lvitem.mask = LVIF_TEXT | LVIF_PARAM;
 		lvitem.iItem = ListView_GetItemCount(control);
@@ -2161,7 +2161,7 @@ namespace corona
 	void directApplicationWin32::setSysLinkText(int ddlControlId, const char* _text)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		::SetWindowText(control, _text);
+		::SetWindowTextA(control, _text);
 	}
 
 	class WinHttpSession {
@@ -2289,7 +2289,7 @@ namespace corona
 		ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
 		ofn.lpstrDefExt = _defaultExtension;
 
-		retval = GetSaveFileName(&ofn);
+		retval = GetSaveFileNameA(&ofn);
 		if (retval)
 			_saveFileName = szFileName;
 
@@ -2367,7 +2367,7 @@ namespace corona
 		std::string result;
 		char buffer[UNLEN+1] = {};
 		DWORD max_length = sizeof(buffer) / sizeof(char);
-		if (GetUserNameEx(NameUserPrincipal, buffer, &max_length)) {
+		if (GetUserNameExA(NameUserPrincipal, buffer, &max_length)) {
 			result = buffer;
 		}
 		return result;
