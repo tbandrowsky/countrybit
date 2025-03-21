@@ -413,7 +413,7 @@ namespace corona
 
 		bool InstallRootCertificate(const std::string& certPath) {
 			// Open the certificate file
-			HANDLE hFile = CreateFile(certPath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			HANDLE hFile = CreateFileA(certPath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (hFile == INVALID_HANDLE_VALUE) {
 				std::cerr << "Failed to open certificate file." << std::endl;
 				return false;

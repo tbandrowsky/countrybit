@@ -355,7 +355,7 @@ namespace corona
 
 		while (fontExtractedName and !hfont)
 		{
-			hfont = CreateFont(-ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
+			hfont = CreateFontA(-ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
 			fontExtractedName = fontList.next_token(',', state);
 		}
 		return hfont;
@@ -373,7 +373,7 @@ namespace corona
 
 		while (fontExtractedName and !hfont)
 		{
-			hfont = CreateFont(ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
+			hfont = CreateFontA(ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
 			fontExtractedName = fontList.next_token(',', state);
 		}
 		return hfont;
@@ -397,7 +397,7 @@ namespace corona
 			srcFont.lfItalic = italic;
 			fontExtractedName = fontList.next_token(',', state);
 
-			hfont = ::CreateFontIndirect(&srcFont);
+			hfont = ::CreateFontIndirectA(&srcFont);
 		}
 		return hfont;
 	}
@@ -700,10 +700,10 @@ namespace corona
 						case LBN_SELCHANGE:
 						{
 							char window_class[500];
-							if (::RealGetWindowClass(controlWindow, window_class, sizeof(window_class) - 1)) {
+							if (::RealGetWindowClassA(controlWindow, window_class, sizeof(window_class) - 1)) {
 								if (
-									(strcmp(WC_COMBOBOX, window_class) == 0) ||
-									(strcmp(WC_COMBOBOXEX, window_class) == 0)
+									(strcmp(WC_COMBOBOXA, window_class) == 0) ||
+									(strcmp(WC_COMBOBOXEXA, window_class) == 0)
 									) {
 									currentController->onDropDownChanged(controlId);
 								}
@@ -757,7 +757,7 @@ namespace corona
 					case NM_CLICK:
 					{
 
-						::GetClassName(lpnm->hwndFrom, className, sizeof(className) - 1);
+						::GetClassNameA(lpnm->hwndFrom, className, sizeof(className) - 1);
 						if (strcmp(className, "SysLink") == 0) {
 							auto plink = (PNMLINK)lParam;
 							::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
@@ -1124,8 +1124,8 @@ namespace corona
 		wcMain.hbrBackground = NULL;
 		wcMain.lpszMenuName = NULL;
 		wcMain.lpszClassName = "Corona2dBase";
-		if (not RegisterClass(&wcMain)) {
-			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
+		if (not RegisterClassA(&wcMain)) {
+			::MessageBoxA(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
 
@@ -1139,8 +1139,8 @@ namespace corona
 		wcControl.hbrBackground = NULL;
 		wcControl.lpszMenuName = NULL;
 		wcControl.lpszClassName = "Corona2dControl";
-		if (not RegisterClass(&wcControl)) {
-			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
+		if (not RegisterClassA(&wcControl)) {
+			::MessageBoxA(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
 
@@ -1158,14 +1158,14 @@ namespace corona
 
 		setController(_firstController);
 
-		hwndRoot = CreateWindowEx(dwExStyle,
+		hwndRoot = CreateWindowExA(dwExStyle,
 			wcMain.lpszClassName, _title,
 			dwStyle | WS_CLIPSIBLINGS | WS_TABSTOP,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 			NULL, NULL, hinstance, NULL);
 
 		if (not hwndRoot) {
-			MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
+			MessageBoxA(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
 			return FALSE;
 		}
 
@@ -1228,8 +1228,8 @@ namespace corona
 		wcMain.hbrBackground = NULL;
 		wcMain.lpszMenuName = NULL;
 		wcMain.lpszClassName = "Corona2dBase";
-		if (not RegisterClass(&wcMain)) {
-			::MessageBox(NULL, "Could not start because the main window class could not be registered", "Couldn't Start", MB_ICONERROR);
+		if (not RegisterClassA(&wcMain)) {
+			::MessageBoxA(NULL, "Could not start because the main window class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
 

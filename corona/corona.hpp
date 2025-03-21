@@ -190,25 +190,28 @@ namespace corona {
 // cheesy infix parser to be used 
 #include "corona-expressions.hpp"
 
-// this is the database engine and it lets you create an object database 
-// consisting of multiple classes
-#include "corona-database-engine.hpp"
-
 // the data block allows for serialization and deserialization of resizable objects to and from a file.
 #include "corona-data-block.hpp"
 
-// a json table here is a physical table in a file beginning at some point within it.
-#include "corona-json-table.hpp"
-
-// a json object table here has a simpler key
-#include "corona-json-object-table.hpp"
-
-// this is going to replace json-table, because the skip list doesn't work and its too damned slow anyway.
+// this did replace json-table, because the skip list doesn't work and its too damned slow anyway.
 #include "corona-express-table.hpp"
 
 // this is a contract of the express table,
 // but implemented using SQL Server tables
 #include "corona-sql.hpp"
+
+// a json table here is a physical table in a file beginning at some point within it.
+// it's ok, but it's actually quite slow and is not the simplest thing to thread.
+#include "corona-json-table.hpp"
+
+// a json object table here has a simpler key
+#include "corona-json-object-table.hpp"
+
+// this is the database engine and it lets you create an object database 
+// consisting of multiple classes
+#include "corona-database-engine.hpp"
+
+
 
 // the file monitor is a thing that lets you set up config files and watch for changes.
 // the bus makes use of these to do the React style insta-edit

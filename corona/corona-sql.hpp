@@ -485,7 +485,7 @@ namespace corona
 
 			bool warned = false;
 
-			while (SQLGetDiagRec(hType,
+			while (SQLGetDiagRecA(hType,
 				hHandle,
 				++iRec,
 				(SQLCHAR *)szState,
@@ -518,7 +518,7 @@ namespace corona
 
 			SQLRETURN status;
 
-			status = SQLPrepare(hStmt, (SQLCHAR*)_statement.string_to_execute.c_str(), SQL_NTS);
+			status = SQLPrepareA(hStmt, (SQLCHAR*)_statement.string_to_execute.c_str(), SQL_NTS);
 			sql_error(SQL_HANDLE_STMT, hStmt, status);
 
 			xrecord xparams;
@@ -770,7 +770,7 @@ namespace corona
 			SQLAllocHandle(SQL_HANDLE_DBC, hEnv, &hDbc);
 
 			SQLSMALLINT completed_len = 0;
-			status = SQLDriverConnect(hDbc, NULL, (SQLCHAR*)conn_string.c_str_w(), SQL_NTS, (SQLCHAR *)completed_string.c_str_w(), completed_string.capacity()-4, &completed_len, SQL_DRIVER_NOPROMPT);
+			status = SQLDriverConnectA(hDbc, NULL, (SQLCHAR*)conn_string.c_str_w(), SQL_NTS, (SQLCHAR *)completed_string.c_str_w(), completed_string.capacity()-4, &completed_len, SQL_DRIVER_NOPROMPT);
 			sql_error(SQL_HANDLE_DBC, hDbc, status);
 		}
 

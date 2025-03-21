@@ -1,0 +1,567 @@
+
+namespace coronawinrt
+{
+    enum FieldTypes
+    {
+        FieldNone,
+        FieldDouble,
+        FieldInt64,
+        FieldString,
+        FieldDateTime,
+        FieldObject,
+        FieldArray,
+        FieldReference,
+        FieldFunction,
+        FieldQuery,
+        FieldBlob
+    };
+
+    [default_interface]
+    unsealed runtimeclass FieldOptions
+    {
+        FieldOptions();
+    };
+
+    [default_interface]
+    runtimeclass DoubleFieldOptions : FieldOptions
+    {
+        DoubleFieldOptions();
+
+        Double MinValue;
+        Double MaxValue;
+        String Message;
+    };
+
+    [default_interface]
+    runtimeclass Int64FieldOptions : FieldOptions
+    {
+        Int64FieldOptions();
+
+        Int64  MinValue;
+        Int64  MaxValue;
+        String Message;
+    };
+
+    [default_interface]
+    runtimeclass DateTimeFieldOptions : FieldOptions
+    {
+        DateTimeFieldOptions();
+
+        Windows.Foundation.DateTime  MinValue;
+        Windows.Foundation.DateTime  MaxValue;
+        String                       Message;
+    };
+
+    [default_interface]
+    runtimeclass ArrayFieldOptions : FieldOptions
+    {
+        ArrayFieldOptions();
+        FieldTypes                                     FundamentalType;
+        IVector<String> AllowedBaseClasses;
+        IVector<String> AllowedClasses;
+    };
+
+    [default_interface]
+    runtimeclass ObjectFieldOptions : FieldOptions
+    {
+        ObjectFieldOptions();
+        FieldTypes                                     FundamentalType;
+        IVector<String> AllowedBaseClasses;
+        IVector<String> AllowedClasses;
+    };
+
+    [default_interface]
+    runtimeclass BasicFilter
+    {
+        BasicFilter();
+
+        String FieldName;
+        String FieldValue;
+    };
+
+    [default_interface]
+    runtimeclass QueryFrom
+    {
+        QueryFrom();
+
+        String ClassName;
+        String Name;
+        IVector<BasicFilter> Filters;
+    };
+
+    [default_interface]
+    unsealed runtimeclass QueryStage
+    {
+        QueryStage();
+        String StageName;
+    };
+
+    [default_interface]
+    unsealed runtimeclass QueryCondition
+    {
+        QueryCondition();
+        String ClassName;
+    };
+
+    [default_interface]
+    runtimeclass QueryConditionLt : QueryCondition
+    {
+        QueryConditionLt();
+        String ValuePath;
+        String Value;
+    };
+
+    [default_interface]
+    runtimeclass QueryConditionLtEq : QueryCondition
+    {
+        QueryConditionLtEq();
+        String ValuePath;
+        String Value;
+    };
+
+    [default_interface]
+    runtimeclass QueryConditionEq : QueryCondition
+    {
+        QueryConditionEq();
+        String ValuePath;
+        String Value;
+    };
+
+    [default_interface]
+    runtimeclass QueryConditionGtEq : QueryCondition
+    {
+        QueryConditionGtEq();
+        String ValuePath;
+        String Value;
+    };
+
+    [default_interface]
+    runtimeclass QueryConditionContains : QueryCondition
+    {
+        QueryConditionContains();
+        String ValuePath;
+        String Value;
+    };
+
+    [default_interface]
+    runtimeclass QueryConditionAll : QueryCondition
+    {
+        QueryConditionAll();
+        String ValuePath;
+        String Value;
+        IVector<QueryCondition> Conditions;
+    };
+
+    [default_interface]
+    runtimeclass QueryConditionAny : QueryCondition
+    {
+        QueryConditionAny();
+        String ValuePath;
+        String Value;
+        IVector<QueryCondition> Conditions;
+    };
+
+    [default_interface]
+    runtimeclass QueryConditionNone : QueryCondition
+    {
+        QueryConditionNone();
+        IVector<QueryCondition> Conditions;
+    };
+
+    [default_interface]
+    runtimeclass QueryFilter : QueryStage
+    {
+        QueryFilter();
+        QueryCondition Condition;
+    };
+
+    [default_interface]
+    runtimeclass QueryJoin : QueryStage
+    {
+        QueryJoin();
+        String Source1;
+        String Source2;
+        String ResultName1;
+        String ResultName2;
+        IVector<String> Keys;
+    };
+
+    [default_interface]
+    runtimeclass QueryProjectField
+    {
+        QueryProjectField();
+        String FieldName;
+        String ValuePath;
+    };
+
+    [default_interface]
+    runtimeclass QueryProject
+    {
+        QueryProject();
+
+        String SourceName;
+        IVector<QueryProjectField> Projection;
+    };
+
+    runtimeclass Query
+    {
+        QueryFrom From;
+        IVector<QueryStage> Stages;
+
+        Query();
+    };
+
+    runtimeclass QueryFieldOptions : FieldOptions
+    {
+        QueryFieldOptions();
+        Query QueryBody;
+    };
+
+    runtimeclass FieldDefinition
+    {
+        FieldDefinition();
+        FieldTypes              FieldType;
+        String                  FieldName;
+        String                  FieldDescription;
+        FieldOptions            FieldOptions;
+    };
+
+    runtimeclass IndexDefinition
+    {
+        IndexDefinition();
+        String                  IndexName;
+        IVector<String> IndexKeys;
+    };
+
+    runtimeclass ClassDefinition
+    {
+        ClassDefinition();
+        String ClassName;
+        String ClassDescription;
+        String BaseClassName;
+        IVector<FieldDefinition> Fields;
+        IVector<IndexDefinition> Indexes;
+        IVector<String> DescendantClasses;
+        IVector<String> AncestorClasses;
+    };
+
+    unsealed runtimeclass BaseRequest
+    {
+        String Token;
+
+        BaseRequest();
+    };
+
+    unsealed runtimeclass BaseResponse
+    {
+        String  Message;
+        String  Token;
+        Boolean Success;
+        Double  ExecutionTimeSeconds;
+
+        BaseResponse();
+    };
+
+    unsealed runtimeclass CoronaBaseObject
+    {
+        String RawJson;
+
+        CoronaBaseObject();
+    };
+
+    unsealed runtimeclass CoronaObject : CoronaBaseObject
+    {
+        String ClassName;
+        Int64 ObjectId;
+        Windows.Foundation.DateTime Created;
+        String CreatedBy;
+        Windows.Foundation.DateTime Updated;
+        String UpdatedBy;
+
+        CoronaObject();
+    };
+
+    runtimeclass CoronaUser : CoronaObject
+    {
+        String UserName;
+        String Email;
+        String Address1;
+        String Address2;
+        String City;
+        String State;
+        String Zip;
+
+        CoronaUser();
+    };
+
+    runtimeclass CreateUserRequest : BaseRequest {
+        String Username;
+        String Email;
+        String Address1;
+        String Address2;
+        String City;
+        String State;
+        String Zip;
+        String Password1;
+        String Password2;
+
+        CreateUserRequest();
+    };
+
+    runtimeclass CreateUserResponse : BaseResponse {
+        CoronaUser Data;
+
+        CreateUserResponse();
+    };
+
+    runtimeclass LoginUserRequest : BaseRequest {
+        String UserName;
+        String Password;
+
+        LoginUserRequest();
+    };
+
+    runtimeclass LoginUserResponse : BaseResponse {
+        CoronaUser Data;
+
+        LoginUserResponse();
+    };
+
+    runtimeclass ConfirmUserRequest : BaseRequest  {
+        String Email;
+        String ValidationCode;
+
+        ConfirmUserRequest();
+    };
+
+    runtimeclass ConfirmUserResponse : BaseResponse {
+        CoronaUser Data;
+
+        ConfirmUserResponse();
+    };
+
+    runtimeclass SendUserRequest : BaseRequest {
+       String Email;
+
+       SendUserRequest();
+    };
+    runtimeclass SendUserResponse : BaseResponse{
+       CoronaUser Data;
+
+       SendUserResponse();
+    };
+
+    runtimeclass PasswordUserRequest : BaseRequest {
+        String UserName;
+        String ValidationCode;
+        String Password1;
+        String Password2;
+
+        PasswordUserRequest();
+    };
+    runtimeclass PasswordUserResponse : BaseResponse {
+        CoronaUser Data;
+
+        PasswordUserResponse();
+    };
+    runtimeclass GetClassRequest : BaseRequest {
+        String ClassName;
+
+        GetClassRequest();
+    };
+    runtimeclass GetClassResponse : BaseResponse{
+        IVector<ClassDefinition> Classes;
+
+        GetClassResponse();
+    };
+
+    runtimeclass GetClassesRequest : BaseRequest  {
+        GetClassesRequest();
+
+        String ClassName;
+    };
+
+    runtimeclass GetClassesResponse : BaseResponse {
+        IVector<ClassDefinition> Classes;
+
+        GetClassesResponse();
+    };
+
+    runtimeclass PutClassesRequest : BaseRequest  {
+        ClassDefinition ClassDef;
+
+        PutClassesRequest();
+    };
+
+    runtimeclass PutClassesResponse : BaseResponse {
+        CoronaObject Data;
+
+        PutClassesResponse();
+    };
+
+    runtimeclass GetObjectRequest : BaseRequest {
+        String ClassName;
+        Int64  ObjectId;
+
+        GetObjectRequest();
+    };
+
+    runtimeclass GetObjectResponse : BaseResponse{
+        CoronaObject Data;
+
+        GetObjectResponse();
+    };
+
+    runtimeclass PutObjectsRequest : BaseRequest {
+        IVector<CoronaObject> Data;
+
+        PutObjectsRequest();
+    };
+
+    runtimeclass PutObjectsResponse : BaseResponse{
+        IVector<CoronaObject> Data;
+
+        PutObjectsResponse();
+    };
+
+    runtimeclass QueryObjectsRequest : BaseRequest  {
+        Query QueryBody;
+
+        QueryObjectsRequest();
+    };
+
+    runtimeclass QueryObjectsResponse : BaseResponse{
+        IVector<CoronaBaseObject> Data;
+
+        QueryObjectsResponse();
+    };
+
+    runtimeclass DeleteObjectsRequest : BaseRequest  {
+        IVector<CoronaObject> Objects;
+
+        DeleteObjectsRequest();
+    };
+
+    runtimeclass DeleteObjectsResponse : BaseResponse{
+        CoronaObject Data;
+
+        DeleteObjectsResponse();
+    };
+
+    runtimeclass CreateObjectRequest : BaseRequest {
+        String ClassName;
+
+        CreateObjectRequest();
+    };
+
+    runtimeclass CreateObjectResponse : BaseResponse{
+        CoronaObject Data;
+
+        CreateObjectResponse();
+    };
+
+    runtimeclass EditObjectRequest : BaseRequest {
+        String ClassName;
+        Int64  ObjectId;
+
+        EditObjectRequest();
+    };
+
+    runtimeclass EditObjectResponse : BaseResponse{
+        CoronaObject Data;
+
+        EditObjectResponse();
+    };
+
+    runtimeclass RunObjectRequest : BaseRequest {
+        CoronaObject Data;
+
+        RunObjectRequest();
+    };
+
+    runtimeclass RunObjectResponse : BaseResponse{
+        CoronaObject Data;
+
+        RunObjectResponse();
+    };
+
+    runtimeclass CopyObjectPath
+    {
+        CopyObjectPath();
+        String ClassName;
+        String Path;
+    };
+
+    runtimeclass CopyObjectRequest : BaseRequest {
+        CopyObjectPath      Source;
+        CopyObjectPath      Dest;
+        CopyObjectPath      Transform;
+
+        CopyObjectRequest();
+    };
+
+    runtimeclass CopyObjectResponse : BaseResponse
+    {
+        CoronaObject Data;
+    };
+
+
+    runtimeclass LocalCoronaClient
+    {
+        LocalCoronaClient();
+
+        String ApplicationName;
+        String ApplicationFolderName;
+        String ConfigFileNameBase;
+
+        Windows.Foundation.IAsyncOperation<BaseResponse> Open();
+        Windows.Foundation.IAsyncOperation<BaseResponse> Close();
+
+        Windows.Foundation.IAsyncOperation<CreateUserResponse> CreateUser(CreateUserRequest request);
+        Windows.Foundation.IAsyncOperation<LoginUserResponse> LoginUser(LoginUserRequest request);
+        Windows.Foundation.IAsyncOperation<ConfirmUserResponse> ConfirmUser(ConfirmUserRequest request);
+        Windows.Foundation.IAsyncOperation<SendUserResponse> SendUser(SendUserRequest request);
+        Windows.Foundation.IAsyncOperation<PasswordUserResponse> PasswordUser(PasswordUserRequest request);
+        Windows.Foundation.IAsyncOperation<GetClassResponse> GetClass(GetClassRequest request);
+        Windows.Foundation.IAsyncOperation<GetClassesResponse> GetClasses(GetClassesRequest request);
+        Windows.Foundation.IAsyncOperation<PutClassesResponse> PutClasses(PutClassesRequest request);
+        Windows.Foundation.IAsyncOperation<GetObjectResponse> GetObjects(GetObjectRequest request);
+        Windows.Foundation.IAsyncOperation<PutObjectsResponse> PutObjects(PutObjectsRequest request);
+        Windows.Foundation.IAsyncOperation<QueryObjectsResponse> QueryObjects(QueryObjectsRequest request);
+        Windows.Foundation.IAsyncOperation<DeleteObjectsResponse> DeleteObjects(DeleteObjectsRequest request);
+        Windows.Foundation.IAsyncOperation<CreateObjectResponse> CreateObject(CreateObjectRequest request);
+        Windows.Foundation.IAsyncOperation<EditObjectResponse> EditObject(EditObjectRequest request);
+        Windows.Foundation.IAsyncOperation<RunObjectRequest> RunObject(RunObjectRequest request);
+        Windows.Foundation.IAsyncOperation<CopyObjectRequest> CopyObject(CopyObjectRequest request);
+
+        String FileName;
+    };
+
+    runtimeclass RemoteCoronaClient
+    {
+        RemoteCoronaClient();
+
+        String ServerHostName;
+        Int32  ServerPort;
+        String ServerUrl;
+
+        Windows.Foundation.IAsyncOperation<CreateUserResponse> CreateUser(CreateUserRequest request);
+        Windows.Foundation.IAsyncOperation<LoginUserResponse> LoginUser(LoginUserRequest request);
+        Windows.Foundation.IAsyncOperation<ConfirmUserResponse> ConfirmUser(ConfirmUserRequest request);
+        Windows.Foundation.IAsyncOperation<SendUserResponse> SendUser(SendUserRequest request);
+        Windows.Foundation.IAsyncOperation<PasswordUserResponse> PasswordUser(PasswordUserRequest request);
+        Windows.Foundation.IAsyncOperation<GetClassResponse> GetClass(GetClassRequest request);
+        Windows.Foundation.IAsyncOperation<GetClassesResponse> GetClasses(GetClassesRequest request);
+        Windows.Foundation.IAsyncOperation<PutClassesResponse> PutClasses(PutClassesRequest request);
+        Windows.Foundation.IAsyncOperation<GetObjectResponse> GetObjects(GetObjectRequest request);
+        Windows.Foundation.IAsyncOperation<PutObjectsResponse> PutObjects(PutObjectsRequest request);
+        Windows.Foundation.IAsyncOperation<QueryObjectsResponse> QueryObjects(QueryObjectsRequest request);
+        Windows.Foundation.IAsyncOperation<DeleteObjectsResponse> DeleteObjects(DeleteObjectsRequest request);
+        Windows.Foundation.IAsyncOperation<CreateObjectResponse> CreateObject(CreateObjectRequest request);
+        Windows.Foundation.IAsyncOperation<EditObjectResponse> EditObject(EditObjectRequest request);
+        Windows.Foundation.IAsyncOperation<RunObjectRequest> RunObject(RunObjectRequest request);
+        Windows.Foundation.IAsyncOperation<CopyObjectRequest> CopyObject(CopyObjectRequest request);
+
+    };
+
+}

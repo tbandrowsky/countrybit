@@ -49,8 +49,8 @@ namespace corona
 		{
 			char buff[MAX_PATH * 2];
 			memset(buff, 0, sizeof(buff) / sizeof(char));
-			::GetModuleFileName(nullptr, buff, sizeof(buff) / sizeof(char));
-			::PathRemoveFileSpec(buff);
+			::GetModuleFileNameA(nullptr, buff, sizeof(buff) / sizeof(char));
+			::PathRemoveFileSpecA(buff);
 			std::string temp = buff;
 			temp += "\\";
 			temp += _filename;
@@ -66,9 +66,9 @@ namespace corona
 			if (wide_path)
 			{
 				istring<2048> temp = wide_path;
-				PathAppend(temp.c_str_w(), application_folder_name.c_str());
-				if (CreateDirectory(temp.c_str(), NULL) or ERROR_ALREADY_EXISTS == GetLastError()) {
-					PathAppend(temp.c_str_w(), _filename.c_str());
+				PathAppendA(temp.c_str_w(), application_folder_name.c_str());
+				if (CreateDirectoryA(temp.c_str(), NULL) or ERROR_ALREADY_EXISTS == GetLastError()) {
+					PathAppendA(temp.c_str_w(), _filename.c_str());
 					result = temp;
 				}
 				else {
@@ -88,7 +88,7 @@ namespace corona
 			std::string result;
 			char buffer[UNLEN + 1] = {};
 			DWORD max_length = sizeof(buffer) / sizeof(char);
-			if (GetUserNameEx(NameDisplay, buffer, &max_length)) {
+			if (GetUserNameExA(NameDisplay, buffer, &max_length)) {
 				result = buffer;
 			}
 			return result;
@@ -99,7 +99,7 @@ namespace corona
 			std::string result;
 			char buffer[UNLEN + 1] = {};
 			DWORD max_length = sizeof(buffer) / sizeof(char);
-			if (GetUserNameEx(NameUserPrincipal, buffer, &max_length)) {
+			if (GetUserNameExA(NameUserPrincipal, buffer, &max_length)) {
 				result = buffer;
 			}
 			return result;
@@ -115,7 +115,7 @@ namespace corona
 		{
 			DWORD       fileAttr;
 
-			fileAttr = GetFileAttributes(filename.c_str());
+			fileAttr = GetFileAttributesA(filename.c_str());
 			if (0xFFFFFFFF == fileAttr and GetLastError() == ERROR_FILE_NOT_FOUND)
 				return false;
 			return true;

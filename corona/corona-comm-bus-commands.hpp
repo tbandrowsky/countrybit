@@ -1065,56 +1065,6 @@ namespace corona
 		}
 	};
 
-	class corona_generate_code_command : public corona_bus_command
-	{
-	public:
-		std::string		edit_target;
-		std::string		code_type;
-
-		virtual json execute()
-		{
-			json obj;
-			control_base* cb = {};
-			if (not edit_target.empty())
-				cb = bus->find_control(edit_target);
-			json data;
-			if (cb) {
-				std::string text = bus->generate_code(code_type);
-				edit_control* ec = dynamic_cast<edit_control *>(cb);
-				if (ec) {
-					ec->set_text(text);
-				}
-			}
-			return obj;
-		}
-
-		virtual void get_json(json& _dest)
-		{
-			using namespace std::literals;
-
-			_dest.put_member("class_name", "select_frame_command"sv);
-			_dest.put_member("edit_target", edit_target);
-			_dest.put_member("code_type", code_type);		
-		}
-
-		virtual void put_json(json& _src)
-		{
-			std::vector<std::string> missing;
-			if (not _src.has_members(missing, { "frame_contents_page", "frame_to_load" })) {
-				system_monitoring_interface::global_mon->log_warning("select_frame_command missing:");
-				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_warning(s);
-					});
-				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
-				return;
-			}
-
-			edit_target = _src["edit_target"];
-			code_type = _src["code_type"];
-		}
-	};
-
 	void get_json(json& _dest, std::shared_ptr<corona_bus_command>& _src)
 	{
 		json_parser jp;
@@ -1230,11 +1180,6 @@ namespace corona
 			else if (class_name == "select_frame_command")
 			{
 				_dest = std::make_shared<corona_select_frame_command>();
-				_dest->put_json(_src);
-			}
-			else if (class_name == "generate_code")
-			{
-				_dest = std::make_shared<corona_generate_code_command>();
 				_dest->put_json(_src);
 			}
 		}

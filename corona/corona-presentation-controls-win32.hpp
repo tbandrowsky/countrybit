@@ -200,7 +200,7 @@ namespace corona
 					if (auto wclassname = get_window_class_w())
 						window = CreateWindowExW(get_window_ex_style(), get_window_class_w(), L"", get_window_style() | group_style, boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
 					else
-						window = CreateWindowEx(get_window_ex_style(), get_window_class(), "", get_window_style() | group_style, boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
+						window = CreateWindowExA(get_window_ex_style(), get_window_class(), "", get_window_style() | group_style, boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
 
 					HFONT old_font = text_font;
 
@@ -891,7 +891,7 @@ namespace corona
 		}
 
 
-		virtual const char* get_window_class() { return WC_STATIC; }
+		virtual const char* get_window_class() { return WC_STATICA; }
 		virtual DWORD get_window_style() { return DisplayOnlyWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
@@ -1116,7 +1116,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return WC_EDIT; }
+		virtual const char* get_window_class() { return WC_EDITA; }
 		virtual DWORD get_window_style() { return EditWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1132,7 +1132,7 @@ namespace corona
 					PAINTSTRUCT ps = {};
 					BeginPaint(hWnd, &ps);
 					SetTextColor(ps.hdc, RGB(128, 128, 128));
-					DrawText(ps.hdc, szFormat, ccFormat, &ps.rcPaint, DT_EDITCONTROL);
+					DrawTextA(ps.hdc, szFormat, ccFormat, &ps.rcPaint, DT_EDITCONTROL);
 					EndPaint(hWnd, &ps);
 				}
 			}
@@ -1160,7 +1160,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return WC_EDIT; }
+		virtual const char* get_window_class() { return WC_EDITA; }
 		virtual DWORD get_window_style() { return EditWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1180,7 +1180,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return WC_LISTBOX; }
+		virtual const char* get_window_class() { return WC_LISTBOXA; }
 		virtual DWORD get_window_style() { return ListBoxWindowsStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1200,7 +1200,7 @@ namespace corona
 			return tv;
 		}
 		virtual void set_window_size();
-		virtual const char* get_window_class() { return WC_COMBOBOX; }
+		virtual const char* get_window_class() { return WC_COMBOBOXA; }
 		virtual DWORD get_window_style() { return ComboWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1231,7 +1231,7 @@ namespace corona
 		void set_list(list_data& _choices);
 		virtual void on_create();
 
-		virtual const char* get_window_class() { return WC_COMBOBOXEX; }
+		virtual const char* get_window_class() { return WC_COMBOBOXEXA; }
 		virtual DWORD get_window_style() { return ComboWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1291,7 +1291,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return WC_LISTVIEW; }
+		virtual const char* get_window_class() { return WC_LISTVIEWA; }
 		virtual DWORD get_window_style() { return ListViewWindowsStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1336,7 +1336,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return WC_SCROLLBAR; }
+		virtual const char* get_window_class() { return WC_SCROLLBARA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1473,7 +1473,7 @@ namespace corona
 
 		virtual ~datetimepicker_control() { ; }
 
-		virtual const char* get_window_class() { return DATETIMEPICK_CLASS; }
+		virtual const char* get_window_class() { return DATETIMEPICK_CLASSA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles | DTS_SHORTDATECENTURYFORMAT; 		}		
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1578,7 +1578,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return MONTHCAL_CLASS; }
+		virtual const char* get_window_class() { return MONTHCAL_CLASSA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1711,7 +1711,7 @@ namespace corona
 		bool play();
 		bool stop();
 
-		virtual const char* get_window_class() { return ANIMATE_CLASS; }
+		virtual const char* get_window_class() { return ANIMATE_CLASSA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1743,7 +1743,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return WC_TREEVIEW; }
+		virtual const char* get_window_class() { return WC_TREEVIEWA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1775,7 +1775,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return WC_HEADER; }
+		virtual const char* get_window_class() { return WC_HEADERA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1806,7 +1806,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return TOOLBARCLASSNAME; }
+		virtual const char* get_window_class() { return TOOLBARCLASSNAMEA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1826,7 +1826,7 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() { return STATUSCLASSNAME; }
+		virtual const char* get_window_class() { return STATUSCLASSNAMEA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1846,7 +1846,7 @@ namespace corona
 
 		virtual ~hotkey_control() { ; }
 
-		virtual const char* get_window_class() { return TOOLBARCLASSNAME; }
+		virtual const char* get_window_class() { return TOOLBARCLASSNAMEA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1866,7 +1866,7 @@ namespace corona
 
 		virtual ~draglistbox_control() { ; }
 
-		virtual const char* get_window_class() { return HOTKEY_CLASS; }
+		virtual const char* get_window_class() { return HOTKEY_CLASSA; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
