@@ -282,9 +282,6 @@ namespace corona
 					json jsrcstyles = pages_json["styles"].clone();
 					json jdststyles = combined["styles"];
 
-					json jsrcstyles = pages_json["styles"].clone();
-					json jdststyles = combined["styles"];
-
 					json jabbreviations = pages_json["abbreviations"].clone();
 					if (jabbreviations.object()) {
 						auto jams = jabbreviations.get_members();

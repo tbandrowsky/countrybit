@@ -916,7 +916,7 @@ namespace corona
 		}
 
 		virtual ~button_control() { ; }
-		virtual const char* get_window_class() { return WC_BUTTON; }
+		virtual const char* get_window_class() { return WC_BUTTONA; }
 		virtual DWORD get_window_style() { return ButtonWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 

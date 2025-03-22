@@ -1243,8 +1243,8 @@ namespace corona
 		wcControl.hbrBackground = NULL;
 		wcControl.lpszMenuName = NULL;
 		wcControl.lpszClassName = "Corona2dControl";
-		if (not RegisterClass(&wcControl)) {
-			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
+		if (not RegisterClassA(&wcControl)) {
+			::MessageBoxA(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
 
@@ -1282,14 +1282,14 @@ namespace corona
 		setController(_firstController);
 
 
-		hwndRoot = CreateWindowEx(dwExStyle,
+		hwndRoot = CreateWindowExA(dwExStyle,
 			wcMain.lpszClassName, _title,
 			dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
 			window_x, window_y, window_width, window_height,
 			NULL, NULL, hinstance, NULL);
 
 		if (not hwndRoot) {
-			MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
+			MessageBoxA(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
 			return FALSE;
 		}
 
@@ -1378,13 +1378,13 @@ namespace corona
 	void directApplicationWin32::setEditText(int textControlId, const std::string& _string)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, textControlId);
-		::SetWindowText(control, _string.c_str());
+		::SetWindowTextA(control, _string.c_str());
 	}
 
 	void directApplicationWin32::setEditText(int textControlId, const char* _string)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, textControlId);
-		::SetWindowText(control, _string);
+		::SetWindowTextA(control, _string);
 	}
 
 	std::string directApplicationWin32::getEditText(int textControlId)
@@ -1394,7 +1394,7 @@ namespace corona
 		int length = ::GetWindowTextLength(control) + 1;
 		char* buffer = new char[length];
 		if (buffer) {
-			::GetWindowText(control, buffer, length);
+			::GetWindowTextA(control, buffer, length);
 			value = buffer;
 			delete[] buffer;
 		}
@@ -1743,7 +1743,7 @@ namespace corona
 	void directApplicationWin32::addListViewItem(int ddlControlId, const char* _text, LPARAM _data)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		LVITEM lvitem;
+		LVITEMA lvitem;
 		ZeroMemory(&lvitem, sizeof(lvitem));
 		lvitem.mask = LVIF_TEXT | LVIF_PARAM;
 		lvitem.iItem = ListView_GetItemCount(control);
@@ -1759,7 +1759,7 @@ namespace corona
 		visual_alignment _alignment)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		LVCOLUMN lvitem;
+		LVCOLUMNA lvitem;
 		ZeroMemory(&lvitem, sizeof(lvitem));
 		lvitem.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 		lvitem.iSubItem = column_id;

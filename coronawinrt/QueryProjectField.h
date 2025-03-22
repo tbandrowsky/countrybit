@@ -7,6 +7,9 @@ namespace winrt::coronawinrt::implementation
     {
         QueryProjectField() = default;
 
+        hstring field_name;
+        hstring value_path;
+
         hstring FieldName();
         void FieldName(hstring const& value);
         hstring ValuePath();

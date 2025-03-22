@@ -5,7 +5,35 @@ namespace winrt::coronawinrt::implementation
 {
     struct LocalCoronaClient : LocalCoronaClientT<LocalCoronaClient>
     {
+        corona::json get_local_token();
+
+        std::string database_schema_filename;
+        std::string database_config_filename;
+
+        corona::json_file_watcher database_schema_mon;
+        corona::json_file_watcher database_config_mon;
+
+        std::string database_filename;
+        std::string user_file_name;
+
+        bool ready_for_polling;
+
+        corona::json system_proof;
+
+        corona::json								local_db_config;
+
+        std::shared_ptr<corona::corona_database>	local_db;
+        std::shared_ptr<corona::application>		app;
+        std::shared_ptr<corona::file>				db_file;
+        corona::json								abbreviations;
+        corona::json                                server_config;
+
         LocalCoronaClient() = default;
+
+        hstring application_name;
+        hstring application_folder_name;
+        hstring config_file_name_base;
+        hstring file_name;
 
         hstring ApplicationName();
         void ApplicationName(hstring const& value);
@@ -13,6 +41,9 @@ namespace winrt::coronawinrt::implementation
         void ApplicationFolderName(hstring const& value);
         hstring ConfigFileNameBase();
         void ConfigFileNameBase(hstring const& value);
+        hstring FileName();
+        void FileName(hstring const& value);
+
         winrt::Windows::Foundation::IAsyncOperation<winrt::coronawinrt::BaseResponse> Open();
         winrt::Windows::Foundation::IAsyncOperation<winrt::coronawinrt::BaseResponse> Close();
         winrt::Windows::Foundation::IAsyncOperation<winrt::coronawinrt::CreateUserResponse> CreateUser(winrt::coronawinrt::CreateUserRequest request);
@@ -31,8 +62,8 @@ namespace winrt::coronawinrt::implementation
         winrt::Windows::Foundation::IAsyncOperation<winrt::coronawinrt::EditObjectResponse> EditObject(winrt::coronawinrt::EditObjectRequest request);
         winrt::Windows::Foundation::IAsyncOperation<winrt::coronawinrt::RunObjectRequest> RunObject(winrt::coronawinrt::RunObjectRequest request);
         winrt::Windows::Foundation::IAsyncOperation<winrt::coronawinrt::CopyObjectRequest> CopyObject(winrt::coronawinrt::CopyObjectRequest request);
-        hstring FileName();
-        void FileName(hstring const& value);
+
+        corona::json get_local_token();
     };
 }
 namespace winrt::coronawinrt::factory_implementation

@@ -152,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Class.idl" />
+    <Midl Include="coronawinrt.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="coronawinrt.def" />
