@@ -194,9 +194,38 @@ namespace winrt::coronawinrt::implementation
             }
         }
 
-        void get_json(json _src, FieldDefinition _src)
+        void get_json(json _dest, FieldDefinition _src)
         {
+            _dest.put_member("field_name", winrt::to_string(_src.FieldName()));
+            _dest.put_member("field_description", winrt::to_string(_src.FieldDescription()));
 
+            switch (_src.FieldType()) {
+            case FieldTypes::FieldArray:
+                _dest.put_member("field_type", field_type_names[field_types::ft_array] );
+                break;
+            case FieldTypes::FieldObject:
+                _dest.put_member("field_type", field_type_names[field_types::ft_object]);
+                break;
+            case FieldTypes::FieldString:
+                _dest.put_member("field_type", field_type_names[field_types::ft_string]);
+                break;
+            case FieldTypes::FieldDateTime:
+                _dest.put_member("field_type", field_type_names[field_types::ft_datetime]);
+                break;
+            case FieldTypes::FieldDouble:
+                _dest.put_member("field_type", field_type_names[field_types::ft_double]);
+                break;
+            case FieldTypes::FieldQuery:
+                _dest.put_member("field_type", field_type_names[field_types::ft_query]);
+                break;
+            case FieldTypes::FieldBlob:
+                _dest.put_member("field_type", field_type_names[field_types::ft_blob]);
+                break;
+            case FieldTypes::FieldReference:
+                _dest.put_member("field_type", field_type_names[field_types::ft_reference]);
+                break;
+
+            }
         }
 
         void put_json(IndexDefinition _dest, json _src)
