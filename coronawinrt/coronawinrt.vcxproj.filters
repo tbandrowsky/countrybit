@@ -79,6 +79,8 @@
     <ClCompile Include="RunObjectResponse.cpp" />
     <ClCompile Include="SendUserRequest.cpp" />
     <ClCompile Include="SendUserResponse.cpp" />
+    <ClCompile Include="QueryConditionGt.cpp" />
+    <ClCompile Include="StringFieldOptions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -149,9 +151,10 @@
     <ClInclude Include="RunObjectResponse.h" />
     <ClInclude Include="SendUserRequest.h" />
     <ClInclude Include="SendUserResponse.h" />
+    <ClInclude Include="QueryConditionGt.h" />
+    <ClInclude Include="StringFieldOptions.h" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="Class.idl" />
     <Midl Include="coronawinrt.idl" />
   </ItemGroup>
   <ItemGroup>

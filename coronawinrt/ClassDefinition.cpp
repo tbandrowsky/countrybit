@@ -60,4 +60,15 @@ namespace winrt::coronawinrt::implementation
     {
         ancestor_classes = value;
     }
+
+    winrt::Windows::Foundation::Collections::IVector<hstring> ClassDefinition::Parents()
+    {
+        return parents;
+    }
+
+    void ClassDefinition::Parents(winrt::Windows::Foundation::Collections::IVector<hstring> const& value)
+    {
+        parents = value;
+    }
+
 }

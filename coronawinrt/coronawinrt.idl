@@ -71,6 +71,18 @@ namespace coronawinrt
     };
 
     [default_interface]
+    runtimeclass StringFieldOptions : FieldOptions
+    {
+        StringFieldOptions();
+
+        Int64  MinLength;
+        Int64  MaxLength;
+        String Message;
+        String RegularExpression;
+        IVector<String> AllowedValues;
+    };
+
+    [default_interface]
     runtimeclass BasicFilter
     {
         BasicFilter();
@@ -131,6 +143,14 @@ namespace coronawinrt
     runtimeclass QueryConditionGtEq : QueryCondition
     {
         QueryConditionGtEq();
+        String ValuePath;
+        String Value;
+    };
+
+    [default_interface]
+    runtimeclass QueryConditionGt : QueryCondition
+    {
+        QueryConditionGt();
         String ValuePath;
         String Value;
     };
@@ -243,6 +263,7 @@ namespace coronawinrt
         IVector<IndexDefinition> Indexes;
         IVector<String> DescendantClasses;
         IVector<String> AncestorClasses;
+        IVector<String> Parents;
     };
 
     unsealed runtimeclass BaseRequest

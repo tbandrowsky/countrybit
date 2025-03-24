@@ -7,7 +7,7 @@
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
     <MinimalCoreWin>true</MinimalCoreWin>
-    <ProjectGuid>{515912f6-3eb5-4750-95b5-9dda2ff6ef1f}</ProjectGuid>
+    <ProjectGuid>{15120A46-47EB-4609-8B01-4530ED26AB12}</ProjectGuid>
     <ProjectName>coronawinrt</ProjectName>
     <RootNamespace>coronawinrt</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
@@ -165,6 +165,7 @@
     <ClInclude Include="QueryConditionAny.h" />
     <ClInclude Include="QueryConditionContains.h" />
     <ClInclude Include="QueryConditionEq.h" />
+    <ClInclude Include="QueryConditionGt.h" />
     <ClInclude Include="QueryConditionGtEq.h" />
     <ClInclude Include="QueryConditionLt.h" />
     <ClInclude Include="QueryConditionLtEq.h" />
@@ -183,6 +184,7 @@
     <ClInclude Include="RunObjectResponse.h" />
     <ClInclude Include="SendUserRequest.h" />
     <ClInclude Include="SendUserResponse.h" />
+    <ClInclude Include="StringFieldOptions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ArrayFieldOptions.cpp" />
@@ -238,6 +240,7 @@
     <ClCompile Include="QueryConditionAny.cpp" />
     <ClCompile Include="QueryConditionContains.cpp" />
     <ClCompile Include="QueryConditionEq.cpp" />
+    <ClCompile Include="QueryConditionGt.cpp" />
     <ClCompile Include="QueryConditionGtEq.cpp" />
     <ClCompile Include="QueryConditionLt.cpp" />
     <ClCompile Include="QueryConditionLtEq.cpp" />
@@ -256,6 +259,7 @@
     <ClCompile Include="RunObjectResponse.cpp" />
     <ClCompile Include="SendUserRequest.cpp" />
     <ClCompile Include="SendUserResponse.cpp" />
+    <ClCompile Include="StringFieldOptions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="coronawinrt.def" />

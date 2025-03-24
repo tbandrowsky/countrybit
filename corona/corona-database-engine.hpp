@@ -2285,6 +2285,7 @@ namespace corona
 			base_class_name = _src->get_base_class_name();
 			table_location = _src->get_location();
 			table_fields = _src->get_table_fields();
+			parents = _src->get_parents();
 			auto new_fields = _src->get_fields();
 			for (auto fld : new_fields) {
 				fields.insert_or_assign(fld->get_field_name(), fld);

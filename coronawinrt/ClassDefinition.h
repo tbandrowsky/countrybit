@@ -16,6 +16,7 @@ namespace winrt::coronawinrt::implementation
         winrtf::IVector<winrt::coronawinrt::IndexDefinition> indexes;
         winrtf::IVector<hstring> descendant_classes;
         winrtf::IVector<hstring> ancestor_classes;
+        winrtf::IVector<hstring> parents;
 
         hstring ClassName();
         void ClassName(hstring const& value);
@@ -23,6 +24,8 @@ namespace winrt::coronawinrt::implementation
         void ClassDescription(hstring const& value);
         hstring BaseClassName();
         void BaseClassName(hstring const& value);
+        winrt::Windows::Foundation::Collections::IVector<hstring> Parents();
+        void Parents(winrt::Windows::Foundation::Collections::IVector<hstring> const& value);
         winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::FieldDefinition> Fields();
         void Fields(winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::FieldDefinition> const& value);
         winrt::Windows::Foundation::Collections::IVector<winrt::coronawinrt::IndexDefinition> Indexes();

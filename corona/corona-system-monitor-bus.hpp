@@ -152,8 +152,10 @@ namespace corona
 
 		static void start()
 		{
-			global_mon = new system_monitoring_interface();
-			global_mon->test_colors();
+			if (global_mon == nullptr) {
+				global_mon = new system_monitoring_interface();
+				global_mon->test_colors();
+			}
 		}
 
 		virtual void log_user_command_start(std::string _command_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
@@ -930,7 +932,7 @@ namespace corona
 		}
 	};
 
-	system_monitoring_interface* system_monitoring_interface::global_mon;
+	system_monitoring_interface* system_monitoring_interface::global_mon = nullptr;
 
 	void log_warning(const std::string& _src)
 	{

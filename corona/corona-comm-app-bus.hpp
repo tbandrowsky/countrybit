@@ -511,7 +511,7 @@ namespace corona
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member(token_field, token);
-			request.put_member("ClassName", class_name);
+			request.put_member(class_name_field, class_name);
 			json response = local_db->create_object(request);
 			log_command_stop("create_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			if (response.error())
