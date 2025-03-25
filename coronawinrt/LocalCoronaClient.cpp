@@ -7,7 +7,7 @@ namespace winrt::coronawinrt::implementation
 
     class json_interop
     {
-        void put_json(ClassDefinition _dest, corona::json _src)
+        void put_json(ClassDefinition& _dest, corona::json _src)
         {
 
             _dest.ClassName(winrt::to_hstring((std::string)_src[class_name_field]));
@@ -26,12 +26,16 @@ namespace winrt::coronawinrt::implementation
                     parents.Append(winrt::to_hstring((std::string)jparent));
                 }
             }
+            _dest.Parents(parents);
+
             json jancestors = _src["ancestors"];
             if (jancestors.array()) {
                 for (auto jancestor : jancestors) {
                     ancestors.Append(winrt::to_hstring((std::string)jancestor));
                 }
             }
+            _dest.AncestorClasses(ancestors);
+
             json jdescendants = _src["descendants"];
             if (jdescendants.array()) {
                 for (auto jdescendant : jdescendants) {
@@ -39,8 +43,6 @@ namespace winrt::coronawinrt::implementation
                 }
             }
 
-            _dest.AncestorClasses(ancestors);
-            _dest.Parents(parents);
             _dest.DescendantClasses(descendants);
 
             json jfields = _src["fields"];
@@ -49,19 +51,24 @@ namespace winrt::coronawinrt::implementation
                 for (auto jmember : jmembers) {
                     FieldDefinition new_field = winrt::make<FieldDefinition>();
                     put_json(new_field, jmember.second);
+                    fields.Append(new_field);
                 }
             }
+            _dest.Fields(fields);
+
             json jindexes = _src["indexes"];
             if (jindexes.object()) {
                 auto jmembers = jindexes.get_members();
                 for (auto jmember : jmembers) {
                     IndexDefinition new_field = winrt::make<IndexDefinition>();
                     put_json(new_field, jmember.second);
+                    indexes.Append(new_field);
                 }
             }
+            _dest.Indexes(indexes);
         }
 
-        void get_json(corona::json _dest, ClassDefinition _src)
+        void get_json(corona::json& _dest, ClassDefinition& _src)
         {
             json_parser jp;
 
@@ -130,7 +137,7 @@ namespace winrt::coronawinrt::implementation
 
         }
 
-        void put_json(FieldDefinition _dest, json _src)
+        void put_json(FieldDefinition& _dest, json _src)
         {
             auto fns = (std::string)_src["field_name"];
             _dest.FieldName(winrt::to_hstring(fns));
@@ -194,253 +201,291 @@ namespace winrt::coronawinrt::implementation
             }
         }
 
-        void get_json(json _dest, FieldDefinition _src)
+        void get_json(json _dest, FieldDefinition& _src)
         {
             _dest.put_member("field_name", winrt::to_string(_src.FieldName()));
             _dest.put_member("field_description", winrt::to_string(_src.FieldDescription()));
 
-            switch (_src.FieldType()) {
-            case FieldTypes::FieldArray:
-                _dest.put_member("field_type", field_type_names[field_types::ft_array] );
-                break;
-            case FieldTypes::FieldObject:
+            if (_src.FieldType() == FieldTypes::FieldArray)
+            {
+                _dest.put_member("field_type", field_type_names[field_types::ft_array]);
+                auto afo = _src.FieldOptions().as<ArrayFieldOptions>();
+                get_json(_dest, afo);
+            }
+            else if (_src.FieldType() == FieldTypes::FieldObject)
+            {
                 _dest.put_member("field_type", field_type_names[field_types::ft_object]);
-                break;
-            case FieldTypes::FieldString:
+                auto afo = _src.FieldOptions().as<ObjectFieldOptions>();
+                get_json(_dest, afo);
+            }
+            else if (_src.FieldType() == FieldTypes::FieldString)
+            {
                 _dest.put_member("field_type", field_type_names[field_types::ft_string]);
-                break;
-            case FieldTypes::FieldDateTime:
+                auto afo = _src.FieldOptions().as<StringFieldOptions>();
+                get_json(_dest, afo);
+            }
+            else if (_src.FieldType() == FieldTypes::FieldDateTime)
+            {
                 _dest.put_member("field_type", field_type_names[field_types::ft_datetime]);
-                break;
-            case FieldTypes::FieldDouble:
+                auto afo = _src.FieldOptions().as<DateTimeFieldOptions>();
+                get_json(_dest, afo);
+            }
+            else if (_src.FieldType() == FieldTypes::FieldDouble)
+            {
                 _dest.put_member("field_type", field_type_names[field_types::ft_double]);
-                break;
-            case FieldTypes::FieldQuery:
+                auto afo = _src.FieldOptions().as<DoubleFieldOptions>();
+                get_json(_dest, afo);
+            }
+            else if (_src.FieldType() == FieldTypes::FieldQuery)
+            {
                 _dest.put_member("field_type", field_type_names[field_types::ft_query]);
-                break;
-            case FieldTypes::FieldBlob:
+                auto afo = _src.FieldOptions().as<QueryFieldOptions>();
+                get_json(_dest, afo);
+            }
+            else if (_src.FieldType() == FieldTypes::FieldBlob)
+            {
                 _dest.put_member("field_type", field_type_names[field_types::ft_blob]);
-                break;
-            case FieldTypes::FieldReference:
+            }
+            else if (_src.FieldType() == FieldTypes::FieldReference)
+            {
                 _dest.put_member("field_type", field_type_names[field_types::ft_reference]);
-                break;
-
             }
         }
 
-        void put_json(IndexDefinition _dest, json _src)
+        void put_json(IndexDefinition& _dest, json _src)
+        {
+            Windows::Foundation::Collections::IVector<hstring> keys{ winrt::single_threaded_vector<hstring>() };
+
+            std::string iname = _src["index_name"];
+            json jkeys = _src["index_keys"];
+            if (jkeys.array()) {
+                for (auto jkey : jkeys) {
+                    keys.Append(winrt::to_hstring((std::string)jkey));
+                }
+            }
+
+            _dest.IndexName(winrt::to_hstring(iname));
+            _dest.IndexKeys(keys);
+        }
+
+        void get_json(json& _dest, IndexDefinition& _src)
+        {
+            _dest.put_member("index_name", winrt::to_string(_src.IndexName()));
+
+            json_parser jp;
+            json jpa = jp.create_array();
+
+            for (auto key : _src.IndexKeys()) 
+            {
+                jpa.push_back(winrt::to_string(key));
+            }
+
+            _dest.put_member("index_keys", jpa);
+        }
+
+        void put_json(ObjectFieldOptions& _dest, json _src)
+        {
+            
+
+        }
+
+        void get_json(json& _dest, ObjectFieldOptions& _src)
         {
 
         }
 
-        void get_json(json _dest, IndexDefinition _src)
+        void put_json(ArrayFieldOptions& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, ArrayFieldOptions& _src)
+        {
+
+        }
+
+        void put_json(QueryFieldOptions& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, QueryFieldOptions& _src)
+        {
+
+        }
+
+        void put_json(Int64FieldOptions& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, Int64FieldOptions& _src)
+        {
+
+        }
+
+        void put_json(DateTimeFieldOptions& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, DateTimeFieldOptions& _src)
+        {
+
+        }
+
+        void put_json(DoubleFieldOptions& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, DoubleFieldOptions& _src)
+        {
+
+        }
+
+        void put_json(StringFieldOptions& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, StringFieldOptions& _src)
+        {
+
+        }
+
+        void put_json(QueryFilter& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, QueryFilter& _src)
+        {
+
+        }
+
+        void put_json(QueryProject& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, QueryProject& _src)
+        {
+
+        }
+
+        void put_json(QueryJoin& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, QueryJoin& _src)
+        {
+
+        }
+
+        void put_json(QueryFrom& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, QueryFrom& _src)
+        {
+
+        }
+
+        void put_json(QueryCondition& _dest, json _src)
+        {
+
+        }
+
+        void get_json(json& _dest, QueryCondition& _src)
         {
 
         }
 
 
-        void put_json(ObjectFieldOptions _dest, json _src)
+        void put_json(QueryConditionAll& _dest, json _src)
         {
 
         }
 
-        void get_json(json _dest, ObjectFieldOptions _src)
+        void get_json(json& _dest, QueryConditionAll& _src)
         {
 
         }
 
-        void put_json(ArrayFieldOptions _dest, json _src)
+        void put_json(QueryConditionAny& _dest, json _src)
         {
 
         }
 
-        void get_json(json _dest, ArrayFieldOptions _src)
+        void get_json(json& _dest, QueryConditionAny& _src)
         {
 
         }
 
-        void put_json(QueryFieldOptions _dest, json _src)
+        void put_json(QueryConditionContains& _dest, json _src)
         {
 
         }
 
-        void get_json(json _dest, QueryFieldOptions _src)
+        void get_json(json& _dest, QueryConditionContains& _src)
         {
 
         }
 
-        void put_json(Int64FieldOptions _dest, json _src)
+        void put_json(QueryConditionEq& _dest, json _src)
         {
 
         }
 
-        void get_json(json _dest, Int64FieldOptions _src)
+        void get_json(json& _dest, QueryConditionEq& _src)
         {
 
         }
 
-        void put_json(DateTimeFieldOptions _dest, json _src)
+        void put_json(QueryConditionLt& _dest, json _src)
         {
 
         }
 
-        void get_json(json _dest, DateTimeFieldOptions _src)
+        void get_json(json& _dest, QueryConditionLt& _src)
         {
 
         }
 
-        void put_json(DoubleFieldOptions _dest, json _src)
+        void put_json(QueryConditionGt& _dest, json _src)
         {
 
         }
 
-        void get_json(json _dest, DoubleFieldOptions _dest)
+        void get_json(json& _dest, QueryConditionGt& _src)
         {
 
         }
 
-        void put_json(StringFieldOptions _dest, json _src)
+        void put_json(QueryConditionGtEq& _dest, json _src)
         {
 
         }
 
-        void get_json(json _dest, StringFieldOptions _dest)
+        void get_json(json& _dest, QueryConditionGtEq& _src)
         {
 
         }
 
-        void put_json(QueryFilter _dest, json _src)
+        void put_json(QueryConditionLtEq& _dest, json _src)
         {
 
         }
 
-        void get_json(json _dest, QueryFilter _src)
+        void get_json(json& _dest, QueryConditionNone _src)
         {
 
         }
 
-        void put_json(QueryProject _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryProject _src)
-        {
-
-        }
-
-        void put_json(QueryJoin _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryJoin _src)
-        {
-
-        }
-
-        void put_json(QueryFrom _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryFrom _src)
-        {
-
-        }
-
-        void put_json(QueryCondition _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryCondition _dest)
-        {
-
-        }
-
-
-        void put_json(QueryConditionAll _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryConditionAll _src)
-        {
-
-        }
-
-        void put_json(QueryConditionAny _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryConditionAny _src)
-        {
-
-        }
-
-        void put_json(QueryConditionContains _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryConditionContains _src)
-        {
-
-        }
-
-        void put_json(QueryConditionEq _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryConditionEq _dest)
-        {
-
-        }
-
-        void put_json(QueryConditionLt _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryConditionLt _src)
-        {
-
-        }
-
-        void put_json(QueryConditionGt _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryConditionGt _src)
-        {
-
-        }
-
-        void put_json(QueryConditionGtEq _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryConditionGtEq _src)
-        {
-
-        }
-
-        void put_json(QueryConditionLtEq _dest, json _src)
-        {
-
-        }
-
-        void put_json(QueryConditionNone _dest, json _src)
-        {
-
-        }
-
-        void get_json(json _dest, QueryConditionNone _src)
+        void put_json(QueryConditionNone& _dest, json _src)
         {
 
         }
