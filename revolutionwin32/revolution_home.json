@@ -1,7 +1,7 @@
 
 {
   "class_name": "page",
-  "page_name": "home",
+  "page_name": "revolution_home",
   "default": true,
   "children": [
     {

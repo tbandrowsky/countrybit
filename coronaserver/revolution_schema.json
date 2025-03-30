@@ -55,6 +55,7 @@
       "class_name": "farm",
       "class_description": "a collection of fields to harvest",
       "base_class_name": "sys_object",
+      "parents": [ "bank" ],
       "fields": {
         "fields": "[field]",
         "workers": "[workers]"
@@ -97,7 +98,8 @@
       "fields": {
         "bank_name": "string",
         "bank_description": "string",
-        "chats": "[chat]"
+        "chats": "[chat]",
+        "farms" :  "[farm]"
       }
     }
   ],

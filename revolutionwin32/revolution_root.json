@@ -5,12 +5,12 @@
   "children": [
     {
       "class_name": "chaptertitle",
-      "text": "Constellation",
+      "text": "Revolution",
       "box": "chaptertitle_box"
     },
     {
       "class_name": "chaptersubtitle",
-      "text": "Government",
+      "text": "Modern Politics for Modern Times",
       "box": "chaptersubtitle_box"
     },
     {

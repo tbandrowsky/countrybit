@@ -1,0 +1,23 @@
+{
+  "class_name": "page",
+  "page_name": "user_login",
+  "default": true,
+  "children": [
+    {
+      "class_name": "form",
+      "model": {
+        "name": "user_login_form",
+        "defaults": {
+
+        },
+        "fields": [
+          {
+            "class_name": "edit",
+
+          }
+
+        ]
+      }
+    }
+  ]
+}

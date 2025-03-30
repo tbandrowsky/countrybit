@@ -7,6 +7,32 @@ namespace winrt::coronawinrt::implementation
 
     class json_interop
     {
+        std::map<FieldTypes, field_types> winrt_to_corona_field_types = {
+            { FieldTypes::FieldObject, field_types::ft_object},
+            { FieldTypes::FieldArray, field_types::ft_array },
+            { FieldTypes::FieldDouble, field_types::ft_double },
+            { FieldTypes::FieldInt64, field_types::ft_int64 },
+            { FieldTypes::FieldReference, field_types::ft_reference },
+            { FieldTypes::FieldString, field_types::ft_string },
+            { FieldTypes::FieldBoolean, field_types::ft_bool },
+            { FieldTypes::FieldDateTime, field_types::ft_datetime },
+            { FieldTypes::FieldFunction, field_types::ft_function },
+            { FieldTypes::FieldQuery, field_types::ft_query }
+        };
+
+        std::map<field_types, FieldTypes> corona_to_winrt_field_types = {
+            { field_types::ft_object, FieldTypes::FieldObject },
+            { field_types::ft_array, FieldTypes::FieldArray },
+            { field_types::ft_double, FieldTypes::FieldDouble,  },
+            { field_types::ft_int64, FieldTypes::FieldInt64 },
+            { field_types::ft_reference, FieldTypes::FieldReference },
+            { field_types::ft_string, FieldTypes::FieldString },
+            { field_types::ft_bool, FieldTypes::FieldBoolean },
+            { field_types::ft_datetime, FieldTypes::FieldDateTime },
+            { field_types::ft_function, FieldTypes::FieldFunction },
+            { field_types::ft_query, FieldTypes::FieldQuery }
+        };
+
         void put_json(ClassDefinition& _dest, corona::json _src)
         {
 
@@ -285,13 +311,65 @@ namespace winrt::coronawinrt::implementation
 
         void put_json(ObjectFieldOptions& _dest, json _src)
         {
-            
+            Windows::Foundation::Collections::IVector<hstring> allowed_base_classes{ winrt::single_threaded_vector<hstring>() };
+            Windows::Foundation::Collections::IVector<hstring> allowed_classes{ winrt::single_threaded_vector<hstring>() };
 
+            json allowed = _src["allowed_base_classes"];
+            if (allowed.array()) {
+                for (auto oneofthem : allowed) {
+                    allowed_base_classes.Append(winrt::to_hstring((std::string)oneofthem));
+                }
+            }
+
+            allowed = _src["allowed_classes"];
+            if (allowed.array()) {
+                for (auto oneofthem : allowed) {
+                    allowed_classes.Append(winrt::to_hstring((std::string)oneofthem));
+                }
+            }
+
+            _dest.AllowedBaseClasses(allowed_base_classes);
+            _dest.AllowedClasses(allowed_classes);
+
+            std::string s = (std::string)_src["fundamental_type"];
+
+            auto found_type = allowed_field_types.find(s);
+            if (found_type != std::end(allowed_field_types)) {
+                auto found_winrt_type = corona_to_winrt_field_types.find(found_type->second);
+                if (found_winrt_type != std::end(corona_to_winrt_field_types)) {
+                    _dest.FundamentalType(found_winrt_type->second);
+                }
+                else {
+                    _dest.FundamentalType(FieldTypes::FieldString);
+                }
+            }
+            else {
+                _dest.FundamentalType(FieldTypes::FieldString);
+            }
         }
 
         void get_json(json& _dest, ObjectFieldOptions& _src)
         {
+            json_parser jp;
 
+            json allowed_classes = jp.create_array();
+            json allowed_base_classes = jp.create_array();
+
+            for (auto cls : _src.AllowedBaseClasses()) 
+            {
+                allowed_base_classes.push_back();
+            }
+
+            for (auto cls : _src.AllowedClasses())
+            {
+                allowed_classes.push_back();
+            }
+
+            auto ft = _src.FundamentalType();
+            if ((int)ft >= 0 and (int)ft <= 12)
+            {
+                _dest.put_member()
+            }
         }
 
         void put_json(ArrayFieldOptions& _dest, json _src)
