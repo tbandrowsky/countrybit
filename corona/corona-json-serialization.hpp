@@ -82,8 +82,8 @@ namespace corona
 			return;
 
 		std::vector<std::string> missing;
-		double damount;
-		std::string sunits;
+		double damount = 0.0;
+		std::string sunits = "pixels";
 
 		if (_src.is_string())
 		{

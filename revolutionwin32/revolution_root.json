@@ -1,6 +1,6 @@
 {
   "class_name": "page",
-  "page_name": "root",
+  "page_name": "revolution_root",
   "default": true,
   "children": [
     {

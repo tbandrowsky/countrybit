@@ -598,16 +598,39 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="corona_generator.json" />
-    <None Include="revolution_bank.json" />
-    <None Include="revolution_home.json" />
-    <None Include="revolution_pages.json" />
-    <None Include="revolution_root.json" />
-    <None Include="revolution_styles.json" />
-    <None Include="revolution_user_login.json" />
-    <None Include="revolution_user_password.json" />
-    <None Include="revolution_user_register.json" />
-    <None Include="revolution_user_sendcode.json" />
-    <None Include="revolution_user_settings.json" />
+    <None Include="revolution_bank.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_home.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_pages.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_root.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_schema.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_styles.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_user_login.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_user_password.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_user_register.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_user_sendcode.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="revolution_user_settings.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

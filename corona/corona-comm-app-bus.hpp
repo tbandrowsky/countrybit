@@ -55,6 +55,24 @@ namespace corona
 			topic_waiters.erase(_topic);
 		}
 
+		relative_ptr_type read_json(std::string _file_name, json& item)
+		{
+			relative_ptr_type pt = null_row;
+			if (app->file_exists(_file_name)) {
+				try {
+					std::string file_contents = read_all_string(_file_name);
+					json_parser jp;
+					item = jp.parse_object(file_contents);
+					pt = 1;
+				}
+				catch (std::exception exc)
+				{
+					std::cerr << "Error:" << __FILE__ << " " << __LINE__ << " polling " << _file_name << " failed:" << exc.what() << std::endl;
+				}
+				return pt;
+			}
+		}
+
 		json								local_db_config;
 
 	public:
@@ -87,10 +105,7 @@ namespace corona
 		std::string styles_config_filename;
 		std::string pages_config_filename;
 
-		json_file_watcher database_schema_mon;
-		json_file_watcher database_config_mon;
-		json_file_watcher pages_config_mon;
-		json_file_watcher styles_config_mon;
+		directory_checker checker;
 
 		std::string database_filename;
 		std::string user_file_name;
@@ -141,43 +156,39 @@ namespace corona
 			styles_config_filename = _config_filename_base + "styles.json";
 			database_filename = app->get_data_filename("corona.cdb");
 
-			database_schema_mon.filename = database_schema_filename;
-			database_config_mon.filename = database_config_filename;
-			pages_config_mon.filename = pages_config_filename;
-			styles_config_mon.filename = styles_config_filename;
+			char path[MAX_PATH + 16] = {};
+			GetModuleFileNameA(NULL, path, MAX_PATH);
+			PathRemoveFileSpecA(path);
+
+			checker.path = path;
 
 			if (not app->file_exists(database_filename))
 			{
 				db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(db_file);
 
-				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {
+				if (read_json(database_config_filename, local_db_config) != null_row) {
 					local_db->apply_config(local_db_config);
 				}
 
 				json create_database_response = local_db->create_database();
 
-				relative_ptr_type result = database_config_mon.poll(app.get());
-				ready_for_polling = true;
-
-				json token = get_local_token();
 			}
 			else
 			{
 				db_file = app->open_file_ptr(database_filename, file_open_types::open_existing);
 				local_db = std::make_shared<corona_database>(db_file);
 
-				if (database_config_mon.poll_contents(app.get(), local_db_config) != null_row) {
+				if (read_json(database_config_filename, local_db_config) != null_row) {
 					local_db->apply_config(local_db_config);
 				}
 
 				local_db->open_database(0);
-
-				json token = get_local_token();
-
-				relative_ptr_type result = database_config_mon.poll(app.get());
-				ready_for_polling = true;
 			}
+
+			json token = get_local_token();
+
+			ready_for_polling = true;
 
 			log_command_stop("comm_app_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
@@ -236,22 +247,21 @@ namespace corona
 
 		void poll_db()
 		{
-			if (ready_for_polling) {
-				timer tx;
-				json_parser jp;
-				json temp;
-				date_time start_time = date_time::now();
-				if (database_schema_mon.poll_contents(app.get(), temp) != null_row) {
-					log_command_start("poll_db", "apply schema", start_time, __FILE__, __LINE__);
-					auto tempo = local_db->apply_schema(temp);
-					log_command_stop("poll_db", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				}
-				timer tx2;
-				if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
-					log_command_start("poll_db", "apply config", start_time, __FILE__, __LINE__);
-					local_db->apply_config(temp);
-					log_command_stop("poll_db", "config applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				}
+			timer tx;
+			json_parser jp;
+			json temp;
+			date_time start_time = date_time::now();
+			if (read_json(database_schema_filename, temp) != null_row) {
+				log_command_start("poll_db", "apply schema", start_time, __FILE__, __LINE__);
+				auto tempo = local_db->apply_schema(temp);
+				log_command_stop("poll_db", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
+
+			timer tx2;
+			if (read_json(database_config_filename, temp) != null_row) {
+				log_command_start("poll_db", "apply config", start_time, __FILE__, __LINE__);
+				local_db->apply_config(temp);
+				log_command_stop("poll_db", "config applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 		}
 
@@ -260,123 +270,127 @@ namespace corona
 			json_parser			jp;
 			json				pages_json;
 			json				styles_json;
-			relative_ptr_type	pages_changed = pages_config_mon.poll_contents(app.get(), pages_json);
-			relative_ptr_type	styles_changed = styles_config_mon.poll_contents(app.get(), styles_json);
 
-			if (pages_changed != null_row or
-				styles_changed != null_row)
+			read_json(pages_config_filename, pages_json);
+			read_json(styles_config_filename, styles_json);
+
+			timer tx;
+			date_time t = date_time::now();
+
+			log_job_start("poll_pages", "apply pages", t, __FILE__, __LINE__);
+
+			abbreviations = jp.create_object();
+
+			// to do, at some point create a merge method in json proper.
+			json combined;
+			if (styles_json.object() and pages_json.object())
 			{
-				timer tx;
-				date_time t = date_time::now();
+				combined = styles_json.clone();
 
-				log_job_start("poll_pages", "apply pages", t, __FILE__, __LINE__);
+				json jsrcstyles = pages_json["styles"].clone();
+				json jdststyles = combined["styles"];
 
-				abbreviations = jp.create_object();
+				json jabbreviations = pages_json["abbreviations"].clone();
+				if (jabbreviations.object()) {
+					auto jams = jabbreviations.get_members();
+					for (auto m : jams) {
+						abbreviations.put_member(m.first, m.second);
+					}
+				}
 
-				// to do, at some point create a merge method in json proper.
-				json combined;
-				if (styles_json.object() and pages_json.object())
+				jabbreviations = combined["abbreviations"].clone();
+				if (jabbreviations.object()) {
+					auto jams = jabbreviations.get_members();
+					for (auto m : jams) {
+						abbreviations.put_member(m.first, m.second);
+					}
+				}
+
+				if (jsrcstyles.array() and jdststyles.array())
 				{
-					combined = styles_json.clone();
+					jdststyles.append_array(jsrcstyles);
+				}
+				else if (jsrcstyles.array())
+				{
+					combined.put_member_array("styles", jsrcstyles);
+				}
 
-					json jsrcstyles = pages_json["styles"].clone();
-					json jdststyles = combined["styles"];
+				json jsrcpages = pages_json["pages"].clone();
+				json jdstpages = combined["pages"];
 
-					json jabbreviations = pages_json["abbreviations"].clone();
-					if (jabbreviations.object()) {
-						auto jams = jabbreviations.get_members();
-						for (auto m : jams) {
-							abbreviations.put_member(m.first, m.second);
-						}
-					}
+				if (jsrcpages.array())
+				{
+					json jpages_expanded_array = jp.create_array();
 
-					jabbreviations = combined["abbreviations"].clone();
-					if (jabbreviations.object()) {
-						auto jams = jabbreviations.get_members();
-						for (auto m : jams) {
-							abbreviations.put_member(m.first, m.second);
-						}
-					}
-
-					if (jsrcstyles.array() and jdststyles.array())
+					for (auto jpage : jsrcpages)
 					{
-						jdststyles.append_array(jsrcstyles);
-					}
-					else if (jsrcstyles.array())
-					{
-						combined.put_member_array("styles", jsrcstyles);
-					}
+						if (jpage.object()) {
+							jpage.apply_abbreviations(abbreviations);
+							std::string class_name = jpage[class_name_field];
+							std::string file_name = jpage["file_name"];
+							if (class_name == "import") 
+							{
+								json_parser jpx;
+								std::string src_page = read_all_string(file_name);
+								json expanded_page = jpx.parse_object(src_page);
 
-					json jsrcpages = pages_json["pages"].clone();
-					json jdstpages = combined["pages"];
-
-					if (jsrcpages.array())
-					{
-						json jpages_expanded_array = jp.create_array();
-
-						for (auto jpage : jsrcpages)
-						{
-							if (jpage.object()) {
-								jpage.apply_abbreviations(abbreviations);
-								std::string class_name = jpage[class_name_field];
-								std::string file_name = jpage["file_name"];
-								if (class_name == "import") 
+								if (expanded_page.error()) 
 								{
-									json_parser jpx;
-									std::string src_page = read_all_string(file_name);
-									json expanded_page = jpx.parse_object(src_page);
-
-									if (expanded_page.error()) 
-									{
-										auto errs = jpx.get_errors();
-										log_error(errs, __FILE__, __LINE__);
-									}
-									else
-									{
-										jpages_expanded_array.append_element(expanded_page);
-										std::string story = std::format("imported page {0}", file_name);
-										log_information(story, __FILE__, __LINE__);
-									}
+									auto errs = jpx.get_errors();
+									log_error(errs, __FILE__, __LINE__);
 								}
 								else
 								{
-									jpages_expanded_array.append_element(jpage);
+									expanded_page.apply_abbreviations(abbreviations);
+									jpages_expanded_array.append_element(expanded_page);
+									std::string story = std::format("imported page {0}", file_name);
+									log_information(story, __FILE__, __LINE__);
 								}
 							}
-						}
-
-						if (jdstpages.array())
-						{
-							jdstpages.append_array(jpages_expanded_array);
-						}
-						else
-						{
-							combined.put_member_array("pages", jpages_expanded_array);
+							else
+							{
+								jpages_expanded_array.append_element(jpage);
+							}
 						}
 					}
 
-					json jsrcstartup = pages_json["startup"].clone();
-					json jdststartup = combined["startup"];
-
-					if (jsrcstartup.array() and jdststartup.array())
+					if (jdstpages.array())
 					{
-						jdststartup.append_array(jsrcstartup);
+						jdstpages.append_array(jpages_expanded_array);
 					}
-					else if (jsrcstartup.array())
+					else
 					{
-						combined.put_member_array("startup", jsrcstartup);
+						combined.put_member_array("pages", jpages_expanded_array);
 					}
-
-					load_pages(combined, _select_default_page);
 				}
-				log_job_stop("poll_pages", "pages updated", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				json jsrcstartup = pages_json["startup"].clone();
+				json jdststartup = combined["startup"];
+
+				if (jsrcstartup.array() and jdststartup.array())
+				{
+					jdststartup.append_array(jsrcstartup);
+				}
+				else if (jsrcstartup.array())
+				{
+					combined.put_member_array("startup", jsrcstartup);
+				}
+
+				load_pages(combined, _select_default_page);
 			}
+			log_job_stop("poll_pages", "pages updated", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
 
 		virtual void poll(bool _select_default_page)
 		{
-			poll_db();
-			poll_pages(_select_default_page);
+			directory_checker::check_options options;
+
+			options.files_to_ignore.insert_or_assign(database_filename, true);
+
+			if (checker.check_changes( options)) {
+				poll_db();
+				poll_pages(_select_default_page);
+			}
 		}
 
 		virtual void error(json _error)

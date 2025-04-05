@@ -120,6 +120,7 @@ namespace corona {
 #include "corona-function.hpp"
 #include "corona-file.hpp"
 #include "corona-file-block.hpp"
+#include "corona-directory.hpp"
 #include "corona-application.hpp"
 #include "corona-visual.hpp"
 #include "corona-control-data.hpp"

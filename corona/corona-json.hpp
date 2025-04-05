@@ -2885,11 +2885,38 @@ namespace corona
 
 			if (object())
 			{
-				for (auto member : object_impl()->members)
+				for (auto& member : object_impl()->members)
 				{
-					auto ifound = abbrev->members.find(member.first);
-					if (ifound != std::end(abbrev->members)) {
-						member.second = ifound->second;
+					if (member.second->get_field_type() == field_types::ft_string)
+					{
+						std::shared_ptr<json_string> js = std::dynamic_pointer_cast<json_string>(member.second);
+						if (js)
+						{
+							auto ifound = abbrev->members.find(js->value);
+							if (ifound != std::end(abbrev->members)) {
+								member.second = ifound->second;
+							}
+						}
+					}
+					else if (member.second->get_field_type() == field_types::ft_object)
+					{
+						json j = member.second;
+						j.apply_abbreviations(_abbreviations);
+					}
+					else if (member.second->get_field_type() == field_types::ft_array)
+					{
+						std::shared_ptr<json_array> js = std::dynamic_pointer_cast<json_array>(member.second);
+						if (js)
+						{
+							for (auto item : js->elements)
+							{
+								if (item->get_field_type() == field_types::ft_object)
+								{
+									json obj = item;
+									obj.apply_abbreviations(_abbreviations);
+								}
+							}
+						}
 					}
 				}
 			}

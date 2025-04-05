@@ -8,14 +8,30 @@
       "model": {
         "name": "user_login_form",
         "defaults": {
-
+          "box": {
+            "width": "1.0 container",
+            "height": "110 pixels"
+          },
+          "label_box": {
+            "width": "1.0 container",
+            "height": "50 pixels"
+          },
+          "field_box": {
+            "width": "1.0 container",
+            "height": "50 pixels"
+          }
         },
         "fields": [
           {
             "class_name": "edit",
-
+            "json_field_name": "user_name",
+            "label_text" :  "User Name:"
+          },
+          {
+            "class_name": "edit",
+            "json_field_name": "password",
+            "label_text": "User Name:"
           }
-
         ]
       }
     }
