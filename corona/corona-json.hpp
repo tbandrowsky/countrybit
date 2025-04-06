@@ -3141,7 +3141,7 @@ namespace corona
 			json error_root(std::make_shared<json_object>());
 
 			error_root.put_member(class_name_field, parse_error_class);
-			error_root.put_member(success_field, false);
+			error_root.put_member(success_field, has_errors());
 
 			json error_array(std::make_shared<json_array>());
 

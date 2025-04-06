@@ -436,8 +436,12 @@ namespace corona
 			json jbox, jmargin, jpadding;
 
 			std::vector<std::string> missing;
+
+			name = _src["name"];
+			std::string class_name = _src["class_name"];
+
 			if (not _src.has_members(missing, { "box" })) {
-				system_monitoring_interface::global_mon->log_warning("control is missing:", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning(std::format( "control '{0}/{1}' is missing:", class_name, name), __FILE__, __LINE__);
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
@@ -448,7 +452,6 @@ namespace corona
 			jbox = _src["box"];
 			jmargin = _src["margin"];
 			jpadding = _src["padding"];
-			name = _src["name"];
 
 			corona::put_json(box, jbox);
 			corona::put_json(margin, jmargin);

@@ -26,7 +26,7 @@ namespace corona
 	{
 	public:
 
-		std::map<std::string, std::filesystem::directory_entry> entries;
+		std::map<std::string, std::filesystem::file_time_type> entries;
 		std::filesystem::path path;
 
 		directory_checker() = default;
@@ -47,13 +47,18 @@ namespace corona
 				auto foundi = entries.find(temp);
 				if (foundi != std::end(entries))
 				{
-					result = foundi->second.last_write_time() != entry.last_write_time();
+					bool matches = foundi->second != entry.last_write_time();
+					if (matches)
+					{
+						system_monitoring_interface::global_mon->log_information(std::format("file changed {0}", temp));
+						result = true;
+					}
 				}
 				else
 				{
 					result = true;
 				}
-				entries.insert_or_assign(temp, entry);
+				entries.insert_or_assign(temp, entry.last_write_time());
 			}
 			return result;
 		}

@@ -1,10 +1,7 @@
 {
   "abbreviations": {
     "button_box": {
-      "width": {
-        "amount": 150,
-        "units": "pixel"
-      },
+      "width": "150 pixels",
       "height": {
         "amount": 65,
         "units": "pixels"
@@ -20,14 +17,16 @@
         "units": "container"
       }
     },
+
     "edit_container_box": {
       "width": "250 pixels",
-      "height": "120 pixels"
+      "height": "60 pixels"
     },
     "edit_label_box": {
       "width": "200 pixels",
       "height": "25 pixels"
     },
+
     "edit_field_box": {
       "width": "200 pixels",
       "height": "25 pixels"

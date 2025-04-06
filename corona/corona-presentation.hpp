@@ -1118,6 +1118,9 @@ namespace corona {
 						if (name.empty()) {
 							system_monitoring_interface::global_mon->log_warning("page_name is empty for this page, skipping");
 						}
+						else {
+							system_monitoring_interface::global_mon->log_information(std::format("updating page {0}", name), __FILE__, __LINE__);
+						}
 						if (is_default or default_page_name.empty()) {
 							default_page_name = name;
 						}

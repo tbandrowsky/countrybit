@@ -144,16 +144,16 @@
           },
           "stops": [
             {
-              "color": "512150",
-              "position": 0.4
+              "color": "000000",
+              "position": 0.0
             },
             {
               "color": "112150",
-              "position": 0.4
+              "position": 0.8
             },
             {
               "color": "313180",
-              "position": 0.83
+              "position": 0.93
             },
             {
               "color": "101020",

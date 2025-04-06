@@ -26,6 +26,8 @@ For Future Consideration
 namespace corona
 {
 
+	void put_json(std::shared_ptr<corona_bus_command>& _dest, json _src);
+
 	class  corona_register_user_command : public corona_bus_command
 	{
 	public:
@@ -139,6 +141,10 @@ namespace corona
 	{
 	public:
 		std::string user_name_ctl;
+		std::string user_password_ctl;
+		std::shared_ptr<corona_bus_command> on_login_success;
+		std::shared_ptr<corona_bus_command> on_login_fail;
+
 		corona_client_response response;
 
 		virtual json execute()
@@ -146,10 +152,23 @@ namespace corona
 			json obj;
 
 			auto cuser_name = bus->find_control(user_name_ctl);
+			auto cuser_password = bus->find_control(user_password_ctl);
 
-			if (cuser_name) {
+			if (cuser_name and cuser_password) {
 				std::string user_name = cuser_name->get_data();
-				response = bus->remote_send_user(user_name_ctl);
+				std::string password = cuser_password->get_data();
+				response = bus->remote_login(user_name, password);
+
+				if (response.success) {
+					if (on_login_success) {
+						on_login_success->execute();
+					}
+				}
+				else if (on_login_fail)
+				{
+					on_login_fail->execute();
+				}
+
 				obj = response.data;
 			}
 			return obj;
@@ -160,13 +179,26 @@ namespace corona
 			using namespace std::literals;
 
 			_dest.put_member("class_name", "login_command"sv);
-			_dest.put_member("user_name_ctl", user_name_ctl);
+			_dest.put_member("username_ctl", user_name_ctl);
+			_dest.put_member("password_ctl", user_password_ctl);
+
+			json_parser jp;
+			if (on_login_success) {
+				json jon_login_success = jp.create_object();
+				on_login_success->get_json(jon_login_success);
+				_dest.put_member("on_login_success", jon_login_success);
+			}
+			if (on_login_fail) {
+				json jon_login_fail = jp.create_object();
+				on_login_fail->get_json(jon_login_fail);
+				_dest.put_member("on_login_fail", jon_login_fail);
+			}
 		}
 
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (not _src.has_members(missing, { "user_name_ctl" })) {
+			if (not _src.has_members(missing, { "username_ctl", "password_ctl" })) {
 				system_monitoring_interface::global_mon->log_warning("login_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -176,7 +208,17 @@ namespace corona
 				return;
 			}
 
-			user_name_ctl = _src["user_name_ctl"];
+			user_name_ctl = _src["username_ctl"];
+			user_password_ctl = _src["password_ctl"];
+
+			json jon_login_success = _src["on_login_success"];
+			if (jon_login_success.object()) {
+				corona::put_json(on_login_success, jon_login_success);
+			}
+			json jon_login_fail = _src["on_login_fail"];
+			if (jon_login_fail.object()) {
+				corona::put_json(on_login_fail, jon_login_fail);
+			}
 		}
 
 	};
@@ -1007,6 +1049,114 @@ namespace corona
 		}
 	};
 
+	class corona_script_command: public corona_bus_command
+	{
+	public:
+		std::string		control_name;
+		std::vector<std::shared_ptr<corona_bus_command>> commands;
+
+		virtual json execute()
+		{
+			json obj;
+			for (auto comm : commands) {
+				obj = comm->execute();
+			}
+			return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "script_command"sv);
+			json_parser jp;
+			json jcommand_array = jp.create_array();
+
+			for (auto comm : commands)
+			{
+				json jcomm = jp.create_object();
+				comm->get_json(jcomm);
+				jcommand_array.push_back(jcomm);
+			}
+
+			_dest.put_member("control_name", control_name);
+			_dest.put_member("commands", jcommand_array);
+
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+
+			if (not _src.has_members(missing, { "control_name", "commands" })) {
+				system_monitoring_interface::global_mon->log_warning("script missing:");
+
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			control_name = _src["control_name"];
+			commands.clear();
+
+			json_parser jp;
+			json jcommand_array = _src["commands"];
+			if (jcommand_array.array()) {
+				for (auto jcomm : jcommand_array)
+				{
+					std::shared_ptr<corona_bus_command> comm;
+					corona::put_json(comm, jcomm);
+					if (not comm)
+						break;
+					commands.push_back(comm);
+				}
+			}
+		}
+	};
+
+	class corona_set_text_command : public corona_bus_command
+	{
+	public:
+		std::string		control_name;
+		std::string		text_to_set;
+
+		// this is defined in corona-presentation-builder.  
+		// should have done this more cleanly with interfaces, but
+		// this gets the job done.
+
+		virtual json execute();
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "set_text_command"sv);
+			_dest.put_member("control_name", control_name);
+			_dest.put_member("text", text_to_set);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+
+			if (not _src.has_members(missing, { "control_name", "text" })) {
+				system_monitoring_interface::global_mon->log_warning("corona_set_text_command missing:");
+
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			control_name = _src["control_name"];
+			text_to_set = _src["text"];
+		}
+	};
+
 	class corona_select_frame_command : public corona_bus_command
 	{
 	public:
@@ -1092,7 +1242,17 @@ namespace corona
 		{
 			std::string class_name = _src["class_name"];
 
-			if (class_name == "register_user_command")
+			if (class_name == "script_command")
+			{
+				_dest = std::make_shared<corona_script_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "set_text_command")
+			{
+				_dest = std::make_shared<corona_set_text_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "register_user_command")
 			{
 				_dest = std::make_shared<corona_register_user_command>();
 				_dest->put_json(_src);

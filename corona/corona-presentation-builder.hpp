@@ -3169,6 +3169,27 @@ namespace corona
 		create(host);
 	}
 
+	json corona_set_text_command::execute()
+	{
+		json obj;
+		control_base* cb = {};
+		if (not control_name.empty()) {
+			cb = bus->find_control(control_name);
+			text_control_base* tcb = dynamic_cast<text_control_base*>(cb);
+			if (tcb != nullptr) {
+				tcb->set_text(text_to_set);
+			}
+			else {
+				text_display_control* tdc = dynamic_cast<text_display_control*>(cb);
+				if (tdc != nullptr) {
+					tdc->set_text(text_to_set);
+				}
+			}
+		}
+		return obj;
+	}
+
+
 }
 
 #endif

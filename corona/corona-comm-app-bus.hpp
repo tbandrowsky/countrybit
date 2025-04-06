@@ -156,11 +156,13 @@ namespace corona
 			styles_config_filename = _config_filename_base + "styles.json";
 			database_filename = app->get_data_filename("corona.cdb");
 
+			/*
 			char path[MAX_PATH + 16] = {};
 			GetModuleFileNameA(NULL, path, MAX_PATH);
 			PathRemoveFileSpecA(path);
+			*/
 
-			checker.path = path;
+			checker.path = std::filesystem::current_path();
 
 			if (not app->file_exists(database_filename))
 			{
@@ -332,19 +334,25 @@ namespace corona
 							{
 								json_parser jpx;
 								std::string src_page = read_all_string(file_name);
-								json expanded_page = jpx.parse_object(src_page);
 
-								if (expanded_page.error()) 
-								{
-									auto errs = jpx.get_errors();
-									log_error(errs, __FILE__, __LINE__);
-								}
-								else
-								{
-									expanded_page.apply_abbreviations(abbreviations);
-									jpages_expanded_array.append_element(expanded_page);
-									std::string story = std::format("imported page {0}", file_name);
-									log_information(story, __FILE__, __LINE__);
+								if (src_page.size() > 0) {
+									log_information(std::format("loading {0}", file_name), __FILE__, __LINE__);
+
+									json expanded_page = jpx.parse_object(src_page);
+
+									if (expanded_page.error())
+									{
+										log_warning(file_name, __FILE__, __LINE__);
+										auto errs = jpx.get_errors();
+										log_error(errs, __FILE__, __LINE__);
+									}
+									else
+									{
+										expanded_page.apply_abbreviations(abbreviations);
+										jpages_expanded_array.append_element(expanded_page);
+										std::string story = std::format("imported page {0}", file_name);
+										log_information(story, __FILE__, __LINE__);
+									}
 								}
 							}
 							else
