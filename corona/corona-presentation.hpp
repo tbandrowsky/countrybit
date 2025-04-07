@@ -1124,7 +1124,7 @@ namespace corona {
 						if (is_default or default_page_name.empty()) {
 							default_page_name = name;
 						}
-						create_page(name, [pg, this](page& _settings)->void
+						create_page(name, [&pg, this](page& _settings)->void
 							{
 								json_parser jp;
 								auto root = _settings.get_root_container();
@@ -1132,6 +1132,15 @@ namespace corona {
 								root->children.clear();
 								control_builder cb(root);
 								cb.bus = bus;
+								json obj = jp.create_object();
+								obj.copy_member("box", pg);
+								obj.copy_member("margin", pg);
+								obj.copy_member("padding", pg);
+								obj.copy_member("content_alignment", pg);
+								obj.copy_member("content_cross_alignment", pg);
+								if (obj.has_member("box")) {
+									_settings.put_json(obj);
+								}
 								json jchildren = pg["children"];
 								if (jchildren.array()) {	
 									for (auto jchild : jchildren) 

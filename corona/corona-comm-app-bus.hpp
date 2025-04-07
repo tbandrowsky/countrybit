@@ -842,6 +842,16 @@ namespace corona
 			return response;
 		}
 
+		virtual json get_form_data(std::string _form_name)
+		{
+			json result;
+			auto ctrl = presentation_layer->find_ptr<control_base>(_form_name);
+			if (ctrl) {
+				result = ctrl->get_data();
+			}
+			return result;
+		}
+
 		virtual control_base* find_control(std::string _name)
 		{
 			return presentation_layer->find_ptr<control_base>(_name);

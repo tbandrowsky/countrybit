@@ -1166,6 +1166,25 @@ namespace corona
 
 	};
 
+	class password_control : public edit_control
+	{
+	public:
+
+		password_control(container_control_base* _parent, int _id) : edit_control(_parent, _id) { ; }
+		virtual ~password_control() { ; }
+		password_control(const password_control& _src) = default;
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<password_control>(*this);
+			return tv;
+		}
+
+		virtual const char* get_window_class() { return WC_EDITA; }
+		virtual DWORD get_window_style() { return EditWindowStyles | ES_PASSWORD; }
+		virtual DWORD get_window_ex_style() { return 0; }
+
+	};
+
 	class listbox_control : public list_control_base
 	{
 	public:

@@ -913,7 +913,15 @@ namespace corona
 			}
 			return *this;
 		}
-
+		control_builder& password(int _id, std::function<void(edit_control&)> _settings = nullptr)
+		{
+			auto tc = create<password_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
 		control_builder& scrollbar(int _id, std::function<void(scrollbar_control&)> _settings = nullptr)
 		{
 			auto tc = create<scrollbar_control>(_id);
@@ -2599,6 +2607,13 @@ namespace corona
 				_ctrl.set_data(control_data);
 				});
 		}
+		else if (class_name == "password")
+		{
+			password(field_id, [&control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
 		else if (class_name == "edit")
 		{
 			edit(field_id, [&control_properties, control_data](auto& _ctrl)->void {
@@ -2860,7 +2875,7 @@ namespace corona
 			std::cout << "Layout types" << class_name << std::endl;
 			std::cout << "row, column, absolute, row_view, absolute_view, grid_view, grid, slide, frame, tab_button, tab_view, search_view" << class_name << std::endl;
 			std::cout << "Windows SDK types" << class_name << std::endl;
-			std::cout << "combobox, listbox, edit, listview, treeview, header, toolbar, statusbar, hotkey, animate, richedit, draglistbox, comboboxex, datetimepicker, monthcalendar, radiobutton_list, checkbox_list" << std::endl;
+			std::cout << "combobox, listbox, edit, password, listview, treeview, header, toolbar, statusbar, hotkey, animate, richedit, draglistbox, comboboxex, datetimepicker, monthcalendar, radiobutton_list, checkbox_list" << std::endl;
 			std::cout << "System Button types" << class_name << std::endl;
 			std::cout << "caption_bar, minimize_button, mnaximize_button, close_button, menu_button, corona_button" << std::endl;
 			std::cout << "Forms types" << class_name << std::endl;
@@ -3169,20 +3184,22 @@ namespace corona
 		create(host);
 	}
 
-	json corona_set_text_command::execute()
+	json corona_set_property_command::execute()
 	{
 		json obj;
 		control_base* cb = {};
 		if (not control_name.empty()) {
 			cb = bus->find_control(control_name);
-			text_control_base* tcb = dynamic_cast<text_control_base*>(cb);
-			if (tcb != nullptr) {
-				tcb->set_text(text_to_set);
-			}
-			else {
-				text_display_control* tdc = dynamic_cast<text_display_control*>(cb);
-				if (tdc != nullptr) {
-					tdc->set_text(text_to_set);
+			if (this->property_name == "text") {
+				text_control_base* tcb = dynamic_cast<text_control_base*>(cb);
+				if (tcb != nullptr) {
+					tcb->set_text(value);
+				}
+				else {
+					text_display_control* tdc = dynamic_cast<text_display_control*>(cb);
+					if (tdc != nullptr) {
+						tdc->set_text(value);
+					}
 				}
 			}
 		}

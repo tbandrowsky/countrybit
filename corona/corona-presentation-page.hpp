@@ -117,6 +117,8 @@ namespace corona
 			return std::dynamic_pointer_cast<column_layout>(root);
 		}
 
+
+
 		inline control_base* get_root() {
 			return root.get();
 		}
@@ -137,6 +139,10 @@ namespace corona
 			return dynamic_cast<T*>(get_root()->find(_id));
 		}
 
+		void put_json(json& _src)
+		{
+			get_root()->put_json(_src);
+		}
 
 		control_base* operator[](int _id)
 		{

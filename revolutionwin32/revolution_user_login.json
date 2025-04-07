@@ -4,84 +4,109 @@
   "default": true,
   "children": [
     {
-      "class_name": "chaptertitle",
+      "class_name": "column",
       "box": {
-        "width": "500 pixels",
-        "height": "50 pixels",
-        "x": "10 pixels",
-        "y": "20 pixels"
-      },
-      "text" : "Login"
-    },
-    {
-      "class_name": "form",
-      "box": {
-        "width": "500 pixels",
-        "height": "500 pixels",
-        "x": "10 pixels"
-      },
-      "model": {
-        "name": "user_login_form",
-        "defaults": {
-          "box": "edit_container_box",
-          "label_box": "edit_label_box",
-          "field_box": "edit_field_box"
-        },
-        "fields": [
-          {
-            "class_name": "edit",
-            "name" : "user_name_ctl",
-            "json_field_name": "user_name",
-            "label_text": "User Name:",
-            "box": "edit_container_box"
-          },
-          {
-            "class_name": "edit",
-            "name": "user_password_ctl",
-            "json_field_name": "password",
-            "label_text": "Password:",
-            "box": "edit_container_box"
-          }
-        ]
-      }
-    },
-    {
-      "class_name": "row",
-      "box": {
-        "x": "10 pixels",
-        "y": "200 pixels",
         "width": "1.0 container",
-        "height": "50 pixels"
+        "height": "1.0 container"
       },
-      "item_space" :  "8 pixels",
+      "content_cross_alignment": "center",
       "children": [
         {
-          "class_name": "push_button",
-          "text": "Login",
-          "box": "button_box",
-          "click_command": {
-            "class_name": "login_command",
-            "user_name_ctl": "",
-            "user_password_ctl": "",
-            "on_login_success" :{
-              "class_name": "select_frame_command",
-              "page_to_select": "home",
-              "frame_to_load": "revolution_home_frame",
-              "frame_contents_page": "revolution_root"
-            }
+          "class_name": "chaptertitle",
+          "box": {
+            "width": "700 pixels",
+            "height": "50 pixels",
+            "y" :  "20 pixels"
+          },
+          "text": "Login"
+        },
+        {
+          "class_name": "chaptersubtitle",
+          "name": "message",
+          "box": {
+            "width": "700 pixels",
+            "height": "25 pixels",
+            "y": "20 pixels"
+          },
+          "text": "Please log in"
+        },
+        {
+          "class_name": "form",
+          "box": {
+            "width": "700 pixels",
+            "height": "250 pixels",
+            "y": "60 pixels"
+          },
+          "model": {
+            "name": "user_login_form",
+            "defaults": {
+              "box": "edit_container_box",
+              "label_box": "edit_label_box",
+              "field_box": "edit_field_box"
+            },
+            "fields": [
+              {
+                "class_name": "edit",
+                "name": "user_name_ctl",
+                "json_field_name": "user_name",
+                "label_text": "User Name:",
+                "box": "edit_container_box"
+              },
+              {
+                "class_name": "password",
+                "name": "user_password_ctl",
+                "json_field_name": "password",
+                "label_text": "Password:",
+                "box": "edit_container_box"
+              }
+            ]
           }
         },
         {
-          "class_name": "push_button",
-          "text": "Register",
-          "box": "button_box"
-        },
-        {
-          "class_name": "push_button",
-          "text": "Forgot Password",
-          "box": "button_box"
+          "class_name": "row",
+          "box": {
+            "width": "700 pixels",
+            "height": "50 pixels"
+          },
+          "item_space": "8 pixels",
+          "children": [
+            {
+              "class_name": "push_button",
+              "text": "Login",
+              "box": "button_box",
+              "click_command": {
+                "class_name": "login_command",
+                "form_name": "user_login_form",
+                "user_name_field": "user_name",
+                "user_password_field": "password",
+                "on_success": {
+                  "class_name": "select_frame_command",
+                  "page_to_select": "home",
+                  "frame_to_load": "revolution_home_frame",
+                  "frame_contents_page": "revolution_root"
+                },
+                "on_fail": {
+                  "class_name": "set_property_command",
+                  "control_name": "chaptersubtitle",
+                  "property": "text",
+                  "value": "Could not log in"
+                }
+              }
+            },
+            {
+              "class_name": "push_button",
+              "text": "Register",
+              "box": "button_box"
+            },
+            {
+              "class_name": "push_button",
+              "text": "Forgot Password",
+              "box": "button_box"
+            }
+          ]
         }
       ]
+
     }
-  ]
+  ],
 }
