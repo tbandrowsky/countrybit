@@ -32,6 +32,7 @@
         },
         {
           "class_name": "form",
+          "name": "user_login_form",
           "box": {
             "width": "700 pixels",
             "height": "250 pixels",
@@ -86,9 +87,9 @@
                   "frame_contents_page": "revolution_root"
                 },
                 "on_fail": {
-                  "class_name": "set_property_command",
+                  "class_name": "set_property",
                   "control_name": "chaptersubtitle",
-                  "property": "text",
+                  "property_name": "text",
                   "value": "Could not log in"
                 }
               }

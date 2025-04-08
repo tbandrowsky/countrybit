@@ -60,6 +60,9 @@ namespace corona
 					on_fail->execute();
 				}
 			}
+			else {
+				log_warning("Could not find form '" + form_name + "'");
+			}
 			return obj;
 		}
 
@@ -1153,7 +1156,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "set_command"sv);
+			_dest.put_member("class_name", "set_property"sv);
 			_dest.put_member("control_name", control_name);
 			_dest.put_member("property_name", property_name);
 			_dest.put_member("value", value);
@@ -1164,7 +1167,7 @@ namespace corona
 			std::vector<std::string> missing;
 
 			if (not _src.has_members(missing, { "control_name", "property_name", "value"})) {
-				system_monitoring_interface::global_mon->log_warning("corona_set_text_command missing:");
+				system_monitoring_interface::global_mon->log_warning("set_property missing:");
 
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
