@@ -38,26 +38,32 @@ namespace corona
 		std::shared_ptr<corona_bus_command> on_success;
 		std::shared_ptr<corona_bus_command> on_fail;
 
-		virtual corona_client_response invoke(json _form_data)
+		corona_form_command() 
+		{
+			;
+		}
+
+		virtual corona_client_response invoke(json _form_data, comm_bus_app_interface* bus)
 		{
 			return response;
 		}
 
-		virtual json execute()
+		virtual json execute(json context, comm_bus_app_interface* bus)
 		{
 			json obj = bus->get_form_data(form_name);
 
 			if (obj.object()) {
-				auto response = invoke(obj);
+				auto response = invoke(obj, bus);
 				if (response.success) {
 					if (on_success) {
-						on_success->execute();
+						on_success->execute(context, bus);
 					}
 					obj = response.data;
 				}
 				else if (on_fail)
 				{
-					on_fail->execute();
+					context.put_member("property_value", response.message);
+					on_fail->execute(context, bus);
 				}
 			}
 			else {
@@ -121,8 +127,13 @@ namespace corona
 		std::string password1_field;
 		std::string password2_field;
 
+		corona_register_user_command()
+		{
+			;
+		}
 
-		virtual corona_client_response invoke(json obj) override
+
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
 			std::string user_name = obj[user_name_field];
 			std::string email = obj[email_field];
@@ -174,13 +185,17 @@ namespace corona
 
 		std::string user_name_field;
 
-		virtual corona_client_response invoke(json obj) override
+		corona_send_user_command()
+		{
+			;
+		}
+
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
 			std::string user_name = obj[user_name_field];
 			response = bus->remote_send_user(user_name);
 			return response;
 		}
-
 
 		virtual void get_json(json& _dest)
 		{
@@ -217,7 +232,12 @@ namespace corona
 		std::string user_name_field;
 		std::string user_password_field;
 
-		virtual corona_client_response invoke(json obj) override
+		corona_login_command()
+		{
+			;
+		}
+
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
 			std::string user_name = obj[user_name_field];
 			std::string password = obj[user_password_field];
@@ -266,7 +286,12 @@ namespace corona
 	public:
 		std::string			table_name;
 
-		virtual corona_client_response invoke(json obj) override
+		corona_get_classes_command()
+		{
+			;
+		}
+
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
 			json_parser jp;
 			control_base* cb_table = {};
@@ -331,7 +356,13 @@ namespace corona
 	class  corona_get_class_command : public corona_bus_command
 	{
 	public:
-		virtual json execute()
+
+		corona_get_class_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			return obj;
@@ -341,7 +372,13 @@ namespace corona
 	class  corona_put_class_command : public corona_bus_command
 	{
 	public:
-		virtual json execute()
+
+		corona_put_class_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			return obj;
@@ -356,7 +393,12 @@ namespace corona
 		std::string password1_field;
 		std::string password2_field;
 
-		virtual corona_client_response invoke(json obj) override
+		corona_set_password_command()
+		{
+			;
+		}
+
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
 			std::string user_name = obj[user_name_field];
 			std::string validation_code = obj[validation_code_field];
@@ -404,7 +446,12 @@ namespace corona
 		std::string	create_class_name;
 		corona_instance instance;
 
-		virtual corona_client_response invoke(json obj) override 
+		corona_create_object_command()
+		{
+			;
+		}
+
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
 			json new_object = bus->create_object(instance, create_class_name);
 			response.data = new_object;
@@ -453,8 +500,14 @@ namespace corona
 		corona_instance instance;
 		corona_client_response response;
 
-		virtual json execute()
+
+		corona_create_object_frame_command()
 		{
+			;
+		}
+
+		virtual json execute(json context, comm_bus_app_interface* bus)		
+{
 			json obj;
 			obj = bus->create_object(instance, create_class_name);
 			if (not obj.empty()) {
@@ -511,7 +564,12 @@ namespace corona
 		std::string		form_to_load;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_select_object_frame_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			control_base* cb = bus->find_control(table_name);
@@ -569,7 +627,12 @@ namespace corona
 		std::string form_name;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_select_object_page_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			control_base* cb = bus->find_control(table_name);
@@ -623,7 +686,12 @@ namespace corona
 		std::string form_name;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_preview_object_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			control_base* cb = bus->find_control(table_name);
@@ -678,7 +746,12 @@ namespace corona
 		std::string form_name;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_save_object_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			control_base* cb = nullptr;
@@ -730,7 +803,12 @@ namespace corona
 		json		object_data;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_load_object_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			control_base* cb = nullptr;
@@ -781,7 +859,12 @@ namespace corona
 		std::string		control_name;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_delete_object_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			control_base* cb = bus->find_control(control_name);
@@ -831,7 +914,12 @@ namespace corona
 		query_context		qctx;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_run_object_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json_parser jp;
 			json obj;
@@ -922,7 +1010,12 @@ namespace corona
 		query_context		qctx;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_search_objects_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json_parser jp;
 			json obj;
@@ -1012,7 +1105,12 @@ namespace corona
 		std::string		source_name;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_select_page_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			control_base* cb = {};
@@ -1078,11 +1176,16 @@ namespace corona
 		std::string		control_name;
 		std::vector<std::shared_ptr<corona_bus_command>> commands;
 
-		virtual json execute()
+		corona_script_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			for (auto comm : commands) {
-				obj = comm->execute();
+				obj = comm->execute(context, bus);
 			}
 			return obj;
 		}
@@ -1151,7 +1254,12 @@ namespace corona
 		// should have done this more cleanly with interfaces, but
 		// this gets the job done.
 
-		virtual json execute();
+		corona_set_property_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus);
 		virtual void get_json(json& _dest)
 		{
 			using namespace std::literals;
@@ -1192,7 +1300,12 @@ namespace corona
 		std::string		frame_contents_page;
 		corona_instance instance;
 
-		virtual json execute()
+		corona_select_frame_command()
+		{
+			;
+		}
+
+		virtual json execute(json context,  comm_bus_app_interface* bus)
 		{
 			json obj;
 			control_base* cb = {};

@@ -88,7 +88,7 @@
                 },
                 "on_fail": {
                   "class_name": "set_property",
-                  "control_name": "chaptersubtitle",
+                  "control_name": "message",
                   "property_name": "text",
                   "value": "Could not log in"
                 }

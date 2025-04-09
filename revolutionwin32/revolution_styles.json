@@ -105,11 +105,27 @@
           },
           "stops": [
             {
-              "color": "#353531",
+              "color": "#853570",
               "position": 0.1
             },
             {
               "color": "#353570",
+              "position": 0.2
+            },
+            {
+              "color": "#353550",
+              "position": 0.3
+            },
+            {
+              "color": "#353570",
+              "position": 0.5
+            },
+            {
+              "color": "#353550",
+              "position": 0.7
+            },
+            {
+              "color": "#252521",
               "position": 1.0
             }
           ]
@@ -168,7 +184,7 @@
       },
       "title_style": {
         "text_style": {
-          "font_name": "Georgia,Times New Roman",
+          "font_name": "Century Gothic,Arial",
           "font_size": 24,
           "vertical_alignment": "center",
           "horizontal_alignment": "near"
@@ -186,7 +202,7 @@
       },
       "subtitle_style": {
         "text_style": {
-          "font_name": "Georgia, Times New Roman",
+          "font_name": "Century Gothic,Arial",
           "font_size": 18,
           "bold": false,
           "underline": false
@@ -205,7 +221,7 @@
       },
       "chapter_title_style": {
         "text_style": {
-          "font_name": "Arial",
+          "font_name": "Century Gothic,Arial",
           "font_size": 24
         },
         "shape_border_thickness": 0,
@@ -221,7 +237,7 @@
       },
       "chapter_subtitle_style": {
         "text_style": {
-          "font_name": "Arial",
+          "font_name": "Century Gothic,Arial",
           "font_size": 17,
           "underline": true
         },

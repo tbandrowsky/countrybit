@@ -408,74 +408,271 @@ namespace corona
 
 		virtual corona_client_response remote_register_user(std::string _user_name, std::string _email, std::string _password1, std::string _password2)
 		{
-			return client.register_user(_user_name, _email, _password1, _password2);
+			corona_client_response response;
+
+			try 
+			{
+				response = client.register_user(_user_name, _email, _password1, _password2);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 
 		virtual corona_client_response remote_confirm_user(std::string _user_name, std::string _confirmation_code)
 		{
-			return client.confirm_user(_user_name, _confirmation_code);
+			corona_client_response response;
+
+			try
+			{
+				response = client.confirm_user(_user_name, _confirmation_code);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 
 		virtual corona_client_response remote_send_user(std::string _user_name)
 		{
-			return client.send_user(_user_name);
+			corona_client_response response;
+
+			try 
+			{
+				response = client.send_user(_user_name);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 
 		virtual corona_client_response remote_login(std::string _user_name, std::string _password)
 		{
-			return client.login(_user_name, _password);
+			corona_client_response response;
+
+			try 
+			{
+				response = client.login(_user_name, _password);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
+
 		}
 
 		virtual corona_client_response remote_login()
 		{
-			return client.login();
+			corona_client_response response;
+
+			try {
+				response = client.login();
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 
 		virtual corona_client_response remote_set_password(std::string user_name, std::string validation_code, std::string password1, std::string password2)
 		{
-			return client.set_password(user_name, validation_code, password1, password2);
+			corona_client_response response;
+
+			try 
+			{
+				response = client.set_password(user_name, validation_code, password1, password2);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 
 		virtual corona_client_response remote_get_classes()
 		{
-			return client.get_classes();
+			corona_client_response response;
+
+			try
+			{
+				response = client.get_classes();
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 
 		virtual corona_client_response remote_get_class(std::string class_name)
 		{
-			return client.get_class(class_name);
+			corona_client_response response;
+
+			try
+			{
+				response = client.get_class(class_name);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
+
 		virtual corona_client_response remote_put_class(json _class_definition)
 		{
-			return client.put_class(_class_definition);
+			corona_client_response response;
+
+			try
+			{
+				response = client.put_class(_class_definition);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
+
 		virtual corona_client_response remote_create_object(std::string class_name)
 		{
-			return client.create_object(class_name);
+			corona_client_response response;
+
+			try
+			{
+				response = client.create_object(class_name);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
+
 		virtual corona_client_response remote_edit_object(std::string _class_name, int64_t _object_id, bool _include_children)
 		{
-			return client.edit_object(_class_name, _object_id, _include_children);
+			corona_client_response response;
+
+			try
+			{
+
+				return client.edit_object(_class_name, _object_id, _include_children);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
+
 		virtual corona_client_response remote_get_object(std::string _class_name, int64_t _object_id, bool _include_children)
 		{
-			return client.get_object(_class_name, _object_id, _include_children);
+			corona_client_response response;
+
+			try
+			{
+				return client.get_object(_class_name, _object_id, _include_children);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 		virtual corona_client_response remote_put_object(json _object)
 		{
-			return client.put_object(_object);
+			corona_client_response response;
+
+			try
+			{
+				return client.put_object(_object);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 		virtual corona_client_response remote_run_object(json _object)
 		{
-			return client.run_object(_object);
+			corona_client_response response;
+
+			try
+			{
+				return client.run_object(_object);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 		virtual corona_client_response remote_delete_object(std::string _class_name, int64_t _object_id)
 		{
-			return client.delete_object(_class_name, _object_id);
+			corona_client_response response;
+
+			try
+			{
+				response = client.delete_object(_class_name, _object_id);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 		virtual corona_client_response remote_query_objects(json _query)
 		{
-			return client.query_objects(_query);
+			corona_client_response response;
+
+			try
+			{
+				return client.query_objects(_query);
+			}
+			catch (std::exception& exc)
+			{
+				response.success = false;
+				response.message = exc.what();
+			}
+
+			return response;
 		}
 
 		virtual json  local_create_user(json user_information)
@@ -1000,9 +1197,10 @@ namespace corona
 					log_json<json>(jcommand);
 					std::shared_ptr<corona_bus_command> command;
 					corona::put_json(command, jcommand);
+					json_parser jp2;
+					json context = jp2.create_object();
 					if (command) {
-						command->bus = this;
-						auto tranny = command->execute();
+						auto tranny = command->execute(context, this);
 					}
 					log_function_stop("run_command", jcommand["class_name"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					});
@@ -1023,8 +1221,9 @@ namespace corona
 					std::shared_ptr<corona_bus_command> command;
 					corona::put_json(command, jcommand);
 					if (command) {
-						command->bus = this;
-						auto tranny = command->execute();
+						json_parser jp2;
+						json context = jp2.create_object();
+						auto tranny = command->execute(context, this);
 					}
 					log_user_command_stop("run_command", jcommand["class_name"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				});

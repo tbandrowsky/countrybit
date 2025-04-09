@@ -465,19 +465,12 @@ namespace corona
 	class corona_bus_command : public json_serializable
 	{
 	public:
-		comm_bus_app_interface* bus;
-
-		corona_bus_command() : bus(nullptr)
+		corona_bus_command()
 		{
 			;
 		}
 
-		corona_bus_command(comm_bus_app_interface *_bus) : bus(_bus)
-		{
-			;
-		}
-
-		virtual json execute() = 0;
+		virtual json execute(json context, comm_bus_app_interface* _bus) = 0;
 
 		virtual void get_json(json& _dest)
 		{
