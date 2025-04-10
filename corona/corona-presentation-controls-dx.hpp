@@ -1284,14 +1284,6 @@ namespace corona
 				buttonBackLight.offset = {};
 				buttonBackLight.radiusX = inner_bounds.w / 2.0;
 				buttonBackLight.radiusY = inner_bounds.h / 2.0;
-
-				pwindow->getContext().setLinearGradientBrush(&this->buttonFaceNormal);
-				pwindow->getContext().setLinearGradientBrush(&this->buttonFaceDown);
-				pwindow->getContext().setLinearGradientBrush(&this->buttonFaceOver);
-				pwindow->getContext().setRadialGradientBrush(&this->buttonBackLight);
-				pwindow->getContext().setSolidColorBrush(&this->foregroundNormal);
-				pwindow->getContext().setSolidColorBrush(&this->foregroundDown);
-				pwindow->getContext().setSolidColorBrush(&this->foregroundOver);
 			}
 		}
 
@@ -1300,15 +1292,21 @@ namespace corona
 			;
 		}
 
-		virtual void draw_button(direct2dContext& _context, std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
+		virtual void draw_button(direct2dContext& _context, std::function<void(direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
 		{
 			if (auto pwindow = window.lock())
 			{
 				if (auto phost = host.lock()) {
 					auto draw_bounds = inner_bounds;
 
-					draw_bounds.x = 0;
-					draw_bounds.y = 0;
+					_context.setLinearGradientBrush(&this->buttonFaceNormal);
+					_context.setLinearGradientBrush(&this->buttonFaceDown);
+					_context.setLinearGradientBrush(&this->buttonFaceOver);
+					_context.setRadialGradientBrush(&this->buttonBackLight);
+					_context.setSolidColorBrush(&this->foregroundNormal);
+					_context.setSolidColorBrush(&this->foregroundDown);
+					_context.setSolidColorBrush(&this->foregroundOver);
+
 
 					auto& context = _context;
 
@@ -1316,19 +1314,19 @@ namespace corona
 					{
 						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceDown.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
-						draw_shape(this, &face_bounds, &foregroundDown);
+						draw_shape(_context, this, &face_bounds, &foregroundDown);
 					}
 					else if (mouse_over.value())
 					{
 						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceOver.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-						draw_shape(this, &face_bounds, &foregroundOver);
+						draw_shape(_context, this, &face_bounds, &foregroundOver);
 					}
 					else
 					{
 						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceNormal.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-						draw_shape(this, &face_bounds, &foregroundNormal);
+						draw_shape(_context, this, &face_bounds, &foregroundNormal);
 					}
 				}
 			}
@@ -1389,18 +1387,15 @@ namespace corona
 						if (auto phost = host.lock()) {
 							auto draw_bounds = inner_bounds;
 
-							std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
-
-							draw_bounds.x = 0;
-							draw_bounds.y = 0;
+							std::function<void(direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
 
 							point shape_origin;
 							point* porigin = &shape_origin;
 
-							auto& context = pwindow->getContext();
-							auto pcontext = &_context;
+							auto& context = _context;// pwindow->getContext();
+							auto pcontext = &context;
 
-							draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
+							draw_shape = [this, porigin, pcontext](direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
 								point start, stop;
 								start.x = _bounds->x;
 								start.y = _bounds->y;
@@ -1497,15 +1492,12 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page);
 
-		virtual void draw_button(direct2dContext& _context, std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
+		virtual void draw_button(direct2dContext& _context, std::function<void(direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
 		{
 			if (auto pwindow = window.lock())
 			{
 				if (auto phost = host.lock()) {
 					auto draw_bounds = inner_bounds;
-
-					draw_bounds.x = 0;
-					draw_bounds.y = 0;
 
 					auto& context = _context; // pwindow->getContext();
 
@@ -1513,19 +1505,19 @@ namespace corona
 					{
 						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceDown.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
-						draw_shape(this, &face_bounds, &foregroundDown);
+						draw_shape(_context, this, &face_bounds, &foregroundDown);
 					}
 					else if (mouse_over.value())
 					{
 						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceOver.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
-						draw_shape(this, &face_bounds, &foregroundOver);
+						draw_shape(_context, this, &face_bounds, &foregroundOver);
 					}
 					else
 					{
 						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceNormal.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
-						draw_shape(this, &face_bounds, &foregroundNormal);
+						draw_shape(_context, this, &face_bounds, &foregroundNormal);
 					}
 				}
 			}
@@ -1597,14 +1589,14 @@ namespace corona
 	{
 		image_mode = image_modes::use_filename;
 		image_filename = _name;
-		instance.bitmapName = std::format("bitmap_file_{0}", id);
+		instance.bitmapName = std::format("bitmap_file_{0}", _name);
 	}
 
 	void image_control::load_from_resource(DWORD _resource_id)
 	{
 		image_mode = image_modes::use_resource_id;
 		image_resource_id = _resource_id;
-		instance.bitmapName = std::format("bitmap_resource_{0}_{1}", id, _resource_id);
+		instance.bitmapName = std::format("bitmap_resource_{0}", _resource_id);
 	}
 
 	void image_control::load_from_control(int _control_id)
@@ -1678,9 +1670,7 @@ namespace corona
 				if (auto phost = host.lock()) {
 					auto draw_bounds = inner_bounds;
 
-					draw_bounds.x = 0;
-					draw_bounds.y = 0;
-
+					
 					if (image_mode == image_modes::use_control_id)
 					{
 
@@ -1824,10 +1814,8 @@ namespace corona
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+						std::function<void(direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
 
-						draw_bounds.x = 0;
-						draw_bounds.y = 0;
 
 						point shape_origin;
 						point* porigin = &shape_origin;
@@ -1835,7 +1823,7 @@ namespace corona
 						auto& context = _context; // pwindow->getContext();
 						auto pcontext = &context;
 
-						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
+						draw_shape = [this, porigin, pcontext](direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
 
 							point start;
 							point stop;
@@ -1891,18 +1879,16 @@ namespace corona
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+						std::function<void(direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
 
-						draw_bounds.x = 0;
-						draw_bounds.y = 0;
-
+						
 						point shape_origin;
 						point* porigin = &shape_origin;
 
 						auto& context = _context; // pwindow->getContext();
 						auto pcontext = &context;
 
-						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
+						draw_shape = [this, porigin, pcontext](direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
 							pathImmediateDto pid;
 							porigin->x = _bounds->x;
 							porigin->y = _bounds->y;
@@ -1949,10 +1935,8 @@ namespace corona
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+						std::function<void(direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
 
-						draw_bounds.x = 0;
-						draw_bounds.y = 0;
 
 						point shape_origin;
 						point* porigin = &shape_origin;
@@ -1960,7 +1944,7 @@ namespace corona
 						auto& context = _context; // pwindow->getContext();
 						auto pcontext = &context;
 
-						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
+						draw_shape = [this, porigin, pcontext](direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
 							pathImmediateDto pid;
 							porigin->x = _bounds->x;
 							porigin->y = _bounds->y;
@@ -2055,10 +2039,8 @@ namespace corona
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+						std::function<void(direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
 
-						draw_bounds.x = 0;
-						draw_bounds.y = 0;
 
 						point shape_origin;
 						point* porigin = &shape_origin;
@@ -2066,7 +2048,7 @@ namespace corona
 						auto& context = _context; // pwindow->getContext();
 						auto pcontext = &context;
 
-						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
+						draw_shape = [this, porigin, pcontext](direct2dContext& _context, gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
 
 							rectangle icon_bounds = *_bounds;
 
