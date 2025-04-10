@@ -435,20 +435,17 @@ namespace corona
 
 		void init()
 		{
-			on_create = [this](draw_control *_src)
+			on_create = [this](direct2dContext& _context, draw_control *_src)
 				{
 					if (items_source.assets)
 					{
 						items_source.assets(this, bounds);
 					}
 
-					if (auto pwindow = _src->window.lock())
-					{
-						pwindow->getContext().setSolidColorBrush(&selection_border);
-					}
+					_context.setSolidColorBrush(&selection_border);
 				};
 
-			on_draw = [this](control_base* _item)
+			on_draw = [this](direct2dContext& _context, control_base* _item)
 				{
 					if (auto pwindow = window.lock())
 					{
@@ -456,8 +453,8 @@ namespace corona
 
 							auto draw_bounds = inner_bounds;
 
-							draw_bounds.x = inner_bounds.x - bounds.x;
-							draw_bounds.y = inner_bounds.y - bounds.y;
+							draw_bounds.x = inner_bounds.x;
+							draw_bounds.y = inner_bounds.y;
 
 							point offset = { view_port.x, view_port.y };
 

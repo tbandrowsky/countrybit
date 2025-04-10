@@ -1167,7 +1167,7 @@ namespace corona
 		int								edit_block_id;
 
 		form_field						field_def;
-		std::function<void(form_field_control* _src, draw_control* _dest)> draw_visualization;
+		std::function<void(direct2dContext& _context, form_field_control* _src, draw_control* _dest)> draw_visualization;
 
 		std::string						error_text;
 
@@ -1246,14 +1246,14 @@ namespace corona
 			return result;
 		}
 
-		void set_field_visualization(std::function<void(form_field_control* _src, draw_control* _dest)> _draw_visualization)
+		void set_field_visualization(std::function<void(direct2dContext& _context, form_field_control* _src, draw_control* _dest)> _draw_visualization)
 		{
 			set_field(field_def, _draw_visualization);
 		}
 
 		void set_field(
 			form_field _field,
-			std::function<void(form_field_control* _src, draw_control* _dest)> _draw_visualization)
+			std::function<void(direct2dContext& _context, form_field_control* _src, draw_control* _dest)> _draw_visualization)
 		{
 			control_builder cb;
 			json_parser jp;
@@ -1289,8 +1289,8 @@ namespace corona
 			{
 				cb.draw(visualization_id, [this](draw_control& _settings) {
 					_settings.set_box(field_def.visualization_box);
-					_settings.on_draw = [this](draw_control* control) {
-						draw_visualization(this, control);
+					_settings.on_draw = [this](direct2dContext& _context, draw_control* control) {
+						draw_visualization(_context, this, control);
 						};
 					});
 			}
@@ -1967,8 +1967,6 @@ namespace corona
 
 					if (background_name) {
 						rectangle r = inner_bounds;
-						r.x = bounds.x - inner_bounds.x;
-						r.y = bounds.y - inner_bounds.y;
 						context.drawRectangle(&r, "", 0.0, background_name);
 					}
 
@@ -1980,8 +1978,6 @@ namespace corona
 					if (is_focused and border_name) 
 					{
 						rectangle r = inner_bounds;
-						r.x = bounds.x - inner_bounds.x;
-						r.y = bounds.y - inner_bounds.y;
 						context.drawRectangle(&r, border_name, 4, "");
 					}
 				}
@@ -1998,7 +1994,7 @@ namespace corona
 			}
 		}
 
-		virtual void render(ID2D1DeviceContext* _dest)
+		virtual void render(direct2dContext& _dest)
 		{
 			if (auto pwindow = window.lock())
 			{
@@ -2014,8 +2010,10 @@ namespace corona
 				source.left = 0;
 				source.top = 0;
 				source.bottom = bounds.h;
-				source.right = bounds.w;				
-				_dest->DrawBitmap(bm, &dest, 1.0);
+				source.right = bounds.w;
+
+				auto dc = _dest.getDeviceContext();
+				dc->DrawBitmap(bm, &dest, 1.0);
 			}
 			for (auto& child : children)
 			{

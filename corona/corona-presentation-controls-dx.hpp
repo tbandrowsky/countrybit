@@ -33,8 +33,8 @@ namespace corona
 
 		std::weak_ptr<applicationBase> host;
 		std::weak_ptr<direct2dChildWindow> window;
-		std::function<void(draw_control*)> on_draw;
-		std::function<void(draw_control*)> on_create;
+		std::function<void(direct2dContext& _context, draw_control*)> on_draw;
+		std::function<void(direct2dContext& _context, draw_control*)> on_create;
 
 		lockable camera_access_lock;
 
@@ -74,7 +74,17 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(mm);
 				}
 				window = phost->createDirect2Window(id, bounds);
-//				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
+
+				if (on_create) {
+					auto client_window = phost->getWindow();
+					auto pclient_window = client_window.lock();
+					if (pclient_window) {
+						auto context = pclient_window->getContext();
+						on_create(context, this);
+					}
+				}
+
+				//				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
 			}
 /*			else
 			{
@@ -83,9 +93,6 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning(ss.str());
 			}
 			*/
-			if (on_create) {
-				on_create(this);
-			}
 			for (auto child : children) {
 				child->create(_host);
 			}
@@ -112,139 +119,60 @@ namespace corona
 
 		virtual bool is_camera() { return false;  }
 
-		virtual void draw()
+		void render(direct2dContext& _context)
 		{
-			try {
+			D2D1_COLOR_F color = {};
 
-				// proves that the issue is not caused by some dumb misunderstanding of virtual methods
-				// this does get called.  So, if you have text not showing up, this is one to check
-		//		std::cout << typeid(*this).name() << " draw_control::draw" << std::endl;
+			std::string border_name;
+			std::string background_name;
 
-				bool adapter_blown_away = false;
-
-/*				if (is_camera()) {
-					::DebugBreak();
-				}
-				*/
-				if (auto pwindow = window.lock())
-				{
-					pwindow->beginDraw(adapter_blown_away);
-					if (not adapter_blown_away)
-					{
-						auto& context = pwindow->getContext();
-
-						D2D1_COLOR_F color = {};
-
-						std::string border_name;
-						std::string background_name;
-
-						auto dc = context.getDeviceContext();
-
-						char letter_sequence[16] = "#00000000";
-
-//						letter_sequence[4] = rand() % 9 + '0';
-
-						color = toColor(letter_sequence);
-						dc->Clear(color);
-
-						if (view_style) {
-							auto vs = *view_style;
-							point pt;
-							pt.x = bounds.w;
-							pt.y = bounds.h;
-							vs.apply_scale(pt);
-							pwindow->getContext().setViewStyle(vs);
-						}
-
-						if (view_style and view_style->box_border_brush.get_name())
-						{
-							border_name = view_style->box_border_brush.get_name();
-						}
-
-						if (view_style and view_style->box_fill_brush.get_name())
-						{
-							background_name = view_style->box_fill_brush.get_name();
-						}
-
-						if ( background_name.size()) {
-							rectangle r = inner_bounds;
-							r.x -= bounds.x;
-							r.y -= bounds.y;
-							//							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
-							context.drawRectangle(&r, "", 0, background_name);
-						}
-
-						/* 
-						* this is commented out because it is helpful for debugging. 
-						* a parent is always the background of its children, 
-						* so, what this does is slightly alter a nasty pink
-						* color so you can see what the shape of all the things are 
-						* that do not have backgrounds.  This is helpful for layout work and debugging.
-						*/
-
-						if (on_draw)
-						{
-							on_draw(this);
-						}
-
-						if (border_name.size()) {
-							rectangle r = inner_bounds;
-							r.x -= bounds.x;
-							r.y -= bounds.y;
-							//							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
-							context.drawRectangle(&r, border_name, view_style->box_border_thickness, "");
-						}
-
-
-					}
-					pwindow->endDraw(adapter_blown_away);
-				}
-/*				else
-				{
-					std::cout << typeid(*this).name() << " draw_control::draw NOT DRAWN, not able to lock window" << std::endl;
-				}
-				*/
-
-				for (auto& child : children) 
-				{
-					try 
-					{
-						child->draw();
-					}
-					catch (std::exception exc)
-					{
-						system_monitoring_interface::global_mon->log_exception(exc);
-					}
-				}
+			if (view_style) {
+				auto vs = *view_style;
+				point pt;
+				pt.x = bounds.w;
+				pt.y = bounds.h;
+				vs.apply_scale(pt);
+				_context.setViewStyle(vs);
 			}
-			catch (std::exception exc)
+
+			if (view_style and view_style->box_border_brush.get_name())
 			{
-				system_monitoring_interface::global_mon->log_exception(exc);
+				border_name = view_style->box_border_brush.get_name();
 			}
-		}
 
-		void render(ID2D1DeviceContext* _dest)
-		{
-			if (auto pwindow = window.lock())
+			if (view_style and view_style->box_fill_brush.get_name())
 			{
-				auto bm = pwindow->getBitmap();
-				D2D1_RECT_F dest;
-				dest.left = bounds.x;
-				dest.top = bounds.y;
-				dest.right = bounds.w + bounds.x;
-				dest.bottom = bounds.h + bounds.y;
-
-				auto size = bm->GetPixelSize();
-				D2D1_RECT_F source;
-				source.left = 0;
-				source.top = 0;
-				source.bottom = bounds.h;
-				source.right = bounds.w;
-				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC, &source);
+				background_name = view_style->box_fill_brush.get_name();
 			}
+
+			if (background_name.size()) {
+				rectangle r = inner_bounds;
+				//							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
+				_context.drawRectangle(&r, "", 0, background_name);
+			}
+
+			/*
+			* this is commented out because it is helpful for debugging.
+			* a parent is always the background of its children,
+			* so, what this does is slightly alter a nasty pink
+			* color so you can see what the shape of all the things are
+			* that do not have backgrounds.  This is helpful for layout work and debugging.
+			*/
+
+			if (on_draw)
+			{
+				on_draw(_context, this);
+			}
+
+			if (border_name.size()) {
+				rectangle r = inner_bounds;
+				//							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
+				_context.drawRectangle(&r, border_name, view_style->box_border_thickness, "");
+			}
+
 			for (auto &child : children)
 			{
-				child->render(_dest);
+				child->render(_context);
 			}
 		}
 
@@ -359,7 +287,7 @@ namespace corona
 
 		void init()
 		{
-			on_draw = [this](draw_control* _dc) -> void {
+			on_draw = [this](direct2dContext& _context, draw_control* _dc) -> void {
 
 				counter++;
 
@@ -367,9 +295,6 @@ namespace corona
 				{
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
-
-						draw_bounds.x = inner_bounds.x - bounds.x;
-						draw_bounds.y = inner_bounds.y - bounds.y;
 
 						auto& context = pwindow->getContext();
 						ID2D1DeviceContext* dc = context.getDeviceContext();
@@ -484,8 +409,8 @@ namespace corona
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						draw_bounds.x = inner_bounds.x - bounds.x;
-						draw_bounds.y = inner_bounds.y - bounds.y;
+						draw_bounds.x = inner_bounds.x;
+						draw_bounds.y = inner_bounds.y;
 
 						auto& context = pwindow->getContext();
 
@@ -518,7 +443,7 @@ namespace corona
 				}
 				};
 
-			on_create = [this](draw_control* _ctrl) ->void
+			on_create = [this](direct2dContext& _context, draw_control* _ctrl) ->void
 				{
 					comm_bus_app_interface::global_bus->run_ui([this]() ->void {
 						start();
@@ -1375,7 +1300,7 @@ namespace corona
 			;
 		}
 
-		virtual void draw_button(std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
+		virtual void draw_button(direct2dContext& _context, std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
 		{
 			if (auto pwindow = window.lock())
 			{
@@ -1385,7 +1310,7 @@ namespace corona
 					draw_bounds.x = 0;
 					draw_bounds.y = 0;
 
-					auto& context = pwindow->getContext();
+					auto& context = _context;
 
 					if (mouse_left_down.value())
 					{
@@ -1457,7 +1382,7 @@ namespace corona
 		{
 			auto ctrl = this;
 
-			on_draw = [this](control_base* _item)
+			on_draw = [this](direct2dContext& _context, control_base* _item)
 				{
 					if (auto pwindow = window.lock())
 					{
@@ -1473,7 +1398,7 @@ namespace corona
 							point* porigin = &shape_origin;
 
 							auto& context = pwindow->getContext();
-							auto pcontext = &context;
+							auto pcontext = &_context;
 
 							draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
 								point start, stop;
@@ -1489,7 +1414,7 @@ namespace corona
 								pcontext->drawLine(&start, &stop, _foreground->name, 4);
 								};
 
-							draw_button(draw_shape);
+							draw_button(context, draw_shape);
 						}
 					}
 				};
@@ -1572,7 +1497,7 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page);
 
-		virtual void draw_button(std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
+		virtual void draw_button(direct2dContext& _context, std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
 		{
 			if (auto pwindow = window.lock())
 			{
@@ -1582,7 +1507,7 @@ namespace corona
 					draw_bounds.x = 0;
 					draw_bounds.y = 0;
 
-					auto& context = pwindow->getContext();
+					auto& context = _context; // pwindow->getContext();
 
 					if (mouse_left_down.value() or *active_id == id)
 					{
@@ -1694,11 +1619,11 @@ namespace corona
 		set_origin(0.0_px, 0.0_px);
 		set_size(50.0_px, 50.0_px);
 
-		on_create = [this](draw_control* _src)
+		on_create = [this](direct2dContext& _context, draw_control* _src)
 			{
 				if (auto pwindow = this->window.lock())
 				{
-					auto& context = pwindow->getContext();
+					auto& context = _context;
 
 					solidBrushRequest sbr;
 					sbr.brushColor = toColor("FFFF00");
@@ -1747,7 +1672,7 @@ namespace corona
 				}
 			};
 
-		on_draw = [this](draw_control* _src) {
+		on_draw = [this](direct2dContext& _context, draw_control* _src) {
 			if (auto pwindow = this->window.lock())
 			{
 				if (auto phost = host.lock()) {
@@ -1771,7 +1696,7 @@ namespace corona
 						instance.height = draw_bounds.h;
 						instance.alpha = 1.0;
 
-						auto& context = pwindow->getContext();
+						auto& context = _context; // window->getContext();
 
 						context.drawBitmap(&instance);
 					}
@@ -1809,7 +1734,7 @@ namespace corona
 		set_origin(0.0_px, 0.0_px);
 		set_size(50.0_px, 50.0_px);
 
-		on_create = [this](draw_control* _src)
+		on_create = [this](direct2dContext& _context, draw_control* _src)
 			{
 				if (auto pwindow = this->window.lock())
 				{
@@ -1817,22 +1742,21 @@ namespace corona
 				}
 			};
 
-		on_draw = [this](draw_control* _src) {
+		on_draw = [this](direct2dContext& _context, draw_control* _src) {
 			frame_counter++;
 			if (auto pwindow = this->window.lock())
 			{
 				if (auto phost = host.lock()) {
 					auto draw_bounds = inner_bounds;
 
-					draw_bounds.x = inner_bounds.x - bounds.x;
-					draw_bounds.y = inner_bounds.y - bounds.y;
+					draw_bounds.x = inner_bounds.x;
+					draw_bounds.y = inner_bounds.y;
 
 					control_base *camb = find(camera_control_id);
 					if (camb) {
 						camera_control* cam = dynamic_cast<camera_control*>(camb);
 						if (cam) {
-							auto* dc = pwindow->getContext()
-								.getDeviceContext();
+							auto* dc = _context.getDeviceContext();
 
 							auto *bm = cam->get_camera_image(dc);
 							if (bm) 
@@ -1893,7 +1817,7 @@ namespace corona
 	{
 		auto ctrl = this;
 
-		on_draw = [this](control_base* _item)
+		on_draw = [this](direct2dContext& _context, control_base* _item)
 			{
 				if (auto pwindow = window.lock())
 				{
@@ -1908,7 +1832,7 @@ namespace corona
 						point shape_origin;
 						point* porigin = &shape_origin;
 
-						auto& context = pwindow->getContext();
+						auto& context = _context; // pwindow->getContext();
 						auto pcontext = &context;
 
 						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
@@ -1940,7 +1864,7 @@ namespace corona
 							pcontext->drawPath(&pid);
 							};
 
-						draw_button(draw_shape);
+						draw_button(_context, draw_shape);
 
 					}
 				}
@@ -1960,7 +1884,7 @@ namespace corona
 	{
 		auto ctrl = this;
 
-		on_draw = [this](control_base* _item)
+		on_draw = [this](direct2dContext& _context, control_base* _item)
 			{
 				if (auto pwindow = window.lock())
 				{
@@ -1975,7 +1899,7 @@ namespace corona
 						point shape_origin;
 						point* porigin = &shape_origin;
 
-						auto& context = pwindow->getContext();
+						auto& context = _context; // pwindow->getContext();
 						auto pcontext = &context;
 
 						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
@@ -1994,7 +1918,7 @@ namespace corona
 							pcontext->drawPath(&pid);
 							};
 
-						draw_button(draw_shape);
+						draw_button(_context, draw_shape);
 
 					}
 				}
@@ -2018,7 +1942,7 @@ namespace corona
 	{
 		auto ctrl = this;
 
-		on_draw = [this](control_base* _item)
+		on_draw = [this](direct2dContext& _context, control_base* _item)
 			{
 				if (auto pwindow = window.lock())
 				{
@@ -2033,7 +1957,7 @@ namespace corona
 						point shape_origin;
 						point* porigin = &shape_origin;
 
-						auto& context = pwindow->getContext();
+						auto& context = _context; // pwindow->getContext();
 						auto pcontext = &context;
 
 						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
@@ -2052,7 +1976,7 @@ namespace corona
 							pcontext->drawPath(&pid);
 							};
 
-						draw_button(draw_shape);
+						draw_button(_context, draw_shape);
 
 					}
 				}
@@ -2115,16 +2039,16 @@ namespace corona
 
 		auto ctrl = this;
 
-		on_create = [this](draw_control* _src)
+		on_create = [this](direct2dContext& _context, draw_control* _src)
 			{
 				if (auto pwindow = this->window.lock())
 				{
-					pwindow->getContext().setSolidColorBrush(&this->text_idle_brush);
-					pwindow->getContext().setTextStyle(&this->text_style);
+					_context.setSolidColorBrush(&this->text_idle_brush);
+					_context.setTextStyle(&this->text_style);
 				}
 			};
 
-		on_draw = [this](control_base* _item)
+		on_draw = [this](direct2dContext& _context, control_base* _item)
 			{
 				if (auto pwindow = window.lock())
 				{
@@ -2139,7 +2063,7 @@ namespace corona
 						point shape_origin;
 						point* porigin = &shape_origin;
 
-						auto& context = pwindow->getContext();
+						auto& context = _context; // pwindow->getContext();
 						auto pcontext = &context;
 
 						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
@@ -2175,7 +2099,7 @@ namespace corona
 
 							};
 
-						draw_button(draw_shape);
+						draw_button(context, draw_shape);
 					}
 				}
 			};

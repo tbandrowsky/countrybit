@@ -71,6 +71,7 @@ namespace corona
 		HWND createWindow(DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font);
 		void destroyWindow(HWND hwnd);
 
+		std::weak_ptr<direct2dWindow> getWindow();
 		std::weak_ptr<direct2dChildWindow> createDirect2Window(DWORD control_id, rectangle bounds);
 
 		virtual bool isDialogMessage(HWND hwnd, LPMSG msg);
@@ -256,9 +257,9 @@ namespace corona
 
 			if (not failedDevice)
 			{
-				auto wins = winroot->getChildren();
 				auto& ctx = winroot->getContext();
 				auto dc = ctx.getDeviceContext();
+				bool adapterLost;
 
 				// here, we tell the children to draw on their own surfaces...
 				// and then, draw on this one.
@@ -400,6 +401,11 @@ namespace corona
 			hfont = ::CreateFontIndirectA(&srcFont);
 		}
 		return hfont;
+	}
+
+	std::weak_ptr<direct2dWindow> directApplicationWin32::getWindow()
+	{
+		return factory->getWindow(hwndRoot);
 	}
 
 	std::weak_ptr<direct2dChildWindow> directApplicationWin32::createDirect2Window(DWORD control_id, rectangle bounds)

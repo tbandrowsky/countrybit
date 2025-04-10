@@ -550,8 +550,10 @@ namespace corona {
 				_ctx.setViewStyle(vsr);
 				_ctx.drawRectangle(&size_rect, style->PageStyle->box_fill_brush.get_name(), style->PageStyle->box_border_thickness, style->PageStyle->box_fill_brush.get_name());
 			}
+
+			cp->render(_ctx);
+
 			auto dc = _ctx.getDeviceContext();
-			cp->render(dc);
 
 			if (auto phost = window_host.lock()) {
 				auto pos = phost->getWindowClientPos();
