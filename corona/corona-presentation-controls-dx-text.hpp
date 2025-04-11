@@ -352,7 +352,7 @@ namespace corona
 		set_origin(0.0_px, 0.0_px);
 		set_size(1.0_container, 1.2_fontgr);
 
-		on_create = [](direct2dContext& _context, draw_control* _src)
+		on_create = [](std::shared_ptr<direct2dContext>& _context, draw_control* _src)
 			{
 				text_display_control *t = dynamic_cast<text_display_control*>(_src);
 				if (t) {
@@ -360,7 +360,7 @@ namespace corona
 				}
 			};
 
-		on_draw = [](direct2dContext& _context, draw_control* _src) {
+		on_draw = [](std::shared_ptr<direct2dContext>& _context, draw_control* _src) {
 			if (auto pwindow = _src->window.lock())
 			{
 				if (auto phost = _src->host.lock()) {
@@ -375,7 +375,7 @@ namespace corona
 					//std::cout << test_text << std::endl;
 
 					if (t->view_style) {
-						_context.drawText(t->text.c_str(), &draw_bounds, t->view_style->text_style.name, t->view_style->shape_fill_brush.get_name());
+						_context->drawText(t->text.c_str(), &draw_bounds, t->view_style->text_style.name, t->view_style->shape_fill_brush.get_name());
 					}
 				}
 			}

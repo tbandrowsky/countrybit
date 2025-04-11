@@ -87,9 +87,9 @@ namespace corona
 		void resize(UINT x, UINT y);
 		void moveWindow(UINT x, UINT y, UINT h, UINT w);
 
-		virtual direct2dContext& getContext()
+		virtual std::shared_ptr<direct2dContext> getContext()
 		{
-			return *context.get();
+			return context;
 		}
 
 		ID2D1Bitmap1* getBitmap() { return bitmap; }
@@ -275,7 +275,7 @@ namespace corona
 	{
 		if (not children.contains(_id)) {
 			auto pthis = weak_from_this();
-			auto new_ptr = std::make_shared<direct2dChildWindow>(pthis, getContext().getAdapter(), _x, _y, _w, _h);
+			auto new_ptr = std::make_shared<direct2dChildWindow>(pthis, getContext()->getAdapter(), _x, _y, _w, _h);
 			children.insert_or_assign(_id, new_ptr);
 		}
 

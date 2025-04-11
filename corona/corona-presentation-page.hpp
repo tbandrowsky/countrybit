@@ -183,14 +183,14 @@ namespace corona
 			}
 		}
 
-		void render(direct2dContext& _context)
+		void render(std::shared_ptr<direct2dContext>& _context)
 		{
 			if (root.get())
 			{
 				char letter_sequence[16] = "#00000000";
 
 				auto color = toColor(letter_sequence);
-				auto dc = _context.getDeviceContext();
+				auto dc = _context->getDeviceContext();
 				dc->Clear(color);
 
 				root->render(_context);

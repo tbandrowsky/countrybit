@@ -435,17 +435,17 @@ namespace corona
 
 		void init()
 		{
-			on_create = [this](direct2dContext& _context, draw_control *_src)
+			on_create = [this](std::shared_ptr<direct2dContext>& _context, draw_control *_src)
 				{
 					if (items_source.assets)
 					{
 						items_source.assets(this, bounds);
 					}
 
-					_context.setSolidColorBrush(&selection_border);
+					_context->setSolidColorBrush(&selection_border);
 				};
 
-			on_draw = [this](direct2dContext& _context, control_base* _item)
+			on_draw = [this](std::shared_ptr<direct2dContext>& _context, control_base* _item)
 				{
 					if (auto pwindow = window.lock())
 					{

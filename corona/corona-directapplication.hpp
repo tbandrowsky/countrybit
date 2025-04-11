@@ -257,8 +257,8 @@ namespace corona
 
 			if (not failedDevice)
 			{
-				auto& ctx = winroot->getContext();
-				auto dc = ctx.getDeviceContext();
+				auto ctx = winroot->getContext();
+				auto dc = ctx->getDeviceContext();
 				bool adapterLost;
 
 				// here, we tell the children to draw on their own surfaces...

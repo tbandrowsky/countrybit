@@ -1152,6 +1152,7 @@ namespace corona
 		control_builder& form(int _id, std::function<void(form_control&)> _settings = nullptr);
 		control_builder& form_fieldy(int _id, json _field_def);
 		control_builder& form_fieldy(int _id, form_field _field_def);
+		control_builder& image(int _id, std::function<void(image_control&)> _settings = nullptr);
 
 		std::shared_ptr<control_base> from_json(json _control_properties, layout_rect _default = {});
 	};
@@ -1167,7 +1168,7 @@ namespace corona
 		int								edit_block_id;
 
 		form_field						field_def;
-		std::function<void(direct2dContext& _context, form_field_control* _src, draw_control* _dest)> draw_visualization;
+		std::function<void(std::shared_ptr<direct2dContext>& _context, form_field_control* _src, draw_control* _dest)> draw_visualization;
 
 		std::string						error_text;
 
@@ -1246,14 +1247,14 @@ namespace corona
 			return result;
 		}
 
-		void set_field_visualization(std::function<void(direct2dContext& _context, form_field_control* _src, draw_control* _dest)> _draw_visualization)
+		void set_field_visualization(std::function<void(std::shared_ptr<direct2dContext>& _context, form_field_control* _src, draw_control* _dest)> _draw_visualization)
 		{
 			set_field(field_def, _draw_visualization);
 		}
 
 		void set_field(
 			form_field _field,
-			std::function<void(direct2dContext& _context, form_field_control* _src, draw_control* _dest)> _draw_visualization)
+			std::function<void(std::shared_ptr<direct2dContext>& _context, form_field_control* _src, draw_control* _dest)> _draw_visualization)
 		{
 			control_builder cb;
 			json_parser jp;
@@ -1289,7 +1290,7 @@ namespace corona
 			{
 				cb.draw(visualization_id, [this](draw_control& _settings) {
 					_settings.set_box(field_def.visualization_box);
-					_settings.on_draw = [this](direct2dContext& _context, draw_control* control) {
+					_settings.on_draw = [this](std::shared_ptr<direct2dContext>& _context, draw_control* control) {
 						draw_visualization(_context, this, control);
 						};
 					});
@@ -1994,7 +1995,7 @@ namespace corona
 			}
 		}
 
-		virtual void render(direct2dContext& _dest)
+		virtual void render(std::shared_ptr<direct2dContext>& _dest)
 		{
 			if (auto pwindow = window.lock())
 			{
@@ -2012,7 +2013,7 @@ namespace corona
 				source.bottom = bounds.h;
 				source.right = bounds.w;
 
-				auto dc = _dest.getDeviceContext();
+				auto dc = _dest->getDeviceContext();
 				dc->DrawBitmap(bm, &dest, 1.0);
 			}
 			for (auto& child : children)
@@ -2192,7 +2193,7 @@ namespace corona
 				cl.set_size(1.0_remaining, 1.0_container);
 				cl.set_content_align(visual_alignment::align_center);
 				cl.set_item_margin(10.0_px);
-				cl.set_origin(title_start, 0.0_px);
+				cl.set_origin(title_start, 12.0_px);
 				})
 				.title(title_name, [this](title_control& control) {
 						control.set_nchittest(HTCAPTION);
@@ -2361,6 +2362,16 @@ namespace corona
 	};
 
 	// implementation
+
+	control_builder& control_builder::image(int _id, std::function<void(image_control&)> _settings)
+	{
+		auto tc = create<image_control>(_id);
+		apply_item_sizes(tc);
+		if (_settings) {
+			_settings(*tc);
+		}
+		return *this;
+	}
 
 	control_builder& control_builder::tab_button(int _id, std::function<void(tab_button_control&)> _settings)
 	{
@@ -2857,6 +2868,13 @@ namespace corona
 				_ctrl.set_data(control_data);
 				});
 		}
+		else if (class_name == "image")
+		{
+			image(field_id, [&control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
 		else if (class_name == "form_field")
 		{
 			form_fieldy(field_id, control_properties);
@@ -2867,6 +2885,8 @@ namespace corona
 			msg = std::format("class_name '{0}' is invalid", class_name);
 			system_monitoring_interface::global_mon->log_warning(msg);
 			std::cout << "Currently the following control classes are supported.  Set class_name to one of these." << std::endl;
+			std::cout << "Special types" << std::endl;
+			std::cout << "image, camera, " << std::endl;
 			std::cout << "Text Box types" << std::endl;
 			std::cout << "title, subtitle, chaptertitle, chaptersubtitle, paragraph, " << std::endl;
 			std::cout << "code, label, error, status, success" << std::endl;

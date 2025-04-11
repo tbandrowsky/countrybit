@@ -178,7 +178,7 @@ namespace corona {
 			throw std::exception("could not lock current page");
 		}
 
-		virtual bool drawFrame(direct2dContext& _ctx);
+		virtual bool drawFrame(std::shared_ptr<direct2dContext>& _context);
 		virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
 		virtual void keyPress(int _ctrl_id, int _key);
@@ -533,7 +533,7 @@ namespace corona {
 		}
 	}
 
-	bool presentation::drawFrame(direct2dContext& _ctx)
+	bool presentation::drawFrame(std::shared_ptr<direct2dContext>& _ctx)
 	{
 		auto cp = current_page.lock();
 		if (cp) {
@@ -547,13 +547,13 @@ namespace corona {
 				size_pt.x = size_rect.w;
 				size_pt.y = size_rect.h;
 				vsr.apply_scale(size_pt);
-				_ctx.setViewStyle(vsr);
-				_ctx.drawRectangle(&size_rect, style->PageStyle->box_fill_brush.get_name(), style->PageStyle->box_border_thickness, style->PageStyle->box_fill_brush.get_name());
+				_ctx->setViewStyle(vsr);
+				_ctx->drawRectangle(&size_rect, style->PageStyle->box_fill_brush.get_name(), style->PageStyle->box_border_thickness, style->PageStyle->box_fill_brush.get_name());
 			}
 
 			cp->render(_ctx);
 
-			auto dc = _ctx.getDeviceContext();
+			auto dc = _ctx->getDeviceContext();
 
 			if (auto phost = window_host.lock()) {
 				auto pos = phost->getWindowClientPos();
@@ -596,7 +596,7 @@ namespace corona {
 					{ toColor("#202020FF"), 0.95 },
 					{ toColor("#A0A0A0FF"), 1.0 },
 				};
-				_ctx.setLinearGradientBrush(&lgbr);
+				_ctx->setLinearGradientBrush(&lgbr);
 
 				double inner_right = pos.w - border_thickness * 2;
 				double inner_bottom = pos.h - border_thickness * 2;
@@ -617,7 +617,7 @@ namespace corona {
 				pathx.path.addLineTo(0, 0);
 				pathx.closed = true;
 
-				_ctx.drawPath(&pathx);
+				_ctx->drawPath(&pathx);
 			}
 
 		}

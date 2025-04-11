@@ -39,7 +39,7 @@ namespace corona
 
 	public:
 
-		virtual bool drawFrame(direct2dContext& _ctx) = 0;
+		virtual bool drawFrame(std::shared_ptr<direct2dContext>& _ctx) = 0;
 		virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
 		virtual void keyPress(int _ctrl_id, int _key) = 0;

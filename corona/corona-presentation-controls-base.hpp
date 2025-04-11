@@ -557,7 +557,7 @@ namespace corona
 		virtual void create(std::weak_ptr<applicationBase> _host);
 		virtual void destroy();
 		virtual void draw();
-		virtual void render(direct2dContext& _context);
+		virtual void render(std::shared_ptr<direct2dContext>& _context);
 
 		control_base& set_origin(measure _x, measure _y)
 		{
@@ -775,7 +775,7 @@ namespace corona
 		}
 	}
 
-	void control_base::render(direct2dContext& _context)
+	void control_base::render(std::shared_ptr<direct2dContext>& _context)
 	{
 		for (auto child : children) {
 			child->render(_context);
