@@ -1231,19 +1231,19 @@ namespace corona
 
 			buttonFaceNormal.gradientStops = {
 				{ toColor(dark_step), 0.0 },
-				{ toColor(light_step), 0.9 },
+				{ toColor(light_step), 0.8 },
 				{ toColor(dark_step), 1.0 },
 			};
 
 			buttonFaceOver.gradientStops = {
 				{ toColor(dark_step), 0.0 },
-				{ toColor(light_step), 0.9 },
+				{ toColor(light_step), 0.8 },
 				{ toColor(dark_step), 1.0 },
 			};
 
 			buttonFaceDown.gradientStops = {
 				{ toColor(dark_step), 0.0 },
-				{ toColor(light_step), 0.95 },
+				{ toColor(light_step), 0.9 },
 				{ toColor(dark_step), 1.0 },
 			};
 
@@ -1255,7 +1255,7 @@ namespace corona
 
 			foregroundNormal.brushColor = toColor("#C5C6CA");
 			foregroundOver.brushColor = toColor("#F5F6FA");
-			foregroundDown.brushColor = toColor("#E5E6EA");
+			foregroundDown.brushColor = toColor("#FFD700");
 		}
 
 		virtual ~gradient_button_control()
@@ -1270,25 +1270,25 @@ namespace corona
 				if (auto phost = host.lock()) {
 					auto draw_bounds = inner_bounds;
 
-					buttonFaceNormal.start.x = inner_bounds.w / 2;
-					buttonFaceNormal.start.y = 0;
-					buttonFaceNormal.stop.x = inner_bounds.w / 2;
-					buttonFaceNormal.stop.y = inner_bounds.h;
+					buttonFaceNormal.start.x = draw_bounds.x + draw_bounds.w / 2;
+					buttonFaceNormal.start.y = draw_bounds.y;
+					buttonFaceNormal.stop.x = draw_bounds.x + draw_bounds.w / 2;
+					buttonFaceNormal.stop.y = draw_bounds.y + draw_bounds.h;
 
-					buttonFaceDown.start.x = inner_bounds.w / 2;
-					buttonFaceDown.start.y = 0;
-					buttonFaceDown.stop.x = inner_bounds.w / 2;
-					buttonFaceDown.stop.y = inner_bounds.h;
+					buttonFaceDown.start.x = draw_bounds.x + draw_bounds.w / 2;
+					buttonFaceDown.start.y = draw_bounds.y;
+					buttonFaceDown.stop.x = draw_bounds.x + draw_bounds.w / 2;
+					buttonFaceDown.stop.y = draw_bounds.y + draw_bounds.h;
 
-					buttonFaceOver.start.x = inner_bounds.w / 2;
-					buttonFaceOver.start.y = 0;
-					buttonFaceOver.stop.x = inner_bounds.w / 2;
-					buttonFaceOver.stop.y = inner_bounds.h;
+					buttonFaceOver.start.x = draw_bounds.x + draw_bounds.w / 2;
+					buttonFaceOver.start.y = draw_bounds.y;
+					buttonFaceOver.stop.x = draw_bounds.x + draw_bounds.w / 2;
+					buttonFaceOver.stop.y = draw_bounds.y + draw_bounds.h;
 
-					buttonBackLight.center = rectangle_math::center(inner_bounds);
+					buttonBackLight.center = rectangle_math::center(draw_bounds);
 					buttonBackLight.offset = {};
-					buttonBackLight.radiusX = inner_bounds.w / 2.0;
-					buttonBackLight.radiusY = inner_bounds.h / 2.0;
+					buttonBackLight.radiusX = draw_bounds.w / 2.0;
+					buttonBackLight.radiusY = draw_bounds.h / 2.0;
 
 					_context->setLinearGradientBrush(&this->buttonFaceNormal);
 					_context->setLinearGradientBrush(&this->buttonFaceDown);
