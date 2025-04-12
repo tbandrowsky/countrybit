@@ -50,9 +50,9 @@ namespace corona
 
 		ID2D1Bitmap1* getBitmap() { return childBitmap->getBitmap(); }
 
-		virtual direct2dContext& getContext()
+		virtual std::shared_ptr<direct2dContext> getContext()
 		{
-			return *context.get();
+			return context;
 		}
 
 		virtual ID2D1DeviceContext* beginDraw(bool& _adapter_blown_away);

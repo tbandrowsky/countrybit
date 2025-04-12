@@ -36,7 +36,7 @@
             },
             "box_border_brush": {
               "class_name": "solid_brush",
-              "color": "111111"
+              "color": "111112"
             },
             "box_border_thickness": 4
           },
