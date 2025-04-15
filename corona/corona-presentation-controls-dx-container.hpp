@@ -418,7 +418,7 @@ namespace corona
 			selection_border.name +="_selection";
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setSolidColorBrush(&selection_border);
+				pwindow->getContext()->setSolidColorBrush(&selection_border);
 			}
 		}
 
@@ -429,7 +429,7 @@ namespace corona
 			selection_border.name += "_selection";
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setSolidColorBrush(&selection_border);
+				pwindow->getContext()->setSolidColorBrush(&selection_border);
 			}
 		}
 
@@ -439,7 +439,7 @@ namespace corona
 				{
 					if (items_source.assets)
 					{
-						items_source.assets(this, bounds);
+						items_source.assets(_context, this, bounds);
 					}
 
 					_context->setSolidColorBrush(&selection_border);
@@ -458,7 +458,7 @@ namespace corona
 
 							point offset = { view_port.x, view_port.y };
 
-							auto& context = pwindow->getContext();
+							auto& context = _context;
 
 							if (not page_to_item_index.contains(selected_page_index )) {
 								std::string msg;
@@ -479,12 +479,12 @@ namespace corona
 
 								if (rect_bounds.y < bounds.bottom()) 
 								{
-									items_source.draw_item(this, idx, items_source.data, rect_bounds);
+									items_source.draw_item(_context, this, idx, items_source.data, rect_bounds);
 									if (selected_item_index == idx) 
 									{
-										context.drawRectangle(&rect_bounds, selection_border.name, 4, nullptr);
+										context->drawRectangle(&rect_bounds, selection_border.name, 4, nullptr);
 									}
-									context.drawText("Test", &rect_bounds, "" ,selection_border.name);
+									context->drawText("Test", &rect_bounds, "" ,selection_border.name);
 								}
 								else 
 								{

@@ -538,7 +538,7 @@ namespace corona {
 		auto cp = current_page.lock();
 		if (cp) {
 			auto *style = presentation_style_factory::get_current()->get_style();			
-			cp->draw();
+			cp->draw(_ctx);
 
 			if (style->PageStyle) {
 				viewStyleRequest vsr = *style->PageStyle;
@@ -1036,14 +1036,14 @@ namespace corona {
 					using cell_json_draw = std::function<void(draw_control* _parent, int _index, rectangle _bounds)>;
 					using cell_json_assets = std::function<void(draw_control* _parent, rectangle _bounds)>;
 					*/
-					ads.draw_item = [this](draw_control* _parent, int _index, json _data, rectangle _bounds) {
+					ads.draw_item = [this](std::shared_ptr<direct2dContext>& _context, draw_control* _parent, int _index, json _data, rectangle _bounds) {
 						auto json_object = _data.get_element(_index);
 						auto object_members = json_object.get_members();
 						double x = _bounds.x;
 						double w = 0.0;
 						if (auto win = _parent->window.lock()) {
-							auto& ctxt = win->getContext();
-							ctxt.drawRectangle(&_bounds, "item_border", 1, nullptr);
+							auto& ctxt = _context;
+							ctxt->drawRectangle(&_bounds, "item_border", 1, nullptr);
 							std::string eline = json_object.get_member("line");
 							std::string echar = json_object.get_member("char");
 							std::string etopic = json_object.get_member("topic");
@@ -1052,7 +1052,7 @@ namespace corona {
 							std::string text = std::format("{0}: '{1}' {2} - {3}", eline, echar, etopic, eerror);
 							auto field_bounds = _bounds;
 							field_bounds.x = x;
-							ctxt.drawText(text, &field_bounds, "item_paragraph", "item_foreground");
+							ctxt->drawText(text, &field_bounds, "item_paragraph", "item_foreground");
 							x += w;
 						}
 						};
@@ -1062,28 +1062,28 @@ namespace corona {
 						pt.y = 50;
 						return pt;
 						};
-					ads.assets = [this](draw_control* _parent, rectangle _bounds) {
+					ads.assets = [this](std::shared_ptr<direct2dContext> _context, draw_control* _parent, rectangle _bounds) {
 						if (auto win = _parent->window.lock()) {
-							auto& ctxt = win->getContext();
+							auto& ctxt = _context;
 
 							textStyleRequest tsr = {};
 							tsr.fontName = "Arial";
 							tsr.fontSize = 14;
 							tsr.name = "item_paragraph";
-							ctxt.setTextStyle(&tsr);
+							_context->setTextStyle(&tsr);
 
 							solidBrushRequest sbr;
 							sbr.brushColor = toColor("#000000");
 							sbr.name = "item_foreground";
-							ctxt.setSolidColorBrush(&sbr);
+							_context->setSolidColorBrush(&sbr);
 
 							sbr.brushColor = toColor("#FFFFFF");
 							sbr.name = "item_background";
-							ctxt.setSolidColorBrush(&sbr);
+							_context->setSolidColorBrush(&sbr);
 
 							sbr.brushColor = toColor("#C0C0C0");
 							sbr.name = "item_border";
-							ctxt.setSolidColorBrush(&sbr);
+							_context->setSolidColorBrush(&sbr);
 						}
 					};
 					rvl.set_item_source(ads);

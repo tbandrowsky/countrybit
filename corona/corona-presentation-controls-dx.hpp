@@ -75,7 +75,10 @@ namespace corona
                     system_monitoring_interface::global_mon->log_warning(mm);
                 }
 
-                bool use_native_window;
+                bool use_native_window = false; // a placeholder, and this is a critical spot 
+                // for it, but you'll need to do a few other things as well.
+                // and you can always implement for your own window
+                // easily enough.
                 if (use_native_window) {
                     window = phost->createDirect2Window(id, bounds);
                     auto pwindow = window.lock();
@@ -1069,7 +1072,6 @@ namespace corona
         }
     };
 
-
     class camera_view_control :
         public draw_control
     {
@@ -1089,8 +1091,8 @@ namespace corona
     };
 
     using cell_json_size = std::function<point(draw_control* _parent, int _index, json _data, rectangle _bounds)>;
-    using cell_json_draw = std::function<void(draw_control* _parent, int _index, json _data, rectangle _bounds)>;
-    using cell_json_assets = std::function<void(draw_control* _parent, rectangle _bounds)>;
+    using cell_json_draw = std::function<void(std::shared_ptr<direct2dContext>& _src, draw_control* _parent, int _index, json _data, rectangle _bounds)>;
+    using cell_json_assets = std::function<void(std::shared_ptr<direct2dContext>& _src, draw_control* _parent, rectangle _bounds)>;
 
     class array_data_source
     {
@@ -1734,17 +1736,11 @@ namespace corona
 
         on_create = [this](std::shared_ptr<direct2dContext>& _context, draw_control* _src)
             {
-                if (auto pwindow = this->window.lock())
-                {
-                    auto& context = pwindow->getContext();
-                }
             };
 
         on_draw = [this](std::shared_ptr<direct2dContext>& _context, draw_control* _src) {
             frame_counter++;
-            if (auto pwindow = this->window.lock())
-            {
-                if (auto phost = host.lock()) {
+               if (auto phost = host.lock()) {
                     auto draw_bounds = inner_bounds;
 
                     draw_bounds.x = inner_bounds.x;
@@ -1802,7 +1798,6 @@ namespace corona
                         }
                     }
                 }
-            }
             };
     }
 

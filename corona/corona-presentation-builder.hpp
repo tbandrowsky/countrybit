@@ -1680,14 +1680,10 @@ namespace corona
 
 			control_builder builder;
 
-			on_create = [this](control_base* _item)
+			on_create = [this](std::shared_ptr<direct2dContext>& _context, control_base* _item)
 				{
-					if (auto pwindow = window.lock())
-					{
-						pwindow->getContext().setBrush(border_brush.get(), &inner_bounds);
-					}
+					_context->setBrush(border_brush.get(), &inner_bounds);
 				};
-
 
 			auto main = builder.column_begin(id_counter::next(), [this](column_layout& _settings) {
 				_settings.set_size(1.0_container, 1.0_container);
@@ -1738,8 +1734,8 @@ namespace corona
 
 		std::weak_ptr<applicationBase> host;
 		std::weak_ptr<direct2dChildWindow> window;
-		std::function<void(tab_view_control*)> on_draw;
-		std::function<void(tab_view_control*)> on_create;
+		std::function<void(std::shared_ptr<direct2dContext>& _context, tab_view_control*)> on_draw;
+		std::function<void(std::shared_ptr<direct2dContext>& _context, tab_view_control*)> on_create;
 
 		tab_view_control()
 		{
@@ -1903,7 +1899,7 @@ namespace corona
 
 
 
-		virtual void create(std::weak_ptr<applicationBase> _host)
+		virtual void create(std::shared_ptr<direct2dContext> _context, std::weak_ptr<applicationBase> _host)
 		{
 			host = _host;
 			if (auto phost = _host.lock()) {
@@ -1913,7 +1909,7 @@ namespace corona
 				window = phost->createDirect2Window(id, inner_bounds);
 			}
 			if (on_create) {
-				on_create(this);
+				on_create(_context, this);
 			}
 			for (auto child : children) {
 				child->create(_host);
@@ -1938,55 +1934,47 @@ namespace corona
 			}
 		}
 
-		virtual void draw()
+		virtual void draw_impl(std::shared_ptr<direct2dContext>& _context)
 		{
 			bool adapter_blown_away = false;
 
-			if (auto pwindow = window.lock())
+			auto& context = _context;
+			const char* border_name = nullptr;
+			const char* background_name = nullptr;
+
+			if (border_brush->get_name())
 			{
-				pwindow->beginDraw(adapter_blown_away);
-				if (not adapter_blown_away)
-				{
-					auto& context = pwindow->getContext();
-
-					const char* border_name = nullptr;
-					const char* background_name = nullptr;
-
-					if (border_brush->get_name())
-					{
-						pwindow->getContext().setBrush(border_brush.get(), &inner_bounds);
-						auto dc = context.getDeviceContext();
-						border_name = border_brush->get_name();
-					}
-
-					if (background_brush->get_name())
-					{
-						pwindow->getContext().setBrush(background_brush.get(), &inner_bounds);
-						auto dc = context.getDeviceContext();
-						background_name = background_brush->get_name();
-					}
-
-					if (background_name) {
-						rectangle r = inner_bounds;
-						context.drawRectangle(&r, "", 0.0, background_name);
-					}
-
-					if (on_draw)
-					{
-						on_draw(this);
-					} 
-
-					if (is_focused and border_name) 
-					{
-						rectangle r = inner_bounds;
-						context.drawRectangle(&r, border_name, 4, "");
-					}
-				}
-				pwindow->endDraw(adapter_blown_away);
+				_context->setBrush(border_brush.get(), &inner_bounds);
+				auto dc = _context->getDeviceContext();
+				border_name = border_brush->get_name();
 			}
+
+			if (background_brush->get_name())
+			{
+				_context->setBrush(background_brush.get(), &inner_bounds);
+				auto dc = _context->getDeviceContext();
+				background_name = background_brush->get_name();
+			}
+
+			if (background_name) {
+				rectangle r = inner_bounds;
+				_context->drawRectangle(&r, "", 0.0, background_name);
+			}
+
+			if (on_draw)
+			{
+				on_draw(_context, this);
+			} 
+
+			if (is_focused and border_name) 
+			{
+				rectangle r = inner_bounds;
+				_context->drawRectangle(&r, border_name, 4, "");
+			}
+
 			for (auto& child : children) {
 				try {
-					child->draw();
+					child->draw(_context);
 				}
 				catch (std::exception exc)
 				{
@@ -1995,31 +1983,14 @@ namespace corona
 			}
 		}
 
+		virtual void draw(std::shared_ptr<direct2dContext>& _dest)
+		{
+
+		}
+
 		virtual void render(std::shared_ptr<direct2dContext>& _dest)
 		{
-			if (auto pwindow = window.lock())
-			{
-				auto bm = pwindow->getBitmap();
-				D2D1_RECT_F dest;
-				dest.left = bounds.x;
-				dest.top = bounds.y;
-				dest.right = bounds.w + bounds.x;
-				dest.bottom = bounds.h + bounds.y;
-
-				auto size = bm->GetPixelSize();
-				D2D1_RECT_F source;
-				source.left = 0;
-				source.top = 0;
-				source.bottom = bounds.h;
-				source.right = bounds.w;
-
-				auto dc = _dest->getDeviceContext();
-				dc->DrawBitmap(bm, &dest, 1.0);
-			}
-			for (auto& child : children)
-			{
-				child->render(_dest);
-			}
+			draw_impl(_dest);
 		}
 
 		tab_view_control& set_origin(measure _x, measure _y)
@@ -2040,10 +2011,6 @@ namespace corona
 		{
 			background_brush = std::make_shared<generalBrushRequest>(_brushFill);
 			background_brush->set_name(typeid(*this).name() );
-			if (auto pwindow = window.lock())
-			{
-				pwindow->getContext().setBrush(background_brush.get(), &inner_bounds);
-			}
 			return *this;
 		}
 
@@ -2052,10 +2019,6 @@ namespace corona
 			background_brush = std::make_shared<generalBrushRequest>();
 			background_brush->setColor(_color);
 			background_brush->set_name(typeid(*this).name());
-			if (auto pwindow = window.lock())
-			{
-				pwindow->getContext().setBrush(background_brush.get(), &inner_bounds);
-			}
 			return *this;
 		}
 
@@ -2063,10 +2026,6 @@ namespace corona
 		{
 			border_brush = std::make_shared<generalBrushRequest>(_brushFill);
 			border_brush->set_name(typeid(*this).name());
-			if (auto pwindow = window.lock())
-			{
-				pwindow->getContext().setBrush(border_brush.get(), &inner_bounds);
-			}
 			return *this;
 		}
 
@@ -2075,10 +2034,6 @@ namespace corona
 			border_brush = std::make_shared<generalBrushRequest>();
 			border_brush->setColor(_color);
 			border_brush->set_name( typeid(*this).name() );
-			if (auto pwindow = window.lock())
-			{
-				pwindow->getContext().setBrush(border_brush.get(), &inner_bounds);
-			}
 			return *this;
 		}
 

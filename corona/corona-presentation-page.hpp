@@ -169,12 +169,12 @@ namespace corona
 			}
 		}
 
-		virtual void draw()
+		virtual void draw(std::shared_ptr<direct2dContext>& _context)
 		{
 			if (root.get())
 			{
 				try {
-					root->draw();
+					root->draw(_context);
 				}
 				catch (std::exception exc)
 				{
