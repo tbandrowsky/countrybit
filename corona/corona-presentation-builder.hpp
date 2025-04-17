@@ -1574,8 +1574,6 @@ namespace corona
 			cb.apply_controls(this);
 			calculate_margins();
 			arrange(bounds);
-
-			create(host);
 		}
 
 		virtual void get_json(json& _dest)
@@ -1899,7 +1897,7 @@ namespace corona
 
 
 
-		virtual void create(std::shared_ptr<direct2dContext> _context, std::weak_ptr<applicationBase> _host)
+		virtual void create(std::shared_ptr<direct2dContext>& _context, std::weak_ptr<applicationBase> _host) override
 		{
 			host = _host;
 			if (auto phost = _host.lock()) {
@@ -1912,9 +1910,9 @@ namespace corona
 				on_create(_context, this);
 			}
 			for (auto child : children) {
-				child->create(_host);
+				child->create(_context, _host);
 			}
-			windows_control::create(_host);
+			windows_control::create(_context, _host);
 		}
 
 		void destroy()
@@ -3154,7 +3152,6 @@ namespace corona
 		}
 
 		arrange(bounds);
-		create(host);
 	}
 
 	json corona_set_property_command::execute(json context, comm_bus_app_interface* bus)

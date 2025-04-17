@@ -62,6 +62,11 @@ namespace corona
 			}
 		}
 
+		virtual void create(std::shared_ptr<direct2dContext>& _context, std::weak_ptr<applicationBase> _host) override
+		{
+			draw_control::create(_context, _host);
+		}
+
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<container_control>(*this);
@@ -82,7 +87,6 @@ namespace corona
 			}
 
 			arrange(bounds);
-			create(host);
 		}
 
 		virtual void set_contents(page_base *_contents)
@@ -97,7 +101,6 @@ namespace corona
 			}
 
 			arrange(bounds);
-			create(host);
 		}
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
@@ -369,6 +372,12 @@ namespace corona
 			container_control::set_contents(_contents);
 		}
 
+		virtual void create(std::shared_ptr<direct2dContext>& _context, std::weak_ptr<applicationBase> _host) override
+		{
+			container_control::create(_context, _host);
+		}
+
+
 	};
 
 	class grid_view_row
@@ -416,10 +425,6 @@ namespace corona
 			selection_border = _brushFill;
 			selection_border.name = typeid(*this).name();
 			selection_border.name +="_selection";
-			if (auto pwindow = window.lock())
-			{
-				pwindow->getContext()->setSolidColorBrush(&selection_border);
-			}
 		}
 
 		void set_selection_border(std::string _color)
@@ -427,10 +432,6 @@ namespace corona
 			selection_border.brushColor = toColor(_color.c_str());
 			selection_border.name = typeid(*this).name();
 			selection_border.name += "_selection";
-			if (auto pwindow = window.lock())
-			{
-				pwindow->getContext()->setSolidColorBrush(&selection_border);
-			}
 		}
 
 		void init()
@@ -447,53 +448,49 @@ namespace corona
 
 			on_draw = [this](std::shared_ptr<direct2dContext>& _context, control_base* _item)
 				{
-					if (auto pwindow = window.lock())
+					_context->setSolidColorBrush(&selection_border);
+
+					auto draw_bounds = inner_bounds;
+
+					draw_bounds.x = inner_bounds.x;
+					draw_bounds.y = inner_bounds.y;
+
+					point offset = { view_port.x, view_port.y };
+
+					auto& context = _context;
+
+					if (not page_to_item_index.contains(selected_page_index )) {
+						std::string msg;
+						msg = std::format("selected_page_index '{0}' not found", selected_page_index);
+						system_monitoring_interface::global_mon->log_warning(msg);
+						return;
+					}
+
+					int idx = page_to_item_index[ selected_page_index ];
+
+					while (idx < rows.size())
 					{
-						if (auto phost = host.lock()) {
+						auto& row = rows[idx];
 
-							auto draw_bounds = inner_bounds;
+						auto rect_bounds = row.bounds;
+						rect_bounds.x -= offset.x;
+						rect_bounds.y -= offset.y;
 
-							draw_bounds.x = inner_bounds.x;
-							draw_bounds.y = inner_bounds.y;
-
-							point offset = { view_port.x, view_port.y };
-
-							auto& context = _context;
-
-							if (not page_to_item_index.contains(selected_page_index )) {
-								std::string msg;
-								msg = std::format("selected_page_index '{0}' not found", selected_page_index);
-								system_monitoring_interface::global_mon->log_warning(msg);
-								return;
-							}
-
-							int idx = page_to_item_index[ selected_page_index ];
-
-							while (idx < rows.size())
+						if (rect_bounds.y < bounds.bottom()) 
+						{
+							items_source.draw_item(_context, this, idx, items_source.data, rect_bounds);
+							if (selected_item_index == idx) 
 							{
-								auto& row = rows[idx];
-
-								auto rect_bounds = row.bounds;
-								rect_bounds.x -= offset.x;
-								rect_bounds.y -= offset.y;
-
-								if (rect_bounds.y < bounds.bottom()) 
-								{
-									items_source.draw_item(_context, this, idx, items_source.data, rect_bounds);
-									if (selected_item_index == idx) 
-									{
-										context->drawRectangle(&rect_bounds, selection_border.name, 4, nullptr);
-									}
-									context->drawText("Test", &rect_bounds, "" ,selection_border.name);
-								}
-								else 
-								{
-									break;
-								}
-
-								idx++;
+								context->drawRectangle(&rect_bounds, selection_border.name, 4, nullptr);
 							}
+							context->drawText("Test", &rect_bounds, "" ,selection_border.name);
 						}
+						else 
+						{
+							break;
+						}
+
+						idx++;
 					}
 				};
 
@@ -592,14 +589,12 @@ namespace corona
 				rows.push_back(gvr);
 			}
 
-			if (auto pwindow = window.lock()) {
-				arrange(bounds);
+			arrange(bounds);
 
-				if (rows.size() <= selected_item_index)
-				{
-					selected_item_index = 0;
-					check_scroll();
-				}
+			if (rows.size() <= selected_item_index)
+			{
+				selected_item_index = 0;
+				check_scroll();
 			}
 
 		}

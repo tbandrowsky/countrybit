@@ -305,7 +305,6 @@ namespace corona
 					children.push_back(sc);
 				}
 			}
-			create(host);
 			return status_set;
 		}
 
@@ -361,23 +360,17 @@ namespace corona
 			};
 
 		on_draw = [](std::shared_ptr<direct2dContext>& _context, draw_control* _src) {
-			if (auto pwindow = _src->window.lock())
-			{
-				if (auto phost = _src->host.lock()) {
+			text_display_control* t = dynamic_cast<text_display_control*>(_src);
 
-					text_display_control* t = dynamic_cast<text_display_control*>(_src);
+			auto draw_bounds = t->inner_bounds;
 
-					auto draw_bounds = t->inner_bounds;
+			if (not t->text.size()) t->text = "";
 
-					if (not t->text.size()) t->text = "";
+			std::string test_text = std::format("{0}, {1}, {2}", t->text, draw_bounds.x, draw_bounds.y, (long)t);
+			//std::cout << test_text << std::endl;
 
-					std::string test_text = std::format("{0}, {1}, {2}", t->text, draw_bounds.x, draw_bounds.y, (long)t);
-					//std::cout << test_text << std::endl;
-
-					if (t->view_style) {
-						_context->drawText(t->text.c_str(), &draw_bounds, t->view_style->text_style.name, t->view_style->shape_fill_brush.get_name());
-					}
-				}
+			if (t->view_style) {
+				_context->drawText(t->text.c_str(), &draw_bounds, t->view_style->text_style.name, t->view_style->shape_fill_brush.get_name());
 			}
 		};
 	}

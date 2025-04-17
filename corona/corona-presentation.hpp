@@ -515,7 +515,11 @@ namespace corona {
 			if (auto phost = window_host.lock()) {
 				auto pos = phost->getWindowClientPos();
 				cp->arrange(pos.w, pos.h);
-				cp->create(phost);
+				auto window = phost->getWindow();
+				if (auto pwindow = window.lock()) {
+					auto context = pwindow->getContext();
+					cp->create(context, phost);
+				}
 				cp->subscribe(this);
 			}
 		}

@@ -1136,7 +1136,14 @@ namespace corona
 							if (presentation_layer->pages.contains(_frame_contents_page)) {
 								auto pg_src = presentation_layer->pages[_frame_contents_page];
 								auto pg_master = presentation_layer->get_current_page();
+
 								fl->set_contents(presentation_layer.get(), pg_master, pg_src.get());
+
+								auto hwindow = this->app_ui->getWindow();
+								if (auto pwindow = hwindow.lock()) {
+									auto context = pwindow->getContext();
+									fl->create(context, app_ui);
+								}
 							}
 						}
 						if (not cb->set_items(_obj)) {

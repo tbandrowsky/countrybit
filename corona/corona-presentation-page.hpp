@@ -50,6 +50,7 @@ namespace corona
 
 		std::shared_ptr<menu_item> menu;
 		presentation* parent;
+		std::shared_ptr<direct2dContext> context;
 
 		page(const char* _name)
 		{
@@ -149,14 +150,15 @@ namespace corona
 			return get_root()->find(_id);
 		}
 
-		void create(std::weak_ptr<applicationBase> _host)
+		void create(std::shared_ptr<direct2dContext> _context, std::weak_ptr<applicationBase> _host)
 		{
+			context = _context;
 			if (auto whost = _host.lock()) {
 				auto pos = whost->getWindowClientPos();
 				arrange(pos.w, pos.h);
 				if (root.get())
 				{
-					root->create(_host);
+					root->create(_context, _host);
 				}
 			}
 		}

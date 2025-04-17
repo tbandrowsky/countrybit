@@ -554,7 +554,7 @@ namespace corona
 		void foreach(std::function<void(control_base* _root)> _item);
 		control_base* find_if(std::function<bool(control_base* _root)> _item);
 
-		virtual void create(std::weak_ptr<applicationBase> _host);
+		virtual void create(std::shared_ptr<direct2dContext>& _context, std::weak_ptr<applicationBase> _host);
 		virtual void destroy();
 		virtual void draw(std::shared_ptr<direct2dContext>& _context);
 		virtual void render(std::shared_ptr<direct2dContext>& _context);
@@ -741,11 +741,11 @@ namespace corona
 		}
 	}
 
-	void control_base::create(std::weak_ptr<applicationBase> _host)
+	void control_base::create(std::shared_ptr<direct2dContext>& _context, std::weak_ptr<applicationBase> _host)
 	{
 		for (auto child : children) {
 			try {
-				child->create(_host);
+				child->create(_context, _host);
 			}
 			catch (std::exception exc)
 			{
@@ -1160,7 +1160,6 @@ namespace corona
 	void control_base::on_resize()
 	{
 		auto ti = typeid(*this).name();
-		std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
 	}
 
 

@@ -181,7 +181,7 @@ namespace corona
 			set_window_size();
 		}
 
-		virtual void create(std::weak_ptr<applicationBase> _host)
+		virtual void create(std::shared_ptr<direct2dContext>& _context, std::weak_ptr<applicationBase> _host) override
 		{
 			window_host = _host;
 
@@ -310,9 +310,9 @@ namespace corona
 			return format;
 		}
 
-		virtual void create(std::weak_ptr<applicationBase> _host)
+		virtual void create(std::shared_ptr<direct2dContext>& _context, std::weak_ptr<applicationBase> _host) override
 		{
-			windows_control::create(_host);
+			windows_control::create(_context, _host);
 			if (auto phost = window_host.lock()) {
 				phost->setEditText(id, text);
 			}
