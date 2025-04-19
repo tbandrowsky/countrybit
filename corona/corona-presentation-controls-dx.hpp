@@ -123,8 +123,10 @@ namespace corona
 
         virtual bool is_camera() { return false; }
 
-        void render(std::shared_ptr<direct2dContext>& _context)
+        virtual void render(std::shared_ptr<direct2dContext>& _context)
         {
+            //system_monitoring_interface::global_mon->log_information("rendering " + std::to_string(id) + " " + class_name + " " + name);
+
             D2D1_COLOR_F color = {};
 
             std::string border_name;
@@ -138,10 +140,6 @@ namespace corona
 
             if (view_style) {
                 auto vs = *view_style;
-                point pt;
-                pt.x = bounds.w;
-                pt.y = bounds.h;
-                vs.apply_scale(pt);
                 _context->setViewStyle(vs);
             }
 
@@ -216,6 +214,12 @@ namespace corona
 
                 corona::put_json(view_style, jview_style);
             }
+        }
+
+        virtual std::shared_ptr<control_base> clone()
+        {
+            auto tv = std::make_shared<draw_control>(*this);
+            return tv;
         }
 
     };
@@ -1543,15 +1547,13 @@ namespace corona
         void load_from_resource(DWORD _resource_id);
         void load_from_control(int _control_id);
 
-        virtual void create(std::shared_ptr<direct2dContext>& _context, std::weak_ptr<applicationBase> _host) override
+        virtual std::shared_ptr<control_base> clone()
         {
-            system_monitoring_interface::global_mon->log_information("Create image", __FILE__, __LINE__);
-            draw_control::create(_context, _host);
+            auto tv = std::make_shared<image_control>(*this);
+            return tv;
         }
 
     };
-
-
 
     image_control::image_control()
     {
@@ -1599,70 +1601,74 @@ namespace corona
 
     void image_control::init()
     {
-        set_origin(0.0_px, 0.0_px);
-        set_size(50.0_px, 50.0_px);
 
         on_create = [this](std::shared_ptr<direct2dContext>& _context, draw_control* _src)
             {
-                system_monitoring_interface::global_mon->log_information("image on_create", __FILE__, __LINE__);
-                    solidBrushRequest sbr;
-                    sbr.brushColor = toColor("FFFF00");
-                    sbr.name = "image_control_test";
-                    _context->setSolidColorBrush(&sbr);
+                auto draw_bounds = _src->get_inner_bounds();
 
-                    switch (image_mode) {
-                    case image_modes::use_control_id:
-                        break;
-                    case image_modes::use_resource_id:
-                    {
-                        bitmapRequest request = {};
-                        request.resource_id = image_resource_id;
-                        request.name = instance.bitmapName;
-                        request.cropEnabled = false;
-                        point pt = { inner_bounds.w, inner_bounds.h };
-                        request.sizes.push_back(pt);
-                        _context->setBitmap(&request);
-                        break;
-                    }
+                instance.copyId = 0;
+                instance.selected = false;
+                instance.x = draw_bounds.x;
+                instance.y = draw_bounds.y;
+                instance.width = draw_bounds.w;
+                instance.height = draw_bounds.h;
+                instance.alpha = 1.0;
+
+//                system_monitoring_interface::global_mon->log_information("image on_create", __FILE__, __LINE__);
+                solidBrushRequest sbr;
+                sbr.brushColor = toColor("FFFF00");
+                sbr.name = "image_control_test";
+                _context->setSolidColorBrush(&sbr);
+
+                switch (image_mode) {
+                case image_modes::use_control_id:
                     break;
-                    case image_modes::use_filename:
-                    {
-                        if (image_filename.size() == 0)
-                            throw std::logic_error("Missing file name for image");
-                        bitmapRequest request = {};
-                        request.filename = image_filename;
-                        request.name = instance.bitmapName;
-                        request.cropEnabled = false;
-                        point pt = { inner_bounds.w, inner_bounds.h };
-                        request.sizes.push_back(pt);
-                        _context->setBitmap(&request);
-                        auto szfound = std::begin(request.sizes);
-                        if (szfound != std::end(request.sizes)) {
-                            instance.width = request.sizes.begin()->x;
-                            instance.height = request.sizes.begin()->y;
-                        }
-                        else
-                        {
-                            instance.width = 0;
-                            instance.height = 0;
-                        }
-                        break;
-                    }
+                case image_modes::use_resource_id:
+                {
+                    bitmapRequest request = {};
+                    request.resource_id = image_resource_id;
+                    request.name = instance.bitmapName;
+                    request.cropEnabled = false;
+                    point pt = { inner_bounds.w, inner_bounds.h };
+                    request.sizes.push_back(pt);
+                    _context->setBitmap(&request);
+                    break;
                 }
-            };
+                break;
+                case image_modes::use_filename:
+                {
 
-        on_draw = [this](std::shared_ptr<direct2dContext>& _context, draw_control* _src) 
-            {
-                    auto draw_bounds = inner_bounds;
+                    if (image_filename.size() == 0)
+                        throw std::logic_error("Missing file name for image");
+                    bitmapRequest request = {};
+                    request.filename = image_filename;
+                    request.name = instance.bitmapName;
+                    request.cropEnabled = false;
+                    point pt = { inner_bounds.w, inner_bounds.h };
+                    request.sizes.push_back(pt);
 
-
-                    if (image_mode == image_modes::use_control_id)
-                    {
-
+                    _context->setBitmap(&request);
+                    auto szfound = std::begin(request.sizes);
+                    if (szfound != std::end(request.sizes)) {
+                        instance.width = request.sizes.begin()->x;
+                        instance.height = request.sizes.begin()->y;
                     }
                     else
                     {
+                        instance.width = 0;
+                        instance.height = 0;
+                    }
+                    break;
+                }
+            }
+        };
 
+        on_draw = [this](std::shared_ptr<direct2dContext>& _context, draw_control* _src) 
+            {
+                    auto draw_bounds = _src->get_inner_bounds();
+
+                    if (image_mode == image_modes::use_filename)
+                    {
                         instance.copyId = 0;
                         instance.selected = false;
                         instance.x = draw_bounds.x;

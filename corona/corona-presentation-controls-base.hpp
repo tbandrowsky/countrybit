@@ -224,6 +224,8 @@ namespace corona
 			inner_bounds = _src.inner_bounds;
 			margin_amount = _src.margin_amount;
 			padding_amount = _src.padding_amount;
+			class_name = _src.class_name;
+			name = _src.name;
 
 			mouse_over = _src.mouse_over;
 			mouse_left_down = _src.mouse_left_down;
@@ -265,7 +267,7 @@ namespace corona
 		std::string				tooltip_text;
 		bool					is_focused;
 		std::string				json_field_name;
-
+		std::string				class_name;
 		container_control_base* parent;
 		
 		std::vector<control_push_request> push_requests;
@@ -420,6 +422,7 @@ namespace corona
 			}
 
 			_dest.put_member("name", name);
+			_dest.put_member("class_name", class_name);
 			_dest.put_member("id", id );
 			_dest.put_member("box", jbox );
 			_dest.put_member("padding", jpadding);
@@ -438,7 +441,7 @@ namespace corona
 			std::vector<std::string> missing;
 
 			name = _src["name"];
-			std::string class_name = _src["class_name"];
+			class_name = _src["class_name"];
 
 			if (not _src.has_members(missing, { "box" })) {
 				system_monitoring_interface::global_mon->log_warning(std::format( "control '{0}/{1}' is missing:", class_name, name), __FILE__, __LINE__);
@@ -780,7 +783,18 @@ namespace corona
 	void control_base::render(std::shared_ptr<direct2dContext>& _context)
 	{
 		for (auto child : children) {
-			child->render(_context);
+			if (child->class_name == "image")
+			{
+				DebugBreak();
+			}
+			try
+			{
+				child->render(_context);
+			}
+			catch (std::exception exc)
+			{
+				system_monitoring_interface::global_mon->log_exception(exc);
+			}
 		}
 	}
 
@@ -1114,6 +1128,7 @@ namespace corona
 	void control_base::arrange(rectangle _bounds)
 	{
 		set_bounds(_bounds);
+		system_monitoring_interface::global_mon->log_information(std::format("{0}.{1} {2},{3}-{4},{5}", class_name, name, bounds.x, bounds.y, bounds.w, bounds.h), __FILE__, __LINE__);
 	}
 
 	void control_base::arrange_children(rectangle _bounds,

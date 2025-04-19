@@ -11,45 +11,39 @@
       },
       "children": [
         {
-          "class_name": "column",
+          "class_name": "absolute",
           "box": {
             "width": "250 pixels",
             "height": "1.0 container"
           },
           "children": [
             {
-              "class_name": "paragraph",
+              "class_name": "chaptertitle",
               "box": {
-                "width": "200 pixels",
-                "height": "20 pixels"
+                "width": "1.0 container",
+                "height": "50 pixels",
+                "y": "20 pixels"
               },
-              "text": "tester text"
+              "text": " "
             },
             {
               "class_name": "image",
               "box": {
-                "width": "200 pixels",
-                "height": "250 pixels"
+                "width": "150 pixels",
+                "height": "200 pixels",
+                "y": "20 pixels",
+                "x": "40 pixels"
               },
               "image_filename": "cockade.png"
-            },
-            {
-              "class_name": "paragraph",
-              "box": {
-                "width": "200 pixels",
-                "height": "20 pixels"
-              },
-              "text": "tester text 2"
             }
           ]
         },
         {
           "class_name": "column",
           "box": {
-            "width": "1.0 container",
+            "width": "1.0 remaining",
             "height": "1.0 container"
           },
-          "content_cross_alignment": "center",
           "children": [
             {
               "class_name": "chaptertitle",
