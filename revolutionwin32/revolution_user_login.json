@@ -21,7 +21,7 @@
               "class_name": "chaptertitle",
               "box": {
                 "width": "1.0 container",
-                "height": "50 pixels",
+                "height": "75 pixels",
                 "y": "20 pixels"
               },
               "text": " "
@@ -52,11 +52,10 @@
                 "height": "50 pixels",
                 "y": "20 pixels"
               },
-              "text": "Login"
+              "text": "Constellation Government Access"
             },
             {
               "class_name": "chaptersubtitle",
-              "name": "message",
               "box": {
                 "width": "700 pixels",
                 "height": "25 pixels",
@@ -103,7 +102,7 @@
                 "width": "700 pixels",
                 "height": "50 pixels"
               },
-              "item_space": "8 pixels",
+              "item_next_space": "8 pixels",
               "children": [
                 {
                   "class_name": "push_button",
@@ -122,7 +121,7 @@
                     },
                     "on_fail": {
                       "class_name": "set_property",
-                      "control_name": "message",
+                      "control_name": "status_message",
                       "property_name": "text",
                       "value": "Could not log in"
                     }
@@ -139,6 +138,14 @@
                   "box": "button_box"
                 }
               ]
+            },
+            {
+              "class_name": "code",
+              "name": "status_message",
+              "box": {
+                "width": "700 pixels",
+                "height": "150 pixels"
+              }
             }
           ]
 

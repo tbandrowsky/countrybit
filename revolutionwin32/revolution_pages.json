@@ -3,7 +3,7 @@
     "button_box": {
       "width": "150 pixels",
       "height": {
-        "amount": 65,
+        "amount": 40,
         "units": "pixels"
       }
     },
