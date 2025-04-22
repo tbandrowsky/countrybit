@@ -603,6 +603,7 @@
     <None Include="revolution_bank.json">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="revolution_user_confirm.json" />
     <None Include="revolution_home.json">
       <DeploymentContent>true</DeploymentContent>
     </None>

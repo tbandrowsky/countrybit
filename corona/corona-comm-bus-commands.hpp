@@ -179,6 +179,54 @@ namespace corona
 
 	};
 
+	class  corona_confirm_user_command : public corona_form_command
+	{
+	public:
+
+		std::string user_name_field;
+		std::string validation_field;
+
+		corona_confirm_user_command()
+		{
+			;
+		}
+
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
+		{
+			std::string user_name = obj[user_name_field];
+			std::string validation_field = obj[validation_field];
+			response = bus->remote_send_user(user_name);
+			return response;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			_dest.put_member("class_name", "send_user_command"sv);
+			_dest.put_member("user_name_field", user_name_field);
+			_dest.put_member("form_name", form_name);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { "user_name_field" })) {
+				system_monitoring_interface::global_mon->log_warning("send_user_command missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			user_name_field = _src["user_name_field"];
+			form_name = _src["form_name"];
+		}
+
+	};
+
 	class  corona_send_user_command : public corona_form_command
 	{
 	public:
