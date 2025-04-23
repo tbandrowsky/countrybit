@@ -149,7 +149,7 @@ namespace corona
 
 			corona_form_command::get_json(_dest);
 
-			_dest.put_member("class_name", "register_user_command"sv);
+			_dest.put_member("class_name", "register_user"sv);
 			_dest.put_member("user_name_field", user_name_field);
 			_dest.put_member("email_field", email_field);
 			_dest.put_member("password1_field", password1_field);
@@ -184,7 +184,7 @@ namespace corona
 	public:
 
 		std::string user_name_field;
-		std::string validation_field;
+		std::string validation_code_field;
 
 		corona_confirm_user_command()
 		{
@@ -203,15 +203,20 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "send_user_command"sv);
+            corona_form_command::get_json(_dest);
+
+			_dest.put_member("class_name", "confirm_user"sv);
 			_dest.put_member("user_name_field", user_name_field);
-			_dest.put_member("form_name", form_name);
+			_dest.put_member("validation_code_field", validation_code_field);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (not _src.has_members(missing, { "user_name_field" })) {
+
+            corona_form_command::put_json(_src);
+
+			if (not _src.has_members(missing, { "user_name_field", "validation_code_field" })) {
 				system_monitoring_interface::global_mon->log_warning("send_user_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -222,7 +227,7 @@ namespace corona
 			}
 
 			user_name_field = _src["user_name_field"];
-			form_name = _src["form_name"];
+			validation_code_field = _src["validation_code"];
 		}
 
 	};
@@ -249,13 +254,17 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "send_user_command"sv);
+			corona_form_command::get_json(_dest);
+
+			_dest.put_member("class_name", "send_user"sv);
 			_dest.put_member("user_name_field", user_name_field);
-			_dest.put_member("form_name", form_name);
 		}
 
 		virtual void put_json(json& _src)
 		{
+
+			corona_form_command::put_json(_src);
+
 			std::vector<std::string> missing;
 			if (not _src.has_members(missing, { "user_name_field"})) {
 				system_monitoring_interface::global_mon->log_warning("send_user_command missing:");
@@ -268,7 +277,6 @@ namespace corona
 			}
 
 			user_name_field = _src["user_name_field"];	
-			form_name = _src["form_name"];
 		}
 
 	};
@@ -300,7 +308,7 @@ namespace corona
 
 			corona_form_command::get_json(_dest);
 
-			_dest.put_member("class_name", "login_command"sv);
+			_dest.put_member("class_name", "login"sv);
 			_dest.put_member("user_name_field", user_name_field);
 			_dest.put_member("user_password_field", user_password_field);
 
@@ -380,7 +388,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "get_classes_command"sv);
+			_dest.put_member("class_name", "get_classes"sv);
 			_dest.put_member("table_name", table_name);
 		}
 
@@ -460,7 +468,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "set_password_command"sv);
+			_dest.put_member("class_name", "set_password"sv);
 			_dest.put_member("user_name_field", user_name_field);
 			_dest.put_member("validation_code_field", validation_code_field);
 			_dest.put_member("password1_field", password1_field);
@@ -511,7 +519,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "create_object_command"sv);
+			_dest.put_member("class_name", "create_object"sv);
 			_dest.put_member("create_class_name", create_class_name);
 			_dest.put_member("form_name", form_name);
 
@@ -568,7 +576,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "create_object_frame_command"sv);
+			_dest.put_member("class_name", "create_object_frame"sv);
 			_dest.put_member("create_class_name", create_class_name);
 			_dest.put_member("page_to_select", page_to_select);
 			_dest.put_member("frame_to_load", frame_to_load);
@@ -635,7 +643,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "select_object_frame_command"sv);
+			_dest.put_member("class_name", "select_object_frame"sv);
 			_dest.put_member("table_name", table_name);
 			_dest.put_member("page_to_select", page_to_select);
 			_dest.put_member("frame_to_load", frame_to_load);
@@ -698,7 +706,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "select_object_page_command"sv);
+			_dest.put_member("class_name", "select_object_page"sv);
 			_dest.put_member("table_name", table_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("page_name", page_name);
@@ -760,7 +768,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "preview_object_command"sv);
+			_dest.put_member("class_name", "preview_object"sv);
 			_dest.put_member("table_name", table_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member_i64("instance", (int64_t)instance);
@@ -820,7 +828,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "save_object_command"sv);
+			_dest.put_member("class_name", "save_object"sv);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member_i64("instance", (int64_t)instance);
 
@@ -875,7 +883,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "load_object_command"sv);
+			_dest.put_member("class_name", "load_object"sv);
 			_dest.put_member("control_name", control_name);
 			_dest.put_member("data", object_data);
 			_dest.put_member_i64("instance", (int64_t)instance);
@@ -928,7 +936,7 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			using namespace std::literals;
-			_dest.put_member("class_name", "delete_object_command"sv);
+			_dest.put_member("class_name", "delete_object"sv);
 			_dest.put_member("control_name", control_name);
 			_dest.put_member_i64("instance", (int64_t)instance);
 
@@ -1013,7 +1021,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "search_objects_command"sv);
+			_dest.put_member("class_name", "search_objects"sv);
 			_dest.put_member("search_class_name", search_class_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("table_name", table_name);
@@ -1109,7 +1117,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "search_objects_command"sv);
+			_dest.put_member("class_name", "search_objects"sv);
 			_dest.put_member("search_class_name", search_class_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("table_name", table_name);
@@ -1176,7 +1184,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "select_page_command"sv);
+			_dest.put_member("class_name", "select_page"sv);
 			_dest.put_member("page_name", page_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("source_name", source_name);
@@ -1242,7 +1250,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "script_command"sv);
+			_dest.put_member("class_name", "script"sv);
 			json_parser jp;
 			json jcommand_array = jp.create_array();
 
@@ -1372,7 +1380,7 @@ namespace corona
 		{
 			using namespace std::literals;
 
-			_dest.put_member("class_name", "select_frame_command"sv);
+			_dest.put_member("class_name", "select_frame"sv);
 			_dest.put_member("form_to_read", form_to_read);
 			_dest.put_member("page_to_select", page_to_select);
 			_dest.put_member("frame_to_load", frame_to_load);
@@ -1429,7 +1437,7 @@ namespace corona
 		{
 			std::string class_name = _src["class_name"];
 
-			if (class_name == "script_command")
+			if (class_name == "script")
 			{
 				_dest = std::make_shared<corona_script_command>();
 				_dest->put_json(_src);
@@ -1439,92 +1447,97 @@ namespace corona
 				_dest = std::make_shared<corona_set_property_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "register_user_command")
+			else if (class_name == "register_user")
 			{
 				_dest = std::make_shared<corona_register_user_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "send_user_command")
+			else if (class_name == "send_user")
 			{
 				_dest = std::make_shared<corona_send_user_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "login_command")
+			else if (class_name == "confirm_user")
+			{
+				_dest = std::make_shared<corona_confirm_user_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "login")
 			{
 				_dest = std::make_shared<corona_login_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "get_classes_command")
+			else if (class_name == "get_classes")
 			{
 				_dest = std::make_shared<corona_get_classes_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "get_class_command")
+			else if (class_name == "get_class")
 			{
 				_dest = std::make_shared<corona_get_class_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "put_class_command")
+			else if (class_name == "put_class")
 			{
 				_dest = std::make_shared<corona_put_class_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "set_password_command")
+			else if (class_name == "set_password")
 			{
 				_dest = std::make_shared<corona_set_password_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "create_object_command")
+			else if (class_name == "create_object")
 			{
 				_dest = std::make_shared<corona_create_object_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "create_object_frame_command")
+			else if (class_name == "create_object_frame")
 			{
 				_dest = std::make_shared<corona_create_object_frame_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "select_object_page_command")
+			else if (class_name == "select_object_page")
 			{
 				_dest = std::make_shared<corona_select_object_page_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "select_object_frame_command")
+			else if (class_name == "select_object_frame")
 			{
 				_dest = std::make_shared<corona_select_object_frame_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "preview_object_command")
+			else if (class_name == "preview_object")
 			{
 				_dest = std::make_shared<corona_preview_object_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "save_object_command")
+			else if (class_name == "save_object")
 			{
 				_dest = std::make_shared<corona_save_object_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "load_object_command")
+			else if (class_name == "load_object")
 			{
 				_dest = std::make_shared<corona_load_object_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "delete_object_command")
+			else if (class_name == "delete_object")
 			{
 				_dest = std::make_shared<corona_delete_object_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "search_objects_command")
+			else if (class_name == "search_objects")
 			{
 				_dest = std::make_shared<corona_search_objects_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "select_page_command")
+			else if (class_name == "select_page")
 			{
 				_dest = std::make_shared<corona_select_page_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "select_frame_command")
+			else if (class_name == "select_frame")
 			{
 				_dest = std::make_shared<corona_select_frame_command>();
 				_dest->put_json(_src);

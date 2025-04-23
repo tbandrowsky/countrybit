@@ -928,7 +928,7 @@ namespace corona
 			if (click_command) {
 				json jcommand = jp.create_object();
 				corona::get_json(jcommand, click_command);
-				_dest.put_member("click_command", jcommand);
+				_dest.put_member("on_click", jcommand);
 			}
 		}
 
@@ -937,7 +937,7 @@ namespace corona
 			json_parser jp;
 
 			text_control_base::put_json(_src);
-			json jcommand = _src["click_command"];
+			json jcommand = _src["on_click"];
 			if (jcommand.empty()) {
 				system_monitoring_interface::global_mon->log_information("button control missing click_command", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(_src);

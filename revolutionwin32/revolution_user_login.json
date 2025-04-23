@@ -1,6 +1,6 @@
 {
   "class_name": "page",
-  "page_name": "user_login",
+  "page_name": "user_sendcode",
   "default": true,
   "children": [
     {
@@ -108,13 +108,13 @@
                   "class_name": "push_button",
                   "text": "Login",
                   "box": "button_box",
-                  "click_command": {
-                    "class_name": "login_command",
+                  "on_click": {
+                    "class_name": "login",
                     "form_name": "user_login_form",
                     "user_name_field": "user_name",
                     "user_password_field": "password",
                     "on_success": {
-                      "class_name": "select_frame_command",
+                      "class_name": "select_frame",
                       "page_to_select": "home",
                       "frame_to_load": "revolution_home_frame",
                       "frame_contents_page": "revolution_root"
@@ -130,12 +130,36 @@
                 {
                   "class_name": "push_button",
                   "text": "Register",
-                  "box": "button_box"
+                  "box": "button_box",
+                  "on_click": {
+                    "class_name": "select_frame",
+                    "page_to_select": "home",
+                    "frame_to_load": "revolution_home_frame",
+                    "frame_contents_page": "user_register"
+                  }
                 },
                 {
                   "class_name": "push_button",
                   "text": "Forgot Password",
-                  "box": "button_box"
+                  "box": "button_box",
+                  "on_click": {
+                    "class_name": "login",
+                    "form_name": "user_login_form",
+                    "user_name_field": "user_name",
+                    "user_password_field": "password",
+                    "on_success": {
+                      "class_name": "select_frame",
+                      "page_to_select": "home",
+                      "frame_to_load": "revolution_home_frame",
+                      "frame_contents_page": "revolution_root"
+                    },
+                    "on_fail": {
+                      "class_name": "set_property",
+                      "control_name": "status_message",
+                      "property_name": "text",
+                      "value": "Could not log in"
+                    }
+                  }
                 }
               ]
             },

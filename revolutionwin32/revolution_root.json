@@ -24,8 +24,8 @@
           "text": "Academy",
           "box": "button_box",
           "margin": "button_margin",
-          "click_command": {
-            "class_name": "select_frame_command",
+          "on_click": {
+            "class_name": "select_frame",
             "page_to_select": "home",
             "frame_to_load": "revolution_home_frame",
             "frame_contents_page": "academy"
@@ -36,8 +36,8 @@
           "text": "Activism",
           "box": "button_box",
           "margin": "button_margin",
-          "click_command": {
-            "class_name": "select_frame_command",
+          "on_click": {
+            "class_name": "select_frame",
             "page_to_select": "home",
             "frame_to_load": "revolution_home_frame",
             "frame_contents_page": "activism"
@@ -48,8 +48,8 @@
           "text": "Bank",
           "box": "button_box",
           "margin": "button_margin",
-          "click_command": {
-            "class_name": "select_frame_command",
+          "on_click": {
+            "class_name": "select_frame",
             "page_to_select": "home",
             "frame_to_load": "revolution_home_frame",
             "frame_contents_page": "bank"
@@ -60,8 +60,8 @@
           "text": "Court",
           "box": "button_box",
           "margin": "button_margin",
-          "click_command": {
-            "class_name": "select_frame_command",
+          "on_click": {
+            "class_name": "select_frame",
             "page_to_select": "home",
             "frame_to_load": "revolution_home_frame",
             "frame_contents_page": "court"
@@ -72,8 +72,8 @@
           "text": "Exchange",
           "box": "button_box",
           "margin": "button_margin",
-          "click_command": {
-            "class_name": "select_frame_command",
+          "on_click": {
+            "class_name": "select_frame",
             "page_to_select": "home",
             "frame_to_load": "revolution_home_frame",
             "frame_contents_page": "exchange"
@@ -84,8 +84,8 @@
           "text": "Fake News",
           "box": "button_box",
           "margin": "button_margin",
-          "click_command": {
-            "class_name": "select_frame_command",
+          "on_click": {
+            "class_name": "select_frame",
             "page_to_select": "home",
             "frame_to_load": "revolution_home_frame",
             "frame_contents_page": "fake_news"
@@ -96,8 +96,8 @@
           "text": "Insurance",
           "box": "button_box",
           "margin": "button_margin",
-          "click_command": {
-            "class_name": "select_frame_command",
+          "on_click": {
+            "class_name": "select_frame",
             "page_to_select": "home",
             "frame_to_load": "revolution_home_frame",
             "frame_contents_page": "insurance"
@@ -108,8 +108,8 @@
           "text": "Workshop",
           "box": "button_box",
           "margin": "button_margin",
-          "click_command": {
-            "class_name": "select_frame_command",
+          "on_click": {
+            "class_name": "select_frame",
             "page_to_select": "home",
             "frame_to_load": "revolution_home_frame",
             "frame_contents_page": "workshop"
@@ -120,8 +120,8 @@
           "text": "Store",
           "box": "button_box",
           "margin": "button_margin",
-          "click_command": {
-            "class_name": "select_frame_command",
+          "on_click": {
+            "class_name": "select_frame",
             "page_to_select": "home",
             "frame_to_load": "revolution_home_frame",
             "frame_contents_page": "exchange"

@@ -122,8 +122,8 @@
                   "class_name": "push_button",
                   "text": "Login",
                   "box": "button_box",
-                  "click_command": {
-                    "class_name": "select_frame_command",
+                  "on_click": {
+                    "class_name": "select_frame",
                     "page_to_select": "home",
                     "frame_to_load": "revolution_home_frame",
                     "frame_contents_page": "user_login"
@@ -133,15 +133,15 @@
                   "class_name": "push_button",
                   "text": "Register",
                   "box": "button_box",
-                  "click_command": {
-                    "class_name": "register_user_command",
+                  "on_click": {
+                    "class_name": "register_user",
                     "form_name": "user_login_form",
                     "user_name_field": "user_name_ctl",
                     "email_field": "email_control",
                     "password1_field": "user_password1_ctl",
                     "password2_field": "user_password2_ctl",
                     "on_success": {
-                      "class_name": "select_frame_command",
+                      "class_name": "select_frame",
                       "page_to_select": "home",
                       "frame_to_load": "revolution_home_frame",
                       "frame_contents_page": "user_confirm"

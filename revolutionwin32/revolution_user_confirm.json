@@ -90,7 +90,7 @@
                     "class_name": "password",
                     "name": "user_validation_code_ctl",
                     "json_field_name": "validation_code",
-                    "label_text": "Password:",
+                    "label_text": "Validation Code:",
                     "box": "edit_container_box"
                   }
                 ]
@@ -108,8 +108,8 @@
                   "class_name": "push_button",
                   "text": "Cancel",
                   "box": "button_box",
-                  "click_command": {
-                    "class_name": "select_frame_command",
+                  "on_click": {
+                    "class_name": "select_frame",
                     "page_to_select": "home",
                     "frame_to_load": "revolution_home_frame",
                     "frame_contents_page": "login_user"
@@ -119,15 +119,13 @@
                   "class_name": "push_button",
                   "text": "Confirm",
                   "box": "button_box",
-                  "click_command": {
-                    "class_name": "confirm_user_command",
+                  "on_click": {
+                    "class_name": "confirm_user",
                     "form_name": "user_login_form",
-                    "user_name_field": "user_name_ctl",
-                    "confirm_code_field": "email_control",
-                    "password1_field": "user_password1_ctl",
-                    "password2_field": "user_password2_ctl",
+                    "user_name_field": "user_name",
+                    "confirm_code_field": "validation_code",
                     "on_success": {
-                      "class_name": "select_frame_command",
+                      "class_name": "select_frame",
                       "page_to_select": "home",
                       "frame_to_load": "revolution_home_frame",
                       "frame_contents_page": "user_dashboard"

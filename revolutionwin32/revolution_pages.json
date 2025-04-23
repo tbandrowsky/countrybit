@@ -73,7 +73,7 @@
   },
   "startup": [
     {
-      "class_name": "select_frame_command",
+      "class_name": "select_frame",
       "page_to_select": "revolution_home",
       "frame_to_load": "revolution_home_frame",
       "frame_contents_page": "user_login"
