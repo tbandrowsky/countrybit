@@ -1,6 +1,6 @@
 {
   "class_name": "page",
-  "page_name": "user_sendcode",
+  "page_name": "user_login",
   "default": true,
   "children": [
     {
