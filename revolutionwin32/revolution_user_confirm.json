@@ -117,18 +117,40 @@
                 },
                 {
                   "class_name": "push_button",
+                  "text": "Send Code",
+                  "box": "button_box",
+                  "on_click": {
+                    "class_name": "send_user",
+                    "form_name": "user_confirm_form",
+                    "user_name_field": "user_name",
+                    "on_success": {
+                      "class_name": "select_frame",
+                      "page_to_select": "home",
+                      "frame_to_load": "revolution_home_frame",
+                      "frame_contents_page": "user_confirm"
+                    },
+                    "on_fail": {
+                      "class_name": "set_property",
+                      "control_name": "status_message",
+                      "property_name": "text",
+                      "value": "Could not register user"
+                    }
+                  }
+                },
+                {
+                  "class_name": "push_button",
                   "text": "Confirm",
                   "box": "button_box",
                   "on_click": {
                     "class_name": "confirm_user",
-                    "form_name": "user_login_form",
+                    "form_name": "user_confirm_form",
                     "user_name_field": "user_name",
                     "confirm_code_field": "validation_code",
                     "on_success": {
                       "class_name": "select_frame",
                       "page_to_select": "home",
                       "frame_to_load": "revolution_home_frame",
-                      "frame_contents_page": "user_dashboard"
+                      "frame_contents_page": "revolution_root"
                     },
                     "on_fail": {
                       "class_name": "set_property",

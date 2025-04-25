@@ -68,7 +68,7 @@
               "name": "user_register_form",
               "box": {
                 "width": "700 pixels",
-                "height": "250 pixels",
+                "height": "450 pixels",
                 "y": "60 pixels"
               },
               "model": {
@@ -120,7 +120,7 @@
               "children": [
                 {
                   "class_name": "push_button",
-                  "text": "Login",
+                  "text": "Cancel",
                   "box": "button_box",
                   "on_click": {
                     "class_name": "select_frame",

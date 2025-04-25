@@ -109,7 +109,7 @@
                   "text": "Login",
                   "box": "button_box",
                   "on_click": {
-                    "class_name": "login",
+                    "class_name": "user_login",
                     "form_name": "user_login_form",
                     "user_name_field": "user_name",
                     "user_password_field": "password",
@@ -143,22 +143,10 @@
                   "text": "Forgot Password",
                   "box": "button_box",
                   "on_click": {
-                    "class_name": "login",
-                    "form_name": "user_login_form",
-                    "user_name_field": "user_name",
-                    "user_password_field": "password",
-                    "on_success": {
-                      "class_name": "select_frame",
-                      "page_to_select": "home",
-                      "frame_to_load": "revolution_home_frame",
-                      "frame_contents_page": "revolution_root"
-                    },
-                    "on_fail": {
-                      "class_name": "set_property",
-                      "control_name": "status_message",
-                      "property_name": "text",
-                      "value": "Could not log in"
-                    }
+                    "class_name": "select_frame",
+                    "page_to_select": "home",
+                    "frame_to_load": "revolution_home_frame",
+                    "frame_contents_page": "user_sendcode"
                   }
                 }
               ]

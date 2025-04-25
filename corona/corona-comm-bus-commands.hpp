@@ -195,7 +195,7 @@ namespace corona
 		{
 			std::string user_name = obj[user_name_field];
 			std::string validation_field = obj[validation_field];
-			response = bus->remote_send_user(user_name);
+			response = bus->remote_confirm_user(user_name, validation_field);
 			return response;
 		}
 
@@ -217,7 +217,7 @@ namespace corona
             corona_form_command::put_json(_src);
 
 			if (not _src.has_members(missing, { "user_name_field", "validation_code_field" })) {
-				system_monitoring_interface::global_mon->log_warning("send_user_command missing:");
+				system_monitoring_interface::global_mon->log_warning("confirm_user_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
@@ -277,6 +277,67 @@ namespace corona
 			}
 
 			user_name_field = _src["user_name_field"];	
+		}
+
+	};
+
+	class  corona_password_user_command : public corona_form_command
+	{
+	public:
+
+		std::string user_name_field;
+        std::string validation_code_field;
+		std::string password1_field;
+		std::string password2_field;
+
+		corona_password_user_command()
+		{
+			;
+		}
+
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
+		{
+			std::string user_name = obj[user_name_field];
+			std::string validation_code = obj[validation_code_field];
+			std::string password1 = obj[password1_field];
+			std::string password2= obj[password2_field];
+			response = bus->remote_set_password(user_name, validation_code, password1, password2);
+			return response;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			using namespace std::literals;
+
+			corona_form_command::get_json(_dest);
+
+			_dest.put_member("class_name", "password_user"sv);
+			_dest.put_member("user_name_field", user_name_field);
+			_dest.put_member("validation_code_field", validation_code_field);
+			_dest.put_member("password1_field", password1_field);
+			_dest.put_member("password2_field", password2_field);
+		}
+
+		virtual void put_json(json& _src)
+		{
+
+			corona_form_command::put_json(_src);
+
+			std::vector<std::string> missing;
+			if (not _src.has_members(missing, { "user_name_field", "validation_code_field", "password1_field", "password2_field"})) {
+				system_monitoring_interface::global_mon->log_warning("set_user_password missing:");
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					system_monitoring_interface::global_mon->log_warning(s);
+					});
+				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				return;
+			}
+
+			user_name_field = _src["user_name_field"];
+			validation_code_field = _src["validation_code_field"];
+			password1_field = _src["password1_field"];
+			password2_field = _src["password2_field"];
 		}
 
 	};
@@ -1455,6 +1516,11 @@ namespace corona
 			else if (class_name == "send_user")
 			{
 				_dest = std::make_shared<corona_send_user_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "password_user")
+			{
+				_dest = std::make_shared<corona_password_user_command>();
 				_dest->put_json(_src);
 			}
 			else if (class_name == "confirm_user")

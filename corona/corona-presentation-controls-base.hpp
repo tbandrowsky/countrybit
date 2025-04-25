@@ -1128,7 +1128,7 @@ namespace corona
 	void control_base::arrange(rectangle _bounds)
 	{
 		set_bounds(_bounds);
-		system_monitoring_interface::global_mon->log_information(std::format("{0}.{1} {2},{3}-{4},{5}", class_name, name, bounds.x, bounds.y, bounds.w, bounds.h), __FILE__, __LINE__);
+//		system_monitoring_interface::global_mon->log_information(std::format("{0}.{1} {2},{3}-{4},{5}", class_name, name, bounds.x, bounds.y, bounds.w, bounds.h), __FILE__, __LINE__);
 	}
 
 	void control_base::arrange_children(rectangle _bounds,
