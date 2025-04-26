@@ -72,8 +72,8 @@ namespace corona
 			is_group(false)
 		{
 			text_style = _src.text_style;
-			is_default_focus = false;
-			is_default_button = false;
+			is_default_focus = _src.is_default_focus;
+			is_default_button = _src.is_default_button;
 		}
 
 		windows_control(container_control_base *_parent, int _id)
@@ -151,6 +151,12 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			control_base::put_json(_src);
+			is_default_focus = (bool)_src["default_focus"];
+			is_default_button = (bool)_src["default_button"];
+			json jtext_style = _src["text_style"];
+			if (jtext_style.object()) {
+				corona::put_json(text_style, jtext_style);
+			}
 			set_window_size();
 		}
 
@@ -226,6 +232,28 @@ namespace corona
 					set_window_size();
 					on_create();
 				}
+				else
+				{
+					HFONT old_font = text_font;
+					text_font = phost->createFontDips(window, text_style.fontName, text_style.fontSize, text_style.bold, text_style.italics);
+					SendMessage(window, WM_SETFONT, (WPARAM)text_font, 0);
+
+					if (old_font) {
+						::DeleteObject(old_font);
+						old_font = nullptr;
+					}
+
+					set_window_size();
+					on_create();
+				}
+
+				if (is_default_focus) {
+					set_focus();
+                    if (auto phost = window_host.lock()) {
+                        phost->setFocus(id);
+                    }
+				}
+
 			}
 		}
 

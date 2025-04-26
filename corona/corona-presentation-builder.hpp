@@ -85,6 +85,7 @@ namespace corona
 		std::string   prefix;
 		bool		  read_only;
 		bool		  is_default_focus;
+        bool		  is_default_button;
 		json		  control_settings;
 		layout_rect	  box;
 		layout_rect	  label_box;
@@ -99,6 +100,7 @@ namespace corona
 			field_id = {};
 			read_only = false;
 			is_default_focus = false;
+			is_default_button = false;
 		}
 
 		form_field(const form_field& _src) = default;
@@ -108,16 +110,21 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			control_settings.put_member("default_focus", is_default_focus);
+			control_settings.put_member("default_button", is_default_button);
+
 			_dest.put_member("field_id", field_id);
 			_dest.put_member("json_field_name", json_field_name);
 			_dest.put_member("label_text", label_text);
 			_dest.put_member("class_name", class_name);
 			_dest.put_member("tooltip_text", tooltip_text);
 			_dest.put_member("input_format", input_format);
+
 			_dest.put_member("suffix", suffix);
 			_dest.put_member("prefix", prefix);
 			_dest.put_member("read_only", read_only);
-			_dest.put_member("is_default_focus", is_default_focus);
+			_dest.put_member("default_button", is_default_button);
+			_dest.put_member("default_focus", is_default_focus);
 			_dest.put_member("control_settings", control_settings);
 			_dest.put_member("form_name", form_name);
 
@@ -154,6 +161,7 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
+
 			field_id = _src["field_id"];
 			json_field_name = _src["json_field_name"];
 			label_text = _src["label_text"];
@@ -163,8 +171,15 @@ namespace corona
 			suffix = _src["suffix"];
 			prefix = _src["prefix"];
 			read_only = (bool)_src["read_only"];
-			is_default_focus = (bool)_src["is_default_focus"];
+			is_default_focus = (bool)_src["default_focus"];
+			is_default_button = (bool)_src["default_button"];
 			control_settings = _src["control_settings"];
+            if (control_settings.has_member("default_focus")) {
+                is_default_focus = (bool)control_settings["default_focus"];
+            }
+			if (control_settings.has_member("default_button")) {
+				is_default_button = (bool)control_settings["default_button"];
+			}
 			form_name = _src["form_name"];
 
 			json jcontainer_box = _src["box"];
@@ -1319,6 +1334,9 @@ namespace corona
 				comm_bus_app_interface::global_bus->log_warning(msg);
 			}
 
+			field_def.control_settings.put_member("default_button", field_def.is_default_button);
+			field_def.control_settings.put_member("default_focus", field_def.is_default_focus);
+
 			edit_row.from_json(field_def.control_settings);
 
 			if (not field_def.suffix.empty())
@@ -1395,6 +1413,7 @@ namespace corona
 					msg = std::format("form '{0}' fields.[{1}] does not have a class_name", name, index_lists);
 					system_monitoring_interface::global_mon->log_warning(msg);
 				}
+
 				if (fld.control_settings.empty())
 				{
 					fld.control_settings = jp.create_object();

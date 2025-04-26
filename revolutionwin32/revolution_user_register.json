@@ -52,7 +52,7 @@
                 "height": "50 pixels",
                 "y": "20 pixels"
               },
-              "text": "Constellation Government Access"
+              "text": "Register New Patriot"
             },
             {
               "class_name": "chaptersubtitle",
@@ -68,7 +68,7 @@
               "name": "user_register_form",
               "box": {
                 "width": "700 pixels",
-                "height": "450 pixels",
+                "height": "350 pixels",
                 "y": "60 pixels"
               },
               "model": {
@@ -81,6 +81,7 @@
                 "fields": [
                   {
                     "class_name": "edit",
+                    "default_focus": true,
                     "name": "user_name_ctl",
                     "json_field_name": "user_name",
                     "label_text": "User Name:",

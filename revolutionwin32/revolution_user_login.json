@@ -52,7 +52,7 @@
                 "height": "50 pixels",
                 "y": "20 pixels"
               },
-              "text": "Constellation Government Access"
+              "text": "Constellation Login"
             },
             {
               "class_name": "chaptersubtitle",
@@ -61,7 +61,7 @@
                 "height": "25 pixels",
                 "y": "20 pixels"
               },
-              "text": "Please log in"
+              "text": "Please log in."
             },
             {
               "class_name": "form",
@@ -72,7 +72,7 @@
                 "y": "60 pixels"
               },
               "model": {
-                "name": "user_login_form",
+                "name": "user_login_model",
                 "defaults": {
                   "box": "edit_container_box",
                   "label_box": "edit_label_box",
@@ -81,6 +81,7 @@
                 "fields": [
                   {
                     "class_name": "edit",
+                    "default_focus": true,
                     "name": "user_name_ctl",
                     "json_field_name": "user_name",
                     "label_text": "User Name:",
@@ -108,6 +109,7 @@
                   "class_name": "push_button",
                   "text": "Login",
                   "box": "button_box",
+                  "default_button" :  true,
                   "on_click": {
                     "class_name": "user_login",
                     "form_name": "user_login_form",
@@ -146,7 +148,7 @@
                     "class_name": "select_frame",
                     "page_to_select": "home",
                     "frame_to_load": "revolution_home_frame",
-                    "frame_contents_page": "user_sendcode"
+                    "frame_contents_page": "user_password"
                   }
                 }
               ]
