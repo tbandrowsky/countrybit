@@ -203,6 +203,10 @@ namespace corona
 						group_style = WS_GROUP | WS_TABSTOP;
 					}
 
+					if (is_default_button) {
+                        group_style |= BS_DEFPUSHBUTTON;
+					}
+
 					if (auto wclassname = get_window_class_w())
 						window = CreateWindowExW(get_window_ex_style(), get_window_class_w(), L"", get_window_style() | group_style, boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
 					else

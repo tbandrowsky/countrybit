@@ -95,7 +95,7 @@ namespace corona
 			std::vector<std::string> missing;
 
 			if (not _src.has_members(missing, { "form_name", "on_success", "on_fail" })) {
-				system_monitoring_interface::global_mon->log_warning("login_command missing:");
+				system_monitoring_interface::global_mon->log_warning("corona_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
@@ -369,7 +369,7 @@ namespace corona
 
 			corona_form_command::get_json(_dest);
 
-			_dest.put_member("class_name", "login"sv);
+			_dest.put_member("class_name", "login_user"sv);
 			_dest.put_member("user_name_field", user_name_field);
 			_dest.put_member("user_password_field", user_password_field);
 
@@ -382,7 +382,7 @@ namespace corona
 			corona_form_command::put_json(_src);
 
 			if (not _src.has_members(missing, { "form_name", "user_name_field", "user_password_field" })) {
-				system_monitoring_interface::global_mon->log_warning("login_command missing:");
+				system_monitoring_interface::global_mon->log_warning("login_user missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
@@ -1528,7 +1528,7 @@ namespace corona
 				_dest = std::make_shared<corona_confirm_user_command>();
 				_dest->put_json(_src);
 			}
-			else if (class_name == "login")
+			else if (class_name == "login_user")
 			{
 				_dest = std::make_shared<corona_login_command>();
 				_dest->put_json(_src);

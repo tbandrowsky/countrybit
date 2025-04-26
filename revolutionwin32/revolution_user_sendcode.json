@@ -52,7 +52,7 @@
                 "height": "50 pixels",
                 "y": "20 pixels"
               },
-              "text": "Constellation Government Access"
+              "text": "Confirmation Code"
             },
             {
               "class_name": "chaptersubtitle",
@@ -61,11 +61,11 @@
                 "height": "25 pixels",
                 "y": "20 pixels"
               },
-              "text": "Send Code"
+              "text": "Have a confirmation code sent to the e-mail on your account."
             },
             {
               "class_name": "form",
-              "name": "user_login_form",
+              "name": "user_sendcode_form",
               "box": {
                 "width": "700 pixels",
                 "height": "250 pixels",
@@ -109,21 +109,26 @@
                   }
                 },
                 {
-                  "class_name": "send_user",
-                  "form_name": "user_login_form",
-                  "user_name_field": "user_name",
-                  "user_password_field": "password",
-                  "on_success": {
-                    "class_name": "select_frame",
-                    "page_to_select": "home",
-                    "frame_to_load": "revolution_home_frame",
-                    "frame_contents_page": "revolution_root"
-                  },
-                  "on_fail": {
-                    "class_name": "set_property",
-                    "control_name": "status_message",
-                    "property_name": "text",
-                    "value": "Could not log in"
+                  "class_name": "push_button",
+                  "text": "Send Code",
+                  "box": "button_box",
+                  "default_button": true,
+                  "on_click": {
+                    "form_name": "user_sendcode_form",
+                    "user_name_field": "user_name",
+                    "class_name": "send_user",
+                    "on_success": {
+                      "class_name": "select_frame",
+                      "page_to_select": "home",
+                      "frame_to_load": "revolution_home_frame",
+                      "frame_contents_page": "user_confirm"
+                    },
+                    "on_fail": {
+                      "class_name": "set_property",
+                      "control_name": "status_message",
+                      "property_name": "text",
+                      "value": "Could not log in"
+                    }
                   }
                 },
                 {
