@@ -16,11 +16,19 @@ namespace corona
 		corona_client_response& operator = (http_params& _params)
 		{
 			json_parser jp;
-			json response = jp.parse_object(_params.response.server.c_str());
+			json response = jp.parse_object(_params.response.response_body.get_ptr());
 			data = response[data_field];
 			execution_time = response["execution_time_seconds"];
-			success = (bool)response[success_field];
-			message = (bool)response[message_field];
+			if (response.has_member(success_field)) {
+				success = (bool)response[success_field];
+				message = response[message_field];
+			}
+			else 
+			{
+				success = _params.response.http_status_code == 200;
+				std::string temp = _params.response.response_body.get_ptr();
+                message = std::format("http code {0}\n{1}", _params.response.http_status_code, temp );
+			}
 			return *this;
 		}
 	};

@@ -52,7 +52,7 @@
                 "height": "50 pixels",
                 "y": "20 pixels"
               },
-              "text": "Constellation Government Access"
+              "text": "C O N F I R M"
             },
             {
               "class_name": "chaptersubtitle",
@@ -61,7 +61,7 @@
                 "height": "25 pixels",
                 "y": "20 pixels"
               },
-              "text": "Confirm User"
+              "text": "Enter validation code you've received in your email"
             },
             {
               "class_name": "form",

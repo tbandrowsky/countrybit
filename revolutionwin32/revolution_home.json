@@ -22,7 +22,7 @@
           }
         },
         {
-          "class_name": "column",
+          "class_name": "row",
           "box": {
             "width": "0.9 container",
             "height": "0.8 container",
@@ -49,8 +49,48 @@
             {
               "class_name": "frame",
               "name": "revolution_home_frame",
-              "box": "full_container"
+              "box": {
+                "width": ".7 container",
+                "height": "1.0 container"
+              }
+            },
+            {
+              "class_name": "column",
+              "box": {
+                "width": "1.0 remaining",
+                "height": "1.0 container"
+              },
+              "children": [
+                {
+                  "class_name": "chaptertitle",
+                  "box": {
+                    "width": "1.0 container",
+                    "height": "50 pixels",
+                    "y": "20 pixels"
+                  },
+                  "text": ""
+                },
+                {
+                  "class_name": "chaptersubtitle",
+                  "box": {
+                    "width": "1.0 container",
+                    "height": "25 pixels",
+                    "y": "20 pixels"
+                  },
+                  "text": "Status"
+                },
+                {
+                  "class_name": "code",
+                  "name": "status_message",
+                  "box": {
+                    "width": "1.0 container",
+                    "height": "150 pixels"
+                  }
+                }
+              ]
+
             }
+
           ]
         }
       ]

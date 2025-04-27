@@ -5,5 +5,10 @@
     "DefaultUserPassword": "systempassword",
     "DefaultUserEmailAddress": "noemail@nowhere.com",
     "DefaultGuestTeam": "Guests"
+  },
+  "Client": {
+    "host": "localhost",
+    "port": 5678,
+    "base_path": ""
   }
 }

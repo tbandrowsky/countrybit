@@ -628,7 +628,7 @@ namespace corona
 			data.put_member("password", user_password);
 			payload.put_member("data", data);
 
-			std::string path = base_path + "/corona/login/senduser";
+			std::string path = base_path + "/corona/login/loginuser";
 
 			http_params params = cc.post(host.c_str(), port, path.c_str(), payload, header.c_str());
 

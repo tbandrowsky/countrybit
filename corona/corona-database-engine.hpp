@@ -5942,7 +5942,7 @@ private:
 			if (pm1.is_stupid())
 			{
 				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				response = create_user_response(create_user_request, false, "password is stupid", data, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, std::format("Password does not meet complexity requirements.  Password must be at least 10 characters long, have letters, numbers, and punctuation marks.  You have length = {0}, letters = {1}, numbers = {2}, punctuation = {3}.", pm1.char_count, pm1.alpha_count, pm1.digit_count, pm1.punctuation_count), data, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -6211,7 +6211,7 @@ private:
 
 			if (user_password1 != user_password2)
 			{
-				response = create_user_response(_password_request, false, "No match", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_user_response(_password_request, false, "Passwords do not match.", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6220,7 +6220,7 @@ private:
 
 			if (pm1.is_stupid())
 			{
-				response = create_user_response(_password_request, false, "Stupid password", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_user_response(_password_request, false, "Password fails complexity test.", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}

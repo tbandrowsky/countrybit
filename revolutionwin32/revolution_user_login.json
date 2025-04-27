@@ -52,7 +52,7 @@
                 "height": "50 pixels",
                 "y": "20 pixels"
               },
-              "text": "Constellation Login"
+              "text": "L O G I N"
             },
             {
               "class_name": "chaptersubtitle",
@@ -117,7 +117,7 @@
                     "user_password_field": "password",
                     "on_success": {
                       "class_name": "select_frame",
-                      "page_to_select": "home",
+                      "page_to_select": "revolution_home",
                       "frame_to_load": "revolution_home_frame",
                       "frame_contents_page": "revolution_root"
                     },
@@ -135,64 +135,27 @@
                   "box": "button_box",
                   "on_click": {
                     "class_name": "select_frame",
-                    "page_to_select": "home",
+                    "page_to_select": "revolution_home",
                     "frame_to_load": "revolution_home_frame",
                     "frame_contents_page": "user_register"
                   }
                 },
                 {
                   "class_name": "push_button",
-                  "text": "Forgot Password",
+                  "text": "Password",
                   "box": "button_box",
                   "on_click": {
                     "class_name": "select_frame",
-                    "page_to_select": "home",
+                    "page_to_select": "revolution_home",
                     "frame_to_load": "revolution_home_frame",
                     "frame_contents_page": "user_password"
                   }
                 }
               ]
             }
-
           ]
-        },
-        {
-          "class_name": "column",
-          "box": {
-            "width": "1.0 remaining",
-            "height": "1.0 container"
-          },
-          "children": [
-            {
-              "class_name": "chaptertitle",
-              "box": {
-                "width": "1.0 container",
-                "height": "50 pixels",
-                "y": "20 pixels"
-              },
-              "text": ""
-            },
-            {
-              "class_name": "chaptersubtitle",
-              "box": {
-                "width": "1.0 container",
-                "height": "25 pixels",
-                "y": "20 pixels"
-              },
-              "text": "Status"
-            },
-            {
-              "class_name": "code",
-              "name": "status_message",
-              "box": {
-                "width": "1.0 container",
-                "height": "150 pixels"
-              }
-            }
-          ]
-
         }
-
       ]
     }
+  ]
 }

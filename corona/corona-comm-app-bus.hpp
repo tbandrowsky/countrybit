@@ -173,6 +173,14 @@ namespace corona
 					local_db->apply_config(local_db_config);
 				}
 
+				if (local_db_config.has_member("Client"))
+                {
+                    json client_config = local_db_config["Client"];
+                    client.base_path = client_config["base_path"];
+					client.host = client_config["host"];
+					client.port = client_config["port"];
+				}
+
 				json create_database_response = local_db->create_database();
 
 			}
@@ -184,6 +192,15 @@ namespace corona
 				if (read_json(database_config_filename, local_db_config) != null_row) {
 					local_db->apply_config(local_db_config);
 				}
+
+				if (local_db_config.has_member("Client"))
+				{
+					json client_config = local_db_config["Client"];
+					client.base_path = client_config["base_path"];
+					client.host = client_config["host"];
+					client.port = client_config["port"];
+				}
+
 
 				local_db->open_database(0);
 			}
@@ -253,6 +270,7 @@ namespace corona
 			json_parser jp;
 			json temp;
 			date_time start_time = date_time::now();
+
 			if (read_json(database_schema_filename, temp) != null_row) {
 				log_command_start("poll_db", "apply schema", start_time, __FILE__, __LINE__);
 				auto tempo = local_db->apply_schema(temp);
@@ -265,6 +283,15 @@ namespace corona
 				local_db->apply_config(temp);
 				log_command_stop("poll_db", "config applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
+
+			if (temp.has_member("Client"))
+			{
+				json client_config = local_db_config["Client"];
+				client.base_path = client_config["base_path"];
+				client.host = client_config["host"];
+				client.port = client_config["port"];
+			}
+
 		}
 
 		void poll_pages(bool _select_default_page)
