@@ -35,6 +35,7 @@ namespace corona
 
 		corona_client_response response;
 
+		std::shared_ptr<corona_bus_command> on_start;
 		std::shared_ptr<corona_bus_command> on_success;
 		std::shared_ptr<corona_bus_command> on_fail;
 
@@ -53,16 +54,20 @@ namespace corona
 			json obj = bus->get_form_data(form_name);
 
 			if (obj.object()) {
+                if (on_start) {
+                    on_start->execute(context, bus);
+                }	
 				auto response = invoke(obj, bus);
 				if (response.success) {
 					if (on_success) {
+						context.put_member("value", response.message);
 						on_success->execute(context, bus);
 					}
 					obj = response.data;
 				}
 				else if (on_fail)
 				{
-					context.put_member("property_value", response.message);
+					context.put_member("value", response.message);
 					on_fail->execute(context, bus);
 				}
 			}
@@ -77,6 +82,11 @@ namespace corona
 			using namespace std::literals;
 
 			json_parser jp;
+			if (on_start) {
+				json jon_start = jp.create_object();
+				on_start->get_json(jon_start);
+				_dest.put_member("on_start", jon_start);
+			}
 			if (on_success) {
 				json jon_login_success = jp.create_object();
 				on_success->get_json(jon_login_success);
@@ -104,6 +114,12 @@ namespace corona
 				return;
 			}
 
+			on_start = nullptr;
+
+			json jon_start = _src["on_start"];
+			if (jon_start.object()) {
+				corona::put_json(on_start, jon_start);
+			}
 			json jon_login_success = _src["on_success"];
 			if (jon_login_success.object()) {
 				corona::put_json(on_success, jon_login_success);
@@ -122,10 +138,10 @@ namespace corona
 	{
 	public:
 
-		std::string user_name_field;
-		std::string email_field;
-		std::string password1_field;
-		std::string password2_field;
+		std::string user_name_field = "";
+		std::string email_field = "";
+		std::string password1_field = "";
+		std::string password2_field = "";
 
 		corona_register_user_command()
 		{
@@ -183,8 +199,8 @@ namespace corona
 	{
 	public:
 
-		std::string user_name_field;
-		std::string validation_code_field;
+		std::string user_name_field = "";
+		std::string validation_code_field = "";
 
 		corona_confirm_user_command()
 		{
@@ -236,7 +252,7 @@ namespace corona
 	{
 	public:
 
-		std::string user_name_field;
+		std::string user_name_field = "";
 
 		corona_send_user_command()
 		{
@@ -285,10 +301,10 @@ namespace corona
 	{
 	public:
 
-		std::string user_name_field;
-        std::string validation_code_field;
-		std::string password1_field;
-		std::string password2_field;
+		std::string user_name_field = "";
+        std::string validation_code_field = "";
+		std::string password1_field = "";
+		std::string password2_field = "";
 
 		corona_password_user_command()
 		{
@@ -346,8 +362,8 @@ namespace corona
 	{
 	public:
 
-		std::string user_name_field;
-		std::string user_password_field;
+		std::string user_name_field = "";
+		std::string user_password_field = "";
 
 		corona_login_command()
 		{
@@ -401,7 +417,7 @@ namespace corona
 	class  corona_get_classes_command : public corona_form_command
 	{
 	public:
-		std::string			table_name;
+		std::string			table_name = "";
 
 		corona_get_classes_command()
 		{
@@ -470,7 +486,7 @@ namespace corona
 		}
 	};
 
-	class  corona_get_class_command : public corona_bus_command
+	class  corona_get_class_command : public corona_form_command
 	{
 	public:
 
@@ -479,14 +495,13 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
-			json obj;
-			return obj;
+			return response;
 		}
 	};
 
-	class  corona_put_class_command : public corona_bus_command
+	class  corona_put_class_command : public corona_form_command
 	{
 	public:
 
@@ -495,20 +510,19 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
-			json obj;
-			return obj;
+			return response;
 		}
 	};
 
 	class  corona_set_password_command : public corona_form_command
 	{
 	public:
-		std::string user_name_field;
-		std::string validation_code_field;
-		std::string password1_field;
-		std::string password2_field;
+		std::string user_name_field = "";
+		std::string validation_code_field = "";
+		std::string password1_field = "";
+		std::string password2_field = "";
 
 		corona_set_password_command()
 		{
@@ -560,7 +574,7 @@ namespace corona
 	class corona_create_object_command : public corona_form_command
 	{
 	public:
-		std::string	create_class_name;
+		std::string	create_class_name = "";
 		corona_instance instance;
 
 		corona_create_object_command()
@@ -570,9 +584,7 @@ namespace corona
 
 		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
-			json new_object = bus->create_object(instance, create_class_name);
-			response.data = new_object;
-			response.success = new_object.object();
+			response = bus->create_object(instance, create_class_name);
 			return response;
 		}
 
@@ -606,14 +618,14 @@ namespace corona
 
 	};
 
-	class corona_create_object_frame_command : public corona_bus_command
+	class corona_create_object_frame_command : public corona_form_command
 	{
 	public:
-		std::string	create_class_name;
-		std::string	page_to_select;
-		std::string	frame_to_load;
-		std::string	frame_contents_page;
-		std::string	form_to_load;
+		std::string	create_class_name = "";
+		std::string	page_to_select = "";
+		std::string	frame_to_load = "";
+		std::string	frame_contents_page = "";
+		std::string	form_to_load = "";
 		corona_instance instance;
 		corona_client_response response;
 
@@ -623,14 +635,13 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context, comm_bus_app_interface* bus)		
-{
-			json obj;
-			obj = bus->create_object(instance, create_class_name);
-			if (not obj.empty()) {
-				bus->select_page(page_to_select, frame_to_load, frame_contents_page, form_to_load, obj);
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
+		{
+			response = bus->create_object(instance, create_class_name);
+			if (response.success and response.data.object()) {
+				bus->select_page(page_to_select, frame_to_load, frame_contents_page, form_to_load, response.data);
 			}
-			return obj;
+			return response;
 		}
 
 		virtual void get_json(json& _dest)
@@ -671,14 +682,14 @@ namespace corona
 
 	};
 
-	class corona_select_object_frame_command : public corona_bus_command
+	class corona_select_object_frame_command : public corona_form_command
 	{
 	public:
-		std::string		table_name;
-		std::string		page_to_select;
-		std::string		frame_to_load;
-		std::string		frame_contents_page;
-		std::string		form_to_load;
+		std::string		table_name = "";
+		std::string		page_to_select = "";
+		std::string		frame_to_load = "";
+		std::string		frame_contents_page = "";
+		std::string		form_to_load = "";
 		corona_instance instance;
 
 		corona_select_object_frame_command()
@@ -686,18 +697,19 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
-			json obj;
 			control_base* cb = bus->find_control(table_name);
 			if (cb) {
 				json key_data = cb->get_selected_object();
 				if (key_data.object()) {
-					obj = bus->edit_object(instance, key_data);
-					bus->select_page(page_to_select, frame_to_load, frame_contents_page, form_to_load, obj);
+					response = bus->edit_object(instance, key_data);
+                    if (response.success) {
+                        bus->select_page(page_to_select, frame_to_load, frame_contents_page, form_to_load, response.data);
+                    }
 				}
 			}
-			return obj;
+			return response;
 		}
 
 		virtual void get_json(json& _dest)
@@ -736,12 +748,11 @@ namespace corona
 		}
 	};
 
-	class corona_select_object_page_command : public corona_bus_command
+	class corona_select_object_page_command : public corona_form_command
 	{
 	public:
-		std::string	table_name;
-		std::string page_name;
-		std::string form_name;
+		std::string	table_name = "";
+		std::string page_name = "";
 		corona_instance instance;
 
 		corona_select_object_page_command()
@@ -749,18 +760,19 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
-			json obj;
 			control_base* cb = bus->find_control(table_name);
 			if (cb) {
 				json key_data = cb->get_selected_object();
 				if (key_data.object()) {
-					obj =  bus->edit_object(instance, key_data);
-					bus->select_page(page_name, form_name, obj);
+					response = bus->edit_object(instance, key_data);
+					if (response.success) {
+						bus->select_page(page_name, form_name, response.data);
+					}
 				}
 			}
-			return obj;
+			return response;
 		}
 
 		virtual void get_json(json& _dest)
@@ -796,11 +808,10 @@ namespace corona
 
 	};
 
-	class corona_preview_object_command : public corona_bus_command
+	class corona_preview_object_command : public corona_form_command
 	{
 	public:
-		std::string	table_name;
-		std::string form_name;
+		std::string	table_name = "";
 		corona_instance instance;
 
 		corona_preview_object_command()
@@ -808,22 +819,24 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
-			json obj;
 			control_base* cb = bus->find_control(table_name);
 			if (cb) {
 				json key_data = cb->get_selected_object();
 				if (key_data.object()) {
-					obj =  bus->get_object(instance, key_data);
-					control_base* cf = bus->find_control(form_name);
-					if (cf) {
-						cf->set_data(obj);
+					response = bus->get_object(instance, key_data);
+					if (response.success) {
+						control_base* cf = bus->find_control(form_name);
+						if (cf) {
+							cf->set_data(response.data);
+						}
 					}
 				}
 			}
-			return obj;
+			return response;
 		}
+
 
 		virtual void get_json(json& _dest)
 		{
@@ -856,11 +869,10 @@ namespace corona
 
 	};
 
-	class corona_save_object_command : public corona_bus_command
+	class corona_save_object_command : public corona_form_command
 	{
 	public:
 
-		std::string form_name;
 		corona_instance instance;
 
 		corona_save_object_command()
@@ -868,9 +880,8 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override 
 		{
-			json obj;
 			control_base* cb = nullptr;
 
 			if (not form_name.empty())
@@ -879,15 +890,17 @@ namespace corona
 			if (cb) {
 				json object_data = cb->get_data();
 				if (object_data.object()) {
-					obj =  bus->put_object(instance, object_data);
+					response =  bus->put_object(instance, object_data);
 				}
 			}
-			return obj;
+			return response;
 		}
 
 		virtual void get_json(json& _dest)
 		{
 			using namespace std::literals;
+
+			corona_form_command::get_json(_dest);
 
 			_dest.put_member("class_name", "save_object"sv);
 			_dest.put_member("form_name", form_name);
@@ -897,6 +910,9 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
+
+			corona_form_command::put_json(_src);
+
 			form_name = _src["form_name"];
 			std::vector<std::string> missing;
 			if (not _src.has_members(missing, { "form_name" })) {
@@ -913,10 +929,10 @@ namespace corona
 
 	};
 
-	class corona_load_object_command : public corona_bus_command
+	class corona_load_object_command : public corona_form_command
 	{
 	public:
-		std::string control_name;
+		std::string control_name = "";
 		json		object_data;
 		corona_instance instance;
 
@@ -925,19 +941,18 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override 
 		{
-			json obj;
 			control_base* cb = nullptr;
 			
 			cb = bus->find_control(control_name);
 
 			if (cb) {
 				if (object_data.object()) {
-					obj =  bus->put_object(instance, object_data);
+					response =  bus->put_object(instance, object_data);
 				}
 			}
-			return obj;
+			return response;
 		}
 
 		virtual void get_json(json& _dest)
@@ -970,10 +985,10 @@ namespace corona
 
 	};
 
-	class corona_delete_object_command : public corona_bus_command
+	class corona_delete_object_command : public corona_form_command
 	{
 	public:
-		std::string		control_name;
+		std::string		control_name = "";
 		corona_instance instance;
 
 		corona_delete_object_command()
@@ -981,17 +996,16 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override 
 		{
-			json obj;
 			control_base* cb = bus->find_control(control_name);
 			if (cb) {
-				json object_data = cb->get_data();
-				if (object_data.object()) {
-					obj =  bus->delete_object(instance, object_data);
+				json obj_data = cb->get_data();
+				if (obj_data.object()) {
+					response =  bus->delete_object(instance, obj_data);
 				}
 			}
-			return obj;
+			return response;
 		}
 
 		virtual void get_json(json& _dest)
@@ -1022,12 +1036,12 @@ namespace corona
 
 	};
 
-	class corona_run_object_command : public corona_bus_command
+	class corona_run_object_command : public corona_form_command
 	{
 	public:
-		std::string			search_class_name;
-		std::string			form_name;
-		std::string			table_name;
+		std::string			search_class_name = "";
+		std::string			form_name = "";
+		std::string			table_name = "";
 		query_context		qctx;
 		corona_instance instance;
 
@@ -1036,10 +1050,9 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
 			json_parser jp;
-			json obj;
 			control_base* cb_form = {};
 			control_base* cb_table = {};
 
@@ -1065,7 +1078,7 @@ namespace corona
 					json search_class = jp.create_object();
 					search_class.put_member("class_name", search_class_name);
 					search_class_filters.put_member("filter", object_data);
-					obj = bus->query_objects(instance, search_class_filters);
+					response = bus->query_objects(instance, search_class_filters);
 					qctx.set_data_source(form_name, object_data);
 					qctx.set_data_source(search_class_name, obj);
 					json results = qctx.run();
@@ -1075,7 +1088,7 @@ namespace corona
 				}
 			}
 
-			return obj;
+			return response;
 		}
 
 		virtual void get_json(json& _dest)
@@ -1118,12 +1131,12 @@ namespace corona
 
 	};
 
-	class corona_search_objects_command : public corona_bus_command
+	class corona_search_objects_command : public corona_form_command
 	{
 	public:
-		std::string			search_class_name;
-		std::string			form_name;
-		std::string			table_name;
+		std::string			search_class_name = "";
+		std::string			form_name = "";
+		std::string			table_name = "";
 		query_context		qctx;
 		corona_instance instance;
 
@@ -1132,10 +1145,9 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
 			json_parser jp;
-			json obj;
 			control_base* cb_form = {};
 			control_base* cb_table = {};
 
@@ -1152,6 +1164,7 @@ namespace corona
 			if (not cb_table) {
 				comm_bus_app_interface::global_bus->log_warning(std::format("{0} table for search command not found", table_name), __FILE__, __LINE__);
 			}
+
 			if (cb_form and cb_table) 
 			{
 				json search_class_filters = jp.create_object();
@@ -1160,10 +1173,10 @@ namespace corona
 				if (object_data.object()) {
 					json search_class = jp.create_object();
 					search_class.put_member("class_name", search_class_name);
-					search_class_filters.put_member("Filter", object_data);
-					obj =  bus->query_objects(instance, search_class_filters);
+					search_class_filters.put_member("filter", object_data);
+					response =  bus->query_objects(instance, search_class_filters);
 					qctx.set_data_source(form_name, object_data);
-					qctx.set_data_source(search_class_name, obj);
+					qctx.set_data_source(search_class_name, response.data);
 					json results = qctx.run();
 					if (cb_table) {
 						cb_table->set_items(results);
@@ -1171,7 +1184,7 @@ namespace corona
 				}
 			}
 
-			return obj;
+			return response;
 		}
 
 		virtual void get_json(json& _dest)
@@ -1214,7 +1227,7 @@ namespace corona
 
 	};
 
-	class corona_select_page_command : public corona_bus_command
+	class corona_select_page_command : public corona_form_command
 	{
 	public:
 		std::string		page_name;
@@ -1227,9 +1240,8 @@ namespace corona
 			;
 		}
 
-		virtual json execute(json context,  comm_bus_app_interface* bus)
+		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
-			json obj;
 			control_base* cb = {};
 			if (not source_name.empty())
 				cb = bus->find_control(source_name);
@@ -1238,7 +1250,9 @@ namespace corona
 				data = cb->get_data();
 			}
 			bus->select_page(page_name, form_name, data);
-			return obj;
+			response.data = data;
+			response.success = true;
+			return response;
 		}
 
 		virtual void get_json(json& _dest)
@@ -1287,10 +1301,10 @@ namespace corona
 		}
 	};
 
-	class corona_script_command: public corona_bus_command
+	class corona_script_command: public corona_form_command
 	{
 	public:
-		std::string		control_name;
+		std::string		control_name = "";
 		std::vector<std::shared_ptr<corona_bus_command>> commands;
 
 		corona_script_command()
@@ -1360,7 +1374,7 @@ namespace corona
 		}
 	};
 
-	class corona_set_property_command : public corona_bus_command
+	class corona_set_property_command : public corona_form_command
 	{
 	public:
 		std::string		control_name;
@@ -1408,7 +1422,7 @@ namespace corona
 		}
 	};
 
-	class corona_select_frame_command : public corona_bus_command
+	class corona_select_frame_command : public corona_form_command
 	{
 	public:
 		std::string		form_to_read;
@@ -1426,6 +1440,8 @@ namespace corona
 		{
 			json obj;
 			control_base* cb = {};
+			// if form_to_read isn't empty
+			// then 
 			if (not form_to_read.empty())
 				cb = bus->find_control(form_to_read);
 			json data;

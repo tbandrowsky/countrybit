@@ -5942,7 +5942,7 @@ private:
 			if (pm1.is_stupid())
 			{
 				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				response = create_user_response(create_user_request, false, std::format("Password does not meet complexity requirements.  Password must be at least 10 characters long, have letters, numbers, and punctuation marks.  You have length = {0}, letters = {1}, numbers = {2}, punctuation = {3}.", pm1.char_count, pm1.alpha_count, pm1.digit_count, pm1.punctuation_count), data, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, std::format("Password '{4}' does not meet complexity requirements.  Password must be at least 10 characters long, have letters, numbers, and punctuation marks.  You have length = {0}, letters = {1}, numbers = {2}, punctuation = {3}.", pm1.char_count, pm1.alpha_count, pm1.digit_count, pm1.punctuation_count, user_password1), data, method_timer.get_elapsed_seconds());
 				return response;
 			}
 

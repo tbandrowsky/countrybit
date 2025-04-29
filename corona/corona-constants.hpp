@@ -919,6 +919,8 @@ namespace corona
 
 		bool is_safe_string()
 		{
+			if (not buffer_bytes)
+				return false;
 			char* t = buffer_bytes.get() + buffer_size - 1;
 			return *t == 0;
 		}

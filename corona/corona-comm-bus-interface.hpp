@@ -271,13 +271,13 @@ namespace corona
 		virtual corona_client_response remote_get_class(std::string class_name) = 0;
 		virtual corona_client_response remote_put_class(json _class_data) = 0;
 
-		virtual json create_object(corona_instance _instance, std::string class_name) = 0;
-		virtual json run_object(corona_instance _instance, json object_information) = 0;
-		virtual json edit_object(corona_instance _instance, json object_information) = 0;
-		virtual json put_object(corona_instance _instance, json object_information) = 0;
-		virtual json get_object(corona_instance _instance, json object_information) = 0;
-		virtual json delete_object(corona_instance _instance, json object_information) = 0;
-		virtual json query_objects(corona_instance _instance, json object_information) = 0;
+		virtual corona_client_response create_object(corona_instance _instance, std::string class_name) = 0;
+		virtual corona_client_response run_object(corona_instance _instance, json object_information) = 0;
+		virtual corona_client_response edit_object(corona_instance _instance, json object_information) = 0;
+		virtual corona_client_response put_object(corona_instance _instance, json object_information) = 0;
+		virtual corona_client_response get_object(corona_instance _instance, json object_information) = 0;
+		virtual corona_client_response delete_object(corona_instance _instance, json object_information) = 0;
+		virtual corona_client_response query_objects(corona_instance _instance, json object_information) = 0;
 		virtual void error(json _error) = 0;
 
 		virtual void when(UINT topic, std::function<void()> _runnable) = 0;

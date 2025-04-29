@@ -13,10 +13,36 @@ namespace corona
 		double			execution_time;
 		json			data;
 
+		corona_client_response& operator = (json& response)
+		{
+			json_parser jp;
+
+			data = response[data_field];
+			execution_time = response["execution_time_seconds"];
+			if (response.has_member(success_field)) {
+				success = (bool)response[success_field];
+				message = response[message_field];
+			}
+			else {
+				success = 0;
+				message = "unknown";
+			}
+			return *this;
+		}
+
 		corona_client_response& operator = (http_params& _params)
 		{
 			json_parser jp;
-			json response = jp.parse_object(_params.response.response_body.get_ptr());
+			json response;
+
+            if (_params.response.response_body.is_safe_string() > 0) {
+                // read the response body
+				response = jp.parse_object(_params.response.response_body.get_ptr());
+			}
+			else {
+				response = jp.create_object();
+			}
+
 			data = response[data_field];
 			execution_time = response["execution_time_seconds"];
 			if (response.has_member(success_field)) {
@@ -26,8 +52,13 @@ namespace corona
 			else 
 			{
 				success = _params.response.http_status_code == 200;
-				std::string temp = _params.response.response_body.get_ptr();
-                message = std::format("http code {0}\n{1}", _params.response.http_status_code, temp );
+				if (_params.response.response_body.is_safe_string()) {
+					std::string temp = _params.response.response_body.get_ptr();
+					message = std::format("http code: {0}\nreponse: {1}", _params.response.http_status_code, temp);
+				}
+				else {
+					message = std::format("http code: {0}", _params.response.http_status_code);
+				}
 			}
 			return *this;
 		}

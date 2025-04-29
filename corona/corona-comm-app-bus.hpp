@@ -702,8 +702,9 @@ namespace corona
 			return response;
 		}
 
-		virtual json  local_create_user(json user_information)
+		virtual corona_client_response  local_create_user(json user_information)
 		{
+			corona_client_response response;
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("create_user", user_information["Name"], dt);
@@ -716,20 +717,24 @@ namespace corona
 			json j = local_db->create_user(request);
 			if (j.error())
 				log_error(j, __FILE__, __LINE__);
+			response = j;
 			log_command_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			return j;
+			return response;
 		}
 
-		virtual json  local_login_user(json login_information)
+		virtual corona_client_response  local_login_user(json login_information)
 		{
+
+			corona_client_response response;
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("login_user", login_information["Name"], dt);
 			timer tx;
-			json response = local_db->login_user(login_information);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			log_command_stop("login", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			json j = local_db->login_user(login_information);
+			if (j.error())
+				log_error(j, __FILE__, __LINE__);
+			log_command_stop("login", j["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			response = j;
 			return response;
 		}
 
@@ -746,8 +751,9 @@ namespace corona
 			return result[token_field];
 		}
 
-		virtual json  local_create_object(std::string class_name)
+		virtual corona_client_response  local_create_object(std::string class_name)
 		{
+			corona_client_response response;
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("create_object", class_name, dt);
@@ -758,16 +764,17 @@ namespace corona
 			json request = jp.create_object();
 			request.put_member(token_field, token);
 			request.put_member(class_name_field, class_name);
-			json response = local_db->create_object(request);
-			log_command_stop("create_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			response = response[data_field];
+			json j = local_db->create_object(request);
+			log_command_stop("create_object", j[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			if (j.error())
+				log_error(j, __FILE__, __LINE__);
+			response = j;
 			return response;
 		}
 
-		virtual json  local_run_object(json object_information)
+		virtual corona_client_response  local_run_object(json object_information)
 		{
+			corona_client_response response;
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("run_object", object_information[class_name_field], dt);
@@ -778,16 +785,17 @@ namespace corona
 			json request = object_information.clone();
 			request.put_member(token_field, token);
 			request.put_member(data_field, object_information);
-			json response = local_db->put_object(request);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			response = response[data_field];
-			log_command_stop("put_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			json j = local_db->put_object(request);
+			if (j.error())
+				log_error(j, __FILE__, __LINE__);
+			response = j;
+			log_command_stop("put_object", j[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
-		virtual json  local_put_object(json object_information)
+		virtual corona_client_response  local_put_object(json object_information)
 		{
+			corona_client_response response;
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("put_object", object_information[class_name_field], dt);
@@ -798,17 +806,18 @@ namespace corona
 			json request = object_information.clone();
 			request.put_member(token_field, token);
 			request.put_member(data_field, object_information);
-			json response = local_db->put_object(request);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			response = response[data_field];
-			log_command_stop("put_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			json j = local_db->put_object(request);
+			if (j.error())
+				log_error(j, __FILE__, __LINE__);
+			response = j;
+			log_command_stop("put_object", j[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
 
-		virtual json  local_get_object(json object_information)
+		virtual corona_client_response  local_get_object(json object_information)
 		{
+			corona_client_response response;
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("get_object", object_information[class_name_field], dt);
@@ -817,16 +826,17 @@ namespace corona
 			json request = object_information.clone();
 			json token = get_local_token();
 			request.put_member(token_field, token);
-			json response = local_db->get_object(request);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			log_command_stop("get_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			response = response[data_field];
+			json j = local_db->get_object(request);
+			if (j.error())
+				log_error(j, __FILE__, __LINE__);
+			log_command_stop("get_object", j[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			response = j;
 			return response;
 		}
 
-		virtual json  local_edit_object(std::string _class_name, int64_t _object_id)
+		virtual corona_client_response  local_edit_object(std::string _class_name, int64_t _object_id)
 		{
+			corona_client_response response;
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("edit_object", _class_name, dt);
@@ -835,16 +845,17 @@ namespace corona
 			json request = jp.create_object();
 			json token = get_local_token();
 			request.put_member(token_field, token);
-			json response = local_db->edit_object(request);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			log_command_stop("edit_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			response = response[data_field];
+			json j = local_db->edit_object(request);
+			if (j.error())
+				log_error(j, __FILE__, __LINE__);
+			log_command_stop("edit_object", j[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			response = j;
 			return response;
 		}
 
-		virtual json  local_delete_object(json object_information)
+		virtual corona_client_response  local_delete_object(json object_information)
 		{
+			corona_client_response response;
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("delete_object", object_information[class_name_field], dt);
@@ -852,18 +863,18 @@ namespace corona
 			json request = object_information.clone();
 			json token = get_local_token();
 			request.put_member(token_field, token);
-			json response = local_db->put_object(request);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
+			json j = local_db->put_object(request);
+			if (j.error())
+				log_error(j, __FILE__, __LINE__);
 
-			log_command_stop("delete_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			response = response[data_field];
+			log_command_stop("delete_object", j[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			response = j;
 			return response;
 		}
 
-
-		virtual json  local_query_objects(json query_information)
+		virtual corona_client_response  local_query_objects(json query_information)
 		{
+			corona_client_response response;
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("query_objects", query_information[class_name_field], dt);
@@ -872,180 +883,173 @@ namespace corona
 			json request = jp.create_object();
 			json token = get_local_token();
 			query_information.put_member(token_field, token);
-			json response = local_db->query(request);
-			if (response.error())
-				log_error(response, __FILE__, __LINE__);
-			response = response[data_field];
-			if (response.array()) {
-				std::string rr = std::format("{0} items", response.size());
+			json j = local_db->query(request);
+			if (j.error())
+				log_error(j, __FILE__, __LINE__);
+			response = j;
+			j= j[data_field];
+			if (j.array()) {
+				std::string rr = std::format("{0} items", j.size());
 				log_information(rr);
 			}
-			log_command_stop("query_objects", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("query_objects", j[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
-		virtual json  create_object(corona_instance _instance, std::string class_name)
+		virtual corona_client_response  create_object(corona_instance _instance, std::string class_name)
 		{
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("create_object", class_name, dt);
-			json response;
+			corona_client_response response;
 			timer tx;
 
 			if (_instance == corona_instance::local)
 			{
-				auto result = local_create_object(class_name);
-				response = result;
+				response = local_create_object(class_name);
 			}
 			else
 			{
-				auto result = remote_create_object(class_name);
-				if (!result.success) {
-					log_error(result, __FILE__, __LINE__);
+				response = remote_create_object(class_name);
+				if (!response.success) {
+					log_error(response, __FILE__, __LINE__);
 				}
-				response = result.data;
 			}
 
-			log_command_stop("create_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("create_object", response.message, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
-		virtual json  put_object(corona_instance _instance, json object_information)
+		virtual corona_client_response  put_object(corona_instance _instance, json object_information)
 		{
 			date_time dt;
 			dt = date_time::now();
 			timer tx;
 			log_command_start("put_object", object_information[class_name_field], dt);
-			json response;
+			corona_client_response response;
 
 			if (_instance == corona_instance::local)
 			{
-				return local_put_object(object_information);
+				response = local_put_object(object_information);
 			}
 			else
 			{
-				auto result = remote_put_object(object_information);
-				if (!result.success) {
-					log_error(result, __FILE__, __LINE__);
-				}
-				response = result.data;
+				response = remote_put_object(object_information);
 			}
 
-			log_command_stop("put_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			if (!response.success) {
+				log_error(response, __FILE__, __LINE__);
+			}
+
+			log_command_stop("put_object", response.message, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
-		virtual json  run_object(corona_instance _instance, json object_information)
+		virtual corona_client_response  run_object(corona_instance _instance, json object_information)
 		{
 			date_time dt;
 			dt = date_time::now();
 			timer tx;
 			log_command_start("run_object", object_information[class_name_field], dt);
-			json response;
+			corona_client_response response;
 
 			if (_instance == corona_instance::local)
 			{
-				return local_run_object(object_information);
+				response = local_run_object(object_information);
 			}
 			else
 			{
-				auto result = remote_run_object(object_information);
-				if (!result.success) {
-					log_error(result, __FILE__, __LINE__);
-				}
-				response = result.data;
+				response = remote_run_object(object_information);
 			}
 
-			log_command_stop("run_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			if (!response.success) {
+				log_error(response, __FILE__, __LINE__);
+			}
+
+			log_command_stop("run_object", response.message, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
-		virtual json  edit_object(corona_instance _instance, json object_information)
+		virtual corona_client_response  edit_object(corona_instance _instance, json object_information)
 		{
 			date_time dt;
 			dt = date_time::now();
 			timer tx;
 			log_command_start("edit_object", object_information[class_name_field], dt);
-			json response;
+			corona_client_response response;
 
 			std::string class_name = object_information[class_name_field];
 			int64_t object_id = (int64_t)object_information[object_id_field];
 
 			if (_instance == corona_instance::local)
 			{
-				return local_edit_object(class_name, object_id);
+				response = local_edit_object(class_name, object_id);
 			}
 			else
 			{
-				auto result = remote_edit_object(class_name, object_id, true);
-				if (!result.success) {
-					log_error(result, __FILE__, __LINE__);
-				}
-				response = result.data;
+				response = remote_edit_object(class_name, object_id, true);
 			}
 
-			log_command_stop("edit_object", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			if (!response.success) {
+				log_error(response, __FILE__, __LINE__);
+			}
+
+			log_command_stop("edit_object", response.message, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
-		virtual json  get_object(corona_instance _instance, json object_information)
+		virtual corona_client_response  get_object(corona_instance _instance, json object_information)
 		{
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("get_object", object_information[class_name_field], dt);
-			json response;
-			
+			corona_client_response response;
+
 			if (_instance == corona_instance::local)
 			{
-				return local_get_object(object_information);
+				response = local_get_object(object_information);
 			}
 			else
 			{
 				std::string class_name = object_information[class_name_field];
 				int64_t object_id = (int64_t)object_information[object_id_field];
-				auto result = remote_get_object(class_name, object_id, false);
-				if (!result.success) {
-					log_error(result, __FILE__, __LINE__);
-				}
-				response = result.data;
+				response = remote_get_object(class_name, object_id, false);
+			}
+			if (!response.success) {
+				log_error(response, __FILE__, __LINE__);
 			}
 
 			return response;
 		}
 
-		virtual json  delete_object(corona_instance _instance, json object_information)
+		virtual corona_client_response  delete_object(corona_instance _instance, json object_information)
 		{
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("delete_object", object_information[class_name_field], dt);
-			json response;
+			corona_client_response response;
 
 			if (_instance == corona_instance::local)
 			{
-				return local_delete_object(object_information);
+				response = local_delete_object(object_information);
 			}
 			else
 			{
 				std::string class_name = object_information[class_name_field];
 				int64_t object_id = (int64_t)object_information[object_id_field];
 
-				auto result = remote_delete_object(class_name, object_id);
-				if (!result.success) {
-					log_error(result, __FILE__, __LINE__);
-				}
-				response = result.data;
+				response = remote_delete_object(class_name, object_id);
 			}
+			if (!response.success) {
+				log_error(response, __FILE__, __LINE__);
+			}
+
 			return response;
 		}
 
 
-		virtual json  query_objects(corona_instance _instance, json query_information)
+		virtual corona_client_response  query_objects(corona_instance _instance, json query_information)
 		{
-			if (_instance == corona_instance::local)
-			{
-				return local_query_objects(query_information);
-			}
-
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("query_objects", query_information[class_name_field], dt);
@@ -1053,16 +1057,25 @@ namespace corona
 			json_parser jp;
 			json request = jp.create_object();
 			json token = get_local_token();
-			query_information.put_member(token_field, token);
-			json response =  local_db->query(request);
-			if (response.error())
+			corona_client_response response;
+
+			if (_instance == corona_instance::local)
+			{
+				response = local_query_objects(query_information);
+			} 
+			else
+			{
+                response = remote_query_objects(query_information);	
+			}
+
+			if (!response.success)
 				log_error(response, __FILE__, __LINE__);
-			response = response[data_field];
-			if (response.array()) {
-				std::string rr = std::format("{0} items", response.size());
+
+			if (response.data.array()) {
+				std::string rr = std::format("{0} items", response.data.size());
 				log_information(rr);
 			}
-			log_command_stop("query_objects", response[message_field], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("query_objects", response.message, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 

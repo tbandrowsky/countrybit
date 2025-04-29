@@ -103,7 +103,7 @@
                   "box": "button_box",
                   "on_click": {
                     "class_name": "select_frame",
-                    "page_to_select": "home",
+                    "page_to_select": "revolution_home",
                     "frame_to_load": "revolution_home_frame",
                     "frame_contents_page": "user_login"
                   }
@@ -137,7 +137,7 @@
                   "box": "button_box",
                   "on_click": {
                     "class_name": "select_frame",
-                    "page_to_select": "home",
+                    "page_to_select": "revolution_home",
                     "frame_to_load": "revolution_home_frame",
                     "frame_contents_page": "user_register"
                   }
@@ -148,23 +148,14 @@
                   "box": "button_box",
                   "on_click": {
                     "class_name": "select_frame",
-                    "page_to_select": "home",
+                    "page_to_select": "revolution_home",
                     "frame_to_load": "revolution_home_frame",
                     "frame_contents_page": "user_password"
                   }
                 }
               ]
-            },
-            {
-              "class_name": "code",
-              "name": "status_message",
-              "box": {
-                "width": "700 pixels",
-                "height": "150 pixels"
-              }
             }
           ]
-
         }
 
       ]

@@ -114,6 +114,10 @@
     },
     {
       "class_name": "import",
+      "file_name": "revolution_user_confirm.json"
+    },
+    {
+      "class_name": "import",
       "file_name": "revolution_user_settings.json"
     }
   ]

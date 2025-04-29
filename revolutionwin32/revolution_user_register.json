@@ -124,6 +124,12 @@
                   "class_name": "push_button",
                   "text": "Cancel",
                   "box": "button_box",
+                  "on_start": {
+                    "class_name": "set_property",
+                    "control_name": "status_message",
+                    "property_name": "text",
+                    "value": "Cancel to login"
+                  },
                   "on_click": {
                     "class_name": "select_frame",
                     "page_to_select": "home",
@@ -138,21 +144,25 @@
                   "on_click": {
                     "class_name": "register_user",
                     "form_name": "user_register_form",
-                    "user_name_field": "user_name_ctl",
-                    "email_field": "email_control",
-                    "password1_field": "user_password1_ctl",
-                    "password2_field": "user_password2_ctl",
+                    "user_name_field": "user_name",
+                    "email_field": "email",
+                    "password1_field": "password1",
+                    "password2_field": "password2",
+                    "on_start": {
+                      "class_name": "set_property",
+                      "control_name": "status_message",
+                      "property_name": "text"
+                    },
                     "on_success": {
                       "class_name": "select_frame",
-                      "page_to_select": "home",
+                      "page_to_select": "revolution_home",
                       "frame_to_load": "revolution_home_frame",
                       "frame_contents_page": "user_confirm"
                     },
                     "on_fail": {
                       "class_name": "set_property",
                       "control_name": "status_message",
-                      "property_name": "text",
-                      "value": "Could not register user"
+                      "property_name": "text"
                     }
                   }
                 }

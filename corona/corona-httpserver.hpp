@@ -416,22 +416,19 @@ namespace corona {
 					nullptr
 				);
 
-				while (receive_result != ERROR_HANDLE_EOF)
+				while (receive_result == NO_ERROR)
 				{
-					if (receive_result == NO_ERROR)
-					{
-						read_body(body_builder, (PHTTP_REQUEST)buff.get_ptr());
+                    body_builder.append(buff);
 
-						receive_result = HttpReceiveRequestEntityBody(
-							request_queue,
-							_request->RequestId,
-							0,
-							buff.get_ptr(),
-							buff.get_size(),
-							&bytes_returned,
-							nullptr
-						);
-					}
+					receive_result = HttpReceiveRequestEntityBody(
+						request_queue,
+						_request->RequestId,
+						0,
+						buff.get_ptr(),
+						buff.get_size(),
+						&bytes_returned,
+						nullptr
+					);
 				}
 			}
 
