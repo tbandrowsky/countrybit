@@ -126,11 +126,6 @@
                       "page_to_select": "revolution_home",
                       "frame_to_load": "revolution_home_frame",
                       "frame_contents_page": "revolution_root"
-                    },
-                    "on_fail": {
-                      "class_name": "set_property",
-                      "control_name": "status_message",
-                      "property_name": "text"
                     }
                   }
                 },

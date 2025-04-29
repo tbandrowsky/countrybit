@@ -49,6 +49,8 @@ namespace corona
 			return response;
 		}
 
+		virtual corona_client_response& set_message(corona_client_response& _src, comm_bus_app_interface* _bus);
+
 		virtual json execute(json context, comm_bus_app_interface* bus)
 		{
 			json obj = bus->get_form_data(form_name);
@@ -58,6 +60,7 @@ namespace corona
                     on_start->execute(context, bus);
                 }	
 				auto response = invoke(obj, bus);
+				set_message(response, bus);
 				if (response.success) {
 					if (on_success) {
 						context.put_member("value", response.message);
@@ -104,7 +107,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (not _src.has_members(missing, { "form_name", "on_success", "on_fail" })) {
+			if (not _src.has_members(missing, {  })) {
 				system_monitoring_interface::global_mon->log_warning("corona_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);
@@ -1626,6 +1629,19 @@ namespace corona
 			}
 		}
 	}
+
+	corona_client_response& corona_form_command::set_message(corona_client_response& _src, comm_bus_app_interface* _bus)
+	{
+		auto dest = std::make_shared<corona_set_property_command>();
+
+		dest->control_name = "status_message";
+		dest->property_name = "text";
+		dest->value = _src.message;
+		dest->execute(_src.data, _bus);
+
+		return _src;
+	}
+
 }
 
 #endif
