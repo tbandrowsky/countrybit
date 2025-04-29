@@ -1405,7 +1405,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (not _src.has_members(missing, { "control_name", "property_name", "value"})) {
+			if (not _src.has_members(missing, { "control_name", "property_name"})) {
 				system_monitoring_interface::global_mon->log_warning("set_property missing:");
 
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {

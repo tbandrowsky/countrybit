@@ -130,8 +130,7 @@
                     "on_fail": {
                       "class_name": "set_property",
                       "control_name": "status_message",
-                      "property_name": "text",
-                      "value": "Could not log in"
+                      "property_name": "text"
                     }
                   }
                 },
