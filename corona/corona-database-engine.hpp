@@ -6046,11 +6046,14 @@ private:
 
 			json user_info = get_user(user_name, sys_perm);
 
+			std::string message = "Code not sent.";
+
 			if (user_info.object()) {
+				message = "Code sent";
 				send_user_confirmation(user_info);
 			}
 
-			response = create_user_response(validation_code_request, true, "Ok", data, tx.get_elapsed_seconds());
+			response = create_user_response(validation_code_request, true, message, data, tx.get_elapsed_seconds());
 
 			system_monitoring_interface::global_mon->log_function_stop("send_validation_code", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 

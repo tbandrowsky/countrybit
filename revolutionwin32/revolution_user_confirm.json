@@ -112,7 +112,7 @@
                     "class_name": "select_frame",
                     "page_to_select": "home",
                     "frame_to_load": "revolution_home_frame",
-                    "frame_contents_page": "login_user",
+                    "frame_contents_page": "user_login",
                     "on_start": {
                       "class_name": "set_property",
                       "control_name": "status_message",

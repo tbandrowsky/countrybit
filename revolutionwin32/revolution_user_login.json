@@ -101,9 +101,10 @@
               "class_name": "row",
               "box": {
                 "width": "700 pixels",
-                "height": "50 pixels"
+                "height": "150 pixels"
               },
               "item_next_space": "8 pixels",
+              "wrap" : true,
               "children": [
                 {
                   "class_name": "push_button",
@@ -148,7 +149,24 @@
                 },
                 {
                   "class_name": "push_button",
-                  "text": "Password",
+                  "text": "Confirm Code",
+                  "box": "button_box",
+                  "on_click": {
+                    "class_name": "select_frame",
+                    "page_to_select": "home",
+                    "frame_to_load": "revolution_home_frame",
+                    "frame_contents_page": "user_confirm",
+                    "on_start": {
+                      "class_name": "set_property",
+                      "control_name": "status_message",
+                      "property_name": "text",
+                      "value": "To confirm code"
+                    }
+                  }
+                },
+                {
+                  "class_name": "push_button",
+                  "text": "Set Password",
                   "box": "button_box",
                   "on_click": {
                     "class_name": "select_frame",
@@ -159,10 +177,11 @@
                       "class_name": "set_property",
                       "control_name": "status_message",
                       "property_name": "text",
-                      "value": "To Password"
+                      "value": "To password"
                     }
                   }
                 }
+
               ]
             }
           ]

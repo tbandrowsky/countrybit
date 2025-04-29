@@ -213,7 +213,7 @@ namespace corona
 		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
 			std::string user_name = obj[user_name_field];
-			std::string validation_field = obj[validation_field];
+			std::string validation_field = obj[validation_code_field];
 			response = bus->remote_confirm_user(user_name, validation_field);
 			return response;
 		}
