@@ -84,7 +84,8 @@
                   "name": "status_message",
                   "box": {
                     "width": "1.0 container",
-                    "height": "150 pixels"
+                    "height": "150 pixels",
+                    "y": "20 pixels"
                   }
                 }
               ]
