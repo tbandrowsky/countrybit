@@ -1,8 +1,0 @@
-Package: nu-book-zxing-cpp
-Version: 2.2.1
-Depends: vcpkg-cmake:x64-windows, vcpkg-cmake-config:x64-windows
-Architecture: x86-windows
-Multi-Arch: same
-Abi: 8141e70cd3ba5cbd306a79f296447aee6a74c6bebee1d0a684ae663757642376
-Description: Barcode detection and decoding library.
-Status: install ok half-installed

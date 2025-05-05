@@ -1,4 +1,0 @@
-D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/quirc_x64-windows/lib/quirc.lib
-D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/quirc_x64-windows/include/quirc.h
-D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/quirc_x64-windows/share/quirc/quirc-config.cmake
-D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/quirc_x64-windows/share/quirc/quirc-config-release.cmake

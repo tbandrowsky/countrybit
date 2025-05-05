@@ -1,6 +1,0 @@
-Package: vcpkg-get-python-packages
-Version: 2024-01-24
-Architecture: x64-windows
-Multi-Arch: same
-Abi: dff36a697f121169e75734398b1fe3a531b9eb42310c6c4db12d4fbba7162b69
-Status: purge ok half-installed

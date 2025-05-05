@@ -1,2 +1,0 @@
-D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libjpeg-turbo/x64-windows-rel/simd/CMakeFiles/CheckASM_NASM/CMakeFiles/edit_cache.dir
-D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libjpeg-turbo/x64-windows-rel/simd/CMakeFiles/CheckASM_NASM/CMakeFiles/rebuild_cache.dir

@@ -1,7 +1,0 @@
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/flatbuffers/x64-windows-rel/CMakeFiles/flatbuffers.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/flatbuffers/x64-windows-rel/CMakeFiles/flatc.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/flatbuffers/x64-windows-rel/CMakeFiles/edit_cache.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/flatbuffers/x64-windows-rel/CMakeFiles/rebuild_cache.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/flatbuffers/x64-windows-rel/CMakeFiles/list_install_components.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/flatbuffers/x64-windows-rel/CMakeFiles/install.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/flatbuffers/x64-windows-rel/CMakeFiles/install/local.dir

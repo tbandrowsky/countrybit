@@ -1,9 +1,0 @@
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/protobuf/x64-windows-rel/CMakeFiles/libprotobuf-lite.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/protobuf/x64-windows-rel/CMakeFiles/libprotobuf.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/protobuf/x64-windows-rel/CMakeFiles/libprotoc.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/protobuf/x64-windows-rel/CMakeFiles/protoc.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/protobuf/x64-windows-rel/CMakeFiles/edit_cache.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/protobuf/x64-windows-rel/CMakeFiles/rebuild_cache.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/protobuf/x64-windows-rel/CMakeFiles/list_install_components.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/protobuf/x64-windows-rel/CMakeFiles/install.dir
-D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/blds/protobuf/x64-windows-rel/CMakeFiles/install/local.dir

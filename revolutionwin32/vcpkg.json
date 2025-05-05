@@ -1,9 +1,0 @@
-{
-  "name": "revolution",
-  "version": "1.0",
-  "dependencies": [
-    "opencv",
-    "nu-book-zxing-cpp"
-  ],
-  "builtin-baseline": "f4456c1b974131b8467c7371a3c302b7f58a99f2"
-}
