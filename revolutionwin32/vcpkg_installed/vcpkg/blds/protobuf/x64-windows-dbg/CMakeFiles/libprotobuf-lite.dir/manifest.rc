@@ -1,0 +1,2 @@
+#pragma code_page(65001)
+2 /* CREATEPROCESS_MANIFEST_RESOURCE_ID */ 24 /* RT_MANIFEST */ "D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/protobuf/x64-windows-dbg/CMakeFiles/libprotobuf-lite.dir/embed.manifest"

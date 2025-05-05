@@ -1,0 +1,1364 @@
+{
+	"info": {
+		"_postman_id": "2ecf25e2-f05c-4a2a-9274-a73c4e139e67",
+		"name": "Corona",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "6430556"
+	},
+	"item": [
+		{
+			"name": "Test",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5678/corona/test",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"test"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"\r",
+							"pm.test(\"Receive Token\", function () {\r",
+							"    let jsonData = pm.response.json();\r",
+							"\r",
+							"   console.log(jsonData);\r",
+							"    pm.collectionVariables.set(\"LoginToken\", \"variable_value\");\r",
+							"    let mytoken = jsonData.token;\r",
+							"\r",
+							"    pm.environment.set(\"LoginAccessToken\", mytoken);\r",
+							"})"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_name\" : \"system\",\r\n    \"password\" : \"systempassword\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/loginuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"loginuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Create Company User",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"companydrone\",\r\n        \"password1\" : \"testo12345!\",\r\n        \"password2\" : \"testo12345!\",\r\n        \"email\" : \"todd.bandrowsky@countryvideogames.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/createuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"createuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Confirm Company User",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n        \"user_name\" : \"companydrone\",\r\n        \"validation_code\" : \"MEAYLN\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/confirmuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"confirmuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Create Customer User",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"userdrone\",\r\n        \"password1\" : \"testo12345!\",\r\n        \"password2\" : \"testo12345!\",\r\n        \"email\" : \"todd.bandrowsky@gmail.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/createuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"createuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Send Customer Confirmation",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"userdrone\",\r\n        \"password1\" : \"testo12345!\",\r\n        \"password2\" : \"testo12345!\",\r\n        \"email\" : \"todd.bandrowsky@gmail.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/createuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"createuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Change Customer Password",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"user_name\" : \"userdrone\",\r\n        \"password1\" : \"testo12345!\",\r\n        \"password2\" : \"testo12345!\",\r\n        \"email\" : \"todd.bandrowsky@gmail.com\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/createuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"createuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Confirm Customer User",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n        \"user_name\" : \"userdrone\",\r\n        \"validation_code\" : \"PHQGHU\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/confirmuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"confirmuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Login Company",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"\r",
+							"pm.test(\"Receive Token\", function () {\r",
+							"    let jsonData = pm.response.json();\r",
+							"\r",
+							"   console.log(jsonData);\r",
+							"    pm.collectionVariables.set(\"LoginToken\", \"variable_value\");\r",
+							"    let mytoken = jsonData.token;\r",
+							"\r",
+							"    pm.environment.set(\"LoginAccessToken\", mytoken);\r",
+							"})"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_name\" : \"system\",\r\n    \"password\" : \"systempassword\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/loginuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"loginuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User - Login Customer",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"\r",
+							"pm.test(\"Receive Token\", function () {\r",
+							"    let jsonData = pm.response.json();\r",
+							"\r",
+							"   console.log(jsonData);\r",
+							"    pm.collectionVariables.set(\"LoginToken\", \"variable_value\");\r",
+							"    let mytoken = jsonData.token;\r",
+							"\r",
+							"    pm.environment.set(\"LoginAccessToken\", mytoken);\r",
+							"})"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_name\" : \"userdrone17\",\r\n    \"password\" : \"testo12345!\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/login/loginuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"login",
+						"loginuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Classes",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5678/corona/classes/get",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"classes",
+						"get"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Class Detail",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"ClassName\" : \"Candidates\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/classes/get/details/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"classes",
+						"get",
+						"details",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Put Class",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"ClassName\" : \"Candidates\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/classes/get/details/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"classes",
+						"get",
+						"details",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query Using Index",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {\r\n                \"candidate_id\" : \"H0AK00105\"\r\n            }\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query Using From Joins",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {\r\n                \"candidate_id\" : \"H0NV01219\"\r\n            }\r\n        },\r\n        {\r\n            \"class_name\" : \"committee_candidate\",\r\n            \"name\" : \"committee_candidate\",\r\n            \"filter\" : {\r\n                \"candidate_id\" : \"$candidate.candidate_id\"\r\n            }\r\n        },\r\n        {\r\n            \"class_name\" : \"committee\",\r\n            \"name\" : \"committee\",\r\n            \"filter\" : {\r\n                \"committee_id\" : \"$committee_candidate.committee_id\"\r\n            }\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"candidate\"            \r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "System Teams",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {}\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"name\" : \"people_result\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "System Grants",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {}\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"name\" : \"people_result\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query SQL",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"People\",\r\n            \"name\" : \"somename\"\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"name\" : \"people_result\",\r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"somename\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query - all condition",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"Candidates\",\r\n            \"name\" : \"Candidates\"\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"Candidates\",\r\n            \"condition\" : {\r\n                \"class_name\" : \"all\",\r\n                \"conditions\" : [\r\n                    {\r\n                        \"class_name\" : \"eq\",\r\n                        \"valuepath\" : \"political_party\",\r\n                        \"value\" : \"REP\"\r\n                    },\r\n                    { \r\n                        \"class_name\" : \"eq\",\r\n                        \"valuepath\" : \"state\",\r\n                        \"value\" : \"KY\"\r\n                    }\r\n                ]\r\n            }\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query - any condition",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"Candidates\",\r\n            \"name\" : \"Candidates\"\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"Candidates\",\r\n            \"condition\" : {\r\n                \"class_name\" : \"all\",\r\n                \"conditions\" : [\r\n                    {\r\n                        \"class_name\" : \"eq\",\r\n                        \"valuepath\" : \"political_party\",\r\n                        \"value\" : \"REP\"\r\n                    },\r\n                    { \r\n                        \"class_name\" : \"eq\",\r\n                        \"valuepath\" : \"state\",\r\n                        \"value\" : \"KY\"\r\n                    },\r\n                    { \r\n                        \"class_name\" : \"any\",\r\n                        \"conditions\" : [\r\n                            {\r\n                                \"class_name\" : \"eq\",\r\n                                \"valuepath\" : \"city\",\r\n                                \"value\" : \"LEXINGTON\"\r\n                            },\r\n                            {\r\n                                \"class_name\" : \"eq\",\r\n                                \"valuepath\" : \"city\",\r\n                                \"value\" : \"LOUISVILLE\"\r\n                            }\r\n                        ]\r\n                    }\r\n                ]\r\n            }\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query - simple eq",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"Candidates\",\r\n            \"name\" : \"Candidates\"\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"Candidates\",\r\n            \"condition\" : {\r\n                \"class_name\" : \"eq\",\r\n                \"valuepath\" : \"political_party\",\r\n                \"value\" : \"REP\"\r\n            }\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query - simple contains",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"Candidates\",\r\n            \"name\" : \"Candidates\"\r\n        }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"input\" : \"Candidates\",\r\n            \"condition\" : {\r\n                \"class_name\" : \"contains\",\r\n                \"valuepath\" : \"full_name\",\r\n                \"value\" : \"FRANK\"\r\n            }\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Objects",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"class_name\" : \"candidate\",\r\n    \"object_id\": 5,\r\n    \"include_children\" : true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/get",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"get"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Objects Team",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"class_name\" : \"candidate\",\r\n    \"object_id\": 5,\r\n    \"include_children\" : true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/get",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"get"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Objects SQL",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"class_name\" : \"people\",\r\n    \"object_id\": 37838,\r\n    \"include_children\" : false\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/get",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"get"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Objects 2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"class_name\" : \"candidate\",\r\n    \"object_id\": 29425,\r\n    \"include_children\" : true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/get",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"get"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Object Sibling 1",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"class_name\" : \"Candidates\",\r\n    \"object_id\": 9396,\r\n    \"include_children\" : true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Put Object 1",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"data\": \r\n  {\r\n        \"class_name\": \"Candidates\",\r\n        \"candidate_id\": \"THX1138\",\r\n        \"city\": \"BOWLING GREEN\",\r\n        \"election_year\": 2026,\r\n        \"full_name\": \"TODD BANDROWSKY\",\r\n        \"object_id\": 9403,\r\n        \"political_party\": \"REP\",\r\n        \"state\": \"KY\",\r\n        \"street1\": \"120 W MCLELLAN RD\",\r\n        \"street2\": \"UPSTAIRS\",\r\n        \"zip\": \"42101\"\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/put",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"put"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Object Sibling 2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"data\" : {\r\n        \"class_name\" : \"comment\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Put Object 2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"data\": \r\n  {\r\n        \"class_name\": \"Candidates\",\r\n        \"candidate_id\": \"THX1138\",\r\n        \"city\": \"BOWLING GREEN\",\r\n        \"election_year\": 2026,\r\n        \"full_name\": \"TODD BANDROWSKY\",\r\n        \"object_id\": 9403,\r\n        \"political_party\": \"REP\",\r\n        \"state\": \"KY\",\r\n        \"street1\": \"120 W MCLELLAN RD\",\r\n        \"street2\": \"UPSTAIRS\",\r\n        \"zip\": \"42101\"\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/put",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"put"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query sibling base",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"from\" : [\r\n        {\r\n            \"class_name\" : \"candidate\",\r\n            \"name\" : \"candidate\",\r\n            \"filter\" : {}\r\n       }\r\n    ],\r\n    \"stages\" : [\r\n        { \r\n            \"class_name\" : \"filter\",\r\n            \"name\" : \"people_result\",\r\n            \"input\" : \"candidate\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Put Object",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"data\": \r\n  {\r\n        \"class_name\": \"Candidates\",\r\n        \"candidate_id\": \"THX1138\",\r\n        \"city\": \"BOWLING GREEN\",\r\n        \"election_year\": 2026,\r\n        \"full_name\": \"TODD BANDROWSKY\",\r\n        \"object_id\": 9403,\r\n        \"political_party\": \"REP\",\r\n        \"state\": \"KY\",\r\n        \"street1\": \"120 W MCLELLAN RD\",\r\n        \"street2\": \"UPSTAIRS\",\r\n        \"zip\": \"42101\"\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/put",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"put"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Put Object Partial",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{LoginAccessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"data\": \r\n  {\r\n        \"object_id\": 29425,\r\n        \"class_name\": \"candidate\",\r\n        \"candidate_id\": \"R2D2\"\r\n    }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5678/corona/objects/put",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5678",
+					"path": [
+						"corona",
+						"objects",
+						"put"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "LoginToken",
+			"value": ""
+		},
+		{
+			"key": "variable_key",
+			"value": ""
+		}
+	]
+}

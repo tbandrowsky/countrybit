@@ -1,0 +1,110 @@
+{
+  "class_name": "page",
+  "page_name": "corona_generator",
+  "children": [
+    {
+      "class_name": "chaptertitle",
+      "text": "Corona Database",
+      "box": "chaptertitle_box"
+    },
+    {
+      "class_name": "chaptersubtitle",
+      "text": "Code Generation",
+      "box": "chaptersubtitle_box"
+    },
+    {
+      "class_name": "row",
+      "box": {
+        "width": "1.0 container",
+        "height": "75 pixels"
+      },
+      "wrap": true,
+      "children": [
+        {
+          "class_name": "push_button",
+          "text": "Back",
+          "box": "button_box",
+          "margin": "button_margin",
+          "click_command": {
+            "class_name": "select_frame_command",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "root"
+          }
+        },
+        {
+          "class_name": "combobox",
+          "list": {
+            "id_field": "id",
+            "text_field": "text",
+            "items": [
+              {
+                "id": 0,
+                "text": "Search Page (Corona UI)"
+              },
+              {
+                "id": 1,
+                "text": "Edit Page (Corona UI)"
+              },
+              {
+                "id": 2,
+                "text": ".NET Class"
+              },
+              {
+                "id": 3,
+                "text": "WinUI .NET Edit Class"
+              },
+              {
+                "id": 4,
+                "text": "WinUI .NET Search Class"
+              },
+              {
+                "id": 5,
+                "text": "WinUI Edit Page"
+              },
+              {
+                "id": 6,
+                "text": "WinUI Search Page"
+              }
+            ]
+          },
+          "box": "button_box",
+          "margin": "button_margin",
+          "select_command": {
+            "class_name": "generate_code",
+            "target_control": "generated_text"
+          }
+        }
+
+      ]
+    },
+    {
+      "class_name": "row",
+      "box": {
+        "width": "1.0 container",
+        "height": "1.0 remaining"
+      },
+      "wrap": true,
+      "children": [
+        {
+          "class_name": "edit",
+          "box": "full_container"
+        }
+      ]
+    },
+    {
+      "class_name": "row",
+      "box": {
+        "width": "1.0 container",
+        "height": "1.0 remaining"
+      },
+      "wrap": true,
+      "children": [
+        {
+          "class_name" : "edit",
+          "box" : "full_container"
+        }
+      ]
+    }
+  ]
+}

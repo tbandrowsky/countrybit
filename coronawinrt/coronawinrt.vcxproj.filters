@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>accd3aa8-1ba0-4223-9bbe-0c431709210b</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="ArrayFieldOptions.cpp" />
+    <ClCompile Include="BaseRequest.cpp" />
+    <ClCompile Include="BaseResponse.cpp" />
+    <ClCompile Include="BasicFilter.cpp" />
+    <ClCompile Include="ClassDefinition.cpp" />
+    <ClCompile Include="ConfirmUserRequest.cpp" />
+    <ClCompile Include="ConfirmUserResponse.cpp" />
+    <ClCompile Include="CopyObjectPath.cpp" />
+    <ClCompile Include="CopyObjectRequest.cpp" />
+    <ClCompile Include="CopyObjectResponse.cpp" />
+    <ClCompile Include="CoronaBaseObject.cpp" />
+    <ClCompile Include="CoronaObject.cpp" />
+    <ClCompile Include="CoronaUser.cpp" />
+    <ClCompile Include="CreateObjectRequest.cpp" />
+    <ClCompile Include="CreateObjectResponse.cpp" />
+    <ClCompile Include="CreateUserRequest.cpp" />
+    <ClCompile Include="CreateUserResponse.cpp" />
+    <ClCompile Include="DateTimeFieldOptions.cpp" />
+    <ClCompile Include="DeleteObjectsRequest.cpp" />
+    <ClCompile Include="DeleteObjectsResponse.cpp" />
+    <ClCompile Include="DoubleFieldOptions.cpp" />
+    <ClCompile Include="EditObjectRequest.cpp" />
+    <ClCompile Include="EditObjectResponse.cpp" />
+    <ClCompile Include="FieldDefinition.cpp" />
+    <ClCompile Include="FieldOptions.cpp" />
+    <ClCompile Include="GetClassesRequest.cpp" />
+    <ClCompile Include="GetClassesResponse.cpp" />
+    <ClCompile Include="GetClassRequest.cpp" />
+    <ClCompile Include="GetClassResponse.cpp" />
+    <ClCompile Include="GetObjectRequest.cpp" />
+    <ClCompile Include="GetObjectResponse.cpp" />
+    <ClCompile Include="IndexDefinition.cpp" />
+    <ClCompile Include="Int64FieldOptions.cpp" />
+    <ClCompile Include="LocalCoronaClient.cpp" />
+    <ClCompile Include="LoginUserRequest.cpp" />
+    <ClCompile Include="LoginUserResponse.cpp" />
+    <ClCompile Include="ObjectFieldOptions.cpp" />
+    <ClCompile Include="PasswordUserRequest.cpp" />
+    <ClCompile Include="PasswordUserResponse.cpp" />
+    <ClCompile Include="PutClassesRequest.cpp" />
+    <ClCompile Include="PutClassesResponse.cpp" />
+    <ClCompile Include="PutObjectsRequest.cpp" />
+    <ClCompile Include="PutObjectsResponse.cpp" />
+    <ClCompile Include="Query.cpp" />
+    <ClCompile Include="QueryCondition.cpp" />
+    <ClCompile Include="QueryConditionAll.cpp" />
+    <ClCompile Include="QueryConditionAny.cpp" />
+    <ClCompile Include="QueryConditionContains.cpp" />
+    <ClCompile Include="QueryConditionEq.cpp" />
+    <ClCompile Include="QueryConditionGtEq.cpp" />
+    <ClCompile Include="QueryConditionLt.cpp" />
+    <ClCompile Include="QueryConditionLtEq.cpp" />
+    <ClCompile Include="QueryConditionNone.cpp" />
+    <ClCompile Include="QueryFieldOptions.cpp" />
+    <ClCompile Include="QueryFilter.cpp" />
+    <ClCompile Include="QueryFrom.cpp" />
+    <ClCompile Include="QueryJoin.cpp" />
+    <ClCompile Include="QueryObjectsRequest.cpp" />
+    <ClCompile Include="QueryObjectsResponse.cpp" />
+    <ClCompile Include="QueryProject.cpp" />
+    <ClCompile Include="QueryProjectField.cpp" />
+    <ClCompile Include="QueryStage.cpp" />
+    <ClCompile Include="RemoteCoronaClient.cpp" />
+    <ClCompile Include="RunObjectRequest.cpp" />
+    <ClCompile Include="RunObjectResponse.cpp" />
+    <ClCompile Include="SendUserRequest.cpp" />
+    <ClCompile Include="SendUserResponse.cpp" />
+    <ClCompile Include="QueryConditionGt.cpp" />
+    <ClCompile Include="StringFieldOptions.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="ArrayFieldOptions.h" />
+    <ClInclude Include="BaseRequest.h" />
+    <ClInclude Include="BaseResponse.h" />
+    <ClInclude Include="BasicFilter.h" />
+    <ClInclude Include="ClassDefinition.h" />
+    <ClInclude Include="ConfirmUserRequest.h" />
+    <ClInclude Include="ConfirmUserResponse.h" />
+    <ClInclude Include="CopyObjectPath.h" />
+    <ClInclude Include="CopyObjectRequest.h" />
+    <ClInclude Include="CopyObjectResponse.h" />
+    <ClInclude Include="CoronaBaseObject.h" />
+    <ClInclude Include="CoronaObject.h" />
+    <ClInclude Include="CoronaUser.h" />
+    <ClInclude Include="CreateObjectRequest.h" />
+    <ClInclude Include="CreateObjectResponse.h" />
+    <ClInclude Include="CreateUserRequest.h" />
+    <ClInclude Include="CreateUserResponse.h" />
+    <ClInclude Include="DateTimeFieldOptions.h" />
+    <ClInclude Include="DeleteObjectsRequest.h" />
+    <ClInclude Include="DeleteObjectsResponse.h" />
+    <ClInclude Include="DoubleFieldOptions.h" />
+    <ClInclude Include="EditObjectRequest.h" />
+    <ClInclude Include="EditObjectResponse.h" />
+    <ClInclude Include="FieldDefinition.h" />
+    <ClInclude Include="FieldOptions.h" />
+    <ClInclude Include="GetClassesRequest.h" />
+    <ClInclude Include="GetClassesResponse.h" />
+    <ClInclude Include="GetClassRequest.h" />
+    <ClInclude Include="GetClassResponse.h" />
+    <ClInclude Include="GetObjectRequest.h" />
+    <ClInclude Include="GetObjectResponse.h" />
+    <ClInclude Include="IndexDefinition.h" />
+    <ClInclude Include="Int64FieldOptions.h" />
+    <ClInclude Include="LocalCoronaClient.h" />
+    <ClInclude Include="LoginUserRequest.h" />
+    <ClInclude Include="LoginUserResponse.h" />
+    <ClInclude Include="ObjectFieldOptions.h" />
+    <ClInclude Include="PasswordUserRequest.h" />
+    <ClInclude Include="PasswordUserResponse.h" />
+    <ClInclude Include="PutClassesRequest.h" />
+    <ClInclude Include="PutClassesResponse.h" />
+    <ClInclude Include="PutObjectsRequest.h" />
+    <ClInclude Include="PutObjectsResponse.h" />
+    <ClInclude Include="Query.h" />
+    <ClInclude Include="QueryCondition.h" />
+    <ClInclude Include="QueryConditionAll.h" />
+    <ClInclude Include="QueryConditionAny.h" />
+    <ClInclude Include="QueryConditionContains.h" />
+    <ClInclude Include="QueryConditionEq.h" />
+    <ClInclude Include="QueryConditionGtEq.h" />
+    <ClInclude Include="QueryConditionLt.h" />
+    <ClInclude Include="QueryConditionLtEq.h" />
+    <ClInclude Include="QueryConditionNone.h" />
+    <ClInclude Include="QueryFieldOptions.h" />
+    <ClInclude Include="QueryFilter.h" />
+    <ClInclude Include="QueryFrom.h" />
+    <ClInclude Include="QueryJoin.h" />
+    <ClInclude Include="QueryObjectsRequest.h" />
+    <ClInclude Include="QueryObjectsResponse.h" />
+    <ClInclude Include="QueryProject.h" />
+    <ClInclude Include="QueryProjectField.h" />
+    <ClInclude Include="QueryStage.h" />
+    <ClInclude Include="RemoteCoronaClient.h" />
+    <ClInclude Include="RunObjectRequest.h" />
+    <ClInclude Include="RunObjectResponse.h" />
+    <ClInclude Include="SendUserRequest.h" />
+    <ClInclude Include="SendUserResponse.h" />
+    <ClInclude Include="QueryConditionGt.h" />
+    <ClInclude Include="StringFieldOptions.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="coronawinrt.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="coronawinrt.def" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
+  </ItemGroup>
+</Project>

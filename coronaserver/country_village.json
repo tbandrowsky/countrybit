@@ -1,0 +1,557 @@
+{
+  "schema_name": "Country Video Games Candidate",
+  "schema_description": "Schema creates a simple searchable database using FEC donations as a source.",
+  "schema_version": "1.0",
+  "schema_authors": [
+    "TJ Bandrowsky"
+  ],
+  "classes": [
+    {
+      "class_name": "user_content",
+      "class_description": "Base of user owned objects",
+      "base_class_name": "sys_object",
+      "fields": {
+        "content_object_id": "int64"
+      },
+      "indexes": {
+        "object_content": {
+          "index_keys": [
+            "content_object_id"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "system_content",
+      "class_description": "Base of system owned objects",
+      "base_class_name": "sys_object",
+      "fields": {
+        "comments": {
+          "field_type": "array",
+          "child_objects": {
+            "UserContentBase": {
+              "child_class_name": "user_content",
+              "copy_values": {
+                "object_id": "content_object_id"
+              },
+              "construct_values": {
+                "object_id": "content_object_id"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "class_name": "comment",
+      "class_description": "Comments made by users",
+      "base_class_name": "user_content",
+      "fields": {
+        "comment_text": "string"
+      }
+    },
+    {
+      "class_name": "link",
+      "class_description": "Links made by users",
+      "base_class_name": "user_content",
+      "fields": {
+        "link_url": "string"
+      }
+    },
+    {
+      "class_name": "candidate",
+      "class_description": "Candidates running for public office",
+      "base_class_name": "system_content",
+      "fields": {
+        "candidate_id": "string",
+        "full_name": "string",
+        "political_party": "string",
+        "election_year": "int64",
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "committees": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "committee_candidate",
+                "name": "committee_candidate",
+                "filter": {
+                  "candidate_id": "$this.candidate_id"
+                }
+              },
+              {
+                "class_name": "committee",
+                "name": "committee",
+                "filter": {
+                  "committee_id": "committee_candidate.committee_id"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "committee"
+              }
+            ]
+          }
+        }
+      },
+      "indexes": {
+        "candidate_candidate_id_idx": {
+          "index_keys": [
+            "candidate_id"
+          ]
+        },
+        "candidate_full_name_idx": {
+          "index_keys": [
+            "full_name"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "candidate_search",
+      "class_description": "search object for candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "full_name": "string",
+        "state": "string",
+        "city": "string",
+        "political_party": "string",
+        "candidates": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "candidate",
+                "name": "candidate"
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "candidate",
+                "condition": {
+                  "class_name": "any",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "full_name",
+                      "value": "$this.full_name"
+                    },
+                    {
+                      "class_name": "eq",
+                      "valuepath": "state",
+                      "value": "$this.state"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "city",
+                      "value": "$this.city"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "political_party",
+                      "value": "$this.political_party"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "class_name": "committee",
+      "class_description": "Political groups that accept money from the public to support candidates",
+      "base_class_name": "system_content",
+      "fields": {
+        "committee_id": "string",
+        "committee_name": "string",
+        "political_party": "string"
+      },
+      "indexes": {
+        "committee_committee_id_idx": {
+          "index_keys": [
+            "committee_id"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "committee_search",
+      "class_description": "search object for committees",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_name": "string",
+        "political_party": "string",
+        "committees": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "committee",
+                "name": "committee",
+                "filter": {
+                  "committee_name": "$this.committee_name",
+                  "political_party": "$this.political_party"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "committee",
+                "condition": {
+                  "class_name": "all",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "committee_name",
+                      "value": "$this.committee_name"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "political_party",
+                      "value": "$this.political_party"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "class_name": "committee_candidate",
+      "class_description": "Mapping of committees and candidates",
+      "base_class_name": "system_content",
+      "fields": {
+        "committee_id": "string",
+        "candidate_id": "string"
+      },
+      "indexes": {
+        "committee_candidate_committee_id_idx": {
+          "index_keys": [
+            "committee_id"
+          ]
+        },
+        "committee_candidate_candidate_id_idx": {
+          "index_keys": [
+            "candidate_id"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "individual",
+      "class_description": "Mapping of committees and candidates",
+      "base_class_name": "system_content",
+      "fields": {
+        "committee_id": "string",
+        "full_name": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "employer": "string",
+        "occupation": "string",
+        "transaction_date": "datetime",
+        "transaction_amount": "double",
+        "memo": "string"
+      }
+    },
+    {
+      "class_name": "people",
+      "class_description": "SQL Server Adventure Works People.People",
+      "base_class_name": "system_content",
+      "fields": {
+        "business_entity_id": "string",
+        "person_type": "string",
+        "name_style": "string",
+        "title": "string",
+        "full_name": "string",
+        "first_name": "string",
+        "middle_name": "string",
+        "last_name": "string",
+        "suffix": "string"
+      },
+      "sql": {
+          "connection_name": "AdventureWorks2016",
+          "sql_view_name": "[AdventureWorks2016].[Person].[Person]",
+          "sql_table_name": "[AdventureWorks2016].[Person].[Person]",
+          "mappings": [
+            {
+              "corona_field_name": "business_entity_id",
+              "sql_field_name": "BusinessEntityID",
+              "primary_key": true,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
+              "corona_field_name": "person_type",
+              "sql_field_name": "PersonType",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 20
+            },
+            {
+              "corona_field_name": "name_style",
+              "sql_field_name": "NameStyle",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 20
+            },
+            {
+              "corona_field_name": "title",
+              "sql_field_name": "Title",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 20
+            },
+            {
+              "corona_field_name": "full_name",
+              "sql_field_name": "Upper(Concat(LastName, ', ', FirstName))",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
+              "corona_field_name": "first_name",
+              "sql_field_name": "FirstName",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
+              "corona_field_name": "middle_name",
+              "sql_field_name": "MiddleName",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
+              "corona_field_name": "last_name",
+              "sql_field_name": "LastName",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 100
+            },
+            {
+              "corona_field_name": "suffix",
+              "sql_field_name": "Suffix",
+              "primary_key": false,
+              "field_type": "string",
+              "string_size": 20
+            }
+          ]
+      },
+      "indexes": {
+        "people_full_name_idx": {
+          "index_keys": [
+            "full_name"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "people_search",
+      "class_description": "search object for people",
+      "base_class_name": "sys_object",
+      "fields": {
+        "full_name": "string",
+        "people": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "people",
+                "name": "people"
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "people",
+                "condition": {
+                  "class_name": "any",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "full_name",
+                      "value" :  "$this.full_name"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+
+  ],
+  "users": [
+    {
+      "user_name": "doctorw420",
+      "first_name": "jack",
+      "last_name": "swatsky"
+    },
+    {
+      "user_name": "doctorw421",
+      "first_name": "dianne",
+      "last_name": "jackson"
+    }
+  ],
+  "datasets": [
+    {
+      "dataset_name": "Candidate Teams",
+      "dataset_description": "Load Teams",
+      "dataset_version": "1.0",
+      "dataset_author": "TJ Bandrowsky",
+      "dataset_source": "inline",
+      "objects": [
+        {
+          "class_name": "sys_team",
+          "team_name": "candidate_admins",
+          "team_description": "company admins",
+          "team_domain": "countryvideogames.com",
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "user_content",
+              "put": "own",
+              "get": "any",
+              "alter": "none",
+              "delete": "own"
+            },
+            {
+              "class_name": "sys_grant",
+              "grant_class": "system_content",
+              "put": "any",
+              "get": "any",
+              "alter": "any",
+              "delete": "any"
+            }
+          ],
+          "workflow_classes": [ "committee_search", "candidate_search", "people_search" ]
+        },
+        {
+          "class_name": "sys_team",
+          "team_name": "candidate_users",
+          "team_description": "candidate users",
+          "team_domain": "*",
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "user_content",
+              "put": "own",
+              "get": "any",
+              "alter": "none",
+              "delete": "own"
+            },
+            {
+              "class_name": "sys_grant",
+              "grant_class": "system_content",
+              "put": "none",
+              "get": "any",
+              "alter": "none",
+              "delete": "none"
+            }
+          ],
+          "workflow_classes": [ "committee_search", "candidate_search", "people_search" ]
+        }
+      ]
+    },
+    {
+      "dataset_name": "Candidate Master",
+      "dataset_description": "Load Candidates",
+      "dataset_version": "1.0",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "filename": "cn.csv",
+        "target_class": "candidate",
+        "column_map": {
+          "0": "candidate_id",
+          "1": "full_name",
+          "2": "political_party",
+          "3": "election_year",
+          "10": "street1",
+          "11": "street2",
+          "12": "city",
+          "13": "state",
+          "14": "zip"
+        }
+      }
+    },
+    {
+      "dataset_name": "Committee Master",
+      "dataset_description": "Load Committees",
+      "dataset_version": "1.0",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "filename": "cm.csv",
+        "target_class": "committee",
+        "column_map": {
+          "0": "committee_id",
+          "1": "committee_name",
+          "10": "political_party",
+          "13": "company_name"
+        }
+      }
+    },
+    {
+      "dataset_name": "CommitteeCandidates Master",
+      "dataset_description": "Map Committees and Candidates",
+      "dataset_version": "1.0",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "filename": "ccl.csv",
+        "target_class": "committee_candidate",
+        "column_map": {
+          "0": "candidate_id",
+          "3": "committee_id"
+        }
+      }
+    },
+    {
+      "dataset_name": "Individual Master",
+      "dataset_description": "Load Individuals",
+      "dataset_version": "1.0",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "filename": "itcont.csv",
+        "target_class": "individual",
+        "column_map": {
+          "0": "committee_id",
+          "8": "full_name",
+          "9": "city",
+          "10": "state",
+          "11": "zip",
+          "12": "employer",
+          "13": "occupation",
+          "14": "transaction_date",
+          "15": "transaction_amount",
+          "20": "memo"
+        }
+      }
+    }
+  ]
+}

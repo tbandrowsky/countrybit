@@ -1,0 +1,112 @@
+{
+  "schema_name": "Country Video Games Revolution",
+  "schema_description": "Schema for the Revolution Server.",
+  "schema_version": "1.0",
+  "schema_authors": [
+    "TJ Bandrowsky"
+  ],
+  "classes": [
+    {
+      "class_name": "worker",
+      "class_description": "a person working on the field",
+      "base_class_name": "sys_object",
+      "parents": [ "farm" ],
+      "fields": {
+        "x": "double",
+        "y": "double",
+        "dx": "double",
+        "dy": "double"
+      }
+    },
+    {
+      "class_name": "crop",
+      "class_description": "a thing made by a field that has value",
+      "base_class_name": "sys_object",
+      "parents": [ "field" ],
+      "fields": {
+        "crop_name": "string",
+        "crop_description": "string"
+      }
+    },
+    {
+      "class_name": "weed",
+      "class_description": "a thing made by a field that ruins crops",
+      "base_class_name": "sys_object",
+      "parents": [ "field" ],
+      "fields": {
+        "weed_name": "string",
+        "weed_description": "string"
+      }
+    },
+    {
+      "class_name": "field",
+      "class_description": "a thing that has a crop",
+      "base_class_name": "sys_object",
+      "parents": [ "farm" ],
+      "fields": {
+        "status": "string",
+        "status_time": "double",
+        "time_to_harvest": "double",
+        "crops": "[crops]",
+        "weeds": "[weed]"
+      }
+    },
+    {
+      "class_name": "farm",
+      "class_description": "a collection of fields to harvest",
+      "base_class_name": "sys_object",
+      "parents": [ "bank" ],
+      "fields": {
+        "fields": "[field]",
+        "workers": "[workers]"
+      }
+    },
+    {
+      "class_name": "message",
+      "class_description": "a message people send to eacher",
+      "base_class_name": "sys_object",
+      "fields": {
+        "from": "string",
+        "to": "string"
+      }
+    },
+    {
+      "class_name": "chat",
+      "class_description": "a collection of fields to harvest",
+      "base_class_name": "sys_object",
+      "parents": [ "chat" ],
+      "fields": {
+        "chat_name": "string",
+        "chat_description": "string",
+        "messages": "[message]"
+      }
+    },
+    {
+      "class_name": "topic",
+      "class_description": "a collection of fields to harvest",
+      "base_class_name": "sys_object",
+      "fields": {
+        "topic_name": "string",
+        "topic_description": "string",
+        "chats": "[chat]"
+      }
+    },
+    {
+      "class_name": "bank",
+      "class_description": "a collection of fields to harvest",
+      "base_class_name": "sys_object",
+      "fields": {
+        "bank_name": "string",
+        "bank_description": "string",
+        "chats": "[chat]",
+        "farms" :  "[farm]"
+      }
+    }
+  ],
+  "users": [
+
+  ],
+  "datasets": [
+
+  ]
+}

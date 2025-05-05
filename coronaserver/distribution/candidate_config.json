@@ -1,0 +1,21 @@
+{
+  "SendGrid": {
+    "ApiKey": "Your key goes here",
+    "SenderName": "Todd Bandrowsky",
+    "SenderEmail": "todd.bandrowsky@countryvideogames.com",
+    "UserConfirmationTitle": "Your countryvideogames account"
+  },
+  "Connections": {
+    "AdventureWorks2016": "Driver={ODBC Driver 17 for SQL Server};Server=BANDROWSKY-RIPP\\DEV01;Database=AdventureWorks2016;Trusted_Connection=yes;TrustServerCertificate=yes"
+  },
+  "Server": {
+    "listen_point": "http://localhost:5678/corona",
+    "application_name": "coronademo",
+    "schema_filename": "candidate_schema.json",
+    "database_filename": "candidate_database.cdb",
+    "sys_user_name": "system",
+    "sys_user_password": "systempassword",
+    "sys_user_email": "todd.bandrowsky@gmail.com",
+    "new_user_default_team": "Guests"
+  }
+}

@@ -1,0 +1,12 @@
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/lib/libpng16.lib
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/bin/libpng16.dll
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/include/png.h
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/include/pngconf.h
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/include/pnglibconf.h
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/include/libpng16/png.h
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/include/libpng16/pngconf.h
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/include/libpng16/pnglibconf.h
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/lib/pkgconfig/libpng16.pc
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/lib/libpng/libpng16.cmake
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/lib/libpng/libpng16-release.cmake
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/lib/libpng/libpng-config.cmake

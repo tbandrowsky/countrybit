@@ -1,0 +1,133 @@
+{
+  "class_name": "page",
+  "page_name": "revolution_root",
+  "default": true,
+  "children": [
+    {
+      "class_name": "chaptertitle",
+      "text": "Revolution",
+      "box": "chaptertitle_box"
+    },
+    {
+      "class_name": "chaptersubtitle",
+      "text": "Modern Politics for Modern Times",
+      "box": "chaptersubtitle_box"
+    },
+
+    {
+      "class_name": "row",
+      "box": "full_container",
+      "wrap": true,
+      "children": [
+        {
+          "class_name": "push_button",
+          "text": "Academy",
+          "box": "button_box",
+          "margin": "button_margin",
+          "on_click": {
+            "class_name": "select_frame",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "academy"
+          }
+        },
+        {
+          "class_name": "push_button",
+          "text": "Activism",
+          "box": "button_box",
+          "margin": "button_margin",
+          "on_click": {
+            "class_name": "select_frame",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "activism"
+          }
+        },
+        {
+          "class_name": "push_button",
+          "text": "Bank",
+          "box": "button_box",
+          "margin": "button_margin",
+          "on_click": {
+            "class_name": "select_frame",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "bank"
+          }
+        },
+        {
+          "class_name": "push_button",
+          "text": "Court",
+          "box": "button_box",
+          "margin": "button_margin",
+          "on_click": {
+            "class_name": "select_frame",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "court"
+          }
+        },
+        {
+          "class_name": "push_button",
+          "text": "Exchange",
+          "box": "button_box",
+          "margin": "button_margin",
+          "on_click": {
+            "class_name": "select_frame",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "exchange"
+          }
+        },
+        {
+          "class_name": "push_button",
+          "text": "Fake News",
+          "box": "button_box",
+          "margin": "button_margin",
+          "on_click": {
+            "class_name": "select_frame",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "fake_news"
+          }
+        },
+        {
+          "class_name": "push_button",
+          "text": "Insurance",
+          "box": "button_box",
+          "margin": "button_margin",
+          "on_click": {
+            "class_name": "select_frame",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "insurance"
+          }
+        },
+        {
+          "class_name": "push_button",
+          "text": "Workshop",
+          "box": "button_box",
+          "margin": "button_margin",
+          "on_click": {
+            "class_name": "select_frame",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "workshop"
+          }
+        },
+        {
+          "class_name": "push_button",
+          "text": "Store",
+          "box": "button_box",
+          "margin": "button_margin",
+          "on_click": {
+            "class_name": "select_frame",
+            "page_to_select": "home",
+            "frame_to_load": "revolution_home_frame",
+            "frame_contents_page": "exchange"
+          }
+        }
+      ]
+    }
+  ]
+}

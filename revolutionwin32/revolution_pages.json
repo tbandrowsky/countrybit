@@ -1,0 +1,124 @@
+{
+  "abbreviations": {
+    "button_box": {
+      "width": "150 pixels",
+      "height": {
+        "amount": 40,
+        "units": "pixels"
+      }
+    },
+    "full_container": {
+      "width": {
+        "amount": 1.0,
+        "units": "container"
+      },
+      "height": {
+        "amount": 1.0,
+        "units": "container"
+      }
+    },
+
+    "edit_container_box": {
+      "width": "250 pixels",
+      "height": "60 pixels"
+    },
+    "edit_label_box": {
+      "width": "200 pixels",
+      "height": "25 pixels"
+    },
+
+    "edit_field_box": {
+      "width": "200 pixels",
+      "height": "25 pixels"
+    },
+    "chaptertitle_box": {
+      "width": {
+        "amount": 1,
+        "units": "container"
+      },
+      "height": {
+        "amount": 34,
+        "units": "pixels"
+      }
+    },
+    "chaptersubtitle_box": {
+      "width": {
+        "amount": 1,
+        "units": "container"
+      },
+      "height": {
+        "amount": 34,
+        "units": "pixels"
+      }
+    },
+    "paragraph_box": {
+      "width": {
+        "amount": 1,
+        "units": "container"
+      },
+      "height": {
+        "amount": 6.2,
+        "units": "text"
+      }
+    },
+    "button_margin": {
+      "amount": 20,
+      "units": "pixels"
+    },
+    "search_box": {
+      "x": "32.0 pixels",
+      "width": "0.25 container",
+      "height": "1.0 container"
+    }
+  },
+  "startup": [
+    {
+      "class_name": "select_frame",
+      "page_to_select": "revolution_home",
+      "frame_to_load": "revolution_home_frame",
+      "frame_contents_page": "user_login"
+    }
+  ],
+  "pages": [
+    {
+      "class_name": "import",
+      "file_name": "revolution_test.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_root.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_home.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_bank.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_login.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_password.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_register.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_sendcode.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_confirm.json"
+    },
+    {
+      "class_name": "import",
+      "file_name": "revolution_user_settings.json"
+    }
+  ]
+}

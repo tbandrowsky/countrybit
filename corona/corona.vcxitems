@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{c12de1f8-9a25-4e3b-af11-93f4b3aceee9}</ItemsProjectGuid>
+    <ItemsProjectName>corona</ItemsProjectName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-application.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-application_base.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-assert_if.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-base64.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-bitmaps.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-bitmap_filters.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-brushes.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-collection_id_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-color_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-bus-interface.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-bus-commands.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-service-bus.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-express-record.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-interfaces.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-locks.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-constants.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-controller.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-cryptography.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-data-block.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-database-engine.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-datatransfer.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-direct2dcontext.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-direct2dcontextbase.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-direct2dresources.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-direct2dwindow.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-directapplication.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-directory.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-directxadapter.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-directxadapterbase.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-directxdevices.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-expressions.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-file-block.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-file-monitor.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-file.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-filterable_iterator.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-float_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-function-bag.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-function.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-grouping.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-http-messages.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-httpclient.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-httpserver.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-iarray.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-image_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-int_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-jdatabase_server.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-jfield.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-jobject.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-json-object-table.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-json-serialization.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-json-table.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-json.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-jvalue.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-layout_rect_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-list_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-messages.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-midi_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-object_id_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-paths.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-point_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-control-data.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-builder.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-base.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-container.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-text.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-events.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-menu.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-page.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-win32.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-query.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-queue.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-read_all_string.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-rectangle_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-sendgrid-client.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-skip_list.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-sorted_index.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-sql.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-store_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-string_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-styles.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-system-monitor-bus.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-table.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-test.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-textstyles.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-time_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-utility.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-visual.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-wave_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-wchart_convert.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-windows-all.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-windows-lite.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-motion-detect.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-app-bus.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-publicity-stunts.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-express-table.hpp" />
+  </ItemGroup>
+</Project>

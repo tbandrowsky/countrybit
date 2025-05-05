@@ -1,0 +1,171 @@
+{
+  "class_name": "page",
+  "page_name": "user_register",
+  "default": true,
+  "children": [
+    {
+      "class_name": "row",
+      "box": {
+        "width": "1.0 container",
+        "height": "1.0 container"
+      },
+      "children": [
+        {
+          "class_name": "absolute",
+          "box": {
+            "width": "250 pixels",
+            "height": "1.0 container"
+          },
+          "children": [
+            {
+              "class_name": "chaptertitle",
+              "box": {
+                "width": "1.0 container",
+                "height": "75 pixels",
+                "y": "20 pixels"
+              },
+              "text": " "
+            },
+            {
+              "class_name": "image",
+              "box": {
+                "width": "150 pixels",
+                "height": "200 pixels",
+                "y": "20 pixels",
+                "x": "40 pixels"
+              },
+              "image_filename": "cockade.png"
+            }
+          ]
+        },
+        {
+          "class_name": "column",
+          "box": {
+            "width": "700 pixels",
+            "height": "1.0 container"
+          },
+          "children": [
+            {
+              "class_name": "chaptertitle",
+              "box": {
+                "width": "1.0 container",
+                "height": "50 pixels",
+                "y": "20 pixels"
+              },
+              "text": "R E G I S T R A T I O N"
+            },
+            {
+              "class_name": "chaptersubtitle",
+              "box": {
+                "width": "1.0 container",
+                "height": "25 pixels",
+                "y": "20 pixels"
+              },
+              "text": "Register new user."
+            },
+            {
+              "class_name": "form",
+              "name": "user_register_form",
+              "box": {
+                "width": "700 pixels",
+                "height": "350 pixels",
+                "y": "60 pixels"
+              },
+              "wrap": true,
+              "model": {
+                "name": "user_register_model",
+                "defaults": {
+                  "box": "edit_container_box",
+                  "label_box": "edit_label_box",
+                  "field_box": "edit_field_box"
+                },
+                "fields": [
+                  {
+                    "class_name": "edit",
+                    "default_focus": true,
+                    "name": "user_name_ctl",
+                    "json_field_name": "user_name",
+                    "label_text": "User Name:",
+                    "box": "edit_container_box"
+                  },
+                  {
+                    "class_name": "edit",
+                    "name": "email_ctl",
+                    "json_field_name": "email",
+                    "label_text": "E-mail:",
+                    "box": "edit_container_box"
+                  },
+                  {
+                    "class_name": "password",
+                    "name": "user_password1_ctl",
+                    "json_field_name": "password1",
+                    "label_text": "Password:",
+                    "box": "edit_container_box"
+                  },
+                  {
+                    "class_name": "password",
+                    "name": "user_password2_ctl",
+                    "json_field_name": "password2",
+                    "label_text": "Confirm Password:",
+                    "box": "edit_container_box"
+                  }
+                ]
+              }
+            },
+            {
+              "class_name": "row",
+              "box": {
+                "width": "700 pixels",
+                "height": "50 pixels"
+              },
+              "item_next_space": "8 pixels",
+              "children": [
+                {
+                  "class_name": "push_button",
+                  "text": "Cancel",
+                  "box": "button_box",
+                  "on_start": {
+                    "class_name": "set_property",
+                    "control_name": "status_message",
+                    "property_name": "text",
+                    "value": "Cancel to login"
+                  },
+                  "on_click": {
+                    "class_name": "select_frame",
+                    "page_to_select": "home",
+                    "frame_to_load": "revolution_home_frame",
+                    "frame_contents_page": "user_login"
+                  }
+                },
+                {
+                  "class_name": "push_button",
+                  "text": "Register",
+                  "box": "button_box",
+                  "on_click": {
+                    "class_name": "register_user",
+                    "form_name": "user_register_form",
+                    "user_name_field": "user_name",
+                    "email_field": "email",
+                    "password1_field": "password1",
+                    "password2_field": "password2",
+                    "on_start": {
+                      "class_name": "set_property",
+                      "control_name": "status_message",
+                      "property_name": "text"
+                    },
+                    "on_success": {
+                      "class_name": "select_frame",
+                      "page_to_select": "revolution_home",
+                      "frame_to_load": "revolution_home_frame",
+                      "frame_contents_page": "user_confirm"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+       }
+      ]
+    }
+  ]
+}
