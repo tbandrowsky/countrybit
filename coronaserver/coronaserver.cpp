@@ -269,7 +269,7 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
     }
     catch (std::exception exc)
     {
-        std::cout << exc.what() << std::endl;
+        SvcReportEvent(exc.what());
     }
 
     // at this point, here, the service is stopped, or has failed, and we're just waiting 
