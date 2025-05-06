@@ -78,9 +78,11 @@ void RunConsole()
 {
     exit_flag = false;
 
+    SvcReportEvent("Running Console");
+
     if (SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
         try {
-            corona::comm_bus_service corona_service(config_filename);
+            corona::comm_bus_service corona_service(config_filename, false);
             while (not exit_flag)
             {
                 ::Sleep(1000);
@@ -187,13 +189,14 @@ VOID WINAPI SvcMain(DWORD dwArgc, LPTSTR* lpszArgv)
 {
     // Register the handler function for the service
 
+    
     gSvcStatusHandle = RegisterServiceCtrlHandler(
         SVCNAME,
         SvcCtrlHandler);
 
     if (!gSvcStatusHandle)
     {
-        SvcReportEvent("RegisterServiceCtrlHandler");
+        SvcReportEvent("RegisterServiceCtrlHandler Failed");
         return;
     }
 
@@ -203,6 +206,8 @@ VOID WINAPI SvcMain(DWORD dwArgc, LPTSTR* lpszArgv)
     gSvcStatus.dwServiceSpecificExitCode = 0;
 
     // Report initial status to the SCM
+
+    SvcReportEvent("Service Starting");
 
     ReportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
 
@@ -253,7 +258,9 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
     // TO_DO: Perform work until service stops.
 
     try {
-        corona::comm_bus_service corona_service(config_filename);
+        
+
+        corona::comm_bus_service corona_service(config_filename, true);
         while (not exit_flag)
         {
             ::Sleep(1000);
@@ -414,7 +421,13 @@ void RunService()
 
 int main(int argc, char *argv[])
 {
-    if (_strcmpi(argv[1], "install") == 0)
+
+    if (argc <= 1)
+    {
+        RunService();
+        return 0;
+    }
+    else if (_strcmpi(argv[1], "install") == 0)
     {
         SvcInstall();
         return 0;

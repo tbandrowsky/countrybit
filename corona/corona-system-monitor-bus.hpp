@@ -123,8 +123,26 @@ namespace corona
 			Lognvidia.color_foreground = "255;255;255";
 		}
 
+		std::string log_file_name = "corona.log";
+		bool is_service = false;
+		std::ofstream log_file;
+
+		std::ostream &get_log_file()
+		{
+			if (is_service) {
+				if (not log_file.is_open()) {
+					log_file.open(log_file_name, std::ios::out | std::ios::app);
+				}
+				return log_file;
+			}
+
+			return std::cout;
+		}
+
 		void file_line(const char* _file, int _line)
 		{
+			auto &xout = get_log_file();
+
 			if (_file) {
 				const char* last_post = _file;
 				const char* fn = _file;
@@ -143,10 +161,10 @@ namespace corona
 					last_post++;
 				}
 
-				std::cout << std::format("{0:<30}{1:<8}", last_post, _line);
+				xout << std::format("{0:<30}{1:<8}", last_post, _line);
 			}
 			else {
-				std::cout << std::format("{0:<30}{1:<8}", "", "");
+				xout << std::format("{0:<30}{1:<8}", "", "");
 			}
 		}
 
@@ -160,6 +178,8 @@ namespace corona
 
 		virtual void log_user_command_start(std::string _command_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
+
+
 			if (_command_name.empty())
 				_command_name = " ";
 			if (_message.empty())
@@ -168,6 +188,9 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+
+				auto& xout = get_log_file();
+
 				std::cout << Logusercommand;
 				std::cout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
 					_command_name,
@@ -192,6 +215,8 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+
+				auto& xout = get_log_file();
 
 				std::cout << Logusercommand;
 				std::cout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
@@ -220,6 +245,8 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
+
 				std::cout << Logcommand;
 				std::cout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
 					_command_name,
@@ -245,6 +272,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 			if (_command_name.empty())
 				_command_name = " ";
@@ -277,6 +305,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 			if (_api_name.empty())
 				_api_name = " ";
@@ -310,6 +339,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 			if (_api_name.empty())
 				_api_name = " ";
@@ -344,6 +374,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 				if (_api_name.empty())
 					_api_name = " ";
@@ -377,6 +408,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 				if (_api_name.empty())
 					_api_name = " ";
@@ -411,6 +443,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
@@ -442,7 +475,9 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
-			std::cout << Logcommand;
+				auto& xout = get_log_file();
+				
+				std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
 			std::cout << std::format("{0:<5}", " ");
@@ -473,6 +508,8 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
+
 				std::string sindent(_indent, ' ');
 				_function_name = sindent + _function_name;
 				std::cout << Logcommand;
@@ -505,6 +542,9 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
+
+
 				std::string sindent(_indent, ' ');
 				_function_name = sindent + _function_name;
 				std::cout << Logcommand;
@@ -594,6 +634,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
@@ -630,7 +671,8 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
-			std::cout << Logactivity;
+				auto& xout = get_log_file();
+				std::cout << Logactivity;
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
@@ -661,6 +703,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
@@ -696,6 +739,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 				std::cout << Logcommand;
 				std::cout << std::format("{0:<5}", " ");
@@ -727,7 +771,8 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
-			std::cout << Logcommand;
+				auto& xout = get_log_file();
+				std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
 			std::cout << std::format("{0:<5}", " ");
@@ -765,6 +810,7 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
 
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
@@ -796,7 +842,8 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
-			std::cout << Logcommand;
+				auto& xout = get_log_file();
+				std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
 			std::cout << std::format("{0:<5}", " ");
@@ -826,6 +873,8 @@ namespace corona
 			::EnterCriticalSection(&log_lock);
 
 			try {
+				auto& xout = get_log_file();
+
 			std::string sindent(_indent, ' ');
 			if (_src.object())
 			{

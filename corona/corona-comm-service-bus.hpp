@@ -48,12 +48,14 @@ namespace corona
 
 		std::string listen_point;
 
-		comm_bus_service(std::string _config_filename)
+		comm_bus_service(std::string _config_filename, bool _is_service = false)
 		{
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
 			date_time t = date_time::now();
 			json_parser jp;
+
+			is_service = _is_service;
 
 			log_command_start("comm_service_bus", "startup", t);
 
@@ -99,10 +101,12 @@ namespace corona
 				throw std::logic_error("listen_point not specified");
 			}
 
-			log_information("Self test.");
-			prove_system();
-
-			log_information("Startup user name " + app->get_user_display_name());
+			if (not is_service)
+			{
+				log_information("Self test.");
+				prove_system();
+				log_information("Startup user name " + app->get_user_display_name());
+			}
 
 			if (true or not app->file_exists(database_filename))
 			{
