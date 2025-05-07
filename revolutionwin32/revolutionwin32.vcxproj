@@ -598,6 +598,7 @@
     </Natvis>
   </ItemGroup>
   <ItemGroup>
+    <None Include="config.json" />
     <None Include="corona_generator.json" />
     <None Include="packages.config" />
     <None Include="revolution_bank.json">

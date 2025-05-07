@@ -397,6 +397,7 @@ VOID SvcReportEvent(const char *szFunction)
 
 void RunService()
 {
+
     // If command-line parameter is "install", install the service. 
     // Otherwise, the service is probably being started by the SCM.
 
@@ -421,6 +422,17 @@ void RunService()
 
 int main(int argc, char *argv[])
 {
+
+    char szUnquotedPath[MAX_PATH];
+
+    if (!GetModuleFileName(NULL, szUnquotedPath, MAX_PATH))
+    {
+        printf("Cannot install service (%d)\n", GetLastError());
+        return 1;
+    }
+
+    PathRemoveFileSpecA(szUnquotedPath);
+    SetCurrentDirectoryA(szUnquotedPath);
 
     if (argc <= 1)
     {

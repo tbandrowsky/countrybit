@@ -783,10 +783,6 @@ namespace corona
 	void control_base::render(std::shared_ptr<direct2dContext>& _context)
 	{
 		for (auto child : children) {
-			if (child->class_name == "image")
-			{
-				DebugBreak();
-			}
 			try
 			{
 				child->render(_context);
