@@ -826,6 +826,28 @@ namespace corona
 			return *this;
 		}
 
+		control_builder& link_button(int _id, std::function<void(linkbutton_control&)> _settings = nullptr)
+		{
+			auto tc = create<linkbutton_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+		control_builder& link_button(int _id, std::string text, std::function<void(linkbutton_control&) > _settings = nullptr)
+		{
+			auto tc = create<linkbutton_control>(_id);
+			apply_item_sizes(tc);
+			tc->set_text(text);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+
 		control_builder& push_button(int _id, std::function<void(pushbutton_control&)> _settings = nullptr)
 		{
 			auto tc = create<pushbutton_control>(_id);
@@ -2742,6 +2764,13 @@ namespace corona
 				_ctrl.set_data(control_data);
 				});
 		}
+		else if (class_name == "link_button")
+		{
+			link_button(field_id, [&control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
+				_ctrl.set_data(control_data);
+				});
+				}
 		else if (class_name == "push_button")
 		{
 			push_button(field_id, [&control_properties, control_data](auto& _ctrl)->void {

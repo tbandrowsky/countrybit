@@ -54,24 +54,24 @@ namespace corona
 
 		void test_colors()
 		{
-
+			auto& xout = get_log_file();
 			date_time start_time = date_time::now();
 			timer tx;
 			log_command_start("Startup", "Color Test", start_time, __FILE__, __LINE__);
 
 			for (int i = 0; i < 256; i += 45) {
-				std::cout << std::format("{0:<30}", " ");
+				xout << std::format("{0:<30}", " ");
 				for (int j = 0; j < 45; j++) {
-					std::cout << CSI << "48;5;" << std::to_string(j + i) << "m ";
+					xout << CSI << "48;5;" << std::to_string(j + i) << "m ";
 				}
-				std::cout << Loginformation << std::endl;
+				xout << Loginformation << std::endl;
 			}
 			for (int i = 0; i < 256; i += 45) {
-				std::cout << std::format("{0:<30}", " ");
+				xout << std::format("{0:<30}", " ");
 				for (int j = 0; j < 45; j++) {
-					std::cout << CSI << "48;2;" << "0;0;" << std::to_string(j + i) << "m ";
+					xout << CSI << "48;2;" << "0;0;" << std::to_string(j + i) << "m ";
 				}
-				std::cout << Loginformation << std::endl;
+				xout << Loginformation << std::endl;
 			}
 			log_command_stop("Startup", "Color Test", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
@@ -191,16 +191,16 @@ namespace corona
 
 				auto& xout = get_log_file();
 
-				std::cout << Logusercommand;
-				std::cout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
+				xout << Logusercommand;
+				xout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
 					_command_name,
 					trim(_message, 45),
 					GetCurrentThreadId(),
 					_request_time.format("%D %H:%M start")
 				);
 				file_line(_file, _line);
-				std::cout << Normal;
-				std::cout << std::endl;
+				xout << Normal;
+				xout << std::endl;
 			}
 			catch (std::exception exc)
 			{
@@ -218,16 +218,16 @@ namespace corona
 
 				auto& xout = get_log_file();
 
-				std::cout << Logusercommand;
-				std::cout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
+				xout << Logusercommand;
+				xout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
 					_command_name,
 					trim(_message, 45),
 					GetCurrentThreadId(),
 					std::format("{0} secs",_elapsed_seconds)
 				);
 				file_line(_file, _line);
-				std::cout << Normal;
-				std::cout << std::endl << std::endl;
+				xout << Normal;
+				xout << std::endl << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -247,16 +247,16 @@ namespace corona
 			try {
 				auto& xout = get_log_file();
 
-				std::cout << Logcommand;
-				std::cout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
+				xout << Logcommand;
+				xout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
 					_command_name,
 					trim(_message, 45),
 					GetCurrentThreadId(),
 					_request_time.format("%D %H:%M start")
 				);
 				file_line(_file, _line);
-				std::cout << Normal;
-				std::cout << std::endl;
+				xout << Normal;
+				xout << std::endl;
 			}
 			catch (std::exception exc)
 			{
@@ -279,16 +279,16 @@ namespace corona
 			if (_message.empty())
 				_message = " ";
 
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
+			xout << Logcommand;
+			xout << std::format("{0:<30}{1:<45}{2:<10}{3:<25}",
 				_command_name,
 				_message,
 				GetCurrentThreadId(),
 				std::format("{0} secs", _elapsed_seconds)
 			);
 			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			xout << Normal;
+			xout << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -311,18 +311,18 @@ namespace corona
 				_api_name = " ";
 			if (_message.empty())
 				_message = " ";
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<25}{1:<45}{2:<10}{3:<25}",
+			xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<25}{1:<45}{2:<10}{3:<25}",
 				_api_name,
 				trim(_message, 45),
 				GetCurrentThreadId(),
 				_request_time.format("%D %H:%M start")
 			);
 			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			xout << Normal;
+			xout << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -346,18 +346,18 @@ namespace corona
 			if (_message.empty())
 				_message = " ";
 
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<25}{1:<45}{2:<10}{3:<25}",
+			xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<25}{1:<45}{2:<10}{3:<25}",
 				_api_name,
 				trim(_message, 45),
 				GetCurrentThreadId(),
 				std::format("{0} secs", _elapsed_seconds)
 			);
 			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			xout << Normal;
+			xout << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -380,18 +380,18 @@ namespace corona
 					_api_name = " ";
 				if (_message.empty())
 					_message = " ";
-				std::cout << Logcommand;
-				std::cout << std::format("{0:<5}", " ");
-				std::cout << Logapi;
-				std::cout << std::format(" {0:<24}{1:<45}{2:<10}{3:<25}",
+				xout << Logcommand;
+				xout << std::format("{0:<5}", " ");
+				xout << Logapi;
+				xout << std::format(" {0:<24}{1:<45}{2:<10}{3:<25}",
 					_api_name,
 					trim(_message, 45),
 					GetCurrentThreadId(),
 					_request_time.format("%D %H:%M start")
 				);
 				file_line(_file, _line);
-				std::cout << Normal;
-				std::cout << std::endl;
+				xout << Normal;
+				xout << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -415,18 +415,18 @@ namespace corona
 				if (_message.empty())
 					_message = " ";
 
-				std::cout << Logcommand;
-				std::cout << std::format("{0:<5}", " ");
-				std::cout << Logapi;
-				std::cout << std::format(" {0:<24}{1:<45}{2:<10}{3:<25}",
+				xout << Logcommand;
+				xout << std::format("{0:<5}", " ");
+				xout << Logapi;
+				xout << std::format(" {0:<24}{1:<45}{2:<10}{3:<25}",
 					_api_name,
 					trim(_message, 45),
 					GetCurrentThreadId(),
 					std::format("{0} secs", _elapsed_seconds)
 				);
 				file_line(_file, _line);
-				std::cout << Normal;
-				std::cout << std::endl;
+				xout << Normal;
+				xout << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -445,20 +445,20 @@ namespace corona
 			try {
 				auto& xout = get_log_file();
 
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}{1:<45}{2:<10}{3:<25}",
+			xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<5}", " ");
+			xout << Logfunction;
+			xout << std::format("{0:<20}{1:<45}{2:<10}{3:<25}",
 				_function_name,
 				trim(_message, 45),
 				GetCurrentThreadId(),
 				_request_time.format("%D %H:%M start")
 			);
 			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			xout << Normal;
+			xout << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -477,20 +477,20 @@ namespace corona
 			try {
 				auto& xout = get_log_file();
 				
-				std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}{1:<45}{2:<10}{3:<25}",
+				xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<5}", " ");
+			xout << Logfunction;
+			xout << std::format("{0:<20}{1:<45}{2:<10}{3:<25}",
 				_function_name,
 				trim(_message, 45),
 				GetCurrentThreadId(),
 				std::format("{0} secs", _elapsed_seconds)
 			);
 			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			xout << Normal;
+			xout << std::endl;
 			}
 			catch (std::exception exc)
 			{
@@ -512,20 +512,20 @@ namespace corona
 
 				std::string sindent(_indent, ' ');
 				_function_name = sindent + _function_name;
-				std::cout << Logcommand;
-				std::cout << std::format("{0:<5}", " ");
-				std::cout << Logapi;
-				std::cout << std::format("{0:<5}", " ");
-				std::cout << Logfunction;
-				std::cout << std::format("{0:<20}{1:<45}{2:<10}{3:<25}",
+				xout << Logcommand;
+				xout << std::format("{0:<5}", " ");
+				xout << Logapi;
+				xout << std::format("{0:<5}", " ");
+				xout << Logfunction;
+				xout << std::format("{0:<20}{1:<45}{2:<10}{3:<25}",
 					_function_name,
 					trim(_message, 45),
 					GetCurrentThreadId(),
 					_request_time.format("%D %H:%M start")
 				);
 				file_line(_file, _line);
-				std::cout << Normal;
-				std::cout << std::endl;
+				xout << Normal;
+				xout << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -547,20 +547,20 @@ namespace corona
 
 				std::string sindent(_indent, ' ');
 				_function_name = sindent + _function_name;
-				std::cout << Logcommand;
-				std::cout << std::format("{0:<5}", " ");
-				std::cout << Logapi;
-				std::cout << std::format("{0:<5}", " ");
-				std::cout << Logfunction;
-				std::cout << std::format("{0:<20}{1:<45}{2:<10}{3:<25}",
+				xout << Logcommand;
+				xout << std::format("{0:<5}", " ");
+				xout << Logapi;
+				xout << std::format("{0:<5}", " ");
+				xout << Logfunction;
+				xout << std::format("{0:<20}{1:<45}{2:<10}{3:<25}",
 					_function_name,
 					trim(_message, 45),
 					GetCurrentThreadId(),
 					std::format("{0} secs", _elapsed_seconds)
 				);
 				file_line(_file, _line);
-				std::cout << Normal;
-				std::cout << std::endl;
+				xout << Normal;
+				xout << std::endl;
 			}
 			catch (std::exception exc)
 			{
@@ -636,15 +636,15 @@ namespace corona
 			try {
 				auto& xout = get_log_file();
 
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", " ");
-			std::cout << Loginformation;
+			xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<5}", " ");
+			xout << Logfunction;
+			xout << std::format("{0:<20}", " ");
+			xout << Loginformation;
 			if (_message.size() < 45) {
-				std::cout << std::format("{0:<45}{1:<10}{2:<25}",
+				xout << std::format("{0:<45}{1:<10}{2:<25}",
 					_message,
 					GetCurrentThreadId(),
 					" "
@@ -652,9 +652,9 @@ namespace corona
 				file_line(_file, _line);
 			}
 			else {
-				std::cout << _message;
+				xout << _message;
 			}
-			std::cout << std::endl;
+			xout << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -672,22 +672,22 @@ namespace corona
 
 			try {
 				auto& xout = get_log_file();
-				std::cout << Logactivity;
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", " ");
-			std::cout << Loginformation;
-			std::cout << std::format("{0:<45}{1:<10}{2:<25}",
+				xout << Logactivity;
+			xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<5}", " ");
+			xout << Logfunction;
+			xout << std::format("{0:<20}", " ");
+			xout << Loginformation;
+			xout << std::format("{0:<45}{1:<10}{2:<25}",
 				trim(_message, 45),
 				GetCurrentThreadId(),
 				_time.format("%D %H:%M")
 			);
 			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			xout << Normal;
+			xout << std::endl;
 			}
 			catch (std::exception exc)
 			{
@@ -705,21 +705,21 @@ namespace corona
 			try {
 				auto& xout = get_log_file();
 
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", " ");
-			std::cout << Logactivity;
-			std::cout << std::format("{0:<45}{1:<10}{2:<25}",
+			xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<5}", " ");
+			xout << Logfunction;
+			xout << std::format("{0:<20}", " ");
+			xout << Logactivity;
+			xout << std::format("{0:<45}{1:<10}{2:<25}",
 				trim(_message, 45),
 				GetCurrentThreadId(),
 				std::format("{0} secs", _elapsed_seconds)
 			);
 			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			xout << Normal;
+			xout << std::endl;
 			}
 			catch (std::exception exc)
 			{
@@ -741,21 +741,21 @@ namespace corona
 			try {
 				auto& xout = get_log_file();
 
-				std::cout << Logcommand;
-				std::cout << std::format("{0:<5}", " ");
-				std::cout << Logapi;
-				std::cout << std::format("{0:<5}", " ");
-				std::cout << Logfunction;
-				std::cout << std::format("{0:<20}", " ");
-				std::cout << Loginformation;
-				std::cout << std::format("{0:<45}{1:<10}{2:<25}",
+				xout << Logcommand;
+				xout << std::format("{0:<5}", " ");
+				xout << Logapi;
+				xout << std::format("{0:<5}", " ");
+				xout << Logfunction;
+				xout << std::format("{0:<20}", " ");
+				xout << Loginformation;
+				xout << std::format("{0:<45}{1:<10}{2:<25}",
 					trim(_message, 45),
 					GetCurrentThreadId(),
 					std::format("{0} secs", _elapsed_seconds)
 				);
 				file_line(_file, _line);
-				std::cout << Normal;
-				std::cout << std::endl;
+				xout << Normal;
+				xout << std::endl;
 			}
 			catch (std::exception exc)
 			{
@@ -772,28 +772,28 @@ namespace corona
 
 			try {
 				auto& xout = get_log_file();
-				std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", " ");
+				xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<5}", " ");
+			xout << Logfunction;
+			xout << std::format("{0:<20}", " ");
 			if (_message.find("Intel") != std::string::npos) {
-				std::cout << Logintel;
+				xout << Logintel;
 			}
 			else if (_message.find("AMD") != std::string::npos) {
-				std::cout << Logamd;
+				xout << Logamd;
 			}
 			else if (_message.find("NVIDIA") != std::string::npos) {
-				std::cout << Lognvidia;
+				xout << Lognvidia;
 			}
-			std::cout << std::format("{0:<45}{1:<10}{2:<25}",
+			xout << std::format("{0:<45}{1:<10}{2:<25}",
 				trim(_message, 45),
 				GetCurrentThreadId(),
 				" "
 			);
-			std::cout << Normal;
-			std::cout << std::endl;
+			xout << Normal;
+			xout << std::endl;
 
 			}
 			catch (std::exception exc)
@@ -812,21 +812,21 @@ namespace corona
 			try {
 				auto& xout = get_log_file();
 
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", " ");
-			std::cout << Logwarning;
-			std::cout << std::format("{0:<45}{1:<10}{2:<25}",
+			xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<5}", " ");
+			xout << Logfunction;
+			xout << std::format("{0:<20}", " ");
+			xout << Logwarning;
+			xout << std::format("{0:<45}{1:<10}{2:<25}",
 				trim(_message, 45),
 				GetCurrentThreadId(),
 				" "
 			);
 			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			xout << Normal;
+			xout << std::endl;
 			}
 			catch (std::exception exc)
 			{
@@ -843,21 +843,21 @@ namespace corona
 
 			try {
 				auto& xout = get_log_file();
-				std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", " ");
-			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", " ");
-			std::cout << Logexception;
-			std::cout << std::format("{0:<45}{1:<10}{2:<25}",
+				xout << Logcommand;
+			xout << std::format("{0:<5}", " ");
+			xout << Logapi;
+			xout << std::format("{0:<5}", " ");
+			xout << Logfunction;
+			xout << std::format("{0:<20}", " ");
+			xout << Logexception;
+			xout << std::format("{0:<45}{1:<10}{2:<25}",
 				trim(exc.what(), 45),
 				GetCurrentThreadId(),
 				""
 			);
 			file_line(_file, _line);
-			std::cout << std::endl;
-			std::cout << Normal;
+			xout << std::endl;
+			xout << Normal;
 			}
 			catch (std::exception exc)
 			{
@@ -883,24 +883,24 @@ namespace corona
 					auto body = member.second;
 					auto key = member.first;
 					std::string name = sindent + key;
-					std::cout << Logcommand;
-					std::cout << std::format("{0:<5}", " ");
-					std::cout << Logapi;
-					std::cout << std::format("{0:<5}", " ");
-					std::cout << Logfunction;
-					std::cout << std::format("{0:<20}", " ");
-					std::cout << Loginformation;
-					std::cout << std::format("{1:<30}:", " ", name);
+					xout << Logcommand;
+					xout << std::format("{0:<5}", " ");
+					xout << Logapi;
+					xout << std::format("{0:<5}", " ");
+					xout << Logfunction;
+					xout << std::format("{0:<20}", " ");
+					xout << Loginformation;
+					xout << std::format("{1:<30}:", " ", name);
 					if (body.object())
 					{
 						std::string rightArrow = "->";
-						std::cout << std::format("{0:<45}:", "{object}" + rightArrow) << std::endl;
+						xout << std::format("{0:<45}:", "{object}" + rightArrow) << std::endl;
 						log_json<json_type>(body, _indent + 4);
 					}
 					else if (body.array())
 					{
 						std::string rightArrow = "->";
-						std::cout << std::format("{0:<45}:", "[array]" + rightArrow ) << std::endl;
+						xout << std::format("{0:<45}:", "[array]" + rightArrow ) << std::endl;
 						log_json<json_type>(body, _indent + 4);
 					}
 					else
@@ -921,52 +921,52 @@ namespace corona
 				{
 					auto body = _src.get_element(i);
 					std::string sindex = sindent + std::to_string(i);
-					std::cout << Logcommand;
-					std::cout << std::format("{0:<5}", " ");
-					std::cout << Logapi;
-					std::cout << std::format("{0:<5}", " ");
-					std::cout << Logfunction;
-					std::cout << std::format("{0:<20}", " ");
-					std::cout << Loginformation;
-					std::cout << std::format("{0:<30}:", sindex);
+					xout << Logcommand;
+					xout << std::format("{0:<5}", " ");
+					xout << Logapi;
+					xout << std::format("{0:<5}", " ");
+					xout << Logfunction;
+					xout << std::format("{0:<20}", " ");
+					xout << Loginformation;
+					xout << std::format("{0:<30}:", sindex);
 					if (body.object())
 					{
 						std::string rightArrow = "->";
-						std::cout << std::format("{0:<45}:", "{object}" + rightArrow) << std::endl;
+						xout << std::format("{0:<45}:", "{object}" + rightArrow) << std::endl;
 						log_json<json_type>(body, _indent + 4);
 					}
 					else if (body.array())
 					{
 						std::string rightArrow = "->";
-						std::cout << std::format("{0:<45}:", "[array]" + rightArrow) << std::endl;
+						xout << std::format("{0:<45}:", "[array]" + rightArrow) << std::endl;
 						log_json<json_type>(body, _indent + 4);
 					}
 					else
 					{
 						log_json<json_type>(body, _indent + 4);
 					}
-					std::cout << std::endl;
+					xout << std::endl;
 				}
 
 				if (too_many) {
 					std::string sindex = sindent + std::to_string(max_items);
-					std::cout << Logcommand;
-					std::cout << std::format("{0:<5}", " ");
-					std::cout << Logapi;
-					std::cout << std::format("{0:<5}", " ");
-					std::cout << Logfunction;
-					std::cout << std::format("{0:<20}", " ");
-					std::cout << Loginformation;
-					std::cout << std::format("{0:<30}:", "", sindex);
-					std::cout << "*more than this*";
-					std::cout << std::endl;
+					xout << Logcommand;
+					xout << std::format("{0:<5}", " ");
+					xout << Logapi;
+					xout << std::format("{0:<5}", " ");
+					xout << Logfunction;
+					xout << std::format("{0:<20}", " ");
+					xout << Loginformation;
+					xout << std::format("{0:<30}:", "", sindex);
+					xout << "*more than this*";
+					xout << std::endl;
 				}
 			}
 			else {
 				std::string v = _src.to_json();
 				v = trim(v, 45);
-				std::cout << std::format("{0:<45}", v);
-				std::cout << std::endl;
+				xout << std::format("{0:<45}", v);
+				xout << std::endl;
 			}
 
 			}
