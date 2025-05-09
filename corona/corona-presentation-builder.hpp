@@ -2187,15 +2187,16 @@ namespace corona
 				cl.set_size(1.0_remaining, 1.0_container);
 				cl.set_content_align(visual_alignment::align_center);
 				cl.set_item_margin(10.0_px);
-				cl.set_origin(title_start, 12.0_px);
 				})
 				.title(title_name, [this](title_control& control) {
 						control.set_nchittest(HTCAPTION);
 						control.set_size(0.8_container, 1.3_fontgr);
+						control.set_origin(title_start, 25.0_px);
 					}, title_id)
 				.subtitle(subtitle_name, [this](subtitle_control& control) {
 						control.set_nchittest(HTCAPTION);
 						control.set_size(0.8_container, 1.3_fontgr);
+						control.set_origin(title_start, 25.0_px);
 					}, subtitle_id)
 			.end();
 

@@ -15,7 +15,7 @@
           "class_name": "caption_bar",
           "corporate_name": "country video games",
           "title_name": "R E V O L U T I O N",
-          "title_start": "0.28 container",
+          "title_start": "60 pixels",
           "box": {
             "width": "1.0 container",
             "height": "100 pixels"
@@ -24,7 +24,7 @@
         {
           "class_name": "row",
           "box": {
-            "width": "0.9 container",
+            "width": "0.97 container",
             "height": "0.8 container",
             "y" : "10 pixels"
           },
@@ -40,7 +40,7 @@
             "box_border_thickness": 4
           },
           "padding": {
-            "amount": 10,
+            "amount": 0,
             "units": "pixels"
           },
           "content_alignment": "near",

@@ -13,7 +13,7 @@
         {
           "class_name": "absolute",
           "box": {
-            "width": "250 pixels",
+            "width": "150 pixels",
             "height": "1.0 container"
           },
           "children": [
@@ -21,17 +21,15 @@
               "class_name": "chaptertitle",
               "box": {
                 "width": "1.0 container",
-                "height": "75 pixels",
-                "y": "20 pixels"
+                "height": "75 pixels"
               },
               "text": " "
             },
             {
               "class_name": "image",
               "box": {
-                "width": "150 pixels",
-                "height": "200 pixels",
-                "y": "20 pixels",
+                "width": "75 pixels",
+                "height": "100 pixels",
                 "x": "40 pixels"
               },
               "image_filename": "cockade.png"
@@ -41,7 +39,7 @@
         {
           "class_name": "column",
           "box": {
-            "width": "700 pixels",
+            "width": "1.0 remaining",
             "height": "1.0 container"
           },
           "children": [
@@ -49,8 +47,7 @@
               "class_name": "chaptertitle",
               "box": {
                 "width": "1.0 container",
-                "height": "50 pixels",
-                "y": "20 pixels"
+                "height": "50 pixels"
               },
               "text": "R E G I S T R A T I O N"
             },
@@ -58,8 +55,7 @@
               "class_name": "chaptersubtitle",
               "box": {
                 "width": "1.0 container",
-                "height": "25 pixels",
-                "y": "20 pixels"
+                "height": "25 pixels"
               },
               "text": "Register new user."
             },
