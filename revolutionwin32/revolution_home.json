@@ -25,7 +25,7 @@
           "class_name": "row",
           "box": {
             "width": "0.97 container",
-            "height": "0.8 container",
+            "height": "0.86 container",
             "y" : "10 pixels"
           },
           "view_style": {

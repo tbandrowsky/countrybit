@@ -64,7 +64,7 @@
                         "name": "user_login_form",
                         "box": {
                             "width": "1.0 container",
-                            "height": "250 pixels",
+                            "height": "300 pixels",
                             "y": "60 pixels"
                         },
                         "model": {
@@ -100,14 +100,12 @@
                             "height": "75 pixels"
                         },
                         "item_next_space": "8 pixels",
-                        "wrap": true,
                         "children": [
                             {
                                 "class_name": "push_button",
                                 "text": "Login",
                                 "box": "button_box",
                                 "default_button": true,
-                                "wrap_break": true,
                                 "on_click": {
                                     "class_name": "login_user",
                                     "form_name": "user_login_form",
@@ -126,18 +124,14 @@
                                         "frame_contents_page": "revolution_root"
                                     }
                                 }
-                            }
-                        ]
-                    },
-                    {
-                        "class_name": "row",
-                        "box": {
-                            "width": "1.0 container",
-                            "height": "75 pixels"
-                        },
-                        "item_next_space": "8 pixels",
-                        "wrap": true,
-                        "children": [
+                            },
+                            {
+                                "class_name": "paragraph",
+                                "box": {
+                                    "width": "50px",
+                                    "height":  "35px"
+                                }
+                            },
                             {
                                 "class_name": "push_button",
                                 "text": "Register",
@@ -152,23 +146,6 @@
                                         "control_name": "status_message",
                                         "property_name": "text",
                                         "value": "To Registration"
-                                    }
-                                }
-                            },
-                            {
-                                "class_name": "push_button",
-                                "text": "Code",
-                                "box": "button_box",
-                                "on_click": {
-                                    "class_name": "select_frame",
-                                    "page_to_select": "home",
-                                    "frame_to_load": "revolution_home_frame",
-                                    "frame_contents_page": "user_confirm",
-                                    "on_start": {
-                                        "class_name": "set_property",
-                                        "control_name": "status_message",
-                                        "property_name": "text",
-                                        "value": "To confirm code"
                                     }
                                 }
                             },
@@ -189,10 +166,8 @@
                                     }
                                 }
                             }
-
                         ]
                     }
-
                 ]
             }
 
