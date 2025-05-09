@@ -247,6 +247,7 @@ namespace corona
 				children.push_back(new_child);
 			}
 			name = _src.name;
+			wrap_break = _src.wrap_break;
 		}
 
 	public:
@@ -269,7 +270,8 @@ namespace corona
 		std::string				json_field_name;
 		std::string				class_name;
 		container_control_base* parent;
-		
+		bool					wrap_break;
+
 		std::vector<control_push_request> push_requests;
 
 		std::vector<std::shared_ptr<control_base>> children;
@@ -287,6 +289,7 @@ namespace corona
 		{
 			id = id_counter::next();
 			is_focused = false;
+			wrap_break = false;
 		}
 
 		control_base(container_control_base *_parent, int _id) : control_base()
@@ -300,6 +303,7 @@ namespace corona
 				id = _id;
 			}
 			is_focused = false;
+			wrap_break = false;
 		}
 
 		control_base(const control_base& _src)
@@ -317,6 +321,11 @@ namespace corona
 		bool is_mouse_left_down()
 		{
 			return mouse_left_down;
+		}
+
+		bool is_wrap_break()
+		{
+			return wrap_break;
 		}
 
 		point get_relative_mouse_position()
@@ -431,6 +440,7 @@ namespace corona
 			_dest.put_member("json_field_name", json_field_name);
 			_dest.put_member("computed", jcomputed);
 			_dest.put_member("issues", jissues);
+			_dest.put_member("wrap_break", wrap_break);
 
 		}
 
@@ -462,6 +472,8 @@ namespace corona
 
 			tooltip_text = _src["tooltip_text"];
 			json_field_name = _src["json_field_name"];
+
+			wrap_break = (bool)_src["wrap_break"];
 
 		}
 

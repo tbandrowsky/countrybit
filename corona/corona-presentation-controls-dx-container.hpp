@@ -841,9 +841,11 @@ namespace corona
 				temp.x = _origin->x;
 				temp.y = _origin->y + (_bounds->h - sz.y);
 			}
-
-			arrange_extent = rectangle_math::extend(arrange_extent, _item->bounds);
-
+			else
+			{
+				temp.x = _origin->x;
+				temp.y = _origin->y;
+			}
 			return temp;
 		};
 
@@ -866,12 +868,11 @@ namespace corona
 					tempest.x += _item->get_margin_amount().x;
 
 					double r = _bounds->right();
-					double tx = tempest.x + sz.x;
-
-					if (wrap and (tx >= r)) {
+					
+					if (wrap and ((tempest.x >= r) or _item->is_wrap_break())) {
 						tempest.x = _bounds->x + _item->get_margin_amount().x + item_start_space_px;
 						tempest.y = arrange_extent.bottom() + _item->get_margin_amount().y;
-						arrange_extent = {};
+						arrange_extent = rectangle_math::extend(arrange_extent, tempest);
 					}
 					return tempest;
 				}
@@ -982,8 +983,6 @@ namespace corona
 				temp.y = _origin->y;
 			}
 
-			arrange_extent = rectangle_math::extend(arrange_extent, _item->bounds);
-
 			return temp;
 		};
 
@@ -998,18 +997,16 @@ namespace corona
 				},
 				align_item,
 				[this, item_start_space_px, item_next_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
-					point temp = *_origin;
+					point tempest = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-					temp.y += sz.y;
-					temp.y += _item->get_margin_amount().y + item_next_space_px;
+					tempest.y = tempest.y + sz.y;
+					tempest.y = tempest.y + _item->get_margin_amount().y + item_next_space_px;
 					double r = _bounds->bottom();
-					double ty = temp.y + sz.y;
-					if (wrap and (ty > r)) {
-						temp.x = arrange_extent.right() + _item->get_margin_amount().x;
-						temp.y = _bounds->y + _item->get_margin_amount().y + item_start_space_px;
-						arrange_extent = {};
+					if (wrap and ((tempest.y > r) or _item->is_wrap_break())) {
+						tempest.x = arrange_extent.right() + _item->get_margin_amount().x;
+						tempest.y = _bounds->y + _item->get_margin_amount().y + item_start_space_px;
 					}
-					return temp;
+					return tempest;
 				}
 			);
 

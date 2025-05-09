@@ -260,7 +260,7 @@
         },
         "box_fill_brush": {
           "class_name": "solid_brush",
-          "color": "00000044"
+          "color": "00000000"
         }
       },
       "form_style": {

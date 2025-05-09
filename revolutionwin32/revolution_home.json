@@ -65,8 +65,7 @@
                   "class_name": "chaptertitle",
                   "box": {
                     "width": "1.0 container",
-                    "height": "50 pixels",
-                    "y": "20 pixels"
+                    "height": "50 pixels"
                   },
                   "text": ""
                 },
@@ -74,8 +73,7 @@
                   "class_name": "chaptersubtitle",
                   "box": {
                     "width": "1.0 container",
-                    "height": "25 pixels",
-                    "y": "20 pixels"
+                    "height": "25 pixels"
                   },
                   "text": " Status"
                 },
