@@ -934,12 +934,12 @@ namespace corona
 		using control_base::id;
 		using windows_control::window_host;
 		std::string caption_text;
-		long caption_icon_id;
-		HICON caption_icon;
+		std::string icon_path;
+		HICON icon;
 	public:
 		std::shared_ptr<corona_bus_command> click_command;
 
-		button_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
+		button_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id), icon(nullptr) { ; }
 		button_control(const button_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -962,6 +962,8 @@ namespace corona
 				corona::get_json(jcommand, click_command);
 				_dest.put_member("on_click", jcommand);
 			}
+
+			_dest.put_member("icon_path", icon_path);
 		}
 
 		virtual void put_json(json& _src)
@@ -975,6 +977,8 @@ namespace corona
 				system_monitoring_interface::global_mon->log_json(_src);
 			}
 
+			icon_path = _src["icon_path"];
+
 			corona::put_json(click_command, jcommand);
 		}
 
@@ -986,6 +990,23 @@ namespace corona
 				_page->on_command(id, [this](command_event lce) {
 					lce.bus->run_command(click_command);
 					});
+			}
+		}
+
+		virtual void create(std::shared_ptr<direct2dContext>& _context, std::weak_ptr<applicationBase> _host) override
+		{
+			text_control_base::create(_context, _host);
+			if (icon) {
+				::DeleteObject(icon);
+				icon = nullptr;
+			}
+			if (this->window) {
+				if (icon_path.size() > 0) {
+					icon = (HICON)LoadImageA(NULL, icon_path.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+					if (icon) {
+						SendMessage(this->window, BM_SETIMAGE, IMAGE_ICON, (LPARAM)icon);
+					}
+				}
 			}
 		}
 

@@ -106,6 +106,7 @@
                                 "text": "Login",
                                 "box": "button_box",
                                 "default_button": true,
+                                "icon_path": "login.ico",
                                 "on_click": {
                                     "class_name": "login_user",
                                     "form_name": "user_login_form",
@@ -134,7 +135,7 @@
                             },
                             {
                                 "class_name": "push_button",
-                                "text": "Register",
+                                "text": "Join",
                                 "box": "button_box",
                                 "on_click": {
                                     "class_name": "select_frame",

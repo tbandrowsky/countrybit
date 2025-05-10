@@ -104,6 +104,7 @@
                   "class_name": "push_button",
                   "text": "Cancel",
                   "box": "button_box",
+                  "icon": "cancel.ico",
                   "on_click": {
                     "class_name": "select_frame",
                     "page_to_select": "home",
