@@ -28,6 +28,9 @@ namespace corona
 
 	void put_json(std::shared_ptr<corona_bus_command>& _dest, json _src);
 
+
+
+
 	class corona_form_command : public corona_bus_command
 	{
 	public:
@@ -145,6 +148,13 @@ namespace corona
 		std::string email_field = "";
 		std::string password1_field = "";
 		std::string password2_field = "";
+		std::string first_name_field = "";
+		std::string last_name_field = "";
+		std::string street_field = "";
+		std::string city_field = "";
+		std::string state_field = "";
+		std::string zip_field = "";
+		std::string phone_field = "";
 
 		corona_register_user_command()
 		{
@@ -154,11 +164,19 @@ namespace corona
 
 		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
-			std::string user_name = obj[user_name_field];
-			std::string email = obj[email_field];
-			std::string password1 = obj[password1_field];
-			std::string password2 = obj[password2_field];
-			response = bus->remote_register_user(user_name, email, password1, password2);
+			json_parser jp;
+			json user_obj = jp.create_object();
+
+			user_obj.put_member("user_name", (std::string)obj[user_name_field]);
+			user_obj.put_member("email", (std::string)obj[email_field]);
+			user_obj.put_member("password1", (std::string)obj[password1_field]);
+			user_obj.put_member("password2", (std::string)obj[password2_field]);
+			user_obj.put_member("first_name", (std::string)obj[first_name_field]);
+			user_obj.put_member("street", (std::string)obj[street_field]);
+			user_obj.put_member("city", (std::string)obj[city_field]);
+			user_obj.put_member("state", (std::string)obj[state_field]);
+			user_obj.put_member("phone", (std::string)obj[phone_field]);
+			response = bus->remote_register_user(user_obj);
 			return response;
 		}
 
@@ -173,6 +191,12 @@ namespace corona
 			_dest.put_member("email_field", email_field);
 			_dest.put_member("password1_field", password1_field);
 			_dest.put_member("password2_field", password2_field);
+			_dest.put_member("first_name_field", first_name_field);
+			_dest.put_member("last_name_field", last_name_field);
+			_dest.put_member("street_field", street_field);
+			_dest.put_member("zip_field", zip_field);
+			_dest.put_member("city_field", city_field);
+			_dest.put_member("phone_field", phone_field);
 		}
 
 		virtual void put_json(json& _src)
@@ -194,6 +218,11 @@ namespace corona
 			email_field = _src["email_field"];
 			password1_field = _src["password1_field"];
 			password2_field = _src["password2_field"];
+			first_name_field = _src["first_name_field"];
+			last_name_field = _src["last_name_field"];
+			street_field = _src["password2_field"];
+			city_field = _src["password2_field"];
+
 		}
 
 	};

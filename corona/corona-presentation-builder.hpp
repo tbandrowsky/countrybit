@@ -392,6 +392,7 @@ namespace corona
 		inline control_builder& paragraph(int _id, std::string _text) { return paragraph(_text, nullptr, _id); }
 		inline control_builder& code(int _id, std::string _text) { return code(_text, nullptr, _id); }
 		inline control_builder& label(int _id, std::string _text) { return label(_text, nullptr, _id); }
+		inline control_builder& error(int _id, std::string _text) { return error(_text, nullptr, _id); }
 
 		inline control_builder& title(int _id, std::function<void(title_control&)> _settings) { return title("", _settings, _id); }
 		inline control_builder& subtitle(int _id, std::function<void(subtitle_control&)> _settings) { return subtitle("", _settings, _id); }
@@ -401,6 +402,7 @@ namespace corona
 		inline control_builder& paragraph(int _id, std::function<void(paragraph_control&)> _settings) { return paragraph("", _settings, _id); }
 		inline control_builder& code(int _id, std::function<void(code_control&)> _settings) { return code("", _settings, _id); }
 		inline control_builder& label(int _id, std::function<void(label_control&)> _settings) { return label("", _settings, _id); }
+		inline control_builder& error(int _id, std::function<void(error_control&)> _settings) { return error("", _settings, id_counter::next()); }
 
 		inline control_builder& title(std::string _text, std::function<void(title_control&)> _settings) { return title(_text, _settings, id_counter::next()); }
 		inline control_builder& subtitle(std::string _text, std::function<void(subtitle_control&)> _settings) { return subtitle(_text, _settings, id_counter::next()); }
@@ -410,6 +412,7 @@ namespace corona
 		inline control_builder& paragraph(std::string _text, std::function<void(paragraph_control&)> _settings) { return paragraph(_text, _settings, id_counter::next()); }
 		inline control_builder& code(std::string _text, std::function<void(code_control&)> _settings) { return code(_text, _settings, id_counter::next()); }
 		inline control_builder& label(std::string _text, std::function<void(label_control&)> _settings) { return label(_text, _settings, id_counter::next()); }
+		inline control_builder& error(std::string _text, std::function<void(error_control&)> _settings) { return error(_text, _settings, id_counter::next()); }
 
 		inline control_builder& error(call_status _status, std::function<void(error_control&)> _settings) { return error(_status, _settings, id_counter::next()); }
 		inline control_builder& status(call_status _status, std::function<void(status_control&)> _settings) { return status(_status, _settings, id_counter::next()); }
@@ -790,6 +793,18 @@ namespace corona
 			}
 			return *this;
 		}
+
+		control_builder& error(std::string _text, std::function<void(error_control&)> _settings, int _id)
+		{
+			auto tc = create<error_control>(_id);
+			apply_item_sizes(tc);
+			tc->set_text(_text);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
 
 		control_builder& success(call_status _status, std::function<void(success_control&)> _settings, int _id)
 		{
@@ -1202,6 +1217,7 @@ namespace corona
 		int								prefix_id;
 		int								suffix_id;
 		int								visualization_id;
+		int								error_id;
 		int								edit_block_id;
 
 		form_field						field_def;
@@ -1219,6 +1235,7 @@ namespace corona
 			suffix_id = id_counter::next();
 			visualization_id = id_counter::next();
 			edit_block_id = id_counter::next();
+			error_id = id_counter::next();
 		}
 
 		form_field_control(const form_field_control& _src) = default;
@@ -1229,11 +1246,16 @@ namespace corona
 			suffix_id = id_counter::next();
 			visualization_id = id_counter::next();
 			edit_block_id = id_counter::next();
+			error_id = id_counter::next();
 		}
 
 		void set_error(std::string _text)
 		{
 			error_text = _text;
+			auto error = find_by_id<error_control>(error_id);
+			if (error) {
+				error->set_text(_text);
+			}
 		}
 
 		std::string get_error()
@@ -1356,6 +1378,7 @@ namespace corona
 				comm_bus_app_interface::global_bus->log_warning(msg);
 			}
 
+			// hack.
 			field_def.control_settings.put_member("default_button", field_def.is_default_button);
 			field_def.control_settings.put_member("default_focus", field_def.is_default_focus);
 
@@ -1367,6 +1390,10 @@ namespace corona
 					_settings.text = field_def.suffix;
 					});
 			}
+
+			auto error_row = cb.error(error_id, [this](error_control& _row) {
+				_row.set_size(1.0_container, field_def.field_box.height);
+				});
 
 			cb.apply_controls(this);
 		}
@@ -1682,6 +1709,44 @@ namespace corona
 		{
 			auto tv = std::make_shared<form_control>(*this);
 			return tv;
+		}
+
+		virtual void set_errors(std::vector<validation_error>& _errors)
+		{
+			std::map<std::string, std::vector<validation_error>> error_map;
+			error_map.clear();
+
+			for (auto err : _errors)
+			{
+				std::string field_name = err.field_name;
+				if (error_map.find(field_name) == error_map.end()) {
+					error_map[field_name] = std::vector<validation_error>();
+				}
+				error_map[field_name].push_back(err);
+			}
+
+			for (auto& fld : ids.fields)
+			{
+				auto ctrl = find_by_id<control_base>(fld.field_id);
+				if (ctrl) {
+					auto ffc = std::dynamic_pointer_cast<form_field_control>(ctrl);
+					if (ffc) {
+						if (error_map.find(fld.json_field_name) != error_map.end())
+						{
+							std::string err_text;
+							for (auto err : error_map[fld.json_field_name])
+							{
+								err_text += err.message + "\n";
+							}
+							ffc->set_error(err_text);
+						}
+					}
+					else
+					{
+						ffc->set_error("err_text");
+					}
+				}
+			}
 		}
 
 	};

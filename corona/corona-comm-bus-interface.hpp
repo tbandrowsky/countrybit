@@ -261,7 +261,7 @@ namespace corona
 
 		virtual void run_app_ui(HINSTANCE hInstance, LPSTR command_line, bool fullScreen) = 0;
 
-		virtual corona_client_response remote_register_user(std::string _user_name, std::string _email, std::string _password1, std::string _password2) = 0;
+		virtual corona_client_response remote_register_user(json _user) = 0;
 		virtual corona_client_response remote_confirm_user(std::string _user_name, std::string _confirmation_code) = 0;
 		virtual corona_client_response remote_send_user(std::string _user_name) = 0;
 		virtual corona_client_response remote_login(std::string _user_name, std::string _password) = 0;

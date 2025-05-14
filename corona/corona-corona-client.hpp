@@ -6,7 +6,7 @@
 namespace corona
 {
 
-	class client_class 
+	class client_class : public client_class_interface
 	{
 
 	protected:
@@ -471,32 +471,58 @@ namespace corona
 		}
 	};
 
-	class corona_class_response : public corona_client_response
+	void corona_client_response::set(json& _params)
 	{
-	public:
+		json_parser jp;
+		json jerrors;
 
-		std::vector<std::shared_ptr<client_class>> classes;
-		std::vector<validation_error> errors;
-
-		corona_class_response& operator = (http_params& _params)
+		data = _params[data_field];
+		json jclasses = data["class"];
+		execution_time = _params["execution_time_seconds"];
+		classes.clear();
+		errors.clear();
+		jerrors = _params["errors"];
+		if (jerrors.array())
 		{
-			classes.clear();
-			errors.clear();
-
-			corona_client_response::operator=(_params);
-
-			if (data.array())
+			for (auto jerr : jerrors)
 			{
-				for (auto cls : data)
-				{
-					std::shared_ptr<client_class> new_class = std::make_shared<client_class>();
-					new_class->put_json(errors, cls);
+				validation_error ve;
+				ve.put_json(jerr);
+				errors.push_back(ve);
+			}
+		}
+		if (_params.has_member(success_field)) {
+			success = (bool)_params[success_field];
+			message = _params[message_field];
+		}
+		else {
+			success = 0;
+			message = "unknown";
+		}
+
+		if (jclasses.array())
+		{
+			for (auto cls : jclasses)
+			{
+				std::shared_ptr<client_class> new_class = std::make_shared<client_class>();
+				new_class->put_json(errors, cls);
+				auto inew_class = std::dynamic_pointer_cast<client_class_interface>(new_class);
+				if (inew_class) {
+					classes.push_back(inew_class);
 				}
 			}
-
-			return *this;
 		}
-	};
+		else if (jclasses.object())
+		{
+			std::shared_ptr<client_class> new_class = std::make_shared<client_class>();
+			new_class->put_json(errors, data);
+			auto inew_class = std::dynamic_pointer_cast<client_class_interface>(new_class);
+			if (inew_class) {
+				classes.push_back(inew_class);
+			}
+		}
+	}
+
 
 	class corona_client : public corona_client_interface
 	{
@@ -516,7 +542,7 @@ namespace corona
 			;
 		}
 
-		virtual corona_client_response register_user(std::string user_name, std::string email, std::string password1, std::string password2) override
+		virtual corona_client_response register_user(json _user) override
 		{
 			corona_client_response result;
 
@@ -528,12 +554,7 @@ namespace corona
 			std::string header = "Content-Type: application/json\r\n";
 
 			json payload = jp.create_object();
-			json data = jp.create_object();
-			data.put_member("user_name", user_name);
-			data.put_member("password1", password1);
-			data.put_member("password2", password2);
-			data.put_member("email", email);
-			payload.put_member("data", data);
+			payload.put_member("data", _user);
 
 			std::string path = base_path + "/corona/login/createuser";
 
@@ -674,7 +695,7 @@ namespace corona
 
 		virtual corona_client_response get_classes() override
 		{
-			corona_class_response result;
+			corona_client_response result;
 
 			json_parser jp;
 			http_client cc;
@@ -693,7 +714,7 @@ namespace corona
 
 		virtual corona_client_response get_class(std::string class_name) override
 		{
-			corona_class_response result;
+			corona_client_response result;
 
 			json_parser jp;
 			http_client cc;
@@ -714,7 +735,7 @@ namespace corona
 
 		virtual corona_client_response put_class(json _class_definition) override
 		{
-			corona_class_response result;
+			corona_client_response result;
 			json_parser jp;
 			http_client cc;
 
@@ -734,7 +755,7 @@ namespace corona
 
 		virtual corona_client_response put_class(std::shared_ptr<client_class>& _client)
 		{
-			corona_class_response result;
+			corona_client_response result;
 			json_parser jp;
 			http_client cc;
 

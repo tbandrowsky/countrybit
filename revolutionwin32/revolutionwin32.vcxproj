@@ -562,6 +562,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\corona\corona-corona-client.hpp" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="revolution.h" />
   </ItemGroup>

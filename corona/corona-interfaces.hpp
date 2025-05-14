@@ -4,6 +4,10 @@
 
 namespace corona
 {
+	class client_class_interface
+	{
+
+	};
 
 	class corona_client_response
 	{
@@ -12,21 +16,14 @@ namespace corona
 		std::string		message;
 		double			execution_time;
 		json			data;
+		std::vector<validation_error> errors;
+		std::vector<std::shared_ptr<client_class_interface>> classes;
+
+		void set(json& response);
 
 		corona_client_response& operator = (json& response)
 		{
-			json_parser jp;
-
-			data = response[data_field];
-			execution_time = response["execution_time_seconds"];
-			if (response.has_member(success_field)) {
-				success = (bool)response[success_field];
-				message = response[message_field];
-			}
-			else {
-				success = 0;
-				message = "unknown";
-			}
+			set(response);
 			return *this;
 		}
 
@@ -35,41 +32,25 @@ namespace corona
 			json_parser jp;
 			json response;
 
-            if (_params.response.response_body.is_safe_string() > 0) {
-                // read the response body
+			if (_params.response.response_body.is_safe_string() > 0) {
+				// read the response body
 				response = jp.parse_object(_params.response.response_body.get_ptr());
 			}
 			else {
 				response = jp.create_object();
 			}
 
-			data = response[data_field];
-			execution_time = response["execution_time_seconds"];
-			if (response.has_member(success_field)) {
-				success = (bool)response[success_field];
-				message = response[message_field];
-			}
-			else 
-			{
-				success = _params.response.http_status_code == 200;
-				if (_params.response.response_body.is_safe_string()) {
-					std::string temp = _params.response.response_body.get_ptr();
-					message = std::format("http code: {0}\nreponse: {1}", _params.response.http_status_code, temp);
-				}
-				else {
-					message = std::format("http code: {0}", _params.response.http_status_code);
-				}
-			}
+			set(response);
 			return *this;
 		}
-	};
 
+	};
 
 	class corona_client_interface
 	{
 	public:
 
-		virtual corona_client_response register_user(std::string user_name, std::string email, std::string password1, std::string password2) = 0;
+		virtual corona_client_response register_user(json _user) = 0;
 		virtual corona_client_response confirm_user(std::string user_name, std::string confirmation_code) = 0;
 		virtual corona_client_response send_user(std::string user_name) = 0;
 		virtual corona_client_response login(std::string _user_name, std::string _password) = 0;

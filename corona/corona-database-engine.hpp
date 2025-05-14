@@ -6464,6 +6464,9 @@ private:
 				}
 			});
 
+			json data = jp.create_object();
+			data.put_member("class", result_list);
+
 			system_monitoring_interface::global_mon->log_function_stop("get_classes", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			result = create_response(get_classes_request, true, "Ok", result_list, method_timer.get_elapsed_seconds());
 
@@ -6523,7 +6526,7 @@ private:
 					json class_info = classd->get_info(this);
 
 					result = jp.create_object();
-					result.put_member("definition", class_definition);
+					result.put_member("class", class_definition);
 					result.put_member("info", class_info);
 
 					result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());

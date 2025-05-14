@@ -433,13 +433,13 @@ namespace corona
 			log_error(_error);
 		}
 
-		virtual corona_client_response remote_register_user(std::string _user_name, std::string _email, std::string _password1, std::string _password2)
+		virtual corona_client_response remote_register_user(json _user)
 		{
 			corona_client_response response;
 
 			try 
 			{
-				response = client.register_user(_user_name, _email, _password1, _password2);
+				response = client.register_user(_user);
 			}
 			catch (std::exception& exc)
 			{
@@ -1087,6 +1087,17 @@ namespace corona
 				result = ctrl->get_data();
 			}
 			return result;
+		}
+
+		virtual void set_form_errors(std::string _form_name, std::vector<validation_error>& _errors)
+		{
+			control_base *ctrl = presentation_layer->find_ptr<control_base>(_form_name);
+			if (ctrl) {
+				form_control *form = dynamic_cast<form_control *>(ctrl);
+				if (form) {
+					form->set_errors(_errors);
+				}
+			}
 		}
 
 		virtual control_base* find_control(std::string _name)
