@@ -35,6 +35,10 @@ namespace corona
 	{
 	public:
 		std::string form_name;
+		std::string success_message_field;
+		std::string status_message_field;
+		std::string execution_time_field;
+		std::string error_table_field;
 
 		corona_client_response response;
 
@@ -76,6 +80,7 @@ namespace corona
 					context.put_member("value", response.message);
 					on_fail->execute(context, bus);
 				}
+
 			}
 			else {
 				log_warning("Could not find form '" + form_name + "'");
@@ -104,6 +109,10 @@ namespace corona
 				_dest.put_member("on_fail", jon_login_fail);
 			}
 			_dest.put_member("form_name", form_name);
+			_dest.put_member("success_message_field", success_message_field);
+			_dest.put_member("status_message_field", status_message_field);
+			_dest.put_member("error_table_field", error_table_field);
+			_dest.put_member("execution_time_field", execution_time_field);
 		}
 
 		virtual void put_json(json& _src)
@@ -135,8 +144,11 @@ namespace corona
 				corona::put_json(on_fail, jon_login_fail);
 			}
 			form_name = _src["form_name"];
+			success_message_field = _src["success_message_field"];
+			status_message_field = _src["status_message_field"];	
+			error_table_field = _src["error_table_field"];
+			execution_time_field = _src["execution_time_field"];
 		}
-
 
 	};
 
@@ -1454,6 +1466,7 @@ namespace corona
 		}
 	};
 
+
 	class corona_select_frame_command : public corona_form_command
 	{
 	public:
@@ -1663,9 +1676,18 @@ namespace corona
 	{
 		auto dest = std::make_shared<corona_set_property_command>();
 
-		dest->control_name = "status_message";
 		dest->property_name = "text";
+
+		dest->control_name = success_message_field.empty() ? "call_success_message" : status_message_field;
+		dest->value = _src.success ? "Success" : "Failure";
+		dest->execute(_src.data, _bus);
+
+		dest->control_name = status_message_field.empty() ? "call_status_message" : status_message_field;
 		dest->value = _src.message;
+		dest->execute(_src.data, _bus);
+
+		dest->control_name = execution_time_field.empty() ? "call_execution_time" : status_message_field;
+		dest->value = std::format("{0} secs", _src.execution_time );
 		dest->execute(_src.data, _bus);
 
 		return _src;
