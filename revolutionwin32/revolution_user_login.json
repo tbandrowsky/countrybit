@@ -122,7 +122,8 @@
                                         "class_name": "select_frame",
                                         "page_to_select": "revolution_home",
                                         "frame_to_load": "revolution_home_frame",
-                                        "frame_contents_page": "revolution_root"
+                                        "frame_contents_page": "revolution_root",
+                                        "message": "Welcome to the Revolution."
                                     }
                                 }
                             },
@@ -142,12 +143,7 @@
                                     "page_to_select": "revolution_home",
                                     "frame_to_load": "revolution_home_frame",
                                     "frame_contents_page": "user_register",
-                                    "on_start": {
-                                        "class_name": "set_property",
-                                        "control_name": "status_message",
-                                        "property_name": "text",
-                                        "value": "To Registration"
-                                    }
+                                    "transition_message" :  "Joining the Revolution"
                                 }
                             },
                             {
@@ -159,12 +155,7 @@
                                     "page_to_select": "revolution_home",
                                     "frame_to_load": "revolution_home_frame",
                                     "frame_contents_page": "user_password",
-                                    "on_start": {
-                                        "class_name": "set_property",
-                                        "control_name": "status_message",
-                                        "property_name": "text",
-                                        "value": "To password"
-                                    }
+                                    "transition_message": "Welcome to the Revolution"
                                 }
                             }
                         ]

@@ -1474,6 +1474,7 @@ namespace corona
 		std::string		page_to_select;
 		std::string		frame_to_load;
 		std::string		frame_contents_page;
+		std::string		message;	
 		corona_instance instance;
 
 		corona_select_frame_command()
@@ -1495,6 +1496,14 @@ namespace corona
 			}
 			std::string empty_form;
 			bus->select_page(page_to_select, frame_to_load, frame_contents_page, empty_form, data);
+
+			if (not message.empty()) {
+				corona_client_response page_change_response;
+				page_change_response.success = true;
+				page_change_response.message = message;
+				set_message(page_change_response, bus);
+			}
+
 			return obj;
 		}
 
@@ -1507,6 +1516,7 @@ namespace corona
 			_dest.put_member("page_to_select", page_to_select);
 			_dest.put_member("frame_to_load", frame_to_load);
 			_dest.put_member("frame_contents_page", frame_contents_page);
+			_dest.put_member("transition_message", message);
 			_dest.put_member_i64("instance", (int64_t)instance);
 
 		}
@@ -1528,6 +1538,7 @@ namespace corona
 			page_to_select = _src["page_to_select"];
 			frame_to_load = _src["frame_to_load"];
 			frame_contents_page = _src["frame_contents_page"];
+			message = _src["transition_message"];
 			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 	};

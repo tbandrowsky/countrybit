@@ -539,7 +539,6 @@ namespace corona
 				system_monitoring_interface::global_mon->log_information("table control missing select_command", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(_src);
 			}
-
 			corona::put_json(select_command, command);
 
 			data_changed();

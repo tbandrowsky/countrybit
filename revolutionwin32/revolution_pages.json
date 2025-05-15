@@ -76,7 +76,8 @@
       "class_name": "select_frame",
       "page_to_select": "revolution_home",
       "frame_to_load": "revolution_home_frame",
-      "frame_contents_page": "user_login"
+      "frame_contents_page": "user_login",
+      "message":"Please log in."
     }
   ],
   "pages": [
