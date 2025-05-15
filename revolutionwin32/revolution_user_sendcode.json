@@ -101,12 +101,13 @@
                   "class_name": "push_button",
                   "text": "Cancel",
                   "box": "button_box",
-                  "on_click": {
-                    "class_name": "select_frame",
-                    "page_to_select": "revolution_home",
-                    "frame_to_load": "revolution_home_frame",
-                    "frame_contents_page": "user_login"
-                  }
+                    "on_click": {
+                        "class_name": "select_frame",
+                        "page_to_select": "revolution_home",
+                        "frame_to_load": "revolution_home_frame",
+                        "frame_contents_page": "user_login",
+                        "transition_message": "To Login"
+                    }
                 },
                 {
                   "class_name": "push_button",
@@ -118,34 +119,38 @@
                     "user_name_field": "user_name",
                     "class_name": "send_user",
                     "on_success": {
-                      "class_name": "select_frame",
-                      "page_to_select": "home",
-                      "frame_to_load": "revolution_home_frame",
-                      "frame_contents_page": "user_confirm"
+                        "class_name": "select_frame",
+                        "page_to_select": "home",
+                        "frame_to_load": "revolution_home_frame",
+                        "frame_contents_page": "user_confirm"
+
                     }
                   }
                 },
                 {
                   "class_name": "push_button",
-                  "text": "Register",
+                  "text": "Enlist",
                   "box": "button_box",
-                  "on_click": {
-                    "class_name": "select_frame",
-                    "page_to_select": "revolution_home",
-                    "frame_to_load": "revolution_home_frame",
-                    "frame_contents_page": "user_register"
-                  }
+                    "on_click": {
+                        "class_name": "select_frame",
+                        "page_to_select": "revolution_home",
+                        "frame_to_load": "revolution_home_frame",
+                        "frame_contents_page": "user_register",
+                        "transition_message": "To Enlistment"
+
+                    }
                 },
                 {
                   "class_name": "push_button",
-                  "text": "Forgot Password",
+                  "text": "Password",
                   "box": "button_box",
-                  "on_click": {
-                    "class_name": "select_frame",
-                    "page_to_select": "revolution_home",
-                    "frame_to_load": "revolution_home_frame",
-                    "frame_contents_page": "user_password"
-                  }
+                    "on_click": {
+                        "class_name": "select_frame",
+                        "page_to_select": "revolution_home",
+                        "frame_to_load": "revolution_home_frame",
+                        "frame_contents_page": "user_password",
+                        "transition_message": "To Password"
+                    }
                 }
               ]
             }

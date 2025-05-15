@@ -49,7 +49,7 @@
                 "width": "1.0 container",
                 "height": "50 pixels"
               },
-              "text": "R E G I S T R A T I O N"
+              "text": "E N L I S T"
             },
             {
               "class_name": "chaptersubtitle",
@@ -84,13 +84,14 @@
                     "label_text": "User Name:",
                     "box": "edit_container_box"
                   },
-                  {
-                    "class_name": "edit",
-                    "name": "email_ctl",
-                    "json_field_name": "email",
-                    "label_text": "E-mail:",
-                    "box": "edit_container_box"
-                  },
+                    {
+                        "class_name": "edit",
+                        "name": "email_ctl",
+                        "json_field_name": "email",
+                        "label_text": "E-mail:",
+                        "box": "edit_container_box",
+                        "wrap_break" :  true
+                    },
                   {
                     "class_name": "password",
                     "name": "user_password1_ctl",
@@ -120,18 +121,13 @@
                   "class_name": "push_button",
                   "text": "Cancel",
                   "box": "button_box",
-                  "on_start": {
-                    "class_name": "set_property",
-                    "control_name": "status_message",
-                    "property_name": "text",
-                    "value": "Cancel to login"
-                  },
-                  "on_click": {
-                    "class_name": "select_frame",
-                    "page_to_select": "home",
-                    "frame_to_load": "revolution_home_frame",
-                    "frame_contents_page": "user_login"
-                  }
+                    "on_click": {
+                        "class_name": "select_frame",
+                        "page_to_select": "home",
+                        "frame_to_load": "revolution_home_frame",
+                        "frame_contents_page": "user_login",
+                        "transition_message": "To Login"
+                    }
                 },
                 {
                   "class_name": "push_button",
@@ -150,10 +146,10 @@
                       "property_name": "text"
                     },
                     "on_success": {
-                      "class_name": "select_frame",
-                      "page_to_select": "revolution_home",
-                      "frame_to_load": "revolution_home_frame",
-                      "frame_contents_page": "user_confirm"
+                        "class_name": "select_frame",
+                        "page_to_select": "revolution_home",
+                        "frame_to_load": "revolution_home_frame",
+                        "frame_contents_page": "user_confirm"
                     }
                   }
                 }
