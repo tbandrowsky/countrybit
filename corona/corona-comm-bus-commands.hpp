@@ -1690,6 +1690,23 @@ namespace corona
 		dest->value = std::format("{0} secs", _src.execution_time );
 		dest->execute(_src.data, _bus);
 
+		std::string table_field = error_table_field.empty() ? "call_error_table" : error_table_field;
+
+		if (not table_field.empty()) {
+			auto cb_table = _bus->find_control(table_field);
+
+			if (cb_table) {
+				json_parser jp;
+				json results = jp.create_array();
+				for (auto err : _src.errors) {
+					json jerr = jp.create_object();
+					err.get_json(jerr);
+					results.push_back(jerr);
+				}
+				cb_table->set_items(results);
+			}
+		}
+
 		return _src;
 	}
 
