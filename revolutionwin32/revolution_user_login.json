@@ -92,37 +92,6 @@
                                         "message": "Logged in successfully."
                                     }
                                 }
-                            },
-                            {
-                                "class_name": "paragraph",
-                                "box": {
-                                    "width": "100px",
-                                    "height": "35px"
-                                }
-                            },
-                            {
-                                "class_name": "push_button",
-                                "text": "Join",
-                                "box": "button_box",
-                                "on_click": {
-                                    "class_name": "select_frame",
-                                    "page_to_select": "revolution_home",
-                                    "frame_to_load": "revolution_home_frame",
-                                    "frame_contents_page": "user_register",
-                                    "transition_message": "To Enlistment"
-                                }
-                            },
-                            {
-                                "class_name": "push_button",
-                                "text": "Password",
-                                "box": "button_box",
-                                "on_click": {
-                                    "class_name": "select_frame",
-                                    "page_to_select": "revolution_home",
-                                    "frame_to_load": "revolution_home_frame",
-                                    "frame_contents_page": "user_password",
-                                    "transition_message": "To Password"
-                                }
                             }
                         ]
                     },
@@ -131,7 +100,7 @@
                         "name": "user_login_form",
                         "box": {
                             "width": "700 pixels",
-                            "height": "450 pixels"
+                            "height": "200 pixels"
                         },
                         "model": {
                             "name": "user_login_model",
@@ -166,7 +135,47 @@
                                 }
                             ]
                         }
+                    },
+                    {
+                        "class_name": "chaptersubtitle",
+                        "box": "edit_label_box",
+                        "text": "Join the Revolution"
+                    },
+                    {
+                        "class_name": "push_button",
+                        "text": "Join",
+                        "box": "button_box",
+                        "on_click": {
+                            "class_name": "select_frame",
+                            "page_to_select": "revolution_home",
+                            "frame_to_load": "revolution_home_frame",
+                            "frame_contents_page": "user_register",
+                            "transition_message": "To Enlistment"
+                        }
+                    },
+                    {
+                        "class_name": "paragraph",
+                        "box": "edit_label_box",
+                        "text": ""
+                    },
+                    {
+                        "class_name": "chaptersubtitle",
+                        "box": "edit_label_box",
+                        "text": "Change Password"
+                    },
+                    {
+                        "class_name": "push_button",
+                        "text": "Password",
+                        "box": "button_box",
+                        "on_click": {
+                            "class_name": "select_frame",
+                            "page_to_select": "revolution_home",
+                            "frame_to_load": "revolution_home_frame",
+                            "frame_contents_page": "user_password",
+                            "transition_message": "To Password"
+                        }
                     }
+
                 ]
             }
 

@@ -1,7 +1,7 @@
 {
     "abbreviations": {
         "button_box": {
-            "width": "150 pixels",
+            "width": "200 pixels",
             "height": {
                 "amount": 40,
                 "units": "pixels"

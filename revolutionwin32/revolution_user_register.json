@@ -69,6 +69,32 @@
                     "children": [
                         {
                             "class_name": "push_button",
+                            "text": "Enlist",
+                            "box": "button_box",
+                            "on_click": {
+                                "class_name": "register_user",
+                                "form_name": "user_register_form",
+                                "user_name_field": "user_name",
+                                "email_field": "email",
+                                "password1_field": "password1",
+                                "password2_field": "password2",
+                                "on_success": {
+                                    "class_name": "select_frame",
+                                    "page_to_select": "revolution_home",
+                                    "frame_to_load": "revolution_home_frame",
+                                    "frame_contents_page": "user_confirm"
+                                }
+                            }
+                        },
+                        {
+                            "class_name": "paragraph",
+                            "box": {
+                                "width": "36 pixels",
+                                "height": "50 pixels"
+                            }
+                        },
+                        {
+                            "class_name": "push_button",
                             "text": "Cancel",
                             "box": "button_box",
                             "on_click": {
@@ -79,30 +105,6 @@
                                 "transition_message": "To Login"
                             }
                         },
-                        {
-                            "class_name": "push_button",
-                            "text": "Enlist",
-                            "box": "button_box",
-                            "on_click": {
-                                "class_name": "register_user",
-                                "form_name": "user_register_form",
-                                "user_name_field": "user_name",
-                                "email_field": "email",
-                                "password1_field": "password1",
-                                "password2_field": "password2",
-                                "on_start": {
-                                    "class_name": "set_property",
-                                    "control_name": "status_message",
-                                    "property_name": "text"
-                                },
-                                "on_success": {
-                                    "class_name": "select_frame",
-                                    "page_to_select": "revolution_home",
-                                    "frame_to_load": "revolution_home_frame",
-                                    "frame_contents_page": "user_confirm"
-                                }
-                            }
-                        }
                     ]
                 },
                 {
