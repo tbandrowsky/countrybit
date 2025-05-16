@@ -206,6 +206,7 @@ namespace corona
 			std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _align_item,
 			std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _next_origin);
 
+		rectangle				arrange_extent;
 		rectangle				bounds;
 		rectangle				inner_bounds;
 		point					margin_amount;
@@ -232,6 +233,7 @@ namespace corona
 			mouse_right_down = _src.mouse_right_down;
 			mouse_relative_position = _src.mouse_relative_position;
 
+			arrange_extent = _src.arrange_extent;
 			box = _src.box;
 			margin = _src.margin;
 			padding = _src.padding;
@@ -1147,17 +1149,21 @@ namespace corona
 		point origin = { _bounds.x, _bounds.y, 0.0 };
 		point remaining = { _bounds.w, _bounds.h, 0.0 };
 
+		arrange_extent = { _bounds.x, _bounds.y, 0.0, 0.0 };
+
 		if (children.size()) {
 
 			auto sichild = std::begin(children);
 
 			origin = _initial_origin(remaining, &_bounds, sichild->get());
-			remaining = get_remaining(remaining);
 			while (sichild != std::end(children))
 			{
 				auto child = *sichild;
 				auto* c = child.get();
 				c->parent = this;
+
+				remaining.x = inner_bounds.w - arrange_extent.w;
+				remaining.y = inner_bounds.h - arrange_extent.h;
 
 				auto location  = _align_item(remaining, &origin, &inner_bounds, child.get());
 
@@ -1173,6 +1179,17 @@ namespace corona
 				origin = _next_origin(remaining, &origin, &inner_bounds, child.get());
 
 				child->arrange(new_bounds);
+
+				auto dx = new_bounds.right() - arrange_extent.right();
+				auto dy = new_bounds.bottom() - arrange_extent.bottom();
+
+				if (dx > 0.0) {
+					arrange_extent.w += dx;
+				}
+
+				if (dy > 0.0) {
+					arrange_extent.h += dy;
+				}
 
 				sichild++;
 

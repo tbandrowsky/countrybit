@@ -87,6 +87,7 @@ namespace corona
 		bool		  is_default_focus;
         bool		  is_default_button;
 		json		  control_settings;
+		bool		  wrap_break;
 		layout_rect	  box;
 		layout_rect	  label_box;
 		layout_rect	  visualization_box;
@@ -101,6 +102,7 @@ namespace corona
 			read_only = false;
 			is_default_focus = false;
 			is_default_button = false;
+			wrap_break = false;
 		}
 
 		form_field(const form_field& _src) = default;
@@ -127,6 +129,7 @@ namespace corona
 			_dest.put_member("default_focus", is_default_focus);
 			_dest.put_member("control_settings", control_settings);
 			_dest.put_member("form_name", form_name);
+			_dest.put_member("wrap_break", wrap_break);
 
 			json_parser jp;
 			json jsource_list = jp.create_object();
@@ -181,6 +184,7 @@ namespace corona
 				is_default_button = (bool)control_settings["default_button"];
 			}
 			form_name = _src["form_name"];
+			wrap_break = (bool)_src["wrap_break"];
 
 			json jcontainer_box = _src["box"];
 			corona::put_json(box, jcontainer_box);
@@ -1229,6 +1233,7 @@ namespace corona
 
 		form_field_control() 
 		{
+			form_id = 0;
 			field_id = id_counter::next();
 			label_id = id_counter::next();
 			prefix_id = id_counter::next();
@@ -1236,17 +1241,23 @@ namespace corona
 			visualization_id = id_counter::next();
 			edit_block_id = id_counter::next();
 			error_id = id_counter::next();
+			field_def = {};
+			error_text = {};
 		}
 
 		form_field_control(const form_field_control& _src) = default;
 		form_field_control(container_control_base* _parent, int _id) : column_layout(_parent, _id)
 		{
+			form_id = 0;
+			field_id = id_counter::next();
 			label_id = id_counter::next();
 			prefix_id = id_counter::next();
 			suffix_id = id_counter::next();
 			visualization_id = id_counter::next();
 			edit_block_id = id_counter::next();
 			error_id = id_counter::next();
+			field_def = {};
+			error_text = {};
 		}
 
 		void set_error(std::string _text)
@@ -1321,6 +1332,7 @@ namespace corona
 			field_id = _field.field_id;
 			field_def = _field;
 			box = _field.box;
+			wrap_break = _field.wrap_break;
 
 			if (_draw_visualization) {
 				draw_visualization = _draw_visualization;
@@ -1392,7 +1404,7 @@ namespace corona
 			}
 
 			auto error_row = cb.error(error_id, [this](error_control& _row) {
-				_row.set_size(1.0_container, field_def.field_box.height);
+				_row.set_size(field_def.field_box.width, field_def.field_box.height);
 				});
 
 			cb.apply_controls(this);

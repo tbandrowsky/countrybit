@@ -38,124 +38,201 @@
         },
         {
           "class_name": "column",
-          "box": {
-            "width": "1.0 remaining",
-            "height": "1.0 container"
-          },
-          "children": [
-            {
-              "class_name": "chaptertitle",
-              "box": {
-                "width": "1.0 container",
-                "height": "50 pixels"
-              },
-              "text": "E N L I S T"
+            "box": {
+                "width": "1.0 remaining",
+                "height": "1.0 container"
             },
-            {
-              "class_name": "chaptersubtitle",
-              "box": {
-                "width": "1.0 container",
-                "height": "25 pixels"
-              },
-              "text": "Register new user."
-            },
-            {
-              "class_name": "form",
-              "name": "user_register_form",
-              "box": {
-                "width": "700 pixels",
-                "height": "350 pixels",
-                "y": "60 pixels"
-              },
-              "wrap": true,
-              "model": {
-                "name": "user_register_model",
-                "defaults": {
-                  "box": "edit_container_box",
-                  "label_box": "edit_label_box",
-                  "field_box": "edit_field_box"
-                },
-                "fields": [
-                  {
-                    "class_name": "edit",
-                    "default_focus": true,
-                    "name": "user_name_ctl",
-                    "json_field_name": "user_name",
-                    "label_text": "User Name:",
-                    "box": "edit_container_box"
-                  },
-                    {
-                        "class_name": "edit",
-                        "name": "email_ctl",
-                        "json_field_name": "email",
-                        "label_text": "E-mail:",
-                        "box": "edit_container_box",
-                        "wrap_break" :  true
-                    },
-                  {
-                    "class_name": "password",
-                    "name": "user_password1_ctl",
-                    "json_field_name": "password1",
-                    "label_text": "Password:",
-                    "box": "edit_container_box"
-                  },
-                  {
-                    "class_name": "password",
-                    "name": "user_password2_ctl",
-                    "json_field_name": "password2",
-                    "label_text": "Confirm Password:",
-                    "box": "edit_container_box"
-                  }
-                ]
-              }
-            },
-            {
-              "class_name": "row",
-              "box": {
-                "width": "700 pixels",
-                "height": "50 pixels"
-              },
-              "item_next_space": "8 pixels",
-              "children": [
+            "children": [
                 {
-                  "class_name": "push_button",
-                  "text": "Cancel",
-                  "box": "button_box",
-                    "on_click": {
-                        "class_name": "select_frame",
-                        "page_to_select": "home",
-                        "frame_to_load": "revolution_home_frame",
-                        "frame_contents_page": "user_login",
-                        "transition_message": "To Login"
-                    }
+                    "class_name": "chaptertitle",
+                    "box": {
+                        "width": "1.0 container",
+                        "height": "50 pixels"
+                    },
+                    "text": "J O I N"
                 },
                 {
-                  "class_name": "push_button",
-                  "text": "Register",
-                  "box": "button_box",
-                  "on_click": {
-                    "class_name": "register_user",
-                    "form_name": "user_register_form",
-                    "user_name_field": "user_name",
-                    "email_field": "email",
-                    "password1_field": "password1",
-                    "password2_field": "password2",
-                    "on_start": {
-                      "class_name": "set_property",
-                      "control_name": "status_message",
-                      "property_name": "text"
+                    "class_name": "chaptersubtitle",
+                    "box": {
+                        "width": "1.0 container",
+                        "height": "25 pixels"
                     },
-                    "on_success": {
-                        "class_name": "select_frame",
-                        "page_to_select": "revolution_home",
-                        "frame_to_load": "revolution_home_frame",
-                        "frame_contents_page": "user_confirm"
+                    "text": "Enlist Now"
+                },
+                {
+                    "class_name": "row",
+                    "box": {
+                        "width": "700 pixels",
+                        "height": "50 pixels"
+                    },
+                    "item_next_space": "8 pixels",
+                    "children": [
+                        {
+                            "class_name": "push_button",
+                            "text": "Cancel",
+                            "box": "button_box",
+                            "on_click": {
+                                "class_name": "select_frame",
+                                "page_to_select": "home",
+                                "frame_to_load": "revolution_home_frame",
+                                "frame_contents_page": "user_login",
+                                "transition_message": "To Login"
+                            }
+                        },
+                        {
+                            "class_name": "push_button",
+                            "text": "Enlist",
+                            "box": "button_box",
+                            "on_click": {
+                                "class_name": "register_user",
+                                "form_name": "user_register_form",
+                                "user_name_field": "user_name",
+                                "email_field": "email",
+                                "password1_field": "password1",
+                                "password2_field": "password2",
+                                "on_start": {
+                                    "class_name": "set_property",
+                                    "control_name": "status_message",
+                                    "property_name": "text"
+                                },
+                                "on_success": {
+                                    "class_name": "select_frame",
+                                    "page_to_select": "revolution_home",
+                                    "frame_to_load": "revolution_home_frame",
+                                    "frame_contents_page": "user_confirm"
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "class_name": "form",
+                    "name": "user_register_form",
+                    "box": {
+                        "width": "700 pixels",
+                        "height": "450 pixels"
+                    },
+                    "wrap": true,
+                    "model": {
+                        "name": "user_register_model",
+                        "defaults": {
+                            "box": "edit_container_box",
+                            "label_box": "edit_label_box",
+                            "field_box": "edit_field_box"
+                        },
+                        "fields": [
+                            {
+                                "class_name": "chaptersubtitle",
+                                "box": "edit_section_box",
+                                "label_text": " ",
+                                "control_settings": {
+                                    "text": "Digital Contact"
+                                }
+                            },
+                            {
+                                "class_name": "edit",
+                                "default_focus": true,
+                                "name": "user_name_ctl",
+                                "json_field_name": "user_name",
+                                "label_text": "User Name:",
+                                "box": "edit_container_box"
+                            },
+                            {
+                                "class_name": "edit",
+                                "name": "email_ctl",
+                                "json_field_name": "email",
+                                "label_text": "E-mail:",
+                                "box": "edit_container_box"
+                            },
+                            {
+                                "class_name": "chaptersubtitle",
+                                "box": "edit_section_box",
+                                "label_text": " ",
+                                "control_settings": {
+                                    "text": "Security"
+                                }
+                            },
+                            {
+                                "class_name": "password",
+                                "name": "user_password1_ctl",
+                                "json_field_name": "password1",
+                                "label_text": "Password:",
+                                "box": "edit_container_box"
+                            },
+                            {
+                                "class_name": "password",
+                                "name": "user_password2_ctl",
+                                "json_field_name": "password2",
+                                "label_text": "Confirm Password:",
+                                "box": "edit_container_box",
+                                "wrap_break" :  true,
+                            },
+
+                            {
+                                "class_name": "chaptersubtitle",
+                                "box": "edit_section_box",
+                                "label_text": " ",
+                                "control_settings": {
+                                    "text": "Name"
+                                }
+                            },
+                            {
+                                "class_name": "edit",
+                                "name": "first_name_ctl",
+                                "json_field_name": "first_name",
+                                "label_text": "First Name:",
+                                "box": "edit_container_box"
+                            },
+                            {
+                                "class_name": "edit",
+                                "name": "last_name_ctl",
+                                "json_field_name": "last_name",
+                                "label_text": "Last Name:",
+                                "box": "edit_container_box",
+                                "wrap_break": true
+                            },
+                            {
+                                "class_name": "chaptersubtitle",
+                                "box": "edit_section_box",
+                                "label_text": " ",
+                                "control_settings": {
+                                    "text": "Physical Contact"
+                                }
+                            },
+                            {
+                                "class_name": "edit",
+                                "name": "street_ctl",
+                                "json_field_name": "street",
+                                "label_text": "Street:",
+                                "box": "edit_container_box"
+                            },
+                            {
+                                "class_name": "edit",
+                                "name": "city_ctl",
+                                "json_field_name": "city",
+                                "label_text": "City:",
+                                "box": "edit_container_box"
+                            },
+                            {
+                                "class_name": "edit",
+                                "name": "state_ctl",
+                                "json_field_name": "state",
+                                "label_text": "State:",
+                                "box": "edit_container_box"
+                            },
+                            {
+                                "class_name": "edit",
+                                "name": "zip_ctl",
+                                "json_field_name": "zip",
+                                "label_text": "Zip:",
+                                "box": "edit_container_box",
+                                "wrap_break": true
+
+                            }
+                        ]
                     }
-                  }
                 }
-              ]
-            }
-          ]
+            ]
        }
       ]
     }

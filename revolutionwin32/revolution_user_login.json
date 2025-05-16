@@ -57,47 +57,13 @@
                             "width": "1.0 container",
                             "height": "25 pixels"
                         },
-                        "text": "Report for Duty."
-                    },
-                    {
-                        "class_name": "form",
-                        "name": "user_login_form",
-                        "box": {
-                            "width": "1.0 container",
-                            "height": "300 pixels",
-                            "y": "60 pixels"
-                        },
-                        "model": {
-                            "name": "user_login_model",
-                            "defaults": {
-                                "box": "edit_container_box",
-                                "label_box": "edit_label_box",
-                                "field_box": "edit_field_box"
-                            },
-                            "fields": [
-                                {
-                                    "class_name": "edit",
-                                    "default_focus": true,
-                                    "name": "user_name_ctl",
-                                    "json_field_name": "user_name",
-                                    "label_text": "User Name:",
-                                    "box": "edit_container_box"
-                                },
-                                {
-                                    "class_name": "password",
-                                    "name": "user_password_ctl",
-                                    "json_field_name": "password",
-                                    "label_text": "Password:",
-                                    "box": "edit_container_box"
-                                }
-                            ]
-                        }
+                        "text": "Report for Duty"
                     },
                     {
                         "class_name": "row",
                         "box": {
                             "width": "1.0 container",
-                            "height": "75 pixels"
+                            "height": "50 pixels"
                         },
                         "item_next_space": "8 pixels",
                         "children": [
@@ -130,8 +96,8 @@
                             {
                                 "class_name": "paragraph",
                                 "box": {
-                                    "width": "50px",
-                                    "height":  "35px"
+                                    "width": "100px",
+                                    "height": "35px"
                                 }
                             },
                             {
@@ -143,7 +109,7 @@
                                     "page_to_select": "revolution_home",
                                     "frame_to_load": "revolution_home_frame",
                                     "frame_contents_page": "user_register",
-                                    "transition_message" :  "To Enlistment"
+                                    "transition_message": "To Enlistment"
                                 }
                             },
                             {
@@ -159,6 +125,47 @@
                                 }
                             }
                         ]
+                    },
+                    {
+                        "class_name": "form",
+                        "name": "user_login_form",
+                        "box": {
+                            "width": "700 pixels",
+                            "height": "450 pixels"
+                        },
+                        "model": {
+                            "name": "user_login_model",
+                            "defaults": {
+                                "box": "edit_container_box",
+                                "label_box": "edit_label_box",
+                                "field_box": "edit_field_box"
+                            },
+                            "fields": [
+                                {
+                                    "class_name": "chaptersubtitle",
+                                    "box": "edit_section_box",
+                                    "label_text": " ",
+                                    "control_settings": {
+                                        "text": "Provide Credentials"
+                                    }
+                                },
+                                {
+                                    "class_name": "edit",
+                                    "default_focus": true,
+                                    "name": "user_name_ctl",
+                                    "json_field_name": "user_name",
+                                    "label_text": "User Name:",
+                                    "box": "edit_container_box"
+                                },
+                                {
+                                    "class_name": "password",
+                                    "name": "user_password_ctl",
+                                    "json_field_name": "password",
+                                    "label_text": "Password:",
+                                    "box": "edit_container_box"
+                                }
+                            ]
+                        }
                     }
                 ]
             }

@@ -226,7 +226,6 @@ namespace corona
 	class column_layout :
 		public container_control
 	{
-		rectangle	arrange_extent;
 
 	public:
 		layout_rect item_size;
@@ -237,7 +236,6 @@ namespace corona
 		column_layout() : wrap(true) { ; }
 		column_layout(const column_layout& _src) : container_control(_src) 
 		{
-			arrange_extent = _src.arrange_extent;
 			item_size = _src.item_size;
 			item_start_space = _src.item_start_space;
 			item_next_space = _src.item_next_space;
@@ -291,7 +289,6 @@ namespace corona
 	class row_layout :
 		public container_control
 	{
-		rectangle	arrange_extent;
 	protected:
 	public:
 
@@ -815,8 +812,6 @@ namespace corona
 		point origin = { 0, 0, 0 };
 		set_bounds(_bounds);
 		
-		arrange_extent = { 0, 0, 0, 0 };
-
 		double item_start_space_px = to_pixels_x(item_start_space);
 		double item_next_space_px = to_pixels_x(item_next_space);
 
@@ -861,20 +856,19 @@ namespace corona
 				},
 				align_item,
 				[this, item_next_space_px, item_start_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
-					point tempest = *_origin;
+					point end_point = *_origin;
 					auto sz = _item->get_size(inner_bounds, { _bounds->w, _bounds->h });
 
-					tempest.x += sz.x + item_next_space_px;
-					tempest.x += _item->get_margin_amount().x;
+					end_point.x += sz.x + item_next_space_px;
+					end_point.x += _item->get_margin_amount().x;
 
 					double r = _bounds->right();
 					
-					if (wrap and ((tempest.x >= r) or _item->is_wrap_break())) {
-						tempest.x = _bounds->x + _item->get_margin_amount().x + item_start_space_px;
-						tempest.y = arrange_extent.bottom() + _item->get_margin_amount().y;
-						arrange_extent = rectangle_math::extend(arrange_extent, tempest);
+					if (wrap and ((end_point.x >= r) or _item->is_wrap_break())) {
+						end_point.x = _bounds->x + _item->get_margin_amount().x + item_start_space_px;
+						end_point.y = arrange_extent.bottom() + _item->get_margin_amount().y;
 					}
-					return tempest;
+					return end_point;
 				}
 			);
 		}
@@ -902,7 +896,8 @@ namespace corona
 				align_item,
 				[this, item_next_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+					//{ _bounds->w, _bounds->h }
+					auto sz = _item->get_size(bounds, _remaining);
 					temp.x += sz.x;
 					temp.x += _item->get_margin_amount().x;
 					temp.x += item_next_space_px;
@@ -918,15 +913,11 @@ namespace corona
 
 					double w = 0.0;
 					point origin = { 0, 0, 0 };
-					point remaining = { 0, 0, 0 };
-					remaining.x = _bounds->w;
-					remaining.y = _bounds->h;
-					remaining = this->get_remaining(remaining);
 
 					w = _item->margin.amount;
 					for (auto child : children)
 					{
-						auto sz = child->get_size(*_bounds, remaining);
+						auto sz = child->get_size(*_bounds, _remaining);
 						w += sz.x;
 						w += child->get_margin_amount().x;
 					}
@@ -940,7 +931,7 @@ namespace corona
 				align_item,
 				[this, item_next_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+					auto sz = _item->get_size(bounds, _remaining);
 					temp.x += sz.x;
 					temp.x += get_margin_amount().x;
 					temp.x += item_next_space_px;
@@ -969,7 +960,7 @@ namespace corona
 
 			if (this->content_cross_alignment == visual_alignment::align_near)
 			{
-				temp.x = _bounds->x + _item->get_margin_amount().x;
+				temp.x = _origin->x + _item->get_margin_amount().x;
 				temp.y = _origin->y;
 			}
 			else if (this->content_cross_alignment == visual_alignment::align_center)
@@ -997,16 +988,24 @@ namespace corona
 				},
 				align_item,
 				[this, item_start_space_px, item_next_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
-					point tempest = *_origin;
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-					tempest.y = tempest.y + sz.y;
-					tempest.y = tempest.y + _item->get_margin_amount().y + item_next_space_px;
+					point end_point = *_origin;
+					auto sz = _item->get_size(bounds, _remaining);
+					end_point.y = end_point.y + sz.y;
+					end_point.y = end_point.y + _item->get_margin_amount().y + item_next_space_px;
 					double r = _bounds->bottom();
-					if (wrap and ((tempest.y > r) or _item->is_wrap_break())) {
-						tempest.x = arrange_extent.right() + _item->get_margin_amount().x;
-						tempest.y = _bounds->y + _item->get_margin_amount().y + item_start_space_px;
+
+					bool should_wrap = end_point.y > r;
+					bool must_wrap = _item->is_wrap_break();
+
+					if (wrap and should_wrap) {
+						end_point.x = arrange_extent.right() + _item->get_margin_amount().x;
+						end_point.y = _bounds->y + _item->get_margin_amount().y + item_start_space_px;
 					}
-					return tempest;
+					else if (wrap and must_wrap) {
+						end_point.x = arrange_extent.right() + _item->get_margin_amount().x;
+						end_point.y = _bounds->y + _item->get_margin_amount().y + item_start_space_px;
+					}
+					return end_point;
 				}
 			);
 
@@ -1039,7 +1038,7 @@ namespace corona
 				align_item,
 				[this, item_next_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
-					auto size = _item->get_size(bounds, { bounds.w, bounds.h });
+					auto size = _item->get_size(bounds, _remaining);
 					temp.y += (size.y);
 					temp.y += _item->get_margin_amount().y;
 					temp.y += item_next_space_px;
@@ -1076,7 +1075,7 @@ namespace corona
 				align_item,
 				[this, item_next_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+					auto sz = _item->get_size(bounds, _remaining);
 					temp.y += sz.y;
 					temp.y += item_next_space_px;
 					return temp;
