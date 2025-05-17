@@ -42,11 +42,12 @@
                     "width": "1.0 remaining",
                     "height": "1.0 container"
                 },
+                "wrap": true,
                 "children": [
                     {
                         "class_name": "chaptertitle",
                         "box": {
-                            "width": "1.0 container",
+                            "width": "250 pixels",
                             "height": "50 pixels"
                         },
                         "text": "L O G I N"
@@ -54,52 +55,24 @@
                     {
                         "class_name": "chaptersubtitle",
                         "box": {
-                            "width": "1.0 container",
+                            "width": "250 pixels",
                             "height": "25 pixels"
                         },
-                        "text": "Report for Duty"
+                        "text": "Provide Credentials"
                     },
                     {
-                        "class_name": "row",
+                        "class_name": "paragraph",
                         "box": {
-                            "width": "1.0 container",
-                            "height": "50 pixels"
+                            "width": "250 pixels",
+                            "height": "15 pixels"
                         },
-                        "item_next_space": "8 pixels",
-                        "children": [
-                            {
-                                "class_name": "push_button",
-                                "text": "Login",
-                                "box": "button_box",
-                                "default_button": true,
-                                "icon_path": "login.ico",
-                                "on_click": {
-                                    "class_name": "login_user",
-                                    "form_name": "user_login_form",
-                                    "user_name_field": "user_name",
-                                    "user_password_field": "password",
-                                    "on_start": {
-                                        "class_name": "set_property",
-                                        "control_name": "status_message",
-                                        "property_name": "text",
-                                        "value": "Logging in"
-                                    },
-                                    "on_success": {
-                                        "class_name": "select_frame",
-                                        "page_to_select": "revolution_home",
-                                        "frame_to_load": "revolution_home_frame",
-                                        "frame_contents_page": "revolution_root",
-                                        "message": "Logged in successfully."
-                                    }
-                                }
-                            }
-                        ]
+                        "text": ""
                     },
                     {
                         "class_name": "form",
                         "name": "user_login_form",
                         "box": {
-                            "width": "700 pixels",
+                            "width": "250 pixels",
                             "height": "200 pixels"
                         },
                         "model": {
@@ -110,14 +83,6 @@
                                 "field_box": "edit_field_box"
                             },
                             "fields": [
-                                {
-                                    "class_name": "chaptersubtitle",
-                                    "box": "edit_section_box",
-                                    "label_text": " ",
-                                    "control_settings": {
-                                        "text": "Provide Credentials"
-                                    }
-                                },
                                 {
                                     "class_name": "edit",
                                     "default_focus": true,
@@ -139,6 +104,61 @@
                     {
                         "class_name": "chaptersubtitle",
                         "box": "edit_label_box",
+                        "text": "Report for Duty"
+                    },
+                    {
+                        "class_name": "push_button",
+                        "text": "Login",
+                        "box": "button_box",
+                        "default_button": true,
+                        "icon_path": "login.ico",
+                        "wrap_break": true,
+                        "on_click": {
+                            "class_name": "login_user",
+                            "form_name": "user_login_form",
+                            "user_name_field": "user_name",
+                            "user_password_field": "password",
+                            "on_start": {
+                                "class_name": "set_property",
+                                "control_name": "status_message",
+                                "property_name": "text",
+                                "value": "Logging in"
+                            },
+                            "on_success": {
+                                "class_name": "select_frame",
+                                "page_to_select": "revolution_home",
+                                "frame_to_load": "revolution_home_frame",
+                                "frame_contents_page": "revolution_root",
+                                "message": "Logged in successfully."
+                            }
+                        }
+                    },
+
+                    {
+                        "class_name": "chaptertitle",
+                        "box": {
+                            "width": "250 pixels",
+                            "height": "50 pixels"
+                        },
+                        "text": ""
+                    },
+                    {
+                        "class_name": "chaptersubtitle",
+                        "box": "edit_label_box",
+                        "text": ""
+                    },
+                    {
+                        "class_name": "paragraph",
+                        "box": {
+                            "width": "250 pixels",
+                            "height": "15 pixels"
+                        },
+                        "text": ""
+                    },
+
+                    {
+                        "class_name": "label",
+                        "box": "edit_label_box",
                         "text": "Join the Revolution"
                     },
                     {
@@ -155,13 +175,16 @@
                     },
                     {
                         "class_name": "paragraph",
-                        "box": "edit_label_box",
+                        "box": {
+                            "width": "250 pixels",
+                            "height": "15 pixels"
+                        },
                         "text": ""
                     },
                     {
-                        "class_name": "chaptersubtitle",
+                        "class_name": "label",
                         "box": "edit_label_box",
-                        "text": "Change Password"
+                        "text": "Forgot Your Password"
                     },
                     {
                         "class_name": "push_button",

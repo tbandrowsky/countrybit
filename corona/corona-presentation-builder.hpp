@@ -1405,6 +1405,7 @@ namespace corona
 
 			auto error_row = cb.error(error_id, [this](error_control& _row) {
 				_row.set_size(field_def.field_box.width, field_def.field_box.height);
+				_row.set_text("test_error");
 				});
 
 			cb.apply_controls(this);

@@ -23,7 +23,7 @@
         },
         "edit_container_box": {
             "width": "250 pixels",
-            "height": "60 pixels"
+            "height": "80 pixels"
         },
         "edit_label_box": {
             "width": "200 pixels",
