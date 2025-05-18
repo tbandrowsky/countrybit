@@ -1260,12 +1260,21 @@ namespace corona
 			error_text = {};
 		}
 
+		void clear_error()
+		{
+			error_text = "";
+			auto error = find_by_id<error_control>(error_id);
+			if (error) {
+				error->set_text(error_text);
+			}
+		}
+
 		void set_error(std::string _text)
 		{
 			error_text = _text;
 			auto error = find_by_id<error_control>(error_id);
 			if (error) {
-				error->set_text(_text);
+				error->set_text(error_text);
 			}
 		}
 
@@ -1405,7 +1414,6 @@ namespace corona
 
 			auto error_row = cb.error(error_id, [this](error_control& _row) {
 				_row.set_size(field_def.field_box.width, field_def.field_box.height);
-				_row.set_text("test_error");
 				});
 
 			cb.apply_controls(this);
