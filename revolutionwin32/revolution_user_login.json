@@ -69,7 +69,7 @@
               "box": {
                 "width": "700 pixels",
                 "height": "250 pixels",
-                "y": "20 pixels"
+                "y": "50 pixels"
               },
               "model": {
                 "name": "user_login_model",
