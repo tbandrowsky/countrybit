@@ -4570,6 +4570,15 @@ namespace corona
 		validation_error& operator = (const validation_error& _src) = default;
 		validation_error& operator = (validation_error&& _src) = default;
 
+		validation_error(std::string _field_name, std::string _message, std::string _filename, int _line_number)
+		{
+			class_name = "N/A";
+			field_name = _field_name;
+			message = _message;
+			filename = _filename;
+			line_number = _line_number;
+		}
+
 		virtual void get_json(json& _dest)
 		{
 			_dest.put_member(class_name_field, class_name);

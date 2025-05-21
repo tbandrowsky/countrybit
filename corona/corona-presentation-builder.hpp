@@ -1764,7 +1764,7 @@ namespace corona
 					}
 					else
 					{
-						ffc->set_error("err_text");
+						ffc->clear_error();
 					}
 				}
 			}
