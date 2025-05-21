@@ -1552,7 +1552,7 @@ namespace corona
 					if (allowed_values.size())
 					{
 						std::string setx = join(allowed_values, ", ");
-						ve.message += std::format(" and must be withing '{0}'", setx);
+						ve.message += std::format(" and must be within '{0}'", setx);
 					}
 					_validation_errors.push_back(ve);
 					return false;
@@ -4052,431 +4052,88 @@ namespace corona
 			}
 
 
-			response = create_class(R"(
-{
-	"class_name" : "sys_actor",
-	"base_class_name" : "sys_object",
-	"class_description" : "An item participating in a game.  Basically, anything on the screen you can interact with",
-	"fields" : {		
-			"actor_name" : "string",
-			"actor_description" : "string",
-			"parent_game_user" : "int64",
-			"parent_place" : "int64",
-			"parent_actor" : "int64"
-		}
-	},
-	"indexes" : {
-		"idx_actor_game_user" : { 
-				"index_keys" : [ "parent_game_user" ]
-		},
-		"idx_actor_place" : { 
-				"index_keys" : [ "parent_place" ]
-		},
-		"idx_actor_actor" : { 
-				"index_keys" : [ "parent_actor" ]
-		}
-	}
-}
-)");
-
-			created_classes.put_member("sys_actor", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_actor"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_actor after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_money",
-	"base_class_name" : "sys_actor",
-	"class_description" : "money and how you got it",
-	"fields" : {		
-			"currency" : "string",
-			"amount" : "double"
-	}
-}
-)");
-
-			created_classes.put_member("sys_money", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_money"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_money after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_achievement",
-	"base_class_name" : "sys_actor",
-	"class_description" : "money",
-	"fields" : {		
-			"currency" : "string",
-			"amount" : "double"
-	},
-
-}
-)");
-
-			created_classes.put_member("sys_money", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_money"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_money after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_good",
-	"base_class_name" : "sys_actor",
-	"class_description" : "Something worth money",
-	"fields" : {		
-			"good_sku" : "string",
-			"good_quantity" : "double",
-			"good_quantity_units" : "double",
-			"purchase_currency" : "string",
-			"purchase_amount" : "double"			
-	}
-)");
-
-			created_classes.put_member("sys_good", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_good"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_good after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_food",
-	"base_class_name" : "sys_good",
-	"class_description" : "a good you can eat",
-	"fields" : {		
-	}
-}
-)");
-
-
-			created_classes.put_member("sys_food", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_food"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_food after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_cure",
-	"base_class_name" : "sys_good",
-	"class_description" : "something that cures you",
-	"fields" : {		
-	}
-}
-)");
-
-
-			created_classes.put_member("sys_cure", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_cure"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_cure after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_harm",
-	"base_class_name" : "sys_good",
-	"class_description" : "something that harms you",
-	"fields" : {		
-	}
-}
-)");
-
-
-			created_classes.put_member("sys_harm", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_harm"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_harm after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_creator",
-	"base_class_name" : "sys_good",
-	"class_description" : "something that creates",
-	"fields" : {
-
-	}
-}
-)");
-
-
-			created_classes.put_member("sys_creator", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_creator"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_creator after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_place",
-	"base_class_name" : "sys_object",
-	"class_description" : "a place is a part of a game that has its own",
-	"fields" : {		
-			"place_name" : "string",
-			"place_description" : "string",
-			"parent_game" : "int64",
-			"parent_scenario" : "int64",
-			"parent_place" : "int64",
-			"places" : "[sys_place:parent_place]",
-			"actors" : "[sys_actor:parent_place]"
-	}
-}
-)");
-
-			created_classes.put_member("sys_place", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_place"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_place after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_game",
-	"base_class_name" : "sys_object",
-	"class_description" : "a game is an instance of a scenario that users belong to and has actors and places",
-	"fields" : {		
-			"game_name" : "string",
-			"game_description" : "string",
-			"places" : "[sys_place:parent_game]",
-			"users" : "[sys_game_user:parent_game]"
-	}
-}
-)");
-
-			created_classes.put_member("sys_game", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_game"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_game_play after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
-
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_game_user",
-	"base_class_name" : "sys_object",
-	"class_description" : "an instance of a scenario",
-	"fields" : {		
-			"parent_game" : "int64",
-			"parent_user" : "->sys_user",
-			"actor" : "sys_actor:parent_game_user"
-	},
-    "indexes": {
-		"idx_game_user_game": {
-			"index_keys": [ "parent_game" ]
-		},
-		"idx_game_user_user": {
-			"index_keys": [ "parent_user" ]
-		}
-    }
-}
-)");
-			created_classes.put_member("sys_game_user", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_game_user"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_game_user after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-			response = create_class(R"(
-{
-	"class_name" : "sys_scenario",
-	"base_class_name" : "sys_object",
-	"class_description" : "A scenario a user can be engaged in",
-	"fields" : {		
-			"scenario_name" : "string",
-			"scenario_description" : "string",
-			"scenario_instances" : "string",
-			"scenario_authors" : "array",
-			"scenario_view_url" : "string",
-			"scenario_module_url" : "string",
-			"scenario_module_type" : "string",
-			"places" : "[sys_place:parent_scenario]"
-		}
-	}
-}
-)");
-
-			created_classes.put_member("sys_scenario", true);
-
-			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-			}
-
-			test = classes->get(R"({"class_name":"sys_scenario"})");
-			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_scenario after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-
-				return result;
-			}
-
-
 			response =  create_class(R"(
 {	
 	"base_class_name" : "sys_object",
 	"class_name" : "sys_user",
 	"class_description" : "A user",
 	"fields" : {			
-			"first_name" : "string",
-			"last_name" : "string",
-			"user_name" : "string",
-			"email" : "string",
-			"mobile" : "string",
-			"street1" : "string",
-			"street2" : "string",
-			"city" : "string",
-			"state" : "string",
-			"zip" : "string",
+			"first_name" : {
+				"field_type":"string",
+				"field_name":"first_name",
+				"required" : true,
+				"max_length" : 50,
+				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"
+			},
+			"last_name" : {
+				"field_type":"string",
+				"field_name":"last_name",
+				"required" : true,
+				"max_length" : 50,
+				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"
+			},
+			"user_name" : {
+				"field_type":"string",
+				"field_name":"user_name",
+				"required" : true,
+				"max_length" : 40
+				"match_pattern": "[a-zA-Z0-9]+"
+			},
+			"email" : {
+				"field_type":"string",
+				"field_name":"email",
+				"required" : true,
+				"max_length" : 100,
+				"match_pattern": "(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+"	
+			},
+			"mobile" : {
+				"field_type":"string",
+				"field_name":"mobile",
+				"required" : true,
+				"max_length" : 15,
+				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+			},
+			"street1" : {
+				"field_type":"string",
+				"field_name":"street1",
+				"required" : true,
+				"max_length" : 100,
+				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+			},
+			"street2" : {
+				"field_type":"string",
+				"field_name":"street2",
+				"required" : true,
+				"max_length" : 100,
+				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+			},
+			"city" : {
+				"field_type":"string",
+				"field_name":"city",
+				"required" : true,
+				"max_length" : 100,
+				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+			},
+			"state" : {
+				"field_type":"string",
+				"field_name":"state",
+				"required" : true,
+				"max_length" : 50,
+				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+			},
+			"zip" : {
+				"field_type":"string",
+				"field_name":"zip",
+				"required" : true,
+				"max_length" : 15,
+				"match_pattern": "^\d{5}(?:[-\s]\d{4})?$"	
+			},
 			"password" : "string",
 			"team_name" : "string",
 			"validation_code" : "string",
 			"confirmed_code" : "number",
 			"workflow_objects" : "object"
-}
+	}
 }
 )");
 
@@ -4538,16 +4195,17 @@ namespace corona
 			new_user_request = create_system_request(new_user_data);
 			json new_user_result =  create_user(new_user_request);
 			bool success = (bool)new_user_result[success_field];
+			std::vector<validation_error> errors;
 			if (success) {
 				json new_user = new_user_result[data_field];
-				json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
-				response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
+				json user_return = create_response(new_user_request, true, "Ok", new_user, errors, method_timer.get_elapsed_seconds());
+				response = create_response(new_user_request, true, "Database Created", user_return, errors, method_timer.get_elapsed_seconds());
 			}
 			else {
 				system_monitoring_interface::global_mon->log_warning("system user create failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(new_user_result);
 				json temp = jp.create_object();
-				response = create_response(new_user_request, false, "Database user create failed.", temp, method_timer.get_elapsed_seconds());
+				response = create_response(new_user_request, false, "Database user create failed.", temp, errors, method_timer.get_elapsed_seconds());
 			}
 
 			system_monitoring_interface::global_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4716,7 +4374,7 @@ private:
 			return result;
 		}
 
-		json check_object(json object_load, std::string _user_name)
+		json check_object(json object_load, std::string _user_name, std::vector<validation_error>& validation_errors)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -4729,8 +4387,6 @@ private:
 			json object_definition,
 				object_list,
 				result_list;
-
-			std::vector<validation_error> validation_errors;
 
 			if (object_load.array()) 
 			{
@@ -4828,7 +4484,7 @@ private:
 			return "This is a test iv";
 		}
 
-		json create_response(std::string _user_name, std::string _authorization, bool _success, std::string _message, json _data, double _seconds)
+		json create_response(std::string _user_name, std::string _authorization, bool _success, std::string _message, json _data, std::vector<validation_error>& _errors, double _seconds)
 		{
 			json_parser jp;
 
@@ -4852,10 +4508,39 @@ private:
 			payload.put_member(data_field, _data);
 			payload.put_member(seconds_field, _seconds);
 
+			if (_errors.size()) {
+				json errors_array = jp.create_array();
+				for (auto& ve : _errors) {
+					json jve = jp.create_object();
+					ve.get_json(jve);
+					errors_array.push_back(jve);
+				}
+				payload.put_member("errors", errors_array);
+			}
+
+
 			return payload;
 		}
 
-		json create_user_response(json _request, bool _success, std::string _message, json _data, double _seconds)
+		json create_user_response(json _request, bool _success, std::string _message, json _data, std::vector<validation_error>& _errors, double _seconds)
+		{
+			json_parser jp;
+			json payload;
+			json errors_array = jp.create_array();
+
+			if (_errors.size()) {
+				for (auto& ve : _errors) {
+					json jve = jp.create_object();
+					ve.get_json(jve);
+					errors_array.push_back(jve);
+				}
+			}
+			payload = create_user_response(_request, _success, _message, _data, errors_array, _seconds);
+
+			return payload;
+		}
+
+		json create_user_response(json _request, bool _success, std::string _message, json _data, json _errors, double _seconds)
 		{
 			json_parser jp;
 			json payload = jp.create_object();
@@ -4864,10 +4549,15 @@ private:
 			payload.put_member(message_field, _message);
 			payload.put_member(data_field, _data);
 			payload.put_member_double(seconds_field, _seconds);
+
+			if (_errors.size()) {
+				payload.put_member("errors", _errors);
+			}
+
 			return payload;
 		}
 
-		json create_response(json _request, bool _success, std::string _message, json _data, double _seconds)
+		json create_response(json _request, bool _success, std::string _message, json _data, std::vector<validation_error>& _errors, double _seconds)
 		{
 			json_parser jp;
 			json payload = jp.create_object();
@@ -4890,6 +4580,15 @@ private:
 			payload.put_member(success_field, _success);
 			payload.put_member(message_field, _message);
 			payload.put_member(data_field, _data);
+			if (_errors.size()) {
+				json errors_array = jp.create_array();
+				for (auto& ve : _errors) {
+					json jve = jp.create_object();
+					ve.get_json(jve);
+					errors_array.push_back(jve);
+				}
+				payload.put_member("errors", errors_array);
+			}
 			payload.put_member_double(seconds_field, _seconds);
 			return payload;
 		}
@@ -5931,8 +5630,16 @@ private:
 
 			if (user_password1 != user_password2)
 			{
+				std::vector<validation_error> errors;
+				validation_error err;
+                err.class_name = "sys_user";
+				err.field_name = "password2";
+				err.filename = __FILE__;
+                err.line_number = __LINE__;
+                err.message = "Passwords don't match";
+				errors.push_back(err);
 				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				response = create_user_response(create_user_request, false, "Passwords don't match", data, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, "Passwords don't match", data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
 			// password complexity check
@@ -5941,8 +5648,23 @@ private:
 
 			if (pm1.is_stupid())
 			{
+				std::vector<validation_error> errors;
+				validation_error err;
+				err.class_name = "sys_user";
+				err.field_name = "password1";
+				err.filename = __FILE__;
+				err.line_number = __LINE__;
+				err.message = "Password too simple";
+				errors.push_back(err);
+				err.class_name = "sys_user";
+				err.field_name = "password2";
+				err.filename = __FILE__;
+				err.line_number = __LINE__;
+				err.message = "Password too simple";
+				errors.push_back(err);
+
 				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				response = create_user_response(create_user_request, false, std::format("Password '{4}' does not meet complexity requirements.  Password must be at least 10 characters long, have letters, numbers, and punctuation marks.  You have length = {0}, letters = {1}, numbers = {2}, punctuation = {3}.", pm1.char_count, pm1.alpha_count, pm1.digit_count, pm1.punctuation_count, user_password1), data, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, std::format("Password '{4}' does not meet complexity requirements.  Password must be at least 10 characters long, have letters, numbers, and punctuation marks.  You have length = {0}, letters = {1}, numbers = {2}, punctuation = {3}.", pm1.char_count, pm1.alpha_count, pm1.digit_count, pm1.punctuation_count, user_password1), data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -6002,6 +5724,7 @@ private:
 
 			json create_object_request = create_system_request(create_user_params);
 			json user_result =  put_object(create_object_request);
+			json jerrors = user_result["errors"];
 			if (user_result[success_field]) {
 				json new_user_wrapper = user_result[data_field]["sys_user"].get_element(0);
 				new_user_wrapper = new_user_wrapper[data_field];
@@ -6012,11 +5735,11 @@ private:
 				new_user_wrapper.erase_member("password");
 				new_user_wrapper.erase_member("confirmed_code");
 				new_user_wrapper.erase_member("validation_code");
-				response = create_user_response(create_user_request, true, "User created", new_user_wrapper, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, true, "User created", new_user_wrapper, jerrors, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
-				response = create_user_response(create_user_request, false, "User not created", user_result, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, "User not created", user_result, jerrors, method_timer.get_elapsed_seconds());
 			}
 
 			save();
@@ -6053,7 +5776,8 @@ private:
 				send_user_confirmation(user_info);
 			}
 
-			response = create_user_response(validation_code_request, true, message, data, tx.get_elapsed_seconds());
+			json errors = jp.create_array();
+			response = create_user_response(validation_code_request, true, message, data, errors, tx.get_elapsed_seconds());
 
 			system_monitoring_interface::global_mon->log_function_stop("send_validation_code", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -6072,6 +5796,7 @@ private:
 			timer tx;
 
 			read_scope_lock my_lock(database_lock);
+			std::vector<validation_error> errors;
 
 			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
 
@@ -6084,7 +5809,17 @@ private:
 			json user = get_user(user_name, sys_perm);
 
 			if (user.empty()) {
-				response = create_user_response(_confirm_request, false, "user not found", data, method_timer.get_elapsed_seconds());
+
+				std::vector<validation_error> errors;
+				validation_error err;
+				err.class_name = "sys_user";
+				err.field_name = "user_name";
+				err.filename = __FILE__;
+				err.line_number = __LINE__;
+				err.message = "username not found";
+				errors.push_back(err);
+
+				response = create_user_response(_confirm_request, false, "user not found", data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -6143,11 +5878,21 @@ private:
 				}
 
 				put_user(user, sys_perm);
-				response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
+
+				response = create_response(user_name, auth_general, true, "Ok", data, errors, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
-				response = create_user_response(_confirm_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
+				std::vector<validation_error> errors;
+				validation_error err;
+				err.class_name = "sys_user";
+				err.field_name = "validation_code";
+				err.filename = __FILE__;
+				err.line_number = __LINE__;
+				err.message = "Incorrect validation code.";
+				errors.push_back(err);
+
+				response = create_user_response(_confirm_request, false, "Incorrect validation code.  Check your e-mail or send another one.", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 			}
 
 			system_monitoring_interface::global_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -6170,6 +5915,7 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
 
 			read_scope_lock my_lock(database_lock);
+			std::vector<validation_error> errors;
 
 			json data = _password_request[data_field];
 			std::string user_name;
@@ -6181,7 +5927,17 @@ private:
 			json user = get_user(requested_user_name, sys_perm);
 
 			if (user.empty()) {
-				response = create_user_response(_password_request, false, "user not found", data, method_timer.get_elapsed_seconds());
+
+				std::vector<validation_error> errors;
+				validation_error err;
+				err.class_name = "sys_user";
+				err.field_name = "user_name";
+				err.filename = __FILE__;
+				err.line_number = __LINE__;
+				err.message = "Incorrect user_name.";
+				errors.push_back(err);
+
+				response = create_user_response(_password_request, false, "user not found", data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -6195,7 +5951,16 @@ private:
 			}
 			else if (not check_message(_password_request, { auth_general }, user_name))
 			{
-				response = create_user_response(_password_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				std::vector<validation_error> errors;
+				validation_error err;
+				err.class_name = "sys_user";
+				err.field_name = "user_name";
+				err.filename = __FILE__;
+				err.line_number = __LINE__;
+				err.message = "Denied.";
+				errors.push_back(err);
+
+				response = create_user_response(_password_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6204,7 +5969,7 @@ private:
 
 			if (requested_user_name != user_name)
 			{
-				response = create_response(_password_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(_password_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6214,7 +5979,16 @@ private:
 
 			if (user_password1 != user_password2)
 			{
-				response = create_user_response(_password_request, false, "Passwords do not match.", jp.create_object(), method_timer.get_elapsed_seconds());
+				std::vector<validation_error> errors;
+				validation_error err;
+				err.class_name = "sys_user";
+				err.field_name = "password2";
+				err.filename = __FILE__;
+				err.line_number = __LINE__;
+				err.message = "Passwords don't match.";
+				errors.push_back(err);
+
+				response = create_user_response(_password_request, false, "Passwords do not match.", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6223,7 +5997,16 @@ private:
 
 			if (pm1.is_stupid())
 			{
-				response = create_user_response(_password_request, false, "Password fails complexity test.", jp.create_object(), method_timer.get_elapsed_seconds());
+				std::vector<validation_error> errors;
+				validation_error err;
+				err.class_name = "sys_user";
+				err.field_name = "password1";
+				err.filename = __FILE__;
+				err.line_number = __LINE__;
+				err.message = "Password too simple.";
+				errors.push_back(err);
+
+				response = create_user_response(_password_request, false, "Password fails complexity test.", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6232,7 +6015,8 @@ private:
 			user.put_member("password", encrypted_password);
 
 			put_user(user, sys_perm);
-			response = create_user_response(_password_request, true, "Ok", data, method_timer.get_elapsed_seconds());
+			json jerrors;
+			response = create_user_response(_password_request, true, "Ok", data, jerrors, method_timer.get_elapsed_seconds());
 
 			system_monitoring_interface::global_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -6248,6 +6032,8 @@ private:
 			timer method_timer;
 			json_parser jp;
 			json response;
+
+			std::vector<validation_error> errors;
 
 			date_time start_time = date_time::now();
 			timer tx;
@@ -6295,7 +6081,7 @@ private:
 					result.erase_member("confirmed_code");
 					result.erase_member("validation_code");
 
-					response = create_response(user_name, auth_system, true, "Ok", result, method_timer.get_elapsed_seconds());
+					response = create_response(user_name, auth_system, true, "Ok", result, errors, method_timer.get_elapsed_seconds());
 				}
 				else if (confirm)
 				{
@@ -6318,16 +6104,16 @@ private:
 					result.erase_member("confirmed_code");
 					result.erase_member("validation_code");
 
-					response = create_response(user_name, auth_general, true, "Ok", result, method_timer.get_elapsed_seconds());
+					response = create_response(user_name, auth_general, true, "Ok", result, errors, method_timer.get_elapsed_seconds());
 				}
 				else
 				{
-					response = create_response(user_name, auth_general, false, "Need confirmation", data, method_timer.get_elapsed_seconds());
+					response = create_response(user_name, auth_general, false, "Need confirmation", data, errors, method_timer.get_elapsed_seconds());
 				}
 			}
 			else
 			{
-				response = create_response(_login_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(_login_request, false, "Failed", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("login_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -6344,16 +6130,22 @@ private:
 
 			date_time start_time = date_time::now();
 			timer tx;
+			std::vector<validation_error> errors;
 
 			if (not check_message(_run_object_request, { auth_general }, user_name))
 			{
-				response = create_response(_run_object_request, false, "Denied", jp.create_object(), tx.get_elapsed_seconds());
+				response = create_response(_run_object_request, false, "Denied", jp.create_object(), errors, tx.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
 			json data = _run_object_request[data_field];
 			json result = put_object(_run_object_request);
+			if (result.error())
+			{
+				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
 			json key = jp.create_object();
 			key.copy_member(class_name_field, data);
 			key.copy_member(object_id_field, data);
@@ -6376,10 +6168,11 @@ private:
 			std::string user_name;
 
 			bool include_children = (bool)_edit_object_request["include_children"];
+			std::vector<validation_error> errors;
 
 			if (not check_message(_edit_object_request, { auth_general }, user_name))
 			{
-				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -6395,7 +6188,7 @@ private:
 
 			if (perms.get_grant == class_grants::grant_none)
 			{
-				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -6419,11 +6212,11 @@ private:
 			else 
 			{
 				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return create_response(_edit_object_request, false, "Invalid class.", jp.create_object(), method_timer.get_elapsed_seconds());
+				return create_response(_edit_object_request, false, "Invalid class.", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 			}
 
-			return create_response(_edit_object_request, true, "Ok", result, method_timer.get_elapsed_seconds());
 			system_monitoring_interface::global_mon->log_function_stop("edit_object", "success", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			return create_response(_edit_object_request, true, "Ok", result, errors, method_timer.get_elapsed_seconds());
 		}
 
 		virtual json get_classes(json get_classes_request)
@@ -6438,6 +6231,7 @@ private:
 			timer tx;
 
 			read_scope_lock my_lock(database_lock);
+			std::vector<validation_error> errors;
 
 			system_monitoring_interface::global_mon->log_function_start("get_classes", "start", start_time, __FILE__, __LINE__);
 
@@ -6445,7 +6239,7 @@ private:
 
 			if (not check_message(get_classes_request, { auth_general }, user_name))
 			{
-				result = create_response(get_classes_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				result = create_response(get_classes_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				return result;
 			}
 
@@ -6464,8 +6258,11 @@ private:
 				}
 			});
 
+			json data = jp.create_object();
+			data.put_member("class", result_list);
+
 			system_monitoring_interface::global_mon->log_function_stop("get_classes", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			result = create_response(get_classes_request, true, "Ok", result_list, method_timer.get_elapsed_seconds());
+			result = create_response(get_classes_request, true, "Ok", result_list, errors, method_timer.get_elapsed_seconds());
 
 			return result;
 		}
@@ -6484,6 +6281,8 @@ private:
 			system_monitoring_interface::global_mon->log_function_start("get_class", "start", start_time, __FILE__, __LINE__);
 
 			std::vector<std::string> missing_elements;
+			std::vector<validation_error> errors;
+
 
 			if (not get_class_request.has_members(missing_elements, { token_field, class_name_field })) {
 				std::string error_message;
@@ -6493,7 +6292,7 @@ private:
 					error_message.append(comma);
 					error_message.append(m);
 				}
-				json response = create_response(get_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				json response = create_response(get_class_request, false, error_message, jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6502,7 +6301,7 @@ private:
 
 			if (not check_message(get_class_request, { auth_general }, user_name))
 			{
-				result = create_response(get_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				result = create_response(get_class_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -6523,19 +6322,19 @@ private:
 					json class_info = classd->get_info(this);
 
 					result = jp.create_object();
-					result.put_member("definition", class_definition);
+					result.put_member("class", class_definition);
 					result.put_member("info", class_info);
 
-					result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());
+					result = create_response(get_class_request, true, "Ok", result, errors, method_timer.get_elapsed_seconds());
 					system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				else {
-					result = create_response(get_class_request, false, "Missing Class", key, method_timer.get_elapsed_seconds());
+					result = create_response(get_class_request, false, "Missing Class", key, errors, method_timer.get_elapsed_seconds());
 					system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 			else {
-				result = create_response(get_class_request, false, "denied", key, method_timer.get_elapsed_seconds());
+				result = create_response(get_class_request, false, "denied", key, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			return result;
@@ -6548,6 +6347,7 @@ private:
 			json_parser jp;
 
 			read_scope_lock my_lock(database_lock);
+			std::vector<validation_error> errors;
 
 			date_time start_time = date_time::now();
 			timer tx;
@@ -6569,7 +6369,7 @@ private:
 					error_message.append(comma);
 					error_message.append(m);
 				}
-				json response = create_response(put_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				json response = create_response(put_class_request, false, error_message, jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6578,7 +6378,7 @@ private:
 
 			if (not check_message(put_class_request, { auth_general }, user_name))
 			{
-				result = create_response(put_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
@@ -6590,15 +6390,13 @@ private:
 
 			if (jclass_definition.error())
 			{
-				result = create_response(put_class_request, false, "Invalid class", jclass_definition, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, false, "Invalid class", jclass_definition, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			std::vector<validation_error> errors;
-
 			if (class_name.empty()) {
-				result = create_response(put_class_request, false, "No class name", jclass_definition, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, false, "No class name", jclass_definition, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
@@ -6607,7 +6405,7 @@ private:
 				class_name);
 
 			if (permission.put_grant != class_grants::grant_any) {
-				result = create_response(put_class_request, false, "Denied", jclass_definition, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, false, "Denied", jclass_definition, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
@@ -6621,21 +6419,14 @@ private:
 
 			bool success = class_to_modify->update(&update_activity, jclass_definition);
 
-			json results_array = jp.create_array();
-			for (auto& ve : errors) {
-				json err = jp.create_object();
-				ve.get_json(err);
-				results_array.push_back(err);
-			}
-
 			if (success) 
-			{
+			{				
 				save_class(class_to_modify);
-				result = create_response(put_class_request, success, "Ok", results_array, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, success, "Ok", jclass_definition, update_activity.errors, method_timer.get_elapsed_seconds());
 			}
 			else 
 			{
-				result = create_response(put_class_request, success, "errors", results_array, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, success, "errors", jclass_definition, update_activity.errors, method_timer.get_elapsed_seconds());
 			}
 
 			save();
@@ -6654,6 +6445,7 @@ private:
 
 			date_time start_time = date_time::now();
 			timer tx;
+			std::vector<validation_error> errors;
 
 			system_monitoring_interface::global_mon->log_function_start("update", "start", start_time, __FILE__, __LINE__);
 
@@ -6661,7 +6453,7 @@ private:
 
 			json base_class_name = query_details[class_name_field];
 			if (base_class_name.empty()) {
-				response = create_response(_user_name, auth_general, false, "class_name not specified", query_details, method_timer.get_elapsed_seconds());
+				response = create_response(_user_name, auth_general, false, "class_name not specified", query_details, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6669,7 +6461,7 @@ private:
 			auto permission =  get_class_permission(_user_name, base_class_name);
 			if (permission.get_grant == class_grants::grant_none)
 			{
-				response = create_response(_user_name, auth_general, false, "denied", query_details, method_timer.get_elapsed_seconds());
+				response = create_response(_user_name, auth_general, false, "denied", query_details, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6678,7 +6470,7 @@ private:
 
 			json object_list = jp.create_array();
 			if (not class_def) {
-				response = create_response(_user_name, auth_general, false, "class not found", query_details, method_timer.get_elapsed_seconds());
+				response = create_response(_user_name, auth_general, false, "class not found", query_details, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6706,7 +6498,7 @@ private:
 				}
 			}
 
-			response = create_response(_user_name, auth_general, true, "completed", object_list, method_timer.get_elapsed_seconds());
+			response = create_response(_user_name, auth_general, true, "completed", object_list, errors, method_timer.get_elapsed_seconds());
 
 			system_monitoring_interface::global_mon->log_function_stop("update", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
@@ -6724,10 +6516,11 @@ private:
 			json response;
 
 			std::string user_name;
+			std::vector<validation_error> errors;
 
 			if (not check_message(query_request, { auth_general }, user_name))
 			{
-				response = create_response(query_request, false, "Denied", jp.create_object(), tx.get_elapsed_seconds());
+				response = create_response(query_request, false, "Denied", jp.create_object(), errors, tx.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("query", "denied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6743,7 +6536,7 @@ private:
 
 				if (not stages.array() or stages.size() == 0)
 				{
-					response = create_response(query_request, false, "query has no stages", jp.create_object(), tx.get_elapsed_seconds());
+					response = create_response(query_request, false, "query has no stages", jp.create_object(), errors, tx.get_elapsed_seconds());
 					system_monitoring_interface::global_mon->log_function_stop("query", "query has no stages", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					return response;
 				}
@@ -6754,20 +6547,20 @@ private:
 					std::string from_name = from_class["name"];
 					if (from_name.empty())
 					{
-						response = create_response(query_request, false, "from with no name", jp.create_object(), tx.get_elapsed_seconds());
+						response = create_response(query_request, false, "from with no name", jp.create_object(), errors, tx.get_elapsed_seconds());
 						system_monitoring_interface::global_mon->log_function_stop("query", "from with no name", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
 					if (from_class_name.empty())
 					{
-						response = create_response(query_request, false, "from with no class", jp.create_object(), tx.get_elapsed_seconds());
+						response = create_response(query_request, false, "from with no class", jp.create_object(), errors, tx.get_elapsed_seconds());
 						system_monitoring_interface::global_mon->log_function_stop("query", "from with no class", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
 					auto cd = read_lock_class(from_class_name);
 					if (not cd) {
 						std::string message = std::format("from class '{0}' not found", from_class_name);
-						response = create_response(query_request, false, message, jp.create_object(), tx.get_elapsed_seconds());
+						response = create_response(query_request, false, message, jp.create_object(), errors, tx.get_elapsed_seconds());
 						system_monitoring_interface::global_mon->log_function_stop("query", "from class not found", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
@@ -6824,7 +6617,7 @@ private:
 										}
 										else
 										{
-											response = create_response(query_request, false, "Bad $ reference in query.", class_filter, tx.get_elapsed_seconds());
+											response = create_response(query_request, false, "Bad $ reference in query.", class_filter, errors, tx.get_elapsed_seconds());
 											system_monitoring_interface::global_mon->log_function_stop("query", "bad query data", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 											return response;
 										}
@@ -6862,14 +6655,14 @@ private:
 						else
 						{
 							std::string message = std::format("Missing filters for {0}", filter_class_name);
-							response = create_response(query_request, false, message, jp.create_object(), tx.get_elapsed_seconds());
+							response = create_response(query_request, false, message, jp.create_object(), errors, tx.get_elapsed_seconds());
 							system_monitoring_interface::global_mon->log_function_stop("query", "filter error", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 							return response;
 						}
 					}
 					else {
-						response = create_response(query_request, true, "query data is not an object or an array", jp.create_object(), tx.get_elapsed_seconds());
-						system_monitoring_interface::global_mon->log_function_stop("query", "bad query data", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						response = create_response(query_request, true, "query data is not an object or an array", jp.create_object(), errors, tx.get_elapsed_seconds());
+						system_monitoring_interface::global_mon->log_function_stop("query", "bad query data",  tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
 				}
@@ -6884,7 +6677,7 @@ private:
 				if (context.is_error()) 
 				{
 					json query_errors = context.get_errors();
-					response = create_response(query_request, false, "errors", query_errors, tx.get_elapsed_seconds());
+					response = create_response(query_request, false, "errors", query_errors, errors, tx.get_elapsed_seconds());
 					system_monitoring_interface::global_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					return response;
 				}
@@ -6896,19 +6689,19 @@ private:
 				json query_results = context.run();
 				if (context.is_error()) {
 					json query_errors = context.get_errors();
-					response = create_response(query_request, false, "errors", query_errors, tx.get_elapsed_seconds());
+					response = create_response(query_request, false, "errors", query_errors, errors, tx.get_elapsed_seconds());
 					system_monitoring_interface::global_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				else 
 				{
 					json query_errors = context.get_errors();
-					response = create_response(query_request, true, "completed", query_results, tx.get_elapsed_seconds());
+					response = create_response(query_request, true, "completed", query_results, errors, tx.get_elapsed_seconds());
 					system_monitoring_interface::global_mon->log_function_stop("query", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 			else 
 			{
-				response = create_response(query_request, true, "query has no froms", jp.create_object(), tx.get_elapsed_seconds());
+				response = create_response(query_request, true, "query has no froms", jp.create_object(), errors, tx.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			return response;
@@ -6930,17 +6723,18 @@ private:
 			json response;
 
 			std::string user_name;
+			std::vector<validation_error> errors;
 
 			if (not check_message(create_object_request, { auth_general }, user_name))
 			{
-				response = create_response(create_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(create_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
 			auto permission =  get_class_permission(user_name, class_name);
 			if (permission.put_grant == class_grants::grant_none) {
-				json result = create_response(create_object_request, false, "Denied", data, method_timer.get_elapsed_seconds());
+				json result = create_response(create_object_request, false, "Denied", data, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -7010,13 +6804,13 @@ private:
 				}
 				int64_t new_id = get_next_object_id();
 				new_object.put_member_i64("object_id", new_id);
-				response = create_response(create_object_request, true, "Object created", new_object, method_timer.get_elapsed_seconds());
+				response = create_response(create_object_request, true, "Object created", new_object, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else {
 				std::string msg = std::format("create_object failed because the class '{0}' was never found.", class_name);
 				system_monitoring_interface::global_mon->log_warning(msg);
-				response = create_response(create_object_request, false, "Couldn't find class", create_object_request, method_timer.get_elapsed_seconds());
+				response = create_response(create_object_request, false, "Couldn't find class", create_object_request, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			save();
@@ -7035,6 +6829,7 @@ private:
 
 			date_time start_time = date_time::now();
 			timer tx;
+			std::vector<validation_error> errors;
 
 			system_monitoring_interface::global_mon->log_function_start("put_object", "start", start_time, __FILE__, __LINE__);
 
@@ -7043,12 +6838,12 @@ private:
 
 			if (not check_message(put_object_request, { auth_general }, user_name))
 			{
-				result = create_response(put_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				result = create_response(put_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			result = check_object(object_definition, user_name);
+			result = check_object(object_definition, user_name, errors);
 
 			json grouped_by_class_name = result[data_field];
 
@@ -7086,11 +6881,11 @@ private:
 					put_object(put_object_request);
 				}
 
-				result = create_response(put_object_request, true, "Object(s) created", grouped_by_class_name, method_timer.get_elapsed_seconds());
+				result = create_response(put_object_request, true, "Object(s) created", grouped_by_class_name, errors, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
-				result = create_response(put_object_request, false, result[message_field], grouped_by_class_name, method_timer.get_elapsed_seconds());
+				result = create_response(put_object_request, false, result[message_field], grouped_by_class_name, errors, method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -7118,9 +6913,10 @@ private:
 			std::string user_name;
 			json object_key = get_object_request.extract({ class_name_field, object_id_field });
 
+			std::vector<validation_error> errors;
 			if (not check_message(get_object_request, { auth_general }, user_name))
 			{
-				result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				result = create_response(get_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -7129,7 +6925,7 @@ private:
 
 			auto permission =  get_class_permission(user_name, class_name);
 			if (permission.get_grant == class_grants::grant_none) {
-				json result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				json result = create_response(get_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -7148,11 +6944,11 @@ private:
 					}
 				}
 
-				result = create_response(get_object_request, true, "Ok", obj, method_timer.get_elapsed_seconds());
+				result = create_response(get_object_request, true, "Ok", obj, errors, method_timer.get_elapsed_seconds());
 			}
 			else 
 			{
-				result = create_response(get_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
+				result = create_response(get_object_request, false, "Not found", object_key, errors, method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("get_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -7166,8 +6962,10 @@ private:
 			json response;
 			json_parser jp;
 			read_scope_lock my_lock(database_lock);
-			date_time start_time = date_time::now();
+			date_time start_time = date_time::now();			
 			timer tx;
+
+			std::vector<validation_error> errors;
 
 			system_monitoring_interface::global_mon->log_function_start("delete_object", "start", start_time, __FILE__, __LINE__);
 
@@ -7176,7 +6974,7 @@ private:
 
 			if (not check_message(delete_object_request, { auth_general }, user_name))
 			{
-				response = create_response(delete_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(delete_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -7185,7 +6983,7 @@ private:
 
 			auto permission = get_class_permission(user_name, class_name);
 			if (permission.delete_grant == class_grants::grant_none) {
-				response = create_response(delete_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(delete_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -7195,12 +6993,12 @@ private:
 
 				cd->delete_objects(this, object_key, true, permission);
 
-				response = create_response(delete_object_request, true, "Ok", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(delete_object_request, true, "Ok", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else 
 			{
-				response = create_response(delete_object_request, true, "class not foudn", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(delete_object_request, true, "class not found", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
@@ -7220,11 +7018,12 @@ private:
 			timer tx;
 			system_monitoring_interface::global_mon->log_function_start("copy_object", "start", start_time, __FILE__, __LINE__);
 
+			std::vector<validation_error> errors;
 			std::string user_name;
 
 			if (not check_message(copy_request, { auth_general }, user_name))
 			{
-				response = create_response(copy_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				response = create_response(copy_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -7246,14 +7045,14 @@ private:
 
 			src_permission = get_class_permission(user_name, source_class);
 			if (src_permission.get_grant == class_grants::grant_none) {
-				response = create_response(copy_request, false, "Denied", source_spec, method_timer.get_elapsed_seconds());
+				response = create_response(copy_request, false, "Denied", source_spec, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
 			dest_permission = get_class_permission(user_name, dest_class);
 			if (dest_permission.put_grant == class_grants::grant_none) {
-				response = create_response(copy_request, false, "Denied", dest_spec, method_timer.get_elapsed_seconds());
+				response = create_response(copy_request, false, "Denied", dest_spec, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -7261,7 +7060,7 @@ private:
 			if (not transform_class.empty()) {
 				trans_permission = get_class_permission(user_name, transform_class);
 				if (trans_permission.get_grant == class_grants::grant_none) {
-					response = create_response(copy_request, false, "Denied", transform_spec, method_timer.get_elapsed_seconds());
+					response = create_response(copy_request, false, "Denied", transform_spec, errors, method_timer.get_elapsed_seconds());
 					system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					return response;
 				}
@@ -7333,15 +7132,15 @@ private:
 						response = put_object(por);
 					}
 					else {
-						response = create_response(copy_request, false, "could not find dest object", object_dest, method_timer.get_elapsed_seconds());;
+						response = create_response(copy_request, false, "could not find dest object", object_dest, errors, method_timer.get_elapsed_seconds());;
 					}
 				}
 				else {
-					response = create_response(copy_request, false, "could not find source object", object_source, method_timer.get_elapsed_seconds());;
+					response = create_response(copy_request, false, "could not find source object", object_source, errors, method_timer.get_elapsed_seconds());;
 				}
 			}
 			else {
-				response = create_response(copy_request, false, "source object not specified", object_source, method_timer.get_elapsed_seconds());;;
+				response = create_response(copy_request, false, "source object not specified", object_source, errors, method_timer.get_elapsed_seconds());;;
 			}
 
 			system_monitoring_interface::global_mon->log_function_stop("copy_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);

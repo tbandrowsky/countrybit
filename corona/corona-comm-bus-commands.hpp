@@ -28,10 +28,17 @@ namespace corona
 
 	void put_json(std::shared_ptr<corona_bus_command>& _dest, json _src);
 
+
+
+
 	class corona_form_command : public corona_bus_command
 	{
 	public:
 		std::string form_name;
+		std::string success_message_field;
+		std::string status_message_field;
+		std::string execution_time_field;
+		std::string error_table_field;
 
 		corona_client_response response;
 
@@ -73,6 +80,7 @@ namespace corona
 					context.put_member("value", response.message);
 					on_fail->execute(context, bus);
 				}
+
 			}
 			else {
 				log_warning("Could not find form '" + form_name + "'");
@@ -101,6 +109,10 @@ namespace corona
 				_dest.put_member("on_fail", jon_login_fail);
 			}
 			_dest.put_member("form_name", form_name);
+			_dest.put_member("success_message_field", success_message_field);
+			_dest.put_member("status_message_field", status_message_field);
+			_dest.put_member("error_table_field", error_table_field);
+			_dest.put_member("execution_time_field", execution_time_field);
 		}
 
 		virtual void put_json(json& _src)
@@ -132,8 +144,11 @@ namespace corona
 				corona::put_json(on_fail, jon_login_fail);
 			}
 			form_name = _src["form_name"];
+			success_message_field = _src["success_message_field"];
+			status_message_field = _src["status_message_field"];	
+			error_table_field = _src["error_table_field"];
+			execution_time_field = _src["execution_time_field"];
 		}
-
 
 	};
 
@@ -145,6 +160,13 @@ namespace corona
 		std::string email_field = "";
 		std::string password1_field = "";
 		std::string password2_field = "";
+		std::string first_name_field = "";
+		std::string last_name_field = "";
+		std::string street_field = "";
+		std::string city_field = "";
+		std::string state_field = "";
+		std::string zip_field = "";
+		std::string phone_field = "";
 
 		corona_register_user_command()
 		{
@@ -154,11 +176,19 @@ namespace corona
 
 		virtual corona_client_response invoke(json obj, comm_bus_app_interface* bus) override
 		{
-			std::string user_name = obj[user_name_field];
-			std::string email = obj[email_field];
-			std::string password1 = obj[password1_field];
-			std::string password2 = obj[password2_field];
-			response = bus->remote_register_user(user_name, email, password1, password2);
+			json_parser jp;
+			json user_obj = jp.create_object();
+
+			user_obj.put_member("user_name", (std::string)obj[user_name_field]);
+			user_obj.put_member("email", (std::string)obj[email_field]);
+			user_obj.put_member("password1", (std::string)obj[password1_field]);
+			user_obj.put_member("password2", (std::string)obj[password2_field]);
+			user_obj.put_member("first_name", (std::string)obj[first_name_field]);
+			user_obj.put_member("street", (std::string)obj[street_field]);
+			user_obj.put_member("city", (std::string)obj[city_field]);
+			user_obj.put_member("state", (std::string)obj[state_field]);
+			user_obj.put_member("phone", (std::string)obj[phone_field]);
+			response = bus->remote_register_user(user_obj);
 			return response;
 		}
 
@@ -173,6 +203,12 @@ namespace corona
 			_dest.put_member("email_field", email_field);
 			_dest.put_member("password1_field", password1_field);
 			_dest.put_member("password2_field", password2_field);
+			_dest.put_member("first_name_field", first_name_field);
+			_dest.put_member("last_name_field", last_name_field);
+			_dest.put_member("street_field", street_field);
+			_dest.put_member("zip_field", zip_field);
+			_dest.put_member("city_field", city_field);
+			_dest.put_member("phone_field", phone_field);
 		}
 
 		virtual void put_json(json& _src)
@@ -194,6 +230,11 @@ namespace corona
 			email_field = _src["email_field"];
 			password1_field = _src["password1_field"];
 			password2_field = _src["password2_field"];
+			first_name_field = _src["first_name_field"];
+			last_name_field = _src["last_name_field"];
+			street_field = _src["password2_field"];
+			city_field = _src["password2_field"];
+
 		}
 
 	};
@@ -1425,6 +1466,7 @@ namespace corona
 		}
 	};
 
+
 	class corona_select_frame_command : public corona_form_command
 	{
 	public:
@@ -1432,6 +1474,7 @@ namespace corona
 		std::string		page_to_select;
 		std::string		frame_to_load;
 		std::string		frame_contents_page;
+		std::string		message;	
 		corona_instance instance;
 
 		corona_select_frame_command()
@@ -1453,6 +1496,14 @@ namespace corona
 			}
 			std::string empty_form;
 			bus->select_page(page_to_select, frame_to_load, frame_contents_page, empty_form, data);
+
+			if (not message.empty()) {
+				corona_client_response page_change_response;
+				page_change_response.success = true;
+				page_change_response.message = message;
+				set_message(page_change_response, bus);
+			}
+
 			return obj;
 		}
 
@@ -1465,6 +1516,7 @@ namespace corona
 			_dest.put_member("page_to_select", page_to_select);
 			_dest.put_member("frame_to_load", frame_to_load);
 			_dest.put_member("frame_contents_page", frame_contents_page);
+			_dest.put_member("transition_message", message);
 			_dest.put_member_i64("instance", (int64_t)instance);
 
 		}
@@ -1486,6 +1538,7 @@ namespace corona
 			page_to_select = _src["page_to_select"];
 			frame_to_load = _src["frame_to_load"];
 			frame_contents_page = _src["frame_contents_page"];
+			message = _src["transition_message"];
 			instance = (corona_instance)((int64_t)_src["instance"]);
 		}
 	};
@@ -1634,10 +1687,36 @@ namespace corona
 	{
 		auto dest = std::make_shared<corona_set_property_command>();
 
-		dest->control_name = "status_message";
 		dest->property_name = "text";
+
+		dest->control_name = success_message_field.empty() ? "call_success_message" : status_message_field;
+		dest->value = _src.success ? "Success" : "Failure";
+		dest->execute(_src.data, _bus);
+
+		dest->control_name = status_message_field.empty() ? "call_status_message" : status_message_field;
 		dest->value = _src.message;
 		dest->execute(_src.data, _bus);
+
+		dest->control_name = execution_time_field.empty() ? "call_execution_time" : status_message_field;
+		dest->value = std::format("{0} secs", _src.execution_time );
+		dest->execute(_src.data, _bus);
+
+		std::string table_field = error_table_field.empty() ? "call_error_table" : error_table_field;
+
+		if (not table_field.empty()) {
+			auto cb_table = _bus->find_control(table_field);
+
+			if (cb_table) {
+				json_parser jp;
+				json results = jp.create_array();
+				for (auto err : _src.errors) {
+					json jerr = jp.create_object();
+					err.get_json(jerr);
+					results.push_back(jerr);
+				}
+				cb_table->set_items(results);
+			}
+		}
 
 		return _src;
 	}

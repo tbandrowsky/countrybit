@@ -48,12 +48,14 @@ namespace corona
 
 		std::string listen_point;
 
-		comm_bus_service(std::string _config_filename)
+		comm_bus_service(std::string _config_filename, bool _is_service = false)
 		{
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
 			date_time t = date_time::now();
 			json_parser jp;
+
+			is_service = _is_service;
 
 			log_command_start("comm_service_bus", "startup", t);
 
@@ -99,10 +101,12 @@ namespace corona
 				throw std::logic_error("listen_point not specified");
 			}
 
-			log_information("Self test.");
-			prove_system();
-
-			log_information("Startup user name " + app->get_user_display_name());
+			if (not is_service)
+			{
+				log_information("Self test.");
+				prove_system();
+				log_information("Startup user name " + app->get_user_display_name());
+			}
 
 			if (true or not app->file_exists(database_filename))
 			{
@@ -641,77 +645,84 @@ namespace corona
 		{
 			std::string _root_path = listen_point;
 
-			if (not _root_path.ends_with('/')) {
-				_root_path += "/";
+			try {
+
+				if (not _root_path.ends_with('/')) {
+					_root_path += "/";
+				}
+
+				std::string path = _root_path + "test/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
+
+				path = _root_path + "login/createuser/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_create);
+
+				path = _root_path + "login/loginuser/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_login);
+
+				path = _root_path + "login/confirmuser/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_confirm);
+
+				path = _root_path + "login/senduser/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_send_confirm);
+
+				path = _root_path + "login/passworduser/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_user_password);
+
+				path = _root_path + "classes/get/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
+
+				path = _root_path + "classes/get/details/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_class_get);
+
+				path = _root_path + "classes/put/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
+
+				path = _root_path + "objects/get/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_get);
+
+				path = _root_path + "objects/query/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
+
+				path = _root_path + "objects/create/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_create);
+
+				path = _root_path + "objects/put/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_put);
+
+				path = _root_path + "objects/delete/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_delete);
+
+				path = _root_path + "objects/edit/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
+
+				path = _root_path + "objects/run/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_run);
+
+				path = _root_path + "objects/copy/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
 			}
-
-			std::string path = _root_path + "test/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
-
-			path = _root_path + "login/createuser/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_create);
-
-			path = _root_path + "login/loginuser/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_login);
-
-			path = _root_path + "login/confirmuser/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_confirm);
-
-			path = _root_path + "login/senduser/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_send_confirm);
-
-			path = _root_path + "login/passworduser/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_user_password);
-
-			path = _root_path + "classes/get/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
-
-			path = _root_path + "classes/get/details/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_class_get);
-
-			path = _root_path + "classes/put/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
-
-			path = _root_path + "objects/get/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_get);
-
-			path = _root_path + "objects/query/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
-
-			path = _root_path + "objects/create/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_create);
-
-			path = _root_path + "objects/put/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_put);
-
-			path = _root_path + "objects/delete/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_delete);
-
-			path = _root_path + "objects/edit/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
-
-			path = _root_path + "objects/run/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_run);
-
-			path = _root_path + "objects/copy/";
-			api_paths.push_back(path);
-			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
 
 		}
 

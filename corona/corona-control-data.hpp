@@ -128,7 +128,7 @@ namespace corona
 		{
 
 			std::vector<std::string> missing;
-			if (not _src.has_members(missing, { "columns", "id_field", "items" })) {
+			if (not _src.has_members(missing, { "columns" })) {
 				system_monitoring_interface::global_mon->log_warning("table_data missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_warning(s);

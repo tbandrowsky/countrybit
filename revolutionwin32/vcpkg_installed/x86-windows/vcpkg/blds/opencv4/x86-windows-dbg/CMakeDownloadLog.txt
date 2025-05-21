@@ -1,1 +1,0 @@
-#use_cache "C:/Users/toddb/AppData/Local/vcpkg/downloads/opencv-cache"

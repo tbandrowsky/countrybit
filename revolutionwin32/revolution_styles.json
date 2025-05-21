@@ -220,17 +220,14 @@
       "chapter_title_style": {
         "text_style": {
           "font_name": "Century Gothic,Arial",
-          "font_size": 24
+            "font_size": 24,
+            "vertical_alignment" :  "center"
         },
         "shape_border_thickness": 0,
         "box_border_thickness": 0,
         "shape_fill_brush": {
           "class_name": "solid_brush",
           "color": "FFFFEE"
-        },
-        "box_fill_brush": {
-          "class_name": "solid_brush",
-          "color": "00000044"
         }
       },
       "chapter_subtitle_style": {
@@ -260,7 +257,7 @@
         },
         "box_fill_brush": {
           "class_name": "solid_brush",
-          "color": "00000044"
+          "color": "00000000"
         }
       },
       "form_style": {
@@ -299,13 +296,13 @@
       },
       "error_style": {
         "text_style": {
-          "font_name": "Tahoma, Arial",
-          "font_size": 14,
-          "underline": true
+          "font_name": "Consolas,Tahoma, Arial",
+          "font_size": 12,
+          "underline": false
         },
         "shape_fill_brush": {
           "class_name": "solid_brush",
-          "color": "FFFFEE"
+          "color": "FF7777"
         }
       },
       "success_style": {
@@ -319,18 +316,22 @@
           "color": "FFFFEE"
         }
       },
-      "code_style": {
-        "text_style": {
-          "font_name": "Consolas, CourierNew",
-          "font_size": 16,
-          "underline": false,
-          "vertical_alignment": "center"
+        "code_style": {
+            "text_style": {
+                "font_name": "Consolas, CourierNew",
+                "font_size": 16,
+                "underline": false,
+                "vertical_alignment": "top"
+            },
+            "shape_fill_brush": {
+                "class_name": "solid_brush",
+                "color": "aaFFaa"
+            },
+            "box_fill_brush": {
+                "class_name": "solid_brush",
+                "color": "001500"
+            }
         },
-        "shape_fill_brush": {
-          "class_name": "solid_brush",
-          "color": "FFFFEE"
-        }
-      },
       "window_style": {
         "text_style": {
           "font_name": "Tahoma, Arial",

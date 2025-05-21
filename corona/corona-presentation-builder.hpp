@@ -87,6 +87,7 @@ namespace corona
 		bool		  is_default_focus;
         bool		  is_default_button;
 		json		  control_settings;
+		bool		  wrap_break;
 		layout_rect	  box;
 		layout_rect	  label_box;
 		layout_rect	  visualization_box;
@@ -101,6 +102,7 @@ namespace corona
 			read_only = false;
 			is_default_focus = false;
 			is_default_button = false;
+			wrap_break = false;
 		}
 
 		form_field(const form_field& _src) = default;
@@ -127,6 +129,7 @@ namespace corona
 			_dest.put_member("default_focus", is_default_focus);
 			_dest.put_member("control_settings", control_settings);
 			_dest.put_member("form_name", form_name);
+			_dest.put_member("wrap_break", wrap_break);
 
 			json_parser jp;
 			json jsource_list = jp.create_object();
@@ -181,6 +184,7 @@ namespace corona
 				is_default_button = (bool)control_settings["default_button"];
 			}
 			form_name = _src["form_name"];
+			wrap_break = (bool)_src["wrap_break"];
 
 			json jcontainer_box = _src["box"];
 			corona::put_json(box, jcontainer_box);
@@ -392,6 +396,7 @@ namespace corona
 		inline control_builder& paragraph(int _id, std::string _text) { return paragraph(_text, nullptr, _id); }
 		inline control_builder& code(int _id, std::string _text) { return code(_text, nullptr, _id); }
 		inline control_builder& label(int _id, std::string _text) { return label(_text, nullptr, _id); }
+		inline control_builder& error(int _id, std::string _text) { return error(_text, nullptr, _id); }
 
 		inline control_builder& title(int _id, std::function<void(title_control&)> _settings) { return title("", _settings, _id); }
 		inline control_builder& subtitle(int _id, std::function<void(subtitle_control&)> _settings) { return subtitle("", _settings, _id); }
@@ -401,6 +406,7 @@ namespace corona
 		inline control_builder& paragraph(int _id, std::function<void(paragraph_control&)> _settings) { return paragraph("", _settings, _id); }
 		inline control_builder& code(int _id, std::function<void(code_control&)> _settings) { return code("", _settings, _id); }
 		inline control_builder& label(int _id, std::function<void(label_control&)> _settings) { return label("", _settings, _id); }
+		inline control_builder& error(int _id, std::function<void(error_control&)> _settings) { return error("", _settings, id_counter::next()); }
 
 		inline control_builder& title(std::string _text, std::function<void(title_control&)> _settings) { return title(_text, _settings, id_counter::next()); }
 		inline control_builder& subtitle(std::string _text, std::function<void(subtitle_control&)> _settings) { return subtitle(_text, _settings, id_counter::next()); }
@@ -410,6 +416,7 @@ namespace corona
 		inline control_builder& paragraph(std::string _text, std::function<void(paragraph_control&)> _settings) { return paragraph(_text, _settings, id_counter::next()); }
 		inline control_builder& code(std::string _text, std::function<void(code_control&)> _settings) { return code(_text, _settings, id_counter::next()); }
 		inline control_builder& label(std::string _text, std::function<void(label_control&)> _settings) { return label(_text, _settings, id_counter::next()); }
+		inline control_builder& error(std::string _text, std::function<void(error_control&)> _settings) { return error(_text, _settings, id_counter::next()); }
 
 		inline control_builder& error(call_status _status, std::function<void(error_control&)> _settings) { return error(_status, _settings, id_counter::next()); }
 		inline control_builder& status(call_status _status, std::function<void(status_control&)> _settings) { return status(_status, _settings, id_counter::next()); }
@@ -791,6 +798,18 @@ namespace corona
 			return *this;
 		}
 
+		control_builder& error(std::string _text, std::function<void(error_control&)> _settings, int _id)
+		{
+			auto tc = create<error_control>(_id);
+			apply_item_sizes(tc);
+			tc->set_text(_text);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+
 		control_builder& success(call_status _status, std::function<void(success_control&)> _settings, int _id)
 		{
 			auto tc = create<success_control>(_id);
@@ -825,6 +844,28 @@ namespace corona
 			}
 			return *this;
 		}
+
+		control_builder& link_button(int _id, std::function<void(linkbutton_control&)> _settings = nullptr)
+		{
+			auto tc = create<linkbutton_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+		control_builder& link_button(int _id, std::string text, std::function<void(linkbutton_control&) > _settings = nullptr)
+		{
+			auto tc = create<linkbutton_control>(_id);
+			apply_item_sizes(tc);
+			tc->set_text(text);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
 
 		control_builder& push_button(int _id, std::function<void(pushbutton_control&)> _settings = nullptr)
 		{
@@ -1180,6 +1221,7 @@ namespace corona
 		int								prefix_id;
 		int								suffix_id;
 		int								visualization_id;
+		int								error_id;
 		int								edit_block_id;
 
 		form_field						field_def;
@@ -1191,27 +1233,49 @@ namespace corona
 
 		form_field_control() 
 		{
+			form_id = 0;
 			field_id = id_counter::next();
 			label_id = id_counter::next();
 			prefix_id = id_counter::next();
 			suffix_id = id_counter::next();
 			visualization_id = id_counter::next();
 			edit_block_id = id_counter::next();
+			error_id = id_counter::next();
+			field_def = {};
+			error_text = {};
 		}
 
 		form_field_control(const form_field_control& _src) = default;
 		form_field_control(container_control_base* _parent, int _id) : column_layout(_parent, _id)
 		{
+			form_id = 0;
+			field_id = id_counter::next();
 			label_id = id_counter::next();
 			prefix_id = id_counter::next();
 			suffix_id = id_counter::next();
 			visualization_id = id_counter::next();
 			edit_block_id = id_counter::next();
+			error_id = id_counter::next();
+			field_def = {};
+			error_text = {};
+		}
+
+		void clear_error()
+		{
+			error_text = "";
+			auto error = find_by_id<error_control>(error_id);
+			if (error) {
+				error->set_text(error_text);
+			}
 		}
 
 		void set_error(std::string _text)
 		{
 			error_text = _text;
+			auto error = find_by_id<error_control>(error_id);
+			if (error) {
+				error->set_text(error_text);
+			}
 		}
 
 		std::string get_error()
@@ -1277,6 +1341,7 @@ namespace corona
 			field_id = _field.field_id;
 			field_def = _field;
 			box = _field.box;
+			wrap_break = _field.wrap_break;
 
 			if (_draw_visualization) {
 				draw_visualization = _draw_visualization;
@@ -1334,6 +1399,7 @@ namespace corona
 				comm_bus_app_interface::global_bus->log_warning(msg);
 			}
 
+			// hack.
 			field_def.control_settings.put_member("default_button", field_def.is_default_button);
 			field_def.control_settings.put_member("default_focus", field_def.is_default_focus);
 
@@ -1345,6 +1411,10 @@ namespace corona
 					_settings.text = field_def.suffix;
 					});
 			}
+
+			auto error_row = cb.error(error_id, [this](error_control& _row) {
+				_row.set_size(field_def.field_box.width, field_def.field_box.height);
+				});
 
 			cb.apply_controls(this);
 		}
@@ -1660,6 +1730,44 @@ namespace corona
 		{
 			auto tv = std::make_shared<form_control>(*this);
 			return tv;
+		}
+
+		virtual void set_errors(std::vector<validation_error>& _errors)
+		{
+			std::map<std::string, std::vector<validation_error>> error_map;
+			error_map.clear();
+
+			for (auto err : _errors)
+			{
+				std::string field_name = err.field_name;
+				if (error_map.find(field_name) == error_map.end()) {
+					error_map[field_name] = std::vector<validation_error>();
+				}
+				error_map[field_name].push_back(err);
+			}
+
+			for (auto& fld : ids.fields)
+			{
+				auto ctrl = find_by_id<control_base>(fld.field_id);
+				if (ctrl) {
+					auto ffc = std::dynamic_pointer_cast<form_field_control>(ctrl);
+					if (ffc) {
+						if (error_map.find(fld.json_field_name) != error_map.end())
+						{
+							std::string err_text;
+							for (auto err : error_map[fld.json_field_name])
+							{
+								err_text += err.message + "\n";
+							}
+							ffc->set_error(err_text);
+						}
+					}
+					else
+					{
+						ffc->clear_error();
+					}
+				}
+			}
 		}
 
 	};
@@ -2165,15 +2273,16 @@ namespace corona
 				cl.set_size(1.0_remaining, 1.0_container);
 				cl.set_content_align(visual_alignment::align_center);
 				cl.set_item_margin(10.0_px);
-				cl.set_origin(title_start, 12.0_px);
 				})
 				.title(title_name, [this](title_control& control) {
 						control.set_nchittest(HTCAPTION);
 						control.set_size(0.8_container, 1.3_fontgr);
+						control.set_origin(title_start, 25.0_px);
 					}, title_id)
 				.subtitle(subtitle_name, [this](subtitle_control& control) {
 						control.set_nchittest(HTCAPTION);
 						control.set_size(0.8_container, 1.3_fontgr);
+						control.set_origin(title_start, 25.0_px);
 					}, subtitle_id)
 			.end();
 
@@ -2742,6 +2851,13 @@ namespace corona
 				_ctrl.set_data(control_data);
 				});
 		}
+		else if (class_name == "link_button")
+		{
+			link_button(field_id, [&control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
+				_ctrl.set_data(control_data);
+				});
+				}
 		else if (class_name == "push_button")
 		{
 			push_button(field_id, [&control_properties, control_data](auto& _ctrl)->void {

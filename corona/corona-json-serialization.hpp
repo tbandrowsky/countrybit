@@ -143,6 +143,10 @@ namespace corona
 		{
 			_dest.units = measure_units::pixels;
 		}
+		else if (sunits == "px")
+		{
+			_dest.units = measure_units::pixels;
+		}
 		else if (sunits == "text")
 		{
 			_dest.units = measure_units::text;

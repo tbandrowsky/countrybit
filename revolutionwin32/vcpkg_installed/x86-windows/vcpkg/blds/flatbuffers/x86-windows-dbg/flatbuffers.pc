@@ -1,9 +1,0 @@
-libdir=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/flatbuffers_x86-windows/debug/lib
-includedir=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/flatbuffers_x86-windows/debug/include
-
-Name: FlatBuffers
-Description: Memory Efficient Serialization Library
-Version: 24.3.25
-
-Libs: -L${libdir} -lflatbuffers
-Cflags: -I${includedir}

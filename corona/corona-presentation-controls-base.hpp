@@ -206,6 +206,7 @@ namespace corona
 			std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _align_item,
 			std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _next_origin);
 
+		rectangle				arrange_extent;
 		rectangle				bounds;
 		rectangle				inner_bounds;
 		point					margin_amount;
@@ -232,6 +233,7 @@ namespace corona
 			mouse_right_down = _src.mouse_right_down;
 			mouse_relative_position = _src.mouse_relative_position;
 
+			arrange_extent = _src.arrange_extent;
 			box = _src.box;
 			margin = _src.margin;
 			padding = _src.padding;
@@ -247,6 +249,7 @@ namespace corona
 				children.push_back(new_child);
 			}
 			name = _src.name;
+			wrap_break = _src.wrap_break;
 		}
 
 	public:
@@ -269,7 +272,8 @@ namespace corona
 		std::string				json_field_name;
 		std::string				class_name;
 		container_control_base* parent;
-		
+		bool					wrap_break;
+
 		std::vector<control_push_request> push_requests;
 
 		std::vector<std::shared_ptr<control_base>> children;
@@ -287,6 +291,7 @@ namespace corona
 		{
 			id = id_counter::next();
 			is_focused = false;
+			wrap_break = false;
 		}
 
 		control_base(container_control_base *_parent, int _id) : control_base()
@@ -300,6 +305,7 @@ namespace corona
 				id = _id;
 			}
 			is_focused = false;
+			wrap_break = false;
 		}
 
 		control_base(const control_base& _src)
@@ -317,6 +323,11 @@ namespace corona
 		bool is_mouse_left_down()
 		{
 			return mouse_left_down;
+		}
+
+		bool is_wrap_break()
+		{
+			return wrap_break;
 		}
 
 		point get_relative_mouse_position()
@@ -431,6 +442,7 @@ namespace corona
 			_dest.put_member("json_field_name", json_field_name);
 			_dest.put_member("computed", jcomputed);
 			_dest.put_member("issues", jissues);
+			_dest.put_member("wrap_break", wrap_break);
 
 		}
 
@@ -462,6 +474,8 @@ namespace corona
 
 			tooltip_text = _src["tooltip_text"];
 			json_field_name = _src["json_field_name"];
+
+			wrap_break = (bool)_src["wrap_break"];
 
 		}
 
@@ -783,10 +797,6 @@ namespace corona
 	void control_base::render(std::shared_ptr<direct2dContext>& _context)
 	{
 		for (auto child : children) {
-			if (child->class_name == "image")
-			{
-				DebugBreak();
-			}
 			try
 			{
 				child->render(_context);
@@ -1139,17 +1149,21 @@ namespace corona
 		point origin = { _bounds.x, _bounds.y, 0.0 };
 		point remaining = { _bounds.w, _bounds.h, 0.0 };
 
+		arrange_extent = { _bounds.x, _bounds.y, 0.0, 0.0 };
+
 		if (children.size()) {
 
 			auto sichild = std::begin(children);
 
 			origin = _initial_origin(remaining, &_bounds, sichild->get());
-			remaining = get_remaining(remaining);
 			while (sichild != std::end(children))
 			{
 				auto child = *sichild;
 				auto* c = child.get();
 				c->parent = this;
+
+				remaining.x = inner_bounds.w - arrange_extent.w;
+				remaining.y = inner_bounds.h - arrange_extent.h;
 
 				auto location  = _align_item(remaining, &origin, &inner_bounds, child.get());
 
@@ -1165,6 +1179,17 @@ namespace corona
 				origin = _next_origin(remaining, &origin, &inner_bounds, child.get());
 
 				child->arrange(new_bounds);
+
+				auto dx = new_bounds.right() - arrange_extent.right();
+				auto dy = new_bounds.bottom() - arrange_extent.bottom();
+
+				if (dx > 0.0) {
+					arrange_extent.w += dx;
+				}
+
+				if (dy > 0.0) {
+					arrange_extent.h += dy;
+				}
 
 				sichild++;
 

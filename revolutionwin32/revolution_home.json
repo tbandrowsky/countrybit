@@ -15,17 +15,17 @@
           "class_name": "caption_bar",
           "corporate_name": "country video games",
           "title_name": "R E V O L U T I O N",
-          "title_start": "0.28 container",
+          "title_start": "60 pixels",
           "box": {
             "width": "1.0 container",
-            "height": "100 pixels"
+            "height": "80 pixels"
           }
         },
         {
           "class_name": "row",
           "box": {
-            "width": "0.9 container",
-            "height": "0.8 container",
+            "width": "0.97 container",
+            "height": "0.86 container",
             "y" : "10 pixels"
           },
           "view_style": {
@@ -40,7 +40,7 @@
             "box_border_thickness": 4
           },
           "padding": {
-            "amount": 10,
+            "amount": 0,
             "units": "pixels"
           },
           "content_alignment": "near",
@@ -56,39 +56,112 @@
             },
             {
               "class_name": "column",
-              "box": {
-                "width": "1.0 remaining",
-                "height": "1.0 container"
-              },
-              "children": [
-                {
-                  "class_name": "chaptertitle",
-                  "box": {
-                    "width": "1.0 container",
-                    "height": "50 pixels",
-                    "y": "20 pixels"
-                  },
-                  "text": ""
+                "box": {
+                    "width": "1.0 remaining",
+                    "height": "1.0 container"
                 },
-                {
-                  "class_name": "chaptersubtitle",
-                  "box": {
-                    "width": "1.0 container",
-                    "height": "25 pixels",
-                    "y": "20 pixels"
-                  },
-                  "text": " Status"
-                },
-                {
-                  "class_name": "code",
-                  "name": "status_message",
-                  "box": {
-                    "width": "1.0 container",
-                    "height": "150 pixels",
-                    "y": "20 pixels"
-                  }
-                }
-              ]
+                "children": [
+                    {
+                        "class_name": "chaptertitle",
+                        "box": {
+                            "width": "0.9 container",
+                            "height": "50 pixels"
+                        },
+                        "text": ""
+                    },
+                    {
+                        "class_name": "chaptersubtitle",
+                        "box": {
+                            "width": "0.9 container",
+                            "height": "25 pixels"
+                        },
+                        "text": "Status"
+                    },
+                    {
+                        "class_name": "code",
+                        "name": "call_success_message",
+                        "box": {
+                            "width": "0.9 container",
+                            "height": "20 pixels"
+                        }
+                    },
+                    {
+                        "class_name": "code",
+                        "name": "call_execution_time",
+                        "box": {
+                            "width": "0.9 container",
+                            "height": "20 pixels"
+                        }
+                    },
+                    {
+                        "class_name": "code",
+                        "box": {
+                            "width": "0.9 container",
+                            "height": "20 pixels"
+                        }
+                    },
+                    {
+                        "class_name": "label",
+                        "text": "Message:",
+                        "box": {
+                            "width": "0.9 container",
+                            "height": "35 pixels"
+                        }
+                    },
+                    {
+                        "class_name": "code",
+                        "name": "call_status_message",
+                        "box": {
+                            "width": "0.9 container",
+                            "height": "150 pixels"
+                        }
+                    },
+                    {
+                        "class_name": "label",
+                        "text": "Details (if any):",
+                        "box": {
+                            "width": "0.9 container",
+                            "height": "25 pixels"
+                        }
+                    },
+                    {
+                        "class_name": "listview",
+                        "name": "call_error_table",
+                        "box": {
+                            "width": "0.9 container",
+                            "height": "0.5 remaining"
+                        },
+                        "table": {
+                            "columns": [
+                                {
+                                    "label_text": "Class",
+                                    "json_field_name": "class_name",
+                                    "width": 150
+                                },
+                                {
+                                    "label_text": "Field",
+                                    "json_field_name": "field_name",
+                                    "width": 150
+                                },
+                                {
+                                    "label_text": "Message",
+                                    "json_field_name": "message",
+                                    "width": 250
+                                },
+                                {
+                                    "label_text": "File",
+                                    "json_field_name": "filename",
+                                    "width": 50
+                                },
+                                {
+                                    "label_text": "Line",
+                                    "json_field_name": "line_number",
+                                    "width": 50
+                                }
+                            ]
+                        }
+                    }
+                ]
 
             }
 
