@@ -493,6 +493,9 @@ namespace corona {
 			response.ReasonLength = reason.size();
 			response.pReason = reason.c_str();
 
+
+			std::string buffer_length;
+
 			if (_buffer) 
 			{
 				dataChunk.FromMemory.pBuffer = _buffer;
@@ -501,10 +504,17 @@ namespace corona {
 
 				response.EntityChunkCount = 1;
 				response.pEntityChunks = &dataChunk;
+
+				buffer_length = std::format("{0}", _buffer_length_bytes);
+
+				response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentLength].pRawValue = buffer_length.c_str();
+				response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentLength].RawValueLength = buffer_length.size();
+
 			}
 
 			response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentType].pRawValue = content_type.c_str();
 			response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentType].RawValueLength = content_type.size();
+
 
 			// 
 			// Because the entity body is sent in one call, it is not
@@ -514,7 +524,7 @@ namespace corona {
 			result = HttpSendHttpResponse(
 				request_queue,           // ReqQueueHandle
 				_request_id, // Request ID
-				0,                   // Flags
+				HTTP_SEND_RESPONSE_FLAG_DISCONNECT,                   // Flags
 				&response,           // HTTP response
 				NULL,                // pReserved1
 				&bytesSent,          // bytes sent  (OPTIONAL)
