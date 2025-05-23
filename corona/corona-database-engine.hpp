@@ -4076,7 +4076,7 @@ namespace corona
 				"field_type":"string",
 				"field_name":"user_name",
 				"required" : true,
-				"max_length" : 40
+				"max_length" : 40,
 				"match_pattern": "[a-zA-Z0-9]+"
 			},
 			"email" : {

@@ -651,7 +651,11 @@ namespace corona
 					_root_path += "/";
 				}
 
-				std::string path = _root_path + "test/";
+				std::string path = _root_path;
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
+
+				path = _root_path + "test/";
 				api_paths.push_back(path);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
 
