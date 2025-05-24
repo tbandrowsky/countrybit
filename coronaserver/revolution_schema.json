@@ -7,58 +7,43 @@
   ],
   "classes": [
     {
-      "class_name": "worker",
-      "class_description": "a person working on the field",
+      "class_name": "actor",
+      "class_description": "an item on the board",
       "base_class_name": "sys_object",
-      "parents": [ "farm" ],
+      "parents": [ "board" ],
       "fields": {
-        "x": "double",
-        "y": "double",
-        "dx": "double",
-        "dy": "double"
+        "actor_name": "string",
+        "actor_type": "string",
+        "actor_state": "string",
+        "actor_x": "double",
+        "actor_y": "double",
+        "actor_z": "double",
+        "actor_dx": "double",
+        "actor_dy": "double",
+        "actor_dz": "double"
       }
     },
     {
-      "class_name": "crop",
-      "class_description": "a thing made by a field that has value",
-      "base_class_name": "sys_object",
-      "parents": [ "field" ],
+      "class_name": "actor2d",
+      "class_description": "an item on the board",
+      "base_class_name": "actor",
       "fields": {
-        "crop_name": "string",
-        "crop_description": "string"
+        "actor_description": "string",
+        "actor_sprite_sheet": "string",
+        "actor_y": "double",
+        "actor_dx": "double",
+        "actor_dy": "double"
       }
     },
     {
-      "class_name": "weed",
-      "class_description": "a thing made by a field that ruins crops",
+      "class_name": "board",
+      "class_description": "a board in revolution",
       "base_class_name": "sys_object",
-      "parents": [ "field" ],
+      "parents": [ "game" ],
       "fields": {
-        "weed_name": "string",
-        "weed_description": "string"
-      }
-    },
-    {
-      "class_name": "field",
-      "class_description": "a thing that has a crop",
-      "base_class_name": "sys_object",
-      "parents": [ "farm" ],
-      "fields": {
-        "status": "string",
-        "status_time": "double",
-        "time_to_harvest": "double",
-        "crops": "[crops]",
-        "weeds": "[weed]"
-      }
-    },
-    {
-      "class_name": "farm",
-      "class_description": "a collection of fields to harvest",
-      "base_class_name": "sys_object",
-      "parents": [ "bank" ],
-      "fields": {
-        "fields": "[field]",
-        "workers": "[workers]"
+        "name": "string",
+        "mechanic" : "string",
+        "actors": "[ actor ]"
       }
     },
     {
@@ -67,39 +52,8 @@
       "base_class_name": "sys_object",
       "fields": {
         "from": "string",
-        "to": "string"
-      }
-    },
-    {
-      "class_name": "chat",
-      "class_description": "a collection of fields to harvest",
-      "base_class_name": "sys_object",
-      "parents": [ "chat" ],
-      "fields": {
-        "chat_name": "string",
-        "chat_description": "string",
-        "messages": "[message]"
-      }
-    },
-    {
-      "class_name": "topic",
-      "class_description": "a collection of fields to harvest",
-      "base_class_name": "sys_object",
-      "fields": {
-        "topic_name": "string",
-        "topic_description": "string",
-        "chats": "[chat]"
-      }
-    },
-    {
-      "class_name": "bank",
-      "class_description": "a collection of fields to harvest",
-      "base_class_name": "sys_object",
-      "fields": {
-        "bank_name": "string",
-        "bank_description": "string",
-        "chats": "[chat]",
-        "farms" :  "[farm]"
+        "to": "string",
+        "text" : "string"
       }
     }
   ],
