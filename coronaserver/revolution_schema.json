@@ -36,24 +36,62 @@
       }
     },
     {
+      "class_name": "comment",
+      "class_description": "a people send to each other",
+      "base_class_name": "sys_object",
+      "fields": {
+        "comment_from": "string",
+        "comment_to": "string",
+        "comment_text": "string"
+      }
+    },
+    {
       "class_name": "board",
       "class_description": "a board in revolution",
       "base_class_name": "sys_object",
       "parents": [ "game" ],
       "fields": {
-        "name": "string",
-        "mechanic" : "string",
+        "board_name": "string",
+        "board_type": "string",
+        "mechanic": "string",
         "actors": "[ actor ]"
       }
     },
     {
-      "class_name": "message",
-      "class_description": "a message people send to eacher",
+      "class_name": "command",
+      "class_description": "command in a game",
       "base_class_name": "sys_object",
       "fields": {
-        "from": "string",
-        "to": "string",
-        "text" : "string"
+        "message_type": "string",
+        "delivery": "datetime",
+        "board": "->board",
+        "actor": "->actor"
+      }
+    },
+    {
+      "class_name": "move_command",
+      "class_description": "command to move",
+      "base_class_name": "command",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "activate_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "command",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "game",
+      "class_description": "a board in revolution",
+      "base_class_name": "sys_object",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "state" : "string",
+        "boards": "[ board ]"
       }
     }
   ],
