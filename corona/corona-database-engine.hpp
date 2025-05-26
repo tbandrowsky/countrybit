@@ -3839,12 +3839,40 @@ namespace corona
 
 			json test =  classes->get(R"({"class_name":"sys_object"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class SysObject after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_object after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			created_classes.put_member("sys_object", true);
+
+
+			response = create_class(R"(
+{	
+	"class_name" : "sys_command",
+	"class_description" : "Base of all commands",
+	"base_class_name" : "sys_object",
+	"fields" : {
+	}
+}
+)");
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			json test = classes->get(R"({"class_name":"sys_command"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_command after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			created_classes.put_member("sys_command", true);
+
 
 
 			response = create_class(R"(

@@ -153,7 +153,7 @@ namespace corona
 			date_time t = date_time::now();
 
 			json_parser jp;
-			
+
 			test_master tm;
 
 			log_job_start("verification", "verification start", t, __FILE__, __LINE__);
@@ -186,7 +186,7 @@ namespace corona
 			dependencies = { "data block" };
 			testo = tm.create_test_set("json node", dependencies);
 			test_json_node(testo, app);
-		
+
 			dependencies = { "data block" };
 			testo = tm.create_test_set("xrecord", dependencies);
 			test_xrecord(testo, app);
@@ -199,7 +199,7 @@ namespace corona
 			testo = tm.create_test_set("xbranch", dependencies);
 			test_xbranch(testo, app);
 
-			dependencies = {"xbranch"};
+			dependencies = { "xbranch" };
 			testo = tm.create_test_set("xtable", dependencies);
 			test_xtable(testo, app);
 
@@ -207,7 +207,7 @@ namespace corona
 			testo = tm.create_test_set("master", dependencies);
 
 			bool system_works = tm.prove("master");
-			if (not system_works) 
+			if (not system_works)
 			{
 				log_job_stop("verification", "verification failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
@@ -299,7 +299,7 @@ namespace corona
 	]
 }
 )"_jobject;
-			
+
 
 			request.put_member("token", token);
 			json from = request["from"].get_element(0);
@@ -307,6 +307,41 @@ namespace corona
 			result = local_db->get_classes(request);
 
 			return result;
+		}
+
+        std::function<bool(json& _command)> command_handler = [](json& _command)->bool {
+            // this is the default command handler, which does nothing.
+            // it can be overridden by the application.
+            // 
+            // _command is a json object with the command and parameters.
+            // 
+            // if you want to handle commands, you can do so here.
+            // 
+            // if you want to handle commands in the application, you can do so by overriding this function.
+            // 
+            // if you want to handle commands in the service, you can do so by overriding this function.
+            // 
+            // if you want to handle commands in the database, you can do so by overriding this function.
+			// return true if the command can be deleted
+			return true;
+        };
+
+		void frame_db()
+		{
+			if (ready_for_polling) 
+			{
+				// get all commands, deleting them as we go.
+				// 
+
+                json jcommands = get_data("sys_command");
+				if (jcommands.array()) 
+				{
+					for (auto jcommand : jcommands)
+					{
+						command_handler(jcommand);
+					}
+				}
+			}
 		}
 
 		void poll_db()
@@ -403,7 +438,7 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			std::string token = get_token(_request);			
+			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
 			auto fn_response = local_db->get_classes(parsed_request);
 			http_response response = create_response(200, fn_response);
@@ -737,6 +772,40 @@ namespace corona
 				msg = "Error";
 			log_warning(msg, _file, _line);
 			log_json<json>(j, 4);
+		}
+
+		double frame_seconds = 1.0 / 20.0; // 60 frames per second	
+		double poll_seconds = 1.0;
+
+		std::chrono::steady_clock::time_point last_frame_time = std::chrono::high_resolution_clock::now();
+		std::chrono::steady_clock::time_point last_poll_time = std::chrono::high_resolution_clock::now();
+
+		int64_t total_frames = 0;
+		int64_t missed_frames = 0;
+
+		void run_frame()
+		{
+			::Sleep(1);
+
+			auto current_frame_time = std::chrono::high_resolution_clock::now();
+			const std::chrono::duration<double> diff_frame = current_frame_time - last_frame_time;
+            double elapsed_frames = diff_frame.count() / frame_seconds;
+			int64_t efc = elapsed_frames;
+
+			if (efc > 0) {
+				total_frames += efc;
+                missed_frames += efc - 1;
+				last_frame_time = current_frame_time;
+			}
+
+			const std::chrono::duration<double> diff_poll = current_frame_time - last_poll_time;
+
+			double elapsed_polls = diff_poll.count() / poll_seconds;
+			int64_t efp = elapsed_polls;
+			if (efp > 0) {
+                poll_db();
+                last_poll_time = current_frame_time;
+            }
 		}
 
 		void run(runnable _runnable)

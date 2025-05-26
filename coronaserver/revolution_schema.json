@@ -36,6 +36,14 @@
       }
     },
     {
+      "class_name": "player2d",
+      "class_description": "an item on the board",
+      "base_class_name": "actor2d",
+      "fields": {
+        "user" :  "->sys_user"
+      }
+    },
+    {
       "class_name": "comment",
       "class_description": "a people send to each other",
       "base_class_name": "sys_object",
@@ -58,20 +66,9 @@
       }
     },
     {
-      "class_name": "command",
-      "class_description": "command in a game",
-      "base_class_name": "sys_object",
-      "fields": {
-        "message_type": "string",
-        "delivery": "datetime",
-        "board": "->board",
-        "actor": "->actor"
-      }
-    },
-    {
       "class_name": "move_command",
       "class_description": "command to move",
-      "base_class_name": "command",
+      "base_class_name": "sys_command",
       "fields": {
 
       }
@@ -79,7 +76,14 @@
     {
       "class_name": "activate_command",
       "class_description": "command for one piece to activate another",
-      "base_class_name": "command",
+      "base_class_name": "sys_command",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "create_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "sys_command",
       "fields": {
       }
     },
@@ -90,7 +94,7 @@
       "fields": {
         "name": "string",
         "description": "string",
-        "state" : "string",
+        "state": "string",
         "boards": "[ board ]"
       }
     }
