@@ -7,99 +7,95 @@
   ],
   "classes": [
     {
-      "class_name": "worker",
-      "class_description": "a person working on the field",
+      "class_name": "actor",
+      "class_description": "an item on the board",
       "base_class_name": "sys_object",
-      "parents": [ "farm" ],
+      "parents": [ "board" ],
       "fields": {
-        "x": "double",
-        "y": "double",
-        "dx": "double",
-        "dy": "double"
+        "actor_name": "string",
+        "actor_type": "string",
+        "actor_state": "string",
+        "actor_x": "double",
+        "actor_y": "double",
+        "actor_z": "double",
+        "actor_dx": "double",
+        "actor_dy": "double",
+        "actor_dz": "double"
       }
     },
     {
-      "class_name": "crop",
-      "class_description": "a thing made by a field that has value",
-      "base_class_name": "sys_object",
-      "parents": [ "field" ],
+      "class_name": "actor2d",
+      "class_description": "an item on the board",
+      "base_class_name": "actor",
       "fields": {
-        "crop_name": "string",
-        "crop_description": "string"
+        "actor_description": "string",
+        "actor_sprite_sheet": "string",
+        "actor_y": "double",
+        "actor_dx": "double",
+        "actor_dy": "double"
       }
     },
     {
-      "class_name": "weed",
-      "class_description": "a thing made by a field that ruins crops",
-      "base_class_name": "sys_object",
-      "parents": [ "field" ],
+      "class_name": "player2d",
+      "class_description": "an item on the board",
+      "base_class_name": "actor2d",
       "fields": {
-        "weed_name": "string",
-        "weed_description": "string"
+        "user" :  "->sys_user"
       }
     },
     {
-      "class_name": "field",
-      "class_description": "a thing that has a crop",
+      "class_name": "comment",
+      "class_description": "a people send to each other",
       "base_class_name": "sys_object",
-      "parents": [ "farm" ],
       "fields": {
-        "status": "string",
-        "status_time": "double",
-        "time_to_harvest": "double",
-        "crops": "[crops]",
-        "weeds": "[weed]"
+        "comment_from": "string",
+        "comment_to": "string",
+        "comment_text": "string"
       }
     },
     {
-      "class_name": "farm",
-      "class_description": "a collection of fields to harvest",
+      "class_name": "board",
+      "class_description": "a board in revolution",
       "base_class_name": "sys_object",
-      "parents": [ "bank" ],
+      "parents": [ "game" ],
       "fields": {
-        "fields": "[field]",
-        "workers": "[workers]"
+        "board_name": "string",
+        "board_type": "string",
+        "mechanic": "string",
+        "actors": "[ actor ]"
       }
     },
     {
-      "class_name": "message",
-      "class_description": "a message people send to eacher",
-      "base_class_name": "sys_object",
+      "class_name": "move_command",
+      "class_description": "command to move",
+      "base_class_name": "sys_command",
       "fields": {
-        "from": "string",
-        "to": "string"
+
       }
     },
     {
-      "class_name": "chat",
-      "class_description": "a collection of fields to harvest",
-      "base_class_name": "sys_object",
-      "parents": [ "chat" ],
+      "class_name": "activate_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "sys_command",
       "fields": {
-        "chat_name": "string",
-        "chat_description": "string",
-        "messages": "[message]"
       }
     },
     {
-      "class_name": "topic",
-      "class_description": "a collection of fields to harvest",
-      "base_class_name": "sys_object",
+      "class_name": "create_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "sys_command",
       "fields": {
-        "topic_name": "string",
-        "topic_description": "string",
-        "chats": "[chat]"
       }
     },
     {
-      "class_name": "bank",
-      "class_description": "a collection of fields to harvest",
+      "class_name": "game",
+      "class_description": "a board in revolution",
       "base_class_name": "sys_object",
       "fields": {
-        "bank_name": "string",
-        "bank_description": "string",
-        "chats": "[chat]",
-        "farms" :  "[farm]"
+        "name": "string",
+        "description": "string",
+        "state": "string",
+        "boards": "[ board ]"
       }
     }
   ],

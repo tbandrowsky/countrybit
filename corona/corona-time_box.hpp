@@ -666,6 +666,11 @@ namespace corona
 		time_span at = (time_span)a;
 		time_span bt = (time_span)b;
 
+        // Ensure both time spans are in seconds for subtraction
+		if (at.units != time_models::seconds || bt.units != time_models::seconds) {
+            throw std::logic_error("Both time spans must be in seconds for subtraction.");
+		}
+
 		double temp = at.units - bt.units;
 		time_span result(temp, time_models::seconds);
 		return result;

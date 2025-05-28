@@ -85,8 +85,7 @@ void RunConsole()
             corona::comm_bus_service corona_service(config_filename, false);
             while (not exit_flag)
             {
-                ::Sleep(1000);
-                corona_service.poll_db();
+                corona_service.run_frame();
             }
         }
         catch (std::exception exc)
@@ -257,14 +256,13 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
 
     // TO_DO: Perform work until service stops.
 
-    try {
-        
-
+    try 
+    {        
         corona::comm_bus_service corona_service(config_filename, true);
         while (not exit_flag)
         {
-            ::Sleep(1000);
-            corona_service.poll_db();
+            ::Sleep(1);
+            corona_service.run_frame();
         }
     }
     catch (std::exception exc)
