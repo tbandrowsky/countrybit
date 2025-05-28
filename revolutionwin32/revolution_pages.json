@@ -1,12 +1,12 @@
 {
     "abbreviations": {
-        "button_box": {
-            "width": "200 pixels",
-            "height": {
-                "amount": 40,
-                "units": "pixels"
-            }
-        },
+      "button_box": {
+        "width": "150 pixels",
+        "height": {
+          "amount": 40,
+          "units": "pixels"
+        }
+      },
         "full_container": {
             "width": {
                 "amount": 1.0,
@@ -17,22 +17,22 @@
                 "units": "container"
             }
         },
-        "edit_section_box": {
-            "width": "250 pixels",
-            "height": "60 pixels"
-        },
-        "edit_container_box": {
-            "width": "250 pixels",
-            "height": "80 pixels"
-        },
-        "edit_label_box": {
-            "width": "200 pixels",
-            "height": "25 pixels"
-        },
-        "edit_field_box": {
-            "width": "200 pixels",
-            "height": "25 pixels"
-        },
+      "edit_section_box": {
+        "width": "150 pixels",
+        "height": "60 pixels"
+      },
+      "edit_container_box": {
+        "width": "150 pixels",
+        "height": "80 pixels"
+      },
+      "edit_label_box": {
+        "width": "150 pixels",
+        "height": "25 pixels"
+      },
+      "edit_field_box": {
+        "width": "150 pixels",
+        "height": "25 pixels"
+      },
         "chaptertitle_box": {
             "width": {
                 "amount": 1,
