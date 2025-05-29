@@ -18,6 +18,9 @@
     <ClCompile Include="coronaserver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="revolutionserver.hpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="config.json" />

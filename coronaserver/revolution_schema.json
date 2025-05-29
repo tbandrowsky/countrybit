@@ -40,7 +40,7 @@
       "class_description": "an item on the board",
       "base_class_name": "actor2d",
       "fields": {
-        "user" :  "->sys_user"
+        "user": "->sys_user"
       }
     },
     {
@@ -66,25 +66,14 @@
       }
     },
     {
-      "class_name": "move_command",
-      "class_description": "command to move",
-      "base_class_name": "sys_command",
+      "class_name": "page",
+      "class_description": "a board in revolution",
+      "base_class_name": "sys_object",
+      "parents": [ "game" ],
       "fields": {
-
-      }
-    },
-    {
-      "class_name": "activate_command",
-      "class_description": "command for one piece to activate another",
-      "base_class_name": "sys_command",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "create_command",
-      "class_description": "command for one piece to activate another",
-      "base_class_name": "sys_command",
-      "fields": {
+        "name": "string",
+        "description": "string",
+        "form_name": "string"
       }
     },
     {
@@ -95,7 +84,8 @@
         "name": "string",
         "description": "string",
         "state": "string",
-        "boards": "[ board ]"
+        "boards": "[ board ]",
+        "pages": "[ page ]"
       }
     }
   ],

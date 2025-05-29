@@ -304,12 +304,12 @@ namespace corona
 			request.put_member("token", token);
 			json from = request["from"].get_element(0);
 			from.put_member(class_name_field, _class_name);
-			result = local_db->get_classes(request);
+			result = local_db->query(request);
 
 			return result;
 		}
 
-        std::function<bool(json& _command)> command_handler = [](json& _command)->bool {
+        std::function<bool(comm_bus_service *_service, json& _command)> command_handler = [this](comm_bus_service* _service, json& _command)->bool {
             // this is the default command handler, which does nothing.
             // it can be overridden by the application.
             // 
@@ -338,7 +338,7 @@ namespace corona
 				{
 					for (auto jcommand : jcommands)
 					{
-						command_handler(jcommand);
+						command_handler(this, jcommand);
 					}
 				}
 			}

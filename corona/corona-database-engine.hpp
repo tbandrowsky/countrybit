@@ -3864,7 +3864,7 @@ namespace corona
 				return result;
 			}
 
-			json test = classes->get(R"({"class_name":"sys_command"})");
+			test = classes->get(R"({"class_name":"sys_command"})");
 			if (test.empty() or test.error()) {
 				system_monitoring_interface::global_mon->log_warning("could not find class sys_command after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
