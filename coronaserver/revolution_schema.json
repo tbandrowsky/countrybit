@@ -7,6 +7,16 @@
   ],
   "classes": [
     {
+      "class_name": "comment",
+      "class_description": "a people send to each other",
+      "base_class_name": "sys_object",
+      "fields": {
+        "comment_from": "string",
+        "comment_to": "string",
+        "comment_text": "string"
+      }
+    },
+    {
       "class_name": "actor",
       "class_description": "an item on the board",
       "base_class_name": "sys_object",
@@ -37,19 +47,11 @@
       "class_description": "an item on the board",
       "base_class_name": "actor2d",
       "fields": {
-        "user": "->sys_user"
+        "user": "->sys_user",
+        "board_id": "->board"
       }
     },
-    {
-      "class_name": "comment",
-      "class_description": "a people send to each other",
-      "base_class_name": "sys_object",
-      "fields": {
-        "comment_from": "string",
-        "comment_to": "string",
-        "comment_text": "string"
-      }
-    },
+
     {
       "class_name": "board",
       "class_description": "a board in revolution",
@@ -58,8 +60,20 @@
       "fields": {
         "board_name": "string",
         "board_type": "string",
+        "form_name": "string",
         "mechanic": "string",
         "actors": "[ actor ]"
+      }
+    },
+    {
+      "class_name": "game",
+      "class_description": "a board in revolution",
+      "base_class_name": "sys_object",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "state": "string",
+        "boards": "[ board ]"
       }
     },
     {
@@ -97,18 +111,8 @@
       "base_class_name": "sys_command",
       "fields": {
       }
-    },
-    {
-      "class_name": "game",
-      "class_description": "a board in revolution",
-      "base_class_name": "sys_object",
-      "fields": {
-        "name": "string",
-        "description": "string",
-        "state": "string",
-        "boards": "[ board ]"
-      }
     }
+
   ],
   "users": [
 
