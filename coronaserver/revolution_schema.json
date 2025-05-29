@@ -29,10 +29,7 @@
       "base_class_name": "actor",
       "fields": {
         "actor_description": "string",
-        "actor_sprite_sheet": "string",
-        "actor_y": "double",
-        "actor_dx": "double",
-        "actor_dy": "double"
+        "actor_sprite_sheet": "string"
       }
     },
     {
@@ -66,14 +63,39 @@
       }
     },
     {
-      "class_name": "page",
-      "class_description": "a board in revolution",
-      "base_class_name": "sys_object",
-      "parents": [ "game" ],
+      "class_name": "select_clear_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "sys_command",
       "fields": {
-        "name": "string",
-        "description": "string",
-        "form_name": "string"
+      }
+    },
+    {
+      "class_name": "select_extend_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "sys_command",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "create_command",
+      "class_description": "command to consume selected pieces to create another",
+      "base_class_name": "sys_command",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "move_command",
+      "class_description": "command to move selected pieces",
+      "base_class_name": "sys_command",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "activate_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "sys_command",
+      "fields": {
       }
     },
     {
@@ -84,8 +106,7 @@
         "name": "string",
         "description": "string",
         "state": "string",
-        "boards": "[ board ]",
-        "pages": "[ page ]"
+        "boards": "[ board ]"
       }
     }
   ],

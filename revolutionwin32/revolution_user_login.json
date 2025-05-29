@@ -10,38 +10,14 @@
         "height": "1.0 container"
       },
         "children": [
-            {
-                "class_name": "absolute",
-                "box": {
-                    "width": "150 pixels",
-                    "height": "1.0 container"
-                },
-                "children": [
-                    {
-                        "class_name": "chaptertitle",
-                        "box": {
-                            "width": "1.0 container",
-                            "height": "75 pixels"
-                        },
-                        "text": " "
-                    },
-                    {
-                        "class_name": "image",
-                        "box": {
-                            "width": "75 pixels",
-                            "height": "100 pixels",
-                            "x": "40 pixels"
-                        },
-                        "image_filename": "cockade.png"
-                    }
-                ]
-            },
+          
             {
                 "class_name": "column",
-                "box": {
-                    "width": "1.0 remaining",
-                    "height": "1.0 container"
-                },
+              "box": {
+                  "x": "50 pixels",
+                "width": "1.0 remaining",
+                "height": "1.0 container"
+              },
                 "wrap": true,
                 "children": [
                     {
