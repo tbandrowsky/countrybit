@@ -53,7 +53,6 @@
         "selection": [ "actor" ]
       }
     },
-
     {
       "class_name": "board",
       "class_description": "a board in revolution",
@@ -64,7 +63,7 @@
         "board_type": "string",
         "form_name": "string",
         "mechanic": "string",
-        "actors": "[ actor ]"
+        "actors": "[ ->actor ]"
       }
     },
     {
@@ -75,7 +74,8 @@
         "name": "string",
         "description": "string",
         "state": "string",
-        "boards": "[ board ]"
+        "boards": "[ board ]",
+        "initial_board": "->board"
       }
     },
     {
@@ -181,7 +181,24 @@
         "page_id": "->page",
         "actor_id": "->actor"
       }
+    },
+    {
+      "class_name": "join_game_command",
+      "class_description": "command to join a game",
+      "base_class_name": "sys_command",
+      "fields": {
+        "game_id": "->game"
+      }
+    },
+    {
+      "class_name": "exit_game_command",
+      "class_description": "command to leave a game",
+      "base_class_name": "sys_command",
+      "fields": {
+        "game_id": "->game"
+      }
     }
+
   ],
   "users": [
 
