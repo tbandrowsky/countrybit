@@ -271,6 +271,63 @@ namespace corona
 			return result;
 		}
 
+		json get_object(std::string _class_name, int64_t _object_id)
+		{
+			json_parser jp;
+			json result;
+
+			std::string token = system_login();
+
+			if (token.empty()) {
+				return result;
+			}
+
+			json request = jp.create_object();
+			request.put_member(token_field, token);
+			request.put_member(class_name_field, _class_name);
+			request.put_member_i64(object_id_field, _object_id);
+			result = local_db->get_object(request);
+			return result;
+		}
+
+		json put_object(json _object)
+		{
+			json_parser jp;
+			json result;
+
+			std::string token = system_login();
+
+			if (token.empty()) {
+				return result;
+			}
+
+			json request = jp.create_object();
+			request.put_member(token_field, token);
+			request.put_member(data_field, _object);
+			result = local_db->put_object(request);
+
+			return result;
+		}
+
+		json get_class(std::string _class_name)
+		{
+			json_parser jp;
+			json result;
+
+			std::string token = system_login();
+
+			if (token.empty()) {
+				return result;
+			}
+
+			json request = jp.create_object();
+			request.put_member(token_field, token);
+			request.put_member(class_name_field, _class_name);
+			result = local_db->get_class(request);
+
+			return result;
+		}
+
 		json get_data(std::string _class_name)
 		{
 			json_parser jp;
