@@ -271,7 +271,7 @@ namespace corona
 			return result;
 		}
 
-		json get_object(std::string _class_name, int64_t _object_id)
+		json get_object(std::string _class_name, int64_t _object_id, bool _include_children = false)
 		{
 			json_parser jp;
 			json result;
@@ -285,6 +285,7 @@ namespace corona
 			json request = jp.create_object();
 			request.put_member(token_field, token);
 			request.put_member(class_name_field, _class_name);
+			request.put_member(include_children_field, _include_children);
 			request.put_member_i64(object_id_field, _object_id);
 			result = local_db->get_object(request);
 			return result;
