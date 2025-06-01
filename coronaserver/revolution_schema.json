@@ -128,50 +128,6 @@
       }
     },
     {
-      "class_name": "trade_stage",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "sys_object",
-      "parents": [ "trade_command" ],
-      "fields": {
-      }
-    },
-    {
-      "class_name": "trade_proposal",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "trade_stage",
-      "fields": {
-        "counterparty": "->actor",
-        "duecounterparty": "[ ->actor ]",
-        "dueparty": "[ ->actor ]"
-      }
-    },
-    {
-      "class_name": "trade_approval",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "trade_stage",
-      "fields": {
-        "approvedparty": "->actor",
-        "approvedcounterparty": "->actor",
-        "duecounterparty": "[ ->actor ]",
-        "dueparty": "[ ->actor ]"
-      }
-    },
-    {
-      "class_name": "trade_execute",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "trade_stage",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "trade_command",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "base_game_command",
-      "fields": {
-        "stages": "[->trade_stage]"
-      }
-    },
-    {
       "class_name": "accelerate_command",
       "class_description": "command to move selected pieces",
       "base_class_name": "base_game_command",
