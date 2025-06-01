@@ -79,7 +79,7 @@
       }
     },
     {
-      "class_name": "select_clear_command",
+      "class_name": "base_game_command",
       "class_description": "command for one piece to activate another",
       "base_class_name": "sys_command",
       "fields": {
@@ -89,72 +89,93 @@
       }
     },
     {
+      "class_name": "select_clear_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "base_game_command",
+      "fields": {
+      }
+    },
+    {
       "class_name": "select_extend_command",
       "class_description": "command for one piece to activate another",
-      "base_class_name": "sys_command",
+      "base_class_name": "base_game_command",
       "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "target_actor_id": "[ ->actor ]"
+        "add_actors": "[ ->actor ]"
       }
     },
     {
       "class_name": "compose_command",
       "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "sys_command",
+      "base_class_name": "base_game_command",
       "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "part_type": "string"
+        "compose_class_name": "string"
       }
     },
     {
       "class_name": "take_command",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "sys_command",
+      "class_description": "command to add additional items to inventory",
+      "base_class_name": "base_game_command",
       "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "part_type": "string"
+        "take_actors": "[ ->actor ]"
       }
     },
     {
       "class_name": "drop_command",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "sys_command",
+      "class_description": "command to drop selected pieces in inventory",
+      "base_class_name": "base_game_command",
       "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "part_type": "string"
+        "drop_actors": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "trade_stage",
+      "class_description": "command to consume selected pieces to create another",
+      "base_class_name": "sys_object",
+      "parents": [ "trade_command" ],
+      "fields": {
+      }
+    },
+    {
+      "class_name": "trade_proposal",
+      "class_description": "command to consume selected pieces to create another",
+      "base_class_name": "trade_stage",
+      "fields": {
+        "counterparty": "->actor",
+        "duecounterparty": "[ ->actor ]",
+        "dueparty": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "trade_approval",
+      "class_description": "command to consume selected pieces to create another",
+      "base_class_name": "trade_stage",
+      "fields": {
+        "approvedparty": "->actor",
+        "approvedcounterparty": "->actor",
+        "duecounterparty": "[ ->actor ]",
+        "dueparty": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "trade_execute",
+      "class_description": "command to consume selected pieces to create another",
+      "base_class_name": "trade_stage",
+      "fields": {
       }
     },
     {
       "class_name": "trade_command",
       "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "sys_command",
+      "base_class_name": "base_game_command",
       "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "counterparty": "->actor",
-        "duecounterparty": "[ ->actor ]",
-        "dueparty": "[ ->actor ]",
-        "approval_party": "string",
-        "approval_counterparty": "string"
+        "stages": "[->trade_stage]"
       }
     },
     {
       "class_name": "accelerate_command",
       "class_description": "command to move selected pieces",
-      "base_class_name": "sys_command",
+      "base_class_name": "base_game_command",
       "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
         "target_actor_id": "->actor",
         "ax": "double",
         "ay": "double",
@@ -164,28 +185,22 @@
     {
       "class_name": "activate_command",
       "class_description": "command for one piece to activate another",
-      "base_class_name": "sys_command",
+      "base_class_name": "base_game_command",
       "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
         "target_actor_id": "->actor"
       }
     },
     {
       "class_name": "navigate_command",
       "class_description": "",
-      "base_class_name": "sys_command",
+      "base_class_name": "base_game_command",
       "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor"
       }
     },
     {
       "class_name": "join_game_command",
       "class_description": "command to join a game",
-      "base_class_name": "sys_command",
+      "base_class_name": "base_game_command",
       "fields": {
         "game_id": "->game"
       }
@@ -193,7 +208,7 @@
     {
       "class_name": "exit_game_command",
       "class_description": "command to leave a game",
-      "base_class_name": "sys_command",
+      "base_class_name": "base_game_command",
       "fields": {
         "game_id": "->game"
       }
