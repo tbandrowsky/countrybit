@@ -89,14 +89,14 @@
       }
     },
     {
-      "class_name": "select_clear_command",
+      "class_name": "selection_clear_command",
       "class_description": "command for one piece to activate another",
       "base_class_name": "base_game_command",
       "fields": {
       }
     },
     {
-      "class_name": "select_extend_command",
+      "class_name": "selection_extend_command",
       "class_description": "command for one piece to activate another",
       "base_class_name": "base_game_command",
       "fields": {
@@ -104,7 +104,7 @@
       }
     },
     {
-      "class_name": "compose_command",
+      "class_name": "compose_selection",
       "class_description": "command to consume selected pieces to create another",
       "base_class_name": "base_game_command",
       "fields": {
@@ -112,7 +112,7 @@
       }
     },
     {
-      "class_name": "take_command",
+      "class_name": "take_selection",
       "class_description": "command to add additional items to inventory",
       "base_class_name": "base_game_command",
       "fields": {
@@ -120,7 +120,7 @@
       }
     },
     {
-      "class_name": "drop_command",
+      "class_name": "drop_selection",
       "class_description": "command to drop selected pieces in inventory",
       "base_class_name": "base_game_command",
       "fields": {
@@ -128,7 +128,7 @@
       }
     },
     {
-      "class_name": "accelerate_command",
+      "class_name": "accelerate_selection",
       "class_description": "command to move selected pieces",
       "base_class_name": "base_game_command",
       "fields": {
@@ -139,7 +139,7 @@
       }
     },
     {
-      "class_name": "activate_command",
+      "class_name": "activate_selection",
       "class_description": "command for one piece to activate another",
       "base_class_name": "base_game_command",
       "fields": {
