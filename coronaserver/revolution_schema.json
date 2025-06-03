@@ -59,10 +59,9 @@
       "base_class_name": "sys_object",
       "parents": [ "game" ],
       "fields": {
-        "board_name": "string",
-        "board_type": "string",
+        "name": "string",
+        "type": "string",
         "form_name": "string",
-        "mechanic": "string",
         "actors": "[ ->actor ]"
       }
     },

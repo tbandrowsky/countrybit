@@ -10,24 +10,31 @@ namespace corona::apps::revolution
     class base_object
     {
     public:
+        std::string class_name;
         int64_t object_id;
         date_time created;
         std::string created_by;
-        date_time modified;
-        std::string modified_by;
+        date_time updated;
+        std::string updated_by;
 
         virtual void put_json(json& _src)
         {
+            class_name = (int64_t)_src["class_name"];
             object_id = (int64_t)_src["object_id"];
             created = (date_time)_src["created"];
             created_by = (std::string)_src["created_by"];
-            modified = (date_time)_src["updated"];
-            modified_by = (std::string)_src["updated_by"];
+            updated = (date_time)_src["updated"];
+            updated_by = (std::string)_src["updated_by"];
         }
 
         virtual void get_json(json& _dest)
         {
-            ;
+            _dest.put_member_i64("object_id", object_id);
+            _dest.put_member("class_name", class_name);
+            _dest.put_member("created", created);
+            _dest.put_member("created_by", created_by);
+            _dest.put_member("updated", updated);
+            _dest.put_member("updated", updated_by);
         }
     };
 
@@ -42,7 +49,6 @@ namespace corona::apps::revolution
         double vx = 0.0;
         double vy = 0.0;
         double vz = 0.0;
-        std::vector<std::string> parts; // part ids
 
         virtual void put_json(json& _src) override
         {
