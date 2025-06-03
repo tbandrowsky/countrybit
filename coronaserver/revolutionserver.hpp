@@ -4,11 +4,96 @@
 #include <windows.h>
 #include <iostream>
 
-namespace corona::apps
+namespace corona::apps::revolution
 {   
+
+    class base_object
+    {
+    public:
+        int64_t object_id;
+        date_time created;
+        std::string created_by;
+        date_time modified;
+        std::string modified_by;
+
+        virtual void put_json(json& _src)
+        {
+            object_id = (int64_t)_src["object_id"];
+            created = (date_time)_src["created"];
+            created_by = (std::string)_src["created_by"];
+            modified = (date_time)_src["updated"];
+            modified_by = (std::string)_src["updated_by"];
+        }
+
+        virtual void get_json(json& _dest)
+        {
+            ;
+        }
+    };
+
+    class actor : public base_object
+    {
+    public:
+        std::string name;
+        std::string type;
+        double x = 0.0;
+        double y = 0.0;
+        double z = 0.0;
+        double vx = 0.0;
+        double vy = 0.0;
+        double vz = 0.0;
+        std::vector<std::string> parts; // part ids
+
+        virtual void put_json(json& _src) override
+        {
+            base_object::put_json(_src);
+        }
+
+        virtual void get_json(json& _dest) override
+        {
+            base_object::get_json(_dest);
+        }
+
+    };
+
+    class board : public base_object
+    {
+    public:
+        std::vector<actor> actors;
+
+        virtual void put_json(json& _src) override
+        {
+            base_object::put_json(_src);
+        }
+
+        virtual void get_json(json& _dest) override
+        {
+            base_object::get_json(_dest);
+        }
+
+    };
+
+    class game : public base_object
+    {
+    public:
+        std::map<std::string, std::shared_ptr<board>> boards;
+        
+        void put_json(json& _src)
+        {
+            base_object::put_json(_src);
+        }
+
+        void get_json(json& _dest)
+        {
+            base_object::get_json(_dest);
+        }
+
+    };
+
     class revolution_server
     {
 
+        
 
     public:
 
@@ -22,32 +107,32 @@ namespace corona::apps
 
         }
 
-        void compose_object(comm_bus_service* _service, json& _command)
+        void compose(comm_bus_service* _service, json& _command)
         {
 
         }
 
-        void take_object(comm_bus_service* _service, json& _command)
+        void take(comm_bus_service* _service, json& _command)
         {
 
         }
 
-        void drop_object(comm_bus_service* _service, json& _command)
+        void drop(comm_bus_service* _service, json& _command)
         {
 
         }
 
-        void trade_object(comm_bus_service* _service, json& _command)
+        void trade(comm_bus_service* _service, json& _command)
         {
 
         }
 
-        void accelerate_object(comm_bus_service* _service, json& _command)
+        void accelerate(comm_bus_service* _service, json& _command)
         {
 
         }
 
-        void activate_object(comm_bus_service* _service, json& _command)
+        void activate(comm_bus_service* _service, json& _command)
         {
 
         }
@@ -71,129 +156,6 @@ namespace corona::apps
         {
             std::string class_name = _command["class_name"];
 
-            /*
-                {
-      "class_name": "select_clear_command",
-      "class_description": "command for one piece to activate another",
-      "base_class_name": "sys_command",
-      "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor"
-      }
-    },
-    {
-      "class_name": "select_extend_command",
-      "class_description": "command for one piece to activate another",
-      "base_class_name": "sys_command",
-      "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "target_actor_id": "[ ->actor ]"
-      }
-    },
-    {
-      "class_name": "compose_command",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "sys_command",
-      "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "part_type": "string"
-      }
-    },
-    {
-      "class_name": "take_command",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "sys_command",
-      "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "part_type": "string"
-      }
-    },
-    {
-      "class_name": "drop_command",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "sys_command",
-      "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "part_type": "string"
-      }
-    },
-    {
-      "class_name": "trade_command",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "sys_command",
-      "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "counterparty": "->actor",
-        "duecounterparty": "[ ->actor ]",
-        "dueparty": "[ ->actor ]",
-        "approval_party": "string",
-        "approval_counterparty": "string"
-      }
-    },
-    {
-      "class_name": "accelerate_command",
-      "class_description": "command to move selected pieces",
-      "base_class_name": "sys_command",
-      "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "target_actor_id": "->actor",
-        "ax": "double",
-        "ay": "double",
-        "az": "double"
-      }
-    },
-    {
-      "class_name": "activate_command",
-      "class_description": "command for one piece to activate another",
-      "base_class_name": "sys_command",
-      "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor",
-        "target_actor_id": "->actor"
-      }
-    },
-    {
-      "class_name": "navigate_command",
-      "class_description": "",
-      "base_class_name": "sys_command",
-      "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor"
-      }
-    },
-    {
-      "class_name": "join_game_command",
-      "class_description": "command to join a game",
-      "base_class_name": "sys_command",
-      "fields": {
-        "game_id": "->game"
-      }
-    },
-    {
-      "class_name": "exit_game_command",
-      "class_description": "command to leave a game",
-      "base_class_name": "sys_command",
-      "fields": {
-        "game_id": "->game"
-      }
-    }
-            */
-
             if (class_name == "select_clear_command")
             {
                 clear_selection(_service, _command);
@@ -204,27 +166,27 @@ namespace corona::apps
             }
             else if (class_name == "compose_command")
             {
-                compose_object(_service, _command);
+                compose(_service, _command);
             }
             else if (class_name == "take_command")
             {
-                take_object(_service, _command);
+                take(_service, _command);
             }
             else if (class_name == "drop_command")
             {
-                drop_object(_service, _command);
+                drop(_service, _command);
             }
             else if (class_name == "trade_command")
             {
-                trade_object(_service, _command);
+                trade(_service, _command);
             }
             else if (class_name == "accelerate_command")
             {
-                accelerate_object(_service, _command);
+                accelerate(_service, _command);
             }
             else if (class_name == "activate_command")
             {
-                activate_object(_service, _command);
+                activate(_service, _command);
             }
             else if (class_name == "navigate_command")
             {

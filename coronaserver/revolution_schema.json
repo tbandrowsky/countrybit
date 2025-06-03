@@ -11,9 +11,9 @@
       "class_description": "a people send to each other",
       "base_class_name": "sys_object",
       "fields": {
-        "comment_from": "string",
-        "comment_to": "string",
-        "comment_text": "string"
+        "from": "string",
+        "to": "string",
+        "text": "string"
       }
     },
     {
@@ -22,15 +22,15 @@
       "base_class_name": "sys_object",
       "parents": [ "board" ],
       "fields": {
-        "actor_name": "string",
-        "actor_type": "string",
-        "actor_state": "string",
-        "actor_x": "double",
-        "actor_y": "double",
-        "actor_z": "double",
-        "actor_dx": "double",
-        "actor_dy": "double",
-        "actor_dz": "double"
+        "name": "string",
+        "type": "string",
+        "state": "string",
+        "x": "double",
+        "y": "double",
+        "z": "double",
+        "dx": "double",
+        "dy": "double",
+        "dz": "double"
       }
     },
     {
@@ -38,8 +38,8 @@
       "class_description": "an item on the board",
       "base_class_name": "actor",
       "fields": {
-        "actor_description": "string",
-        "actor_sprite_sheet": "string",
+        "description": "string",
+        "sprite_sheet": "string",
         "inventory": [ "actor" ]
       }
     },
@@ -83,9 +83,9 @@
       "class_description": "command for one piece to activate another",
       "base_class_name": "sys_command",
       "fields": {
-        "board_id": "->board",
-        "page_id": "->page",
-        "actor_id": "->actor"
+        "board": "->board",
+        "page": "->page",
+        "actor": "->actor"
       }
     },
     {

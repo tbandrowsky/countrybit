@@ -733,6 +733,11 @@ namespace corona
 		virtual std::shared_ptr<field_options_interface> get_options() {
 			return options;
 		}
+		
+		virtual std::shared_ptr<field_options_interface> set_options(std::shared_ptr<field_options_interface> _src) {
+			options = _src;
+			return options;
+		}
 
 		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _class_name, json& _object) = 0;
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
@@ -1949,6 +1954,11 @@ namespace corona
 			return options;
 		}
 
+		virtual std::shared_ptr<field_options_interface> set_options(std::shared_ptr<field_options_interface> _src) {
+			options = _src;
+			return options;
+		}
+
 		virtual void init_validation() override
 		{
 			class_permissions default_perms;
@@ -2715,6 +2725,24 @@ namespace corona
 								field->set_field_type(field_types::ft_object);
 							}
 						}
+					}
+					else if (jfield.second.array())
+					{
+						field->set_field_type(field_types::ft_array);
+						child_object_definition cod;
+						cod.is_array = true;
+						for (auto jfield_grant : jfield.second) {
+							if (jfield_grant.is_string())
+							{
+								std::shared_ptr<child_object_class> coc = std::make_shared<child_object_class>();
+                                coc->class_name = jfield_grant;
+								coc->copy_values.insert_or_assign(class_name, object_id_field);
+								cod.child_classes.push_back( coc );
+							}
+                        }
+						auto afo = std::make_shared<array_field_options>();
+						afo->put_definition(cod);
+						field->set_options(afo);
 					}
 					else
 					{
