@@ -43,21 +43,45 @@ namespace corona::apps::revolution
     public:
         std::string name;
         std::string type;
+        std::string state;
+
         double x = 0.0;
         double y = 0.0;
         double z = 0.0;
-        double vx = 0.0;
-        double vy = 0.0;
-        double vz = 0.0;
+        double dx = 0.0;
+        double dy = 0.0;
+        double dz = 0.0;
 
         virtual void put_json(json& _src) override
         {
             base_object::put_json(_src);
+
+            name = _src["name"];
+            type = _src["type"];
+            state = _src["state"];
+
+            x = (double)_src["x"];
+            y = (double)_src["y"];
+            z = (double)_src["z"];
+            dx = (double)_src["dx"];
+            dy = (double)_src["dy"];
+            dz = (double)_src["dz"];
         }
 
         virtual void get_json(json& _dest) override
         {
             base_object::get_json(_dest);
+
+			_dest.put_member("name", name);
+			_dest.put_member("type", type);
+			_dest.put_member("state", state);   
+
+            _dest.put_member("x", x);   
+			_dest.put_member("y", y);   
+			_dest.put_member("z", z);   
+            _dest.put_member("dx", dx);
+            _dest.put_member("dy", dy);
+            _dest.put_member("dz", dz);
         }
 
     };
@@ -65,18 +89,37 @@ namespace corona::apps::revolution
     class board : public base_object
     {
     public:
-        std::vector<actor> actors;
+        std::map<int64_t, std::shared_ptr<actor>> actors;
 
         virtual void put_json(json& _src) override
         {
             base_object::put_json(_src);
+
+			if (_src.has_member("actors"))
+			{
+				json& actors_json = _src["actors"];
+				for (size_t i = 0; i < actors_json.size(); ++i)
+				{
+					std::shared_ptr<actor> act = std::make_shared<actor>();
+					act->put_json(actors_json[i]);
+					actors.insert_or_assign(act->object_id, act);
+				}
+			}
         }
 
         virtual void get_json(json& _dest) override
         {
             base_object::get_json(_dest);
-        }
+            json_parser jp;
+			json jactors_json = jp.create_array();
 
+            for (const auto& act : actors) {
+                json jactor = jp.create_object();
+				act.second->get_json(jactor);
+				jactors_json.push_back(jactor);
+            }
+			_dest.put_member("actors", jactors_json);
+        }
     };
 
     class game : public base_object
