@@ -95,15 +95,15 @@ namespace corona::apps::revolution
         {
             base_object::put_json(_src);
 
-			if (_src.has_member("actors"))
+            actors.clear();
+
+			json actors_json = _src["actors"];
+            if (actors_json.array()) {}
+			for (size_t i = 0; i < actors_json.size(); ++i)
 			{
-				json& actors_json = _src["actors"];
-				for (size_t i = 0; i < actors_json.size(); ++i)
-				{
-					std::shared_ptr<actor> act = std::make_shared<actor>();
-					act->put_json(actors_json[i]);
-					actors.insert_or_assign(act->object_id, act);
-				}
+				std::shared_ptr<actor> act = std::make_shared<actor>();
+				act->put_json(actors_json[i]);
+				actors.insert_or_assign(act->object_id, act);
 			}
         }
 
