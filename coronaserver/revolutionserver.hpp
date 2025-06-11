@@ -142,9 +142,53 @@ namespace corona::apps::revolution
     class revolution_server
     {
 
-        
+        template <typename board_type> std::shared_ptr<board_type> get_object(comm_bus_service* _service, std::string _class_name, int64_t _object_id, bool _include_children)
+        {
+            std::shared_ptr<board_type> result = nullptr;
+
+            json response = _service->get_object(_class_name, _object_id, _include_children);
+
+            if (response[success_field] == false)
+            {
+                // Handle error case
+                return nullptr;
+            }
+
+            result = std::make_shared<board_type>();
+
+            json result_data = response["result"];
+            if (result_data.object())
+            {
+                result->put_json(result_data);
+            }
+
+            // This is a placeholder for the actual implementation
+            // that would retrieve a board by its ID.
+            return result;
+        }
 
     public:
+
+        std::shared_ptr<board> get_board(comm_bus_service* _service, int64_t _board_id, bool _recursive)
+        {
+            // This is a placeholder for the actual implementation
+            // that would retrieve a board by its ID.
+            return get_object<board>(_service, "board", _board_id, _recursive);
+        }
+
+        std::shared_ptr<game> get_game(comm_bus_service* _service, int64_t _game_id, bool _recursive)
+        {
+            // This is a placeholder for the actual implementation
+            // that would retrieve a board by its ID.
+            return get_object<game>(_service, "game", _game_id, _recursive);
+        }
+
+        std::shared_ptr<actor> get_actor(comm_bus_service* _service, int64_t _actor_id, bool _recursive)
+        {
+            // This is a placeholder for the actual implementation
+            // that would retrieve a board by its ID.
+            return get_object<actor>(_service, "actor", _actor_id, _recursive);
+        }
 
         void clear_selection(comm_bus_service* _service, json& _command)
         {

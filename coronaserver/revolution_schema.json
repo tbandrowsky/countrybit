@@ -30,7 +30,9 @@
         "z": "double",
         "dx": "double",
         "dy": "double",
-        "dz": "double"
+        "dz": "double",
+        "selection": [ "->actor" ],
+        "inventory": [ "->actor" ]
       }
     },
     {
@@ -39,8 +41,7 @@
       "base_class_name": "actor",
       "fields": {
         "description": "string",
-        "sprite_sheet": "string",
-        "inventory": [ "actor" ]
+        "sprite_sheet": "string"
       }
     },
     {
