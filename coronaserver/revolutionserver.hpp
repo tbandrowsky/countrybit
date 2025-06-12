@@ -89,6 +89,11 @@ namespace corona::apps::revolution
     class board : public base_object
     {
     public:
+
+        std::string name;
+        std::string type;
+        std::string state;
+
         std::map<int64_t, std::shared_ptr<actor>> actors;
 
         virtual void put_json(json& _src) override
@@ -98,13 +103,14 @@ namespace corona::apps::revolution
             actors.clear();
 
 			json actors_json = _src["actors"];
-            if (actors_json.array()) {}
-			for (size_t i = 0; i < actors_json.size(); ++i)
-			{
-				std::shared_ptr<actor> act = std::make_shared<actor>();
-				act->put_json(actors_json[i]);
-				actors.insert_or_assign(act->object_id, act);
-			}
+            if (actors_json.array()) {
+                for (auto actorj : actors_json)
+                {
+                    std::shared_ptr<actor> act = std::make_shared<actor>();
+                    act->put_json(actorj);
+                    actors.insert_or_assign(act->object_id, act);
+                }
+            }
         }
 
         virtual void get_json(json& _dest) override

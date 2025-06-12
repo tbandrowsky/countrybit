@@ -7,16 +7,6 @@
   ],
   "classes": [
     {
-      "class_name": "comment",
-      "class_description": "a people send to each other",
-      "base_class_name": "sys_object",
-      "fields": {
-        "from": "string",
-        "to": "string",
-        "text": "string"
-      }
-    },
-    {
       "class_name": "actor",
       "class_description": "an item on the board",
       "base_class_name": "sys_object",
@@ -36,6 +26,36 @@
       }
     },
     {
+      "class_name": "news_section",
+      "class_description": "a people send to each other",
+      "base_class_name": "sys_object",
+      "fields": {
+        "from": "string",
+        "to": "string",
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "news_topic",
+      "class_description": "a people send to each other",
+      "base_class_name": "sys_object",
+      "fields": {
+        "from": "string",
+        "to": "string",
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "news_article",
+      "class_description": "a people send to each other",
+      "base_class_name": "sys_object",
+      "fields": {
+        "from": "string",
+        "to": "string",
+        "text": "string"
+      }
+    },
+    {
       "class_name": "actor2d",
       "class_description": "an item on the board",
       "base_class_name": "actor",
@@ -49,9 +69,7 @@
       "class_description": "an item on the board",
       "base_class_name": "actor2d",
       "fields": {
-        "user": "->sys_user",
-        "board_id": "->board",
-        "selection": [ "actor" ]
+        "user": "->sys_user"
       }
     },
     {
