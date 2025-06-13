@@ -7,81 +7,96 @@
   ],
   "classes": [
     {
+      "class_name": "address",
+      "class_description": "a place where something is",
+      "base_class_name": "sys_object",
+      "fields": {
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "country": "string"
+      }
+    },
+    {
+      "class_name": "contact",
+      "class_description": "a someone",
+      "base_class_name": "sys_object",
+      "fields": {
+        "first_name": "string",
+        "last_name": "string",
+        "mobile_phone": "string",
+        "other_phone": "string",
+        "current_email": "string",
+        "other_email": "string"
+      }
+    },
+    {
+      "class_name": "point",
+      "class_description": "a point",
+      "base_class_name": "sys_object",
+      "parents": [ "polygon" ],
+      "fields": {
+        "x": "double",
+        "y": "double",
+        "z": "double"
+      }
+    },
+    {
+      "class_name": "polygon",
+      "class_description": "a shape defined by a list of points",
+      "base_class_name": "sys_object",
+      "parents": [ "shape" ],
+      "fields": {
+        "fill_brush": "string",
+        "border_brush": "string",
+        "border_thickness": "double",
+        "points": "[ point ]"
+      }
+    },
+    {
+      "class_name": "shape",
+      "class_description": "a shape defined by a list of points",
+      "base_class_name": "sys_object",
+      "fields": {
+        "name": "string",
+        "polygons": "[ point ]"
+      }
+    },
+    {
       "class_name": "actor",
       "class_description": "an item on the board",
       "base_class_name": "sys_object",
-      "parents": [ "board" ],
+      "parents": [ "parent" ],
       "fields": {
         "name": "string",
         "type": "string",
         "state": "string",
+        "shape": "[->shape]",
         "x": "double",
         "y": "double",
         "z": "double",
         "dx": "double",
         "dy": "double",
         "dz": "double",
-        "selection": [ "->actor" ],
-        "inventory": [ "->actor" ]
-      }
-    },
-    {
-      "class_name": "news_section",
-      "class_description": "a people send to each other",
-      "base_class_name": "sys_object",
-      "fields": {
-        "from": "string",
-        "to": "string",
-        "text": "string"
-      }
-    },
-    {
-      "class_name": "news_topic",
-      "class_description": "a people send to each other",
-      "base_class_name": "sys_object",
-      "fields": {
-        "from": "string",
-        "to": "string",
-        "text": "string"
-      }
-    },
-    {
-      "class_name": "news_article",
-      "class_description": "a people send to each other",
-      "base_class_name": "sys_object",
-      "fields": {
-        "from": "string",
-        "to": "string",
-        "text": "string"
-      }
-    },
-    {
-      "class_name": "actor2d",
-      "class_description": "an item on the board",
-      "base_class_name": "actor",
-      "fields": {
-        "description": "string",
-        "sprite_sheet": "string"
-      }
-    },
-    {
-      "class_name": "player2d",
-      "class_description": "an item on the board",
-      "base_class_name": "actor2d",
-      "fields": {
-        "user": "->sys_user"
+        "width": "double",
+        "height": "double",
+        "ax": "double",
+        "ay": "double",
+        "az": "double",
+        "children": "[ actor:parent ]"
       }
     },
     {
       "class_name": "board",
       "class_description": "a board in revolution",
-      "base_class_name": "sys_object",
+      "base_class_name": "actor",
       "parents": [ "game" ],
       "fields": {
         "name": "string",
         "type": "string",
-        "form_name": "string",
-        "actors": "[ ->actor ]"
+        "form_name": "string"
       }
     },
     {
@@ -97,7 +112,7 @@
       }
     },
     {
-      "class_name": "base_game_command",
+      "class_name": "game_command",
       "class_description": "command for one piece to activate another",
       "base_class_name": "sys_command",
       "fields": {
@@ -109,14 +124,14 @@
     {
       "class_name": "selection_clear_command",
       "class_description": "command for one piece to activate another",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
       }
     },
     {
       "class_name": "selection_extend_command",
       "class_description": "command for one piece to activate another",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
         "add_actors": "[ ->actor ]"
       }
@@ -124,7 +139,7 @@
     {
       "class_name": "compose_selection",
       "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
         "compose_class_name": "string"
       }
@@ -132,7 +147,7 @@
     {
       "class_name": "take_selection",
       "class_description": "command to add additional items to inventory",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
         "take_actors": "[ ->actor ]"
       }
@@ -140,7 +155,7 @@
     {
       "class_name": "drop_selection",
       "class_description": "command to drop selected pieces in inventory",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
         "drop_actors": "[ ->actor ]"
       }
@@ -148,7 +163,7 @@
     {
       "class_name": "accelerate_selection",
       "class_description": "command to move selected pieces",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
         "target_actor_id": "->actor",
         "ax": "double",
@@ -159,7 +174,7 @@
     {
       "class_name": "activate_selection",
       "class_description": "command for one piece to activate another",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
         "target_actor_id": "->actor"
       }
@@ -167,14 +182,14 @@
     {
       "class_name": "navigate_command",
       "class_description": "",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
       }
     },
     {
       "class_name": "join_game_command",
       "class_description": "command to join a game",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
         "game_id": "->game"
       }
@@ -182,12 +197,157 @@
     {
       "class_name": "exit_game_command",
       "class_description": "command to leave a game",
-      "base_class_name": "base_game_command",
+      "base_class_name": "game_command",
       "fields": {
         "game_id": "->game"
       }
+    },
+    {
+      "class_name": "content",
+      "class_description": "a comment on an article",
+      "base_class_name": "sys_object",
+      "parents": [ "news_article" ],
+      "fields": {
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "news_comment",
+      "class_description": "a comment on an article",
+      "base_class_name": "sys_object",
+      "parents": [ "news_article" ],
+      "fields": {
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "news_article",
+      "class_description": "an article",
+      "base_class_name": "sys_object",
+      "parents": [ "news_section" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "comments": "[ news_comment ]"
+      }
+    },
+    {
+      "class_name": "news_section",
+      "class_description": "a section of articles",
+      "base_class_name": "sys_object",
+      "parents": [ "news_group" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "sections": "[ news_section ]"
+      }
+    },
+    {
+      "class_name": "news_group",
+      "class_description": "a group of sections",
+      "parents": [ "news_library" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "sections": "[ news_section ]"
+      }
+    },
+    {
+      "class_name": "news_library",
+      "class_description": "a group of groups in a space",
+      "base_class_name": "sys_object",
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "sections": "[ news_group ]"
+      }
+    },
+    {
+      "class_name": "item",
+      "class_description": "a thing you own, property",
+      "base_class_name": "sys_object",
+      "parents": [ "building" ],
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "value": "double"
+      }
+    },
+    {
+      "class_name": "building",
+      "class_description": "a physical space you can put stuff in or be in",
+      "base_class_name": "sys_object",
+      "parents": [ "site" ],
+      "fields": {
+        "name": "string",
+        "building_scheme": "string",
+        "building_class": "string",
+        "construction_scheme": "string",
+        "construction_class": "string",
+        "contents": "[ item ]",
+        "value": "double"
+      }
+    },
+    {
+      "class_name": "site",
+      "class_description": "a thing you own, property",
+      "base_class_name": "address",
+      "parents": [ "account" ],
+      "fields": {
+        "name": "string",
+        "buildings": "[ building ]",
+        "value": "double"
+      }
+    },
+    {
+      "class_name": "permit",
+      "class_description": "a service performanced on a property",
+      "base_class_name": "sys_object",
+      "parents": [ "account" ],
+      "fields": {
+        "name": "string",
+        "status": "string",
+        "description": "string",
+        "issued": "datetime",
+        "expires": "datetime",
+        "site": "->site"
+      }
+    },
+    {
+      "class_name": "service",
+      "class_description": "a service performanced on a property",
+      "base_class_name": "sys_object",
+      "parents": [ "account" ],
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "amount": "double"
+      }
+    },
+    {
+      "class_name": "insurance",
+      "class_description": "an insurance for a property",
+      "base_class_name": "service",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "deductible": "double",
+        "limit": "double",
+        "attachment": "double",
+        "risk_type": "string"
+      }
+    },
+    {
+      "class_name": "customer",
+      "class_description": "a guest user's home object",
+      "base_class_name": "sys_object",
+      "fields": {
+        "name": "string",
+        "property": "[ site ]",
+        "services": "[ service ]",
+        "permit": "[ permit ]"
+      }
     }
-
   ],
   "users": [
 
