@@ -52,16 +52,20 @@
         "fill_brush": "string",
         "border_brush": "string",
         "border_thickness": "double",
-        "points": "[ point ]"
+        "points": "[ point ]",
+        "text": "string",
+        "font_name": "string",
+        "font_size": "string"
       }
     },
     {
       "class_name": "shape",
       "class_description": "a shape defined by a list of points",
       "base_class_name": "sys_object",
+      "parents": [ "actor" ],
       "fields": {
         "name": "string",
-        "polygons": "[ point ]"
+        "polygons": "[ polygon ]"
       }
     },
     {
@@ -73,15 +77,15 @@
         "name": "string",
         "type": "string",
         "state": "string",
-        "shape": "[->shape]",
+        "shape": "[shape]",
         "x": "double",
         "y": "double",
         "z": "double",
         "dx": "double",
         "dy": "double",
         "dz": "double",
-        "width": "double",
-        "height": "double",
+        "w": "double",
+        "h": "double",
         "ax": "double",
         "ay": "double",
         "az": "double",
@@ -301,7 +305,7 @@
     },
     {
       "class_name": "permit",
-      "class_description": "a service performanced on a property",
+      "class_description": "a permission for an activity performed at a property",
       "base_class_name": "sys_object",
       "parents": [ "account" ],
       "fields": {
@@ -310,7 +314,9 @@
         "description": "string",
         "issued": "datetime",
         "expires": "datetime",
-        "site": "->site"
+        "site": "->site",
+        "latitude": "double",
+        "longitude": "double"
       }
     },
     {
@@ -338,14 +344,40 @@
       }
     },
     {
+      "class_name": "generator",
+      "class_description": "creates and destroys items",
+      "base_class_name": "service",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "unit": "string",
+        "quantity": "double",
+        "amount": "double"
+      }
+    },
+    {
+      "class_name": "workers",
+      "class_description": "people on a property",
+      "base_class_name": "service",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "deductible": "double",
+        "limit": "double",
+        "attachment": "double",
+        "risk_type": "string"
+      }
+    },
+    {
       "class_name": "customer",
       "class_description": "a guest user's home object",
       "base_class_name": "sys_object",
       "fields": {
-        "name": "string",
+        "contact": "contact",
+        "address" : "address",
         "property": "[ site ]",
         "services": "[ service ]",
-        "permit": "[ permit ]"
+        "permits": "[ permit ]"
       }
     }
   ],
