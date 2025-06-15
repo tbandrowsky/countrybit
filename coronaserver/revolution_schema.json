@@ -93,6 +93,20 @@
       }
     },
     {
+      "class_name": "pawn",
+      "class_description": "a player",
+      "base_class_name": "actor",
+      "fields": {
+        "user_name": "string",
+        "game": "->game"
+      },
+      "indexes": {
+        "idx_user_name": {
+          "fields": [ "user_name" ]
+        }
+      }
+    },
+    {
       "class_name": "board",
       "class_description": "a board in revolution",
       "base_class_name": "actor",
@@ -101,6 +115,11 @@
         "name": "string",
         "type": "string",
         "form_name": "string"
+      },
+      "indexes": {
+        "idx_user_name": {
+          "fields": [ "user_name" ]
+        }
       }
     },
     {
@@ -327,7 +346,17 @@
       "fields": {
         "name": "string",
         "description": "string",
-        "amount": "double"
+        "amount_total": "double"
+      }
+    },
+    {
+      "class_name": "utility",
+      "class_description": "a service performanced on a property",
+      "base_class_name": "service",
+      "fields": {
+        "commodity": "string",
+        "amount_used": "double",
+        "amount_each": "double"
       }
     },
     {
@@ -340,7 +369,8 @@
         "deductible": "double",
         "limit": "double",
         "attachment": "double",
-        "risk_type": "string"
+        "risk_type": "string",
+        "site": "[ ->site ]"
       }
     },
     {
@@ -369,15 +399,26 @@
       }
     },
     {
-      "class_name": "customer",
-      "class_description": "a guest user's home object",
+      "class_name": "event",
+      "class_description": "something that happens",
       "base_class_name": "sys_object",
+      "parents": [ "account", "event" ],
       "fields": {
-        "contact": "contact",
-        "address" : "address",
+        "name": "string",
+        "targets": "[ ->site ]",
+        "children": "[ event ]"
+      }
+    },
+    {
+      "class_name": "scenario",
+      "class_description": "a guest user's home object",
+      "base_class_name": "sys_team",
+      "fields": {
+        "address": "address",
         "property": "[ site ]",
         "services": "[ service ]",
-        "permits": "[ permit ]"
+        "permits": "[ permit ]",
+        "events": "[ event ]"
       }
     }
   ],
