@@ -285,6 +285,40 @@
         "sections": "[ news_group ]"
       }
     },
+
+    {
+      "class_name": "application",
+      "class_description": "a guest user's home object",
+      "base_class_name": "sys_object",
+      "parents": [ "government" ],
+      "fields": {
+      }
+    },
+
+    {
+      "class_name": "service_application",
+      "class_description": "a guest user's home object",
+      "base_class_name": "application",
+      "fields": {
+      }
+    },
+
+    {
+      "class_name": "insurance_application",
+      "class_description": "application for insurance",
+      "base_class_name": "service_application",
+      "fields": {
+      }
+    },
+
+    {
+      "class_name": "permit_application",
+      "class_description": "a guest user's home object",
+      "base_class_name": "application",
+      "fields": {
+      }
+    },
+
     {
       "class_name": "item",
       "class_description": "a thing you own, property",
@@ -382,7 +416,9 @@
         "description": "string",
         "unit": "string",
         "quantity": "double",
-        "amount": "double"
+        "amount": "double",
+        "latitude": "double",
+        "longitude": "double"
       }
     },
     {
@@ -410,7 +446,7 @@
       }
     },
     {
-      "class_name": "scenario",
+      "class_name": "account",
       "class_description": "a guest user's home object",
       "base_class_name": "sys_team",
       "fields": {
@@ -419,6 +455,16 @@
         "services": "[ service ]",
         "permits": "[ permit ]",
         "events": "[ event ]"
+      }
+    },
+    {
+      "class_name": "government",
+      "class_description": "a user's home object",
+      "base_class_name": "account",
+      "fields": {
+        "service_applications": "[ service_application ]",
+        "permit_applications": "[ permit_application ]",
+        "accounts": "[ account ]"
       }
     }
   ],
