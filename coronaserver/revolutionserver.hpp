@@ -357,6 +357,16 @@ namespace corona::apps::revolution
         {
             auto pactor = get_actor(_service, _command, true);
             if (pactor) {
+                json_parser jp;
+                json add_actors = _command["add_actors"];
+                if (add_actors.array()) {
+                    for (json jactor : add_actors)
+                    {
+                        object_reference_type xsort;
+                        corona::apps::revolution::put_json(xsort, jactor);
+                        pactor->selection.push_back(xsort);
+                    }
+                }
                 pactor->selection.clear();
                 put_actor(_service, pactor);
             }
