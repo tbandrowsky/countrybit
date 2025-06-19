@@ -281,7 +281,6 @@
       "class_name": "news_library",
       "class_description": "a group of groups in a space",
       "base_class_name": "sys_object",
-      "parents": [ "goal" ],
       "fields": {
         "title": "string",
         "text": "string",
@@ -292,82 +291,32 @@
       "class_name": "event",
       "class_description": "a group of groups in a space",
       "base_class_name": "sys_object",
-      "parents": [ "goal" ],
       "fields": {
         "title": "string",
         "text": "string",
         "date": "datetime",
         "address": "address",
-        "contact": "contact",
-        "url": "string",
-        "game": "string"
-      }
-    },
-    {
-      "class_name": "goal_vote",
-      "class_description": "an object for people to achieve",
-      "base_class_name": "sys_object",
-      "parents": [ "goal" ],
-      "fields": {
-        "name": "string",
-        "description": "string",
-        "support_goal": "boolean",
-        "agree_goal": "boolean",
-        "disagree_goal": "boolean",
-        "oppose_goal": "boolean",
-        "text": "string"
+        "contact": "contact"
       }
     },
     {
       "class_name": "goal",
       "class_description": "an object for people to achieve",
       "base_class_name": "sys_object",
-      "parents" : ["public_office"],
       "fields": {
         "name": "string",
         "description": "string",
         "support_goal": "number",
-        "agree_goal": "number",
-        "disagree_goal": "number",
-        "oppose_goal": "number",
-        "votes": [ "goal_vote" ],
-        "events": [ "event" ]
-      }
-    },
-    {
-      "class_name": "goal",
-      "class_description": "an object for people to achieve",
-      "base_class_name": "sys_object",
-      "parents" : ["public_office"],
-      "fields": {
-        "name": "string",
-        "description": "string",
-        "support_goal": "number",
-        "agree_goal": "number",
-        "disagree_goal": "number",
-        "oppose_goal": "number",
-        "votes": [ "goal_vote" ],
-        "events": [ "event" ]
-      }
-    },
-    {
-      "class_name": "public_office",
-      "class_description": "offices to influence or control",
-      "base_class_name": "sys_object",
-      "fields": {
-        "name": "string",
-        "description": "string",
-        "incumbent": "contact",
-        "goals" : "[goal]"
+        "agree_goal": "number"
       }
     },
     {
       "class_name": "federal_office",
       "class_description": "offices to influence or control",
-      "base_class_name": "public_office",
+      "base_class_name": "sys_object",
       "fields": {
         "name": "string",
-        "branch": "string",
+        "state": "string",
         "description": "string",
         "incumbent": "contact"
       }
@@ -375,12 +324,10 @@
     {
       "class_name": "state_office",
       "class_description": "offices to influence or control",
-      "base_class_name": "public_office",
+      "base_class_name": "sys_object",
       "fields": {
-        "name": "string",
-        "branch": "string",
-        "district": "string",
         "state": "string",
+        "name": "string",
         "description": "string",
         "incumbent": "contact"
       }
@@ -388,23 +335,10 @@
     {
       "class_name": "city_office",
       "class_description": "offices to influence or control",
-      "base_class_name": "public_office",
+      "base_class_name": "sys_object",
       "fields": {
-        "name": "string",
         "state": "string",
-        "city": "string",
-        "description": "string",
-        "incumbent": "contact"
-      }
-    },
-    {
-      "class_name": "county_office",
-      "class_description": "offices to influence or control",
-      "base_class_name": "public_office",
-      "fields": {
         "name": "string",
-        "state": "string",
-        "county": "string",
         "description": "string",
         "incumbent": "contact"
       }

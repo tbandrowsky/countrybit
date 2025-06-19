@@ -38,6 +38,7 @@ namespace corona::apps::revolution
         }
     };
 
+
     class actor : public base_object
     {
     public:
@@ -51,6 +52,14 @@ namespace corona::apps::revolution
         double dx = 0.0;
         double dy = 0.0;
         double dz = 0.0;
+        double w = 0.0;
+        double h = 0.0;
+        double ax = 0.0;
+        double ay = 0.0;
+        double az = 0.0;
+
+        std::vector<std::shared_ptr<actor>> children;
+        std::vector<object_reference_type> selection;
 
         virtual void put_json(json& _src) override
         {
@@ -63,9 +72,34 @@ namespace corona::apps::revolution
             x = (double)_src["x"];
             y = (double)_src["y"];
             z = (double)_src["z"];
+
             dx = (double)_src["dx"];
             dy = (double)_src["dy"];
             dz = (double)_src["dz"];
+
+            ax = (double)_src["ax"];
+            ay = (double)_src["ay"];
+            az = (double)_src["az"];
+
+            json jchildren = _src["children"];
+            if (jchildren.array()) {
+                for (json jchild : jchildren)
+                {
+                    std::shared_ptr<actor> sactor = std::make_shared<actor>();
+                    sactor->put_json(jchild);
+                    children.push_back(sactor);
+                }
+            }
+
+            json jselection = _src["selection"];
+            if (jselection.array()) {
+                for (json jchild : jselection)
+                {
+                    std::shared_ptr<actor> sactor = std::make_shared<actor>();
+                    sactor->put_json(jchild);
+                    children.push_back(sactor);
+                }
+            }
         }
 
         virtual void get_json(json& _dest) override
@@ -76,9 +110,10 @@ namespace corona::apps::revolution
 			_dest.put_member("type", type);
 			_dest.put_member("state", state);   
 
-            _dest.put_member("x", x);   
-			_dest.put_member("y", y);   
-			_dest.put_member("z", z);   
+            _dest.put_member("x", x);
+			_dest.put_member("y", y);
+			_dest.put_member("z", z);
+
             _dest.put_member("dx", dx);
             _dest.put_member("dy", dy);
             _dest.put_member("dz", dz);
@@ -175,25 +210,69 @@ namespace corona::apps::revolution
 
     public:
 
-        std::shared_ptr<board> get_board(comm_bus_service* _service, int64_t _board_id, bool _recursive)
+        std::shared_ptr<board> get_board(comm_bus_service* _service, object_reference_type& _ort, bool _recursive)
         {
             // This is a placeholder for the actual implementation
             // that would retrieve a board by its ID.
-            return get_object<board>(_service, "board", _board_id, _recursive);
+            return get_object<board>(_service, "board", _ort.object_id, _recursive);
         }
 
-        std::shared_ptr<game> get_game(comm_bus_service* _service, int64_t _game_id, bool _recursive)
+        std::shared_ptr<game> get_game(comm_bus_service* _service, object_reference_type& _ort, bool _recursive)
         {
-            // This is a placeholder for the actual implementation
+            // This is a placeholder for the actual implementation 
             // that would retrieve a board by its ID.
-            return get_object<game>(_service, "game", _game_id, _recursive);
+            return get_object<game>(_service, "game", _ort.object_id, _recursive);
         }
 
-        std::shared_ptr<actor> get_actor(comm_bus_service* _service, int64_t _actor_id, bool _recursive)
+        std::shared_ptr<actor> get_actor(comm_bus_service* _service, object_reference_type& _ort, bool _recursive)
         {
+            // This is a placeholder for the actual implementation 
+            // that would retrieve a board by its ID.
+            return get_object<actor>(_service, "actor", _ort.object_id, _recursive);
+        }
+
+        std::shared_ptr<board> get_board(comm_bus_service* _service, json& _src_command, bool _recursive)
+        {
+            std::shared_ptr<board> ret;
             // This is a placeholder for the actual implementation
             // that would retrieve a board by its ID.
-            return get_object<actor>(_service, "actor", _actor_id, _recursive);
+            json ref = _src_command["board"];
+            if (ref.reference()) {
+                ref.reference_impl()->value.class_name;
+                ref.reference_impl()->value.object_id;
+                ret = get_board(_service, _src_command, true);
+            }
+            return ret;
+        }
+
+        std::shared_ptr<game> get_game(comm_bus_service* _service, json& _src_command, bool _recursive)
+        {
+            std::shared_ptr<game> ret;
+            // This is a placeholder for the actual implementation
+            // that would retrieve a board by its ID.
+            json ref = _src_command["game"];
+            if (ref.reference()) {
+                ref.reference_impl()->value.class_name;
+                ref.reference_impl()->value.object_id;
+                ret = get_game(_service, _src_command, true);
+            }
+            return ret;
+        }
+
+        std::shared_ptr<actor> get_actor(comm_bus_service* _service, json& _src_command, bool _recursive)
+        {
+            // This is a placeholder for the actual implementation 
+            // that would retrieve a board by its ID.
+            std::shared_ptr<actor> ret;
+            // This is a placeholder for the actual implementation
+            // that would retrieve a board by its ID.
+            json ref = _src_command["board"];
+            if (ref.reference()) {
+                ref.reference_impl()->value.class_name;
+                ref.reference_impl()->value.object_id;
+                ret = get_actor(_service, _src_command, true);
+            }
+            return ret;
         }
 
         void clear_selection(comm_bus_service* _service, json& _command)
