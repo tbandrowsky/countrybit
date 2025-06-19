@@ -310,24 +310,6 @@ namespace corona
 			return result;
 		}
 
-		json get_class(std::string _class_name)
-		{
-			json_parser jp;
-			json result;
-
-			std::string token = system_login();
-
-			if (token.empty()) {
-				return result;
-			}
-
-			json request = jp.create_object();
-			request.put_member(token_field, token);
-			request.put_member(class_name_field, _class_name);
-			result = local_db->get_class(request);
-
-			return result;
-		}
 
 		json get_data(std::string _class_name)
 		{

@@ -6,6 +6,17 @@
 
 namespace corona::apps::revolution
 {   
+    void get_json(json& _dest, object_reference_type& _src)
+    {
+        _dest.put_member("class_name", _src.class_name);
+        _dest.put_member_i64("object_id", _src.object_id);
+    }
+
+    void put_json(object_reference_type& _dest, json& _src)
+    {
+        _dest.class_name = _src["class_name"];
+        _dest.object_id = (int64_t)_src["object_id"];
+    }
 
     class base_object
     {
@@ -83,6 +94,7 @@ namespace corona::apps::revolution
 
             json jchildren = _src["children"];
             if (jchildren.array()) {
+                children.clear();
                 for (json jchild : jchildren)
                 {
                     std::shared_ptr<actor> sactor = std::make_shared<actor>();
@@ -93,11 +105,12 @@ namespace corona::apps::revolution
 
             json jselection = _src["selection"];
             if (jselection.array()) {
-                for (json jchild : jselection)
+                selection.clear();
+                for (json jselected : jselection)
                 {
-                    std::shared_ptr<actor> sactor = std::make_shared<actor>();
-                    sactor->put_json(jchild);
-                    children.push_back(sactor);
+                    object_reference_type xsort;
+                    corona::apps::revolution::put_json(xsort, jselected);
+                    selection.push_back(xsort);
                 }
             }
         }
@@ -105,6 +118,9 @@ namespace corona::apps::revolution
         virtual void get_json(json& _dest) override
         {
             base_object::get_json(_dest);
+
+            json_parser jp; 
+            json jselection = jp.create_array();
 
 			_dest.put_member("name", name);
 			_dest.put_member("type", type);
@@ -117,6 +133,9 @@ namespace corona::apps::revolution
             _dest.put_member("dx", dx);
             _dest.put_member("dy", dy);
             _dest.put_member("dz", dz);
+
+            json jchildren = jp.create_array();
+
         }
 
     };
