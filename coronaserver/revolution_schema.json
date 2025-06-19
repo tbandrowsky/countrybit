@@ -322,23 +322,7 @@
       "class_name": "goal",
       "class_description": "an object for people to achieve",
       "base_class_name": "sys_object",
-      "parents" : ["public_office"],
-      "fields": {
-        "name": "string",
-        "description": "string",
-        "support_goal": "number",
-        "agree_goal": "number",
-        "disagree_goal": "number",
-        "oppose_goal": "number",
-        "votes": [ "goal_vote" ],
-        "events": [ "event" ]
-      }
-    },
-    {
-      "class_name": "goal",
-      "class_description": "an object for people to achieve",
-      "base_class_name": "sys_object",
-      "parents" : ["public_office"],
+      "parents": [ "public_office" ],
       "fields": {
         "name": "string",
         "description": "string",
@@ -358,7 +342,18 @@
         "name": "string",
         "description": "string",
         "incumbent": "contact",
-        "goals" : "[goal]"
+        "goals": "[goal]"
+      }
+    },
+    {
+      "class_name": "corporate_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "corporation": "string",
+        "incumbent": "contact"
       }
     },
     {
