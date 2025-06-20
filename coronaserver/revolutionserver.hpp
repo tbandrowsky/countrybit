@@ -142,10 +142,10 @@ namespace corona::apps::revolution
             _dest.put_member("children", jchildren);
 
             json jselection = jp.create_array();
-            for (auto jc : children) {
+            for (auto& jc : selection) {
                 json jchild = jp.create_object();
-                jc->get_json(jchild);
-                jselection.push_back(jchild);
+                corona::apps::revolution::get_json(jchild, jc);
+                jselection.push_back(jc);
             }
             _dest.put_member("selections", jchildren);
         }
