@@ -108,6 +108,36 @@
       }
     },
     {
+      "class_name": "recipe_ingredient",
+      "class_description": "something consumed by recipe",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "class_name": "string",
+        "amount_used": "double"
+      }
+    },
+    {
+      "class_name": "recipe_dish",
+      "class_description": "something produced by a recipe",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "class_name": "string",
+        "amount_produced": "double"
+      }
+    },
+    {
+      "class_name": "recipe",
+      "class_description": "a means to produce a good given other goods",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "class_name": "string",
+        "amount_produced": "double"
+      }
+    },
+    {
       "class_name": "board",
       "class_description": "a board in revolution",
       "base_class_name": "actor",
@@ -322,23 +352,7 @@
       "class_name": "goal",
       "class_description": "an object for people to achieve",
       "base_class_name": "sys_object",
-      "parents" : ["public_office"],
-      "fields": {
-        "name": "string",
-        "description": "string",
-        "support_goal": "number",
-        "agree_goal": "number",
-        "disagree_goal": "number",
-        "oppose_goal": "number",
-        "votes": [ "goal_vote" ],
-        "events": [ "event" ]
-      }
-    },
-    {
-      "class_name": "goal",
-      "class_description": "an object for people to achieve",
-      "base_class_name": "sys_object",
-      "parents" : ["public_office"],
+      "parents": [ "public_office" ],
       "fields": {
         "name": "string",
         "description": "string",
@@ -358,7 +372,18 @@
         "name": "string",
         "description": "string",
         "incumbent": "contact",
-        "goals" : "[goal]"
+        "goals": "[goal]"
+      }
+    },
+    {
+      "class_name": "corporate_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "corporation": "string",
+        "incumbent": "contact"
       }
     },
     {

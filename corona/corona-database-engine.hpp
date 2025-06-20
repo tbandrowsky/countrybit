@@ -807,6 +807,7 @@ namespace corona
 		virtual void	clear_queries(json& _target) = 0;
 
 		virtual json	get_info(corona_database_interface* _db) = 0;
+		virtual json	create_child(std::string _member_name, std::string _class_name) = 0;
 	};
 
 	using read_class_sp = read_locked_sp<class_interface>;

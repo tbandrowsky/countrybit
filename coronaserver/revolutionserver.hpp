@@ -120,7 +120,6 @@ namespace corona::apps::revolution
             base_object::get_json(_dest);
 
             json_parser jp; 
-            json jselection = jp.create_array();
 
 			_dest.put_member("name", name);
 			_dest.put_member("type", type);
@@ -135,9 +134,21 @@ namespace corona::apps::revolution
             _dest.put_member("dz", dz);
 
             json jchildren = jp.create_array();
+            for (auto jc : children) {
+                json jchild = jp.create_object();
+                jc->get_json(jchild);
+                jchildren.push_back(jchild);
+            }
+            _dest.put_member("children", jchildren);
 
+            json jselection = jp.create_array();
+            for (auto& jc : selection) {
+                json jchild = jp.create_object();
+                corona::apps::revolution::get_json(jchild, jc);
+                jselection.push_back(jc);
+            }
+            _dest.put_member("selections", jchildren);
         }
-
     };
 
     class board : public base_object
@@ -165,6 +176,10 @@ namespace corona::apps::revolution
                     actors.insert_or_assign(act->object_id, act);
                 }
             }
+
+            name = _src["name"];
+            type = _src["type"];
+            state = _src["state"];
         }
 
         virtual void get_json(json& _dest) override
@@ -178,33 +193,78 @@ namespace corona::apps::revolution
 				act.second->get_json(jactor);
 				jactors_json.push_back(jactor);
             }
-			_dest.put_member("actors", jactors_json);
+            _dest.put_member("actors", jactors_json);
+            _dest.put_member("name", name);
+            _dest.put_member("type", type);
+            _dest.put_member("state", state);
         }
+    };
+
+    class recipe_consumption : public base_object
+    {
+    public:
+        std::string class_name;
+        double      amount_consumed;
+    };
+
+    class recipe_production : public base_object
+    {
+    public:
+        std::string class_name;
+        double      amount_produced;
+    };
+
+    class recipe : public base_object
+    {
+    public:
+        std::string class_name;
+        std::vector<recipe_consumption> ingredients;
+        std::vector<recipe_production> produces;
     };
 
     class game : public base_object
     {
     public:
         std::map<std::string, std::shared_ptr<board>> boards;
-        
+        std::map<std::string, std::shared_ptr<recipe>> recipes;
+
         void put_json(json& _src)
         {
             base_object::put_json(_src);
+            boards.clear();
+            json boards_json = _src["boards"];
+            if (boards_json.array())
+            {
+                for (auto boardj : boards_json)
+                {
+                    std::shared_ptr<board> b = std::make_shared<board>();
+                    b->put_json(boardj);
+                    boards.insert_or_assign(b->name, b);
+                }
+            }
         }
 
         void get_json(json& _dest)
         {
             base_object::get_json(_dest);
+            json_parser jp;
+            json jboards_json = jp.create_array();
+            for (auto& board_pair : boards)
+            {
+                json jboard = jp.create_object();
+                board_pair.second->get_json(jboard);
+                jboards_json.push_back(jboard);
+            }
+            _dest.put_member("boards", jboards_json);
         }
-
     };
 
     class revolution_server
     {
 
-        template <typename board_type> std::shared_ptr<board_type> get_object(comm_bus_service* _service, std::string _class_name, int64_t _object_id, bool _include_children)
+        template <typename object_type> std::shared_ptr<object_type> get_object(comm_bus_service* _service, std::string _class_name, int64_t _object_id, bool _include_children)
         {
-            std::shared_ptr<board_type> result = nullptr;
+            std::shared_ptr<object_type> result = nullptr;
 
             json response = _service->get_object(_class_name, _object_id, _include_children);
 
@@ -214,7 +274,7 @@ namespace corona::apps::revolution
                 return nullptr;
             }
 
-            result = std::make_shared<board_type>();
+            result = std::make_shared<object_type>();
 
             json result_data = response["result"];
             if (result_data.object())
@@ -227,7 +287,30 @@ namespace corona::apps::revolution
             return result;
         }
 
+        template <typename object_type> void put_object(comm_bus_service* _service, std::shared_ptr<object_type> _obj)
+        {
+            json_parser jp;
+            json obj = jp.create_object();
+
+            _obj->get_json(obj);
+            json response = _service->put_object(obj);
+
+            if (response[success_field] == false)
+            {
+                // Handle error case
+                return;
+            }
+
+            json result_data = response["result"];
+            if (result_data.object())
+            {
+                result->put_json(result_data);
+            }
+
+        }
     public:
+
+        double selection_distance = 5.0;
 
         std::shared_ptr<board> get_board(comm_bus_service* _service, object_reference_type& _ort, bool _recursive)
         {
@@ -285,7 +368,7 @@ namespace corona::apps::revolution
             std::shared_ptr<actor> ret;
             // This is a placeholder for the actual implementation
             // that would retrieve a board by its ID.
-            json ref = _src_command["board"];
+            json ref = _src_command["actor"];
             if (ref.reference()) {
                 ref.reference_impl()->value.class_name;
                 ref.reference_impl()->value.object_id;
@@ -294,58 +377,166 @@ namespace corona::apps::revolution
             return ret;
         }
 
+        std::shared_ptr<actor> put_actor(comm_bus_service* _service, std::shared_ptr<actor> _actor)
+        {
+            put_object(_service, _actor);
+            return _actor;
+        }
+
+        std::shared_ptr<board> put_board(comm_bus_service* _service, std::shared_ptr<board> _actor)
+        {
+            put_object(_service, _actor);
+            return _actor;
+        }
+
+        std::shared_ptr<game> put_game(comm_bus_service* _service, std::shared_ptr<game> _actor)
+        {
+            put_object(_service, _actor);
+            return _actor;
+        }
+
         void clear_selection(comm_bus_service* _service, json& _command)
         {
-
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(_service, pactor);
+            }
         }
 
         void extend_selection(comm_bus_service* _service, json& _command)
         {
-
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                json_parser jp;
+                json add_actors = _command["add_actors"];
+                if (add_actors.array()) {
+                    for (json jactor : add_actors)
+                    {
+                        object_reference_type xsort;
+                        corona::apps::revolution::put_json(xsort, jactor);
+                        auto target = get_actor(_service, jactor, false);
+                        if (target)
+                        {
+                            double distance = point_math::distance({ target->x, target->y, target->z }, { target->x, target->y, target->z });
+                            if (distance < selection_distance)
+                            {
+                                pactor->selection.push_back(xsort);
+                            }
+                        }
+                    }
+                    put_actor(_service, pactor);
+                }
+            }
         }
 
         void compose(comm_bus_service* _service, json& _command)
         {
+            auto pactor = get_actor(_service, _command, true);
 
+            if (pactor) {
+
+                bool can_compose = true;
+
+                if (can_compose)
+                {
+                    std::string compose_class_name = _command["compose_class_name"];
+                    if (not compose_class_name.empty())
+                    {
+                        json jclass = _service->get_class(compose_class_name);
+                    }
+                }
+
+                for (object_reference_type xsort : pactor->selection)
+                {
+                    auto target = get_actor(_service, xsort, false);
+                    if (not target)
+                    {
+                        can_compose = false;
+                        break;
+                    }
+                }
+
+            }
         }
 
         void take(comm_bus_service* _service, json& _command)
         {
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(_service, pactor);
+            }
 
         }
 
         void drop(comm_bus_service* _service, json& _command)
         {
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(_service, pactor);
+            }
 
         }
 
         void trade(comm_bus_service* _service, json& _command)
         {
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(_service, pactor);
+            }
 
         }
 
         void accelerate(comm_bus_service* _service, json& _command)
         {
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(_service, pactor);
+            }
 
         }
 
         void activate(comm_bus_service* _service, json& _command)
         {
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(_service, pactor);
+            }
 
         }
 
         void navigate(comm_bus_service* _service, json& _command)
         {
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(_service, pactor);
+            }
 
         }
 
         void join_game(comm_bus_service* _service, json& _command)
         {
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(_service, pactor);
+            }
 
         }
 
         void exit_game(comm_bus_service* _service, json& _command)
         {
+            auto pactor = get_actor(_service, _command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(_service, pactor);
+            }
 
         }
 
