@@ -208,7 +208,7 @@ namespace corona::apps::revolution
 
             json response = _service->get_object(_class_name, _object_id, _include_children);
 
-            if (response[success_field] == false)
+            if ((bool)response[success_field] == false)
             {
                 // Handle error case
                 return nullptr;
