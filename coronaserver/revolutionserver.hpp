@@ -176,6 +176,10 @@ namespace corona::apps::revolution
                     actors.insert_or_assign(act->object_id, act);
                 }
             }
+
+            name = _src["name"];
+            type = _src["type"];
+            state = _src["state"];
         }
 
         virtual void get_json(json& _dest) override
@@ -189,7 +193,10 @@ namespace corona::apps::revolution
 				act.second->get_json(jactor);
 				jactors_json.push_back(jactor);
             }
-			_dest.put_member("actors", jactors_json);
+            _dest.put_member("actors", jactors_json);
+            _dest.put_member("name", name);
+            _dest.put_member("type", type);
+            _dest.put_member("state", state);
         }
     };
 
@@ -201,11 +208,31 @@ namespace corona::apps::revolution
         void put_json(json& _src)
         {
             base_object::put_json(_src);
+            boards.clear();
+            json boards_json = _src["boards"];
+            if (boards_json.array())
+            {
+                for (auto boardj : boards_json)
+                {
+                    std::shared_ptr<board> b = std::make_shared<board>();
+                    b->put_json(boardj);
+                    boards.insert_or_assign(b->name, b);
+                }
+            }
         }
 
         void get_json(json& _dest)
         {
             base_object::get_json(_dest);
+            json_parser jp;
+            json jboards_json = jp.create_array();
+            for (auto& board_pair : boards)
+            {
+                json jboard = jp.create_object();
+                board_pair.second->get_json(jboard);
+                jboards_json.push_back(jboard);
+            }
+            _dest.put_member("boards", jboards_json);
         }
 
     };
@@ -364,6 +391,7 @@ namespace corona::apps::revolution
                     {
                         object_reference_type xsort;
                         corona::apps::revolution::put_json(xsort, jactor);
+                        
                         pactor->selection.push_back(xsort);
                     }
                 }
