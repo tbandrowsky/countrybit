@@ -108,6 +108,36 @@
       }
     },
     {
+      "class_name": "recipe_ingredient",
+      "class_description": "something consumed by recipe",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "class_name": "string",
+        "amount_used": "double"
+      }
+    },
+    {
+      "class_name": "recipe_dish",
+      "class_description": "something produced by a recipe",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "class_name": "string",
+        "amount_produced": "double"
+      }
+    },
+    {
+      "class_name": "recipe",
+      "class_description": "a means to produce a good given other goods",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "class_name": "string",
+        "amount_produced": "double"
+      }
+    },
+    {
       "class_name": "board",
       "class_description": "a board in revolution",
       "base_class_name": "actor",

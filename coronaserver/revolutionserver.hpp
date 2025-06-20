@@ -200,11 +200,34 @@ namespace corona::apps::revolution
         }
     };
 
+    class recipe_consumption : public base_object
+    {
+    public:
+        std::string class_name;
+        double      amount_consumed;
+    };
+
+    class recipe_production : public base_object
+    {
+    public:
+        std::string class_name;
+        double      amount_produced;
+    };
+
+    class recipe : public base_object
+    {
+    public:
+        std::string class_name;
+        std::vector<recipe_consumption> ingredients;
+        std::vector<recipe_production> produces;
+    };
+
     class game : public base_object
     {
     public:
         std::map<std::string, std::shared_ptr<board>> boards;
-        
+        std::map<std::string, std::shared_ptr<recipe>> recipes;
+
         void put_json(json& _src)
         {
             base_object::put_json(_src);
@@ -234,7 +257,6 @@ namespace corona::apps::revolution
             }
             _dest.put_member("boards", jboards_json);
         }
-
     };
 
     class revolution_server
