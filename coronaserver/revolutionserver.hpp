@@ -261,6 +261,8 @@ namespace corona::apps::revolution
         }
     public:
 
+        double selection_distance = 5.0;
+
         std::shared_ptr<board> get_board(comm_bus_service* _service, object_reference_type& _ort, bool _recursive)
         {
             // This is a placeholder for the actual implementation
@@ -364,20 +366,48 @@ namespace corona::apps::revolution
                     {
                         object_reference_type xsort;
                         corona::apps::revolution::put_json(xsort, jactor);
-                        pactor->selection.push_back(xsort);
+                        auto target = get_actor(_service, jactor, false);
+                        if (target)
+                        {
+                            double distance = point_math::distance({ target->x, target->y, target->z }, { target->x, target->y, target->z });
+                            if (distance < selection_distance)
+                            {
+                                pactor->selection.push_back(xsort);
+                            }
+                        }
                     }
+                    put_actor(_service, pactor);
                 }
-                pactor->selection.clear();
-                put_actor(_service, pactor);
             }
         }
 
         void compose(comm_bus_service* _service, json& _command)
         {
             auto pactor = get_actor(_service, _command, true);
+
             if (pactor) {
-                pactor->selection.clear();
-                put_actor(_service, pactor);
+
+                bool can_compose = true;
+
+                if (can_compose)
+                {
+                    std::string compose_class_name = _command["compose_class_name"];
+                    if (not compose_class_name.empty())
+                    {
+                        json jclass = _service->get_class(compose_class_name);
+                    }
+                }
+
+                for (object_reference_type xsort : pactor->selection)
+                {
+                    auto target = get_actor(_service, xsort, false);
+                    if (not target)
+                    {
+                        can_compose = false;
+                        break;
+                    }
+                }
+
             }
         }
 
