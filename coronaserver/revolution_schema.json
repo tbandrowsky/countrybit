@@ -124,7 +124,7 @@
       "parents": [ "recipe" ],
       "fields": {
         "class_name": "string",
-        "amount_produced": "double"
+        "amount_made": "double"
       }
     },
     {
@@ -133,8 +133,8 @@
       "base_class_name": "sys_object",
       "parents": [ "recipe" ],
       "fields": {
-        "class_name": "string",
-        "amount_produced": "double"
+        "ingredients": "[ recipe_ingredient ]",
+        "dishes": "[ recipe_dish ]"
       }
     },
     {
