@@ -147,7 +147,7 @@ namespace corona::apps::revolution
                 corona::apps::revolution::get_json(jchild, jc);
                 jselection.push_back(jc);
             }
-            _dest.put_member("selections", jchildren);
+            _dest.put_member("selections", jselection);
         }
     };
 
@@ -200,26 +200,26 @@ namespace corona::apps::revolution
         }
     };
 
-    class recipe_consumption : public base_object
+    class recipe_ingredient : public base_object
     {
     public:
         std::string class_name;
-        double      amount_consumed;
+        double      amount_used;
     };
 
-    class recipe_production : public base_object
+    class recipe_dish : public base_object
     {
     public:
         std::string class_name;
-        double      amount_produced;
+        double      amount_made;
     };
 
     class recipe : public base_object
     {
     public:
         std::string class_name;
-        std::vector<recipe_consumption> ingredients;
-        std::vector<recipe_production> produces;
+        std::vector<recipe_ingredient> ingredients;
+        std::vector<recipe_dish> dishes;
     };
 
     class game : public base_object
