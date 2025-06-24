@@ -57,6 +57,8 @@ namespace corona::apps::revolution
         std::string type;
         std::string state;
 
+        double quantity = 0;
+
         double x = 0.0;
         double y = 0.0;
         double z = 0.0;
@@ -68,6 +70,7 @@ namespace corona::apps::revolution
         double ax = 0.0;
         double ay = 0.0;
         double az = 0.0;
+        int64_t parent = 0;
 
         std::vector<std::shared_ptr<actor>> children;
         std::vector<object_reference_type> selection;
@@ -79,6 +82,8 @@ namespace corona::apps::revolution
             name = _src["name"];
             type = _src["type"];
             state = _src["state"];
+            quantity = _src["quantity"];
+            parent = (int64_t)_src["parent"];
 
             x = (double)_src["x"];
             y = (double)_src["y"];
@@ -132,6 +137,8 @@ namespace corona::apps::revolution
             _dest.put_member("dx", dx);
             _dest.put_member("dy", dy);
             _dest.put_member("dz", dz);
+            _dest.put_member("quantity", quantity);
+            _dest.put_member("parent", parent);
 
             json jchildren = jp.create_array();
             for (auto jc : children) {
@@ -203,23 +210,94 @@ namespace corona::apps::revolution
     class recipe_ingredient : public base_object
     {
     public:
-        std::string class_name;
+        std::string consume_class_name;
         double      amount_used;
+
+        virtual void put_json(json& _src)
+        {
+            consume_class_name = (date_time)_src["create_class_name"];
+            amount_used = (double)_src["amount_used"];
+        }
+
+        virtual void get_json(json& _dest)
+        {
+            _dest.put_member("consume_class_name", consume_class_name);
+            _dest.put_member("amount_used", amount_used);
+        }
     };
 
     class recipe_dish : public base_object
     {
     public:
-        std::string class_name;
+        std::string create_class_name;
         double      amount_made;
-    }; 
+
+        virtual void put_json(json& _src)
+        {
+            create_class_name = _src["create_class_name"];
+            amount_made = (double)_src["amount_used"];
+        }
+
+        virtual void get_json(json& _dest)
+        {
+            _dest.put_member("create_class_name", create_class_name);
+            _dest.put_member("amount_made", amount_made);
+        }
+    };
 
     class recipe : public base_object
     {
     public:
-        std::string class_name;
-        std::vector<recipe_ingredient> ingredients;
-        std::vector<recipe_dish> dishes;
+        std::string name;
+        std::string description;
+        std::vector<std::shared_ptr<recipe_ingredient>> ingredients;
+        std::vector<std::shared_ptr<recipe_dish>> dishes;
+
+        virtual void put_json(json& _src)
+        {
+            json_parser jp;
+            ingredients.clear();
+            dishes.clear();
+            json jingredients = _src["ingredients"];
+            if (jingredients.array()) {
+                for (auto jingredient : jingredients)
+                {
+                    std::shared_ptr<recipe_ingredient> ingredient = std::make_shared<recipe_ingredient>();
+                    ingredient->put_json(jingredient);
+                    ingredients.push_back(ingredient);
+                }
+            }
+            json jdishes = _src["dishes"];
+            if (jdishes.array()) {
+                for (auto jdish : jdishes)
+                {
+                    std::shared_ptr<recipe_dish> dish = std::make_shared<recipe_dish>();
+                    dish->put_json(jdish);
+                    dishes.push_back(dish);
+                }
+            }
+        }
+
+        virtual void get_json(json& _dest)
+        {
+            json_parser jp;
+            json jingredients = jp.create_array();
+            json jdishes = jp.create_array();
+            for (auto& ingredient : ingredients)
+            {
+                json jingredient = jp.create_object();
+                ingredient->get_json(jingredient);
+                jingredients.push_back(jingredient);
+            }
+            for (auto& dish: dishes)
+            {
+                json jdish = jp.create_object();
+                dish->get_json(jdish);
+                jdishes.push_back(jdish);
+            }
+            _dest.put_member("ingredients", jingredients);
+            _dest.put_member("dishes", jdishes);
+        }
     };
 
     class game : public base_object
@@ -231,6 +309,7 @@ namespace corona::apps::revolution
         void put_json(json& _src)
         {
             base_object::put_json(_src);
+
             boards.clear();
             json boards_json = _src["boards"];
             if (boards_json.array())
@@ -242,6 +321,19 @@ namespace corona::apps::revolution
                     boards.insert_or_assign(b->name, b);
                 }
             }
+
+            recipes.clear();
+            json recipes_json = _src["recipes"];
+            if (recipes_json.array())
+            {
+                for (auto recipesj : recipes_json)
+                {
+                    std::shared_ptr<recipe> b = std::make_shared<recipe>();
+                    b->put_json(recipesj);
+                    recipes.insert_or_assign(b->name, b);
+                }
+            }
+
         }
 
         void get_json(json& _dest)
@@ -256,7 +348,159 @@ namespace corona::apps::revolution
                 jboards_json.push_back(jboard);
             }
             _dest.put_member("boards", jboards_json);
+
+            json jrecipes_json = jp.create_array();
+            for (auto& recipe_pair: recipes)
+            {
+                json jboard = jp.create_object();
+                recipe_pair.second->get_json(jboard);
+                jrecipes_json.push_back(jboard);
+            }
+            _dest.put_member("recipes", jrecipes_json);
+
         }
+    };
+
+    class inventory_count
+    {
+    public:
+        int64_t object_id;
+        double quantity;
+        std::shared_ptr<actor> actor;
+    };
+
+    class inventory_class {
+    public:
+        std::string class_name;
+        double quantity;
+        std::vector<inventory_count> items;
+    };
+
+    class inventory_transaction {
+    public:
+        std::string class_name;
+        std::shared_ptr<actor> actor;
+        double quantity;
+    };
+
+    class inventory
+    {
+        std::map<std::string, std::shared_ptr<inventory_class>> totals;
+
+        std::shared_ptr<inventory_class> check_ingredient(std::shared_ptr<recipe_ingredient>& _ingredient)
+        {
+            std::shared_ptr<inventory_class> total;
+
+            std::string class_name = _ingredient->consume_class_name;
+            double quantity = _ingredient->amount_used;
+
+            if (totals.find(class_name) == std::end(totals)) {
+                return total;
+            }
+            else
+            {
+                auto& total = totals[class_name];
+                total->quantity += quantity;
+
+                if (total->quantity >= quantity) {
+                    return total; // enough inventory
+                }
+            }
+            return total;
+        }
+
+        bool use_ingredient(std::vector<inventory_transaction>& _transactions, std::shared_ptr<recipe_ingredient>&_ingredient)
+        {
+            std::string class_name = _ingredient->consume_class_name;
+            double quantity = _ingredient->amount_used;
+
+            if (totals.find(class_name) == std::end(totals)) {
+                return false;
+            }
+            else
+            {
+                auto& total = totals[class_name];
+                total->quantity -= quantity;
+
+                for (auto& _item : total->items)
+                {
+                    if (_item.quantity >= quantity) {
+                        quantity = 0;
+                        _item.quantity -= quantity;
+
+                        inventory_transaction transaction;
+                        transaction.actor = _item.actor;
+                        transaction.class_name = _item.actor->class_name;
+                        transaction.quantity = -quantity;
+                        _transactions.push_back(transaction);
+                        break;
+                    }
+                    else if (_item.quantity < quantity and _item.quantity > 0.0) {
+                        quantity -= _item.quantity;
+                        _item.quantity = 0.0; // used up this item
+
+                        inventory_transaction transaction;
+                        transaction.actor = _item.actor;
+                        transaction.class_name = _item.actor->class_name;
+                        transaction.quantity = quantity;
+                        _transactions.push_back(transaction);
+                    }
+                }
+                if (quantity > 0) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+    public:
+
+        bool use(std::vector<inventory_transaction>& _transactions, std::shared_ptr<recipe>& _ingredient)
+        {
+            for (auto& ingredient : _ingredient->ingredients) {
+                if (not check_ingredient(ingredient)) {
+                    return false; // not enough inventory
+                }
+            }
+            for (auto& ingredient : _ingredient->ingredients) {
+                use_ingredient(_transactions, ingredient);
+            }
+            return true;
+        }
+
+        void add(std::shared_ptr<actor> _actor)
+        {
+            std::string class_name = _actor->class_name;
+            int64_t object_id = _actor->object_id;
+            double quantity = _actor->quantity;
+
+            if (totals.find(class_name) == std::end(totals)) {
+                std::shared_ptr<inventory_class> total = std::make_shared<inventory_class>();
+                total->class_name = class_name;
+                total->quantity = quantity;
+
+                inventory_count ict;
+                ict.object_id = object_id;
+                ict.quantity = quantity;
+                ict.actor = _actor;
+                total->items.push_back(ict);
+
+                totals[class_name] = total;
+            }
+            else 
+            {
+                auto& total = totals[class_name];
+                total->quantity += quantity;
+
+                inventory_count ict;
+                ict.object_id = object_id;
+                ict.quantity = quantity;
+                ict.actor = _actor;
+                total->items.push_back(ict);
+            }
+        }
+
     };
 
     class revolution_server
@@ -276,7 +520,7 @@ namespace corona::apps::revolution
 
             result = std::make_shared<object_type>();
 
-            json result_data = response["result"];
+            json result_data = response["data"];
             if (result_data.object())
             {
                 result->put_json(result_data);
@@ -293,24 +537,54 @@ namespace corona::apps::revolution
             json obj = jp.create_object();
 
             _obj->get_json(obj);
+
             json response = _service->put_object(obj);
 
-            if (response[success_field] == false)
+            if (response[success_field])
             {
-                // Handle error case
-                return;
-            }
+                json result_data = response["data"];
 
-            json result_data = response["result"];
-            if (result_data.object())
-            {
-                result->put_json(result_data);
+                if (result_data.object())
+                {
+                    _obj->put_json(result_data);
+                }
             }
-
         }
+
+        template <typename object_type> std::shared_ptr<object_type> create_object(comm_bus_service* _service, std::string _class_name)
+        {
+            json_parser jp;
+            std::shared_ptr<object_type> result = nullptr;
+
+            json response = _service->create_object(_class_name);
+
+            if (response[success_field])
+            {
+                json result_data = response["data"];
+                if (result_data.object())
+                {
+                    result = std::make_shared<object_type>();
+                    result->put_json(result_data);
+                }
+            }
+            return result;
+        }
+
     public:
 
         double selection_distance = 5.0;
+
+        std::shared_ptr<inventory> get_selection(comm_bus_service* _service, std::shared_ptr<actor> _actor)
+        {
+            std::shared_ptr<inventory> inv = std::make_shared<inventory>();
+            for (auto sel : _actor->selection) {
+                auto target = get_actor(_service, sel, false);
+                if (target) {
+                    inv->add(target);
+                }
+            }
+            return inv;
+        }
 
         std::shared_ptr<board> get_board(comm_bus_service* _service, object_reference_type& _ort, bool _recursive)
         {
@@ -433,41 +707,52 @@ namespace corona::apps::revolution
         void compose(comm_bus_service* _service, json& _command)
         {
             auto pactor = get_actor(_service, _command, true);
+            auto pgame = get_game(_service, _command, true);
+            auto actor_selection = get_selection(_service, pactor);
 
-            if (pactor) {
-
+            if (pactor and pgame) {
+                std::vector<inventory_transaction> transactions;
                 bool can_compose = true;
-
-                if (can_compose)
-                {
-                    std::string compose_class_name = _command["compose_class_name"];
-                    if (not compose_class_name.empty())
+                std::string compose_class_name = _command["compose_class_name"];
+                auto found_recipes = pgame->recipes.find(compose_class_name);
+                if (found_recipes != std::end(pgame->recipes)) {
+                    // take the things away
+                    auto my_recipe = found_recipes->second;
+                    actor_selection->use(transactions, my_recipe);
+                    for (auto& tran : transactions)
                     {
-                        json jclass = _service->get_class(compose_class_name);
+                        if (tran.actor)
+                        {
+                            tran.actor->quantity = tran.quantity;
+                            put_actor(_service, tran.actor);
+                        }
+                    }
+                    // then add the new things
+                    for (auto& dish : my_recipe->dishes)
+                    {
+                        std::shared_ptr<actor> new_actor = create_object<actor>(_service, dish->create_class_name);
+                        if (new_actor) {
+                            new_actor->quantity = dish->amount_made;
+                            new_actor->x = 0;
+                            new_actor->y = 0;
+                            new_actor->z = 0;
+                            new_actor->parent = pactor->object_id; // parent is the actor that composed it
+                            put_actor(_service, new_actor);
+                        }
                     }
                 }
-
-                for (object_reference_type xsort : pactor->selection)
-                {
-                    auto target = get_actor(_service, xsort, false);
-                    if (not target)
-                    {
-                        can_compose = false;
-                        break;
-                    }
-                }
-
             }
         }
 
         void take(comm_bus_service* _service, json& _command)
         {
             auto pactor = get_actor(_service, _command, true);
+            auto board = get_board(_service, _command, true);
+
             if (pactor) {
-                pactor->selection.clear();
+                
                 put_actor(_service, pactor);
             }
-
         }
 
         void drop(comm_bus_service* _service, json& _command)
@@ -517,7 +802,6 @@ namespace corona::apps::revolution
                 pactor->selection.clear();
                 put_actor(_service, pactor);
             }
-
         }
 
         void join_game(comm_bus_service* _service, json& _command)
@@ -537,7 +821,6 @@ namespace corona::apps::revolution
                 pactor->selection.clear();
                 put_actor(_service, pactor);
             }
-
         }
 
         bool operator()(comm_bus_service* _service, json& _command)
