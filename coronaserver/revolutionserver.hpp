@@ -212,7 +212,7 @@ namespace corona::apps::revolution
     public:
         std::string class_name;
         double      amount_made;
-    };
+    }; 
 
     class recipe : public base_object
     {
