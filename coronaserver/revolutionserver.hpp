@@ -736,11 +736,8 @@ namespace corona::apps::revolution
                             new_actor->x = 0;
                             new_actor->y = 0;
                             new_actor->z = 0;
+                            new_actor->parent = pactor->object_id; // parent is the actor that composed it
                             put_actor(_service, new_actor);
-                        }
-                        else 
-                        {
-                            can_compose = false; // failed to create the actor
                         }
                     }
                 }
@@ -750,11 +747,12 @@ namespace corona::apps::revolution
         void take(comm_bus_service* _service, json& _command)
         {
             auto pactor = get_actor(_service, _command, true);
+            auto board = get_board(_service, _command, true);
+
             if (pactor) {
-                pactor->selection.clear();
+                
                 put_actor(_service, pactor);
             }
-
         }
 
         void drop(comm_bus_service* _service, json& _command)
