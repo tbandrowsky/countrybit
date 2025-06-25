@@ -824,6 +824,13 @@ namespace corona
 		class_interface* create_class(std::string _class_name);
 	};
 
+	class corona_simulation_interface
+	{
+	public:
+
+		virtual void on_frame(json& _commands) = 0;
+	};
+
 	class corona_database_interface : public file_block
 	{
 	protected:
@@ -890,7 +897,7 @@ namespace corona
 		virtual write_class_sp create_lock_class(const std::string& _class_name) = 0;
 		virtual json save_class(write_class_sp& _class_to_save) = 0;
 		virtual json save_class(class_interface* _class_to_save) = 0;
-
+		virtual bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name) = 0;
 	};
 
 	class corona_db_header_struct
@@ -4722,7 +4729,9 @@ private:
 			return empty;
 		}
 
-		bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name)
+		public:
+
+		virtual bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name) override
 		{
 			std::string token = _message[token_field];
 
@@ -4735,6 +4744,8 @@ private:
 
 			return is_ok;
 		}
+
+		protected:
 
 		json select_object(json _key, bool _children, class_permissions _permission)
 		{

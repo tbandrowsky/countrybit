@@ -503,7 +503,7 @@ namespace corona::apps::revolution
 
     };
 
-    class revolution_server
+    class revolution_server : public corona_simulation_interface
     {
 
         template <typename object_type> std::shared_ptr<object_type> get_object(comm_bus_service* _service, std::string _class_name, int64_t _object_id, bool _include_children)
@@ -568,6 +568,11 @@ namespace corona::apps::revolution
                 }
             }
             return result;
+        }
+
+        std::string get_command_user(json _token)
+        {
+            ;
         }
 
     public:
@@ -749,38 +754,84 @@ namespace corona::apps::revolution
             auto pactor = get_actor(_service, _command, true);
             auto board = get_board(_service, _command, true);
 
-            if (pactor) {
-                
-                put_actor(_service, pactor);
+            if (pactor and board) {
+
+                json take_actors = _command["take_actors"];
+                if (take_actors.array()) {
+                    for (json jactor : take_actors)
+                    {
+                        object_reference_type xsort;
+                        corona::apps::revolution::put_json(xsort, jactor);
+                        auto target = get_actor(_service, jactor, false);
+
+                        // simple takeability constraint that we will refine later
+                        if (target)
+                        {
+                            double distance = point_math::distance({ target->x, target->y, target->z }, { target->x, target->y, target->z });
+                            if (distance < selection_distance)
+                            {
+                                target->parent = pactor->object_id; // take the actor
+                                put_actor(_service, target);
+                            }
+                        }
+                    }
+                }
             }
         }
 
         void drop(comm_bus_service* _service, json& _command)
         {
             auto pactor = get_actor(_service, _command, true);
-            if (pactor) {
-                pactor->selection.clear();
-                put_actor(_service, pactor);
+            auto board = get_board(_service, _command, true);
+
+            if (pactor and board) {
+                json drop_actors = _command["drop_actors"];
+                if (drop_actors.array()) {
+                    for (json jactor : drop_actors)
+                    {
+                        object_reference_type xsort;
+                        corona::apps::revolution::put_json(xsort, jactor);
+                        auto target = get_actor(_service, jactor, false);
+
+                        // simple drop constraint that we will refine later
+                        if (target and target->parent == pactor->object_id)
+                        {
+                            target->parent = board->object_id; // put the actor
+                            target->x = pactor->x; // drop it at the actor's location
+                            target->y = pactor->y;
+                            target->z = pactor->z;
+                            put_actor(_service, target);
+                        }
+                    }
+                }
             }
-
-        }
-
-        void trade(comm_bus_service* _service, json& _command)
-        {
-            auto pactor = get_actor(_service, _command, true);
-            if (pactor) {
-                pactor->selection.clear();
-                put_actor(_service, pactor);
-            }
-
         }
 
         void accelerate(comm_bus_service* _service, json& _command)
         {
             auto pactor = get_actor(_service, _command, true);
+            auto board = get_board(_service, _command, true);
             if (pactor) {
-                pactor->selection.clear();
-                put_actor(_service, pactor);
+                if (pactor and board) {
+                    json accelerate_actors = _command["accelerate_actors"];
+                    if (accelerate_actors.array()) {
+                        for (json jactor : accelerate_actors)
+                        {
+                            object_reference_type xsort;
+                            corona::apps::revolution::put_json(xsort, jactor);
+                            auto target = get_actor(_service, jactor, false);
+
+                            // simple constraint that we will refine later
+                            if (target and target->parent == pactor->object_id)
+                            {
+                                target->ax = _command["ax"];
+                                target->ay = _command["ay"];
+                                target->az = _command["az"];
+                                put_actor(_service, target);
+                            }
+                        }
+                    }
+                }
             }
 
         }
@@ -789,10 +840,7 @@ namespace corona::apps::revolution
         {
             auto pactor = get_actor(_service, _command, true);
             if (pactor) {
-                pactor->selection.clear();
-                put_actor(_service, pactor);
             }
-
         }
 
         void navigate(comm_bus_service* _service, json& _command)
@@ -808,8 +856,7 @@ namespace corona::apps::revolution
         {
             auto pactor = get_actor(_service, _command, true);
             if (pactor) {
-                pactor->selection.clear();
-                put_actor(_service, pactor);
+
             }
 
         }
@@ -847,10 +894,6 @@ namespace corona::apps::revolution
             {
                 drop(_service, _command);
             }
-            else if (class_name == "trade_command")
-            {
-                trade(_service, _command);
-            }
             else if (class_name == "accelerate_command")
             {
                 accelerate(_service, _command);
@@ -876,4 +919,12 @@ namespace corona::apps::revolution
         }
     };
 
+
 }
+
+
+int main(int argc, char** argv)
+{
+    return corona::apps::service_main<corona::apps::revolution::revolution_server>(argc, argv);
+}
+

@@ -20,7 +20,7 @@ For Future Consideration
 
 namespace corona
 {
-	class comm_bus_service : public system_monitoring_interface
+	template <typename simulation_interface> class comm_bus_service : public system_monitoring_interface
 	{
 
 	public:
@@ -28,6 +28,8 @@ namespace corona
 		std::shared_ptr<corona_database>	local_db;
 		std::shared_ptr<application>		app;
 		std::shared_ptr<file>				db_file;
+
+		std::shared_ptr<simulation_interface> simulation;
 
 		std::string database_schema_filename;
 		std::string database_config_filename;
@@ -428,12 +430,15 @@ namespace corona
 				}
 
 				if (show_listen) {
-					log_information("listening on :" + listen_point, __FILE__, __LINE__);
+					log_information("updated server, and listening on :" + listen_point, __FILE__, __LINE__);
 					for (auto path : api_paths) {
 						log_information(path, __FILE__, __LINE__);
 					}
 				}
 
+                if (simulation) {
+                    simulation->run_frame();
+                }
 			}
 		}
 

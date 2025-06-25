@@ -174,18 +174,19 @@
         "game": "->game",
         "board": "->board",
         "page": "->page",
-        "actor": "->actor"
+        "actor": "->actor",
+        "token": "string"
       }
     },
     {
-      "class_name": "selection_clear_command",
+      "class_name": "clear_selection",
       "class_description": "command for one piece to activate another",
       "base_class_name": "game_command",
       "fields": {
       }
     },
     {
-      "class_name": "selection_extend_command",
+      "class_name": "extend_selection",
       "class_description": "command for one piece to activate another",
       "base_class_name": "game_command",
       "fields": {
@@ -201,7 +202,7 @@
       }
     },
     {
-      "class_name": "take_selection",
+      "class_name": "take_actor",
       "class_description": "command to add additional items to inventory",
       "base_class_name": "game_command",
       "fields": {
@@ -209,7 +210,7 @@
       }
     },
     {
-      "class_name": "drop_selection",
+      "class_name": "drop_actor",
       "class_description": "command to drop selected pieces in inventory",
       "base_class_name": "game_command",
       "fields": {
@@ -217,33 +218,33 @@
       }
     },
     {
-      "class_name": "accelerate_selection",
+      "class_name": "accelerate_actor",
       "class_description": "command to move selected pieces",
       "base_class_name": "game_command",
       "fields": {
-        "target_actor_id": "->actor",
+        "accelerate_actors": "[ ->actor ]",
         "ax": "double",
         "ay": "double",
         "az": "double"
       }
     },
     {
-      "class_name": "activate_selection",
+      "class_name": "activate_actor",
       "class_description": "command for one piece to activate another",
       "base_class_name": "game_command",
       "fields": {
-        "target_actor_id": "->actor"
+        "activate_actors": "[ ->actor ]"
       }
     },
     {
-      "class_name": "navigate_command",
+      "class_name": "navigate",
       "class_description": "",
       "base_class_name": "game_command",
       "fields": {
       }
     },
     {
-      "class_name": "join_game_command",
+      "class_name": "join_game",
       "class_description": "command to join a game",
       "base_class_name": "game_command",
       "fields": {
@@ -251,7 +252,7 @@
       }
     },
     {
-      "class_name": "exit_game_command",
+      "class_name": "exit_game",
       "class_description": "command to leave a game",
       "base_class_name": "game_command",
       "fields": {
