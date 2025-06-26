@@ -896,6 +896,27 @@ namespace corona::apps::revolution
                     execute(command);
                 }
             }
+            json games = service->get_data("game");
+            if (games.array()) {
+                for (auto jgame : games) {
+                    std::shared_ptr<game> pgame = std::make_shared<game>();
+                    pgame->put_json(jgame);
+                    for (auto& board_pair : pgame->boards) {
+                        auto& board = board_pair.second;
+                        for (auto& actor_pair : board->actors) {
+                            auto& actor = actor_pair.second;
+                            actor->dx += actor->ax;
+                            actor->dy += actor->ay;
+                            actor->dz += actor->az;
+                            actor->x += actor->dx;
+                            actor->y += actor->dy;
+                            actor->z += actor->dz;
+                            put_actor(actor);
+                        }
+                    }
+                    put_game(pgame);
+                }
+            }
         }
 
         virtual void execute(json& _command)
