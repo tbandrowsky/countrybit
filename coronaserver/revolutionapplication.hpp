@@ -872,55 +872,77 @@ namespace corona::apps::revolution
             }
         }
 
-        bool operator()(json& _command)
+        virtual void on_frame(json& _commands)
+        {
+            if (_commands.object()) 
+            {
+                execute(_commands);
+            }
+            else if (_commands.array()) 
+            {
+                for (auto command : _commands)
+                {
+                    execute(command);
+                }
+            }
+        }
+
+        virtual void execute(json& _command)
         {
             std::string class_name = _command["class_name"];
+            int64_t object_id = (int64_t)_command["object_id"];
 
-            if (class_name == "select_clear_command")
-            {
-                clear_selection(_command);
-            }
-            else if (class_name == "select_extend_command")
-            {
-                extend_selection(_command);;
-            }
-            else if (class_name == "compose_command")
-            {
-                compose(_command);
-            }
-            else if (class_name == "take_command")
-            {
-                take(_command);
-            }
-            else if (class_name == "drop_command")
-            {
-                drop(_command);
-            }
-            else if (class_name == "accelerate_command")
-            {
-                accelerate(_command);
-            }
-            else if (class_name == "activate_command")
-            {
-                activate(_command);
-            }
-            else if (class_name == "navigate_command")
-            {
-                navigate(_command);
-            }
-            else if (class_name == "join_game_command")
-            {
-                join_game(_command);
-            }
-            else if (class_name == "exit_game_command")
-            {
-                exit_game(_command);
-            }
+            try {
 
-            return true;
+                if (class_name == "select_clear_command")
+                {
+                    clear_selection(_command);
+                }
+                else if (class_name == "select_extend_command")
+                {
+                    extend_selection(_command);;
+                }
+                else if (class_name == "compose_command")
+                {
+                    compose(_command);
+                }
+                else if (class_name == "take_command")
+                {
+                    take(_command);
+                }
+                else if (class_name == "drop_command")
+                {
+                    drop(_command);
+                }
+                else if (class_name == "accelerate_command")
+                {
+                    accelerate(_command);
+                }
+                else if (class_name == "activate_command")
+                {
+                    activate(_command);
+                }
+                else if (class_name == "navigate_command")
+                {
+                    navigate(_command);
+                }
+                else if (class_name == "join_game_command")
+                {
+                    join_game(_command);
+                }
+                else if (class_name == "exit_game_command")
+                {
+                    exit_game(_command);
+                }
+
+                service->delete_object(class_name, object_id);
+            }
+            catch (std::exception& e)
+            {
+                service->log_exception(e, __FILE__, __LINE__);
+            }
         }
     };
-
 
 }
 

@@ -293,6 +293,25 @@ namespace corona
 			return result;
 		}
 
+		json delete_object(std::string _class_name, int64_t _object_id)
+		{
+			json_parser jp;
+			json result;
+
+			std::string token = system_login();
+
+			if (token.empty()) {
+				return result;
+			}
+
+			json request = jp.create_object();
+			request.put_member(token_field, token);
+			request.put_member(class_name_field, _class_name);
+			request.put_member_i64(object_id_field, _object_id);
+			result = local_db->delete_object(request);
+			return result;
+		}
+
 		json create_object(std::string _class_name)
 		{
 			json_parser jp;
