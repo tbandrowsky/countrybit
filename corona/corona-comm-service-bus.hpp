@@ -50,13 +50,14 @@ namespace corona
 
 		std::string listen_point;
 
-		comm_bus_service(std::string _config_filename, bool _is_service = false)
+		comm_bus_service(std::shared_ptr<corona_simulation_interface>& _simulation, std::string _config_filename, bool _is_service = false)
 		{
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
 			date_time t = date_time::now();
 			json_parser jp;
 
+			simulation = _simulation;
 			is_service = _is_service;
 
 			log_command_start("comm_service_bus", "startup", t);

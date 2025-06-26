@@ -503,7 +503,7 @@ namespace corona::apps::revolution
 
     };
 
-    class revolution_server : public corona_simulation_interface
+    class revolution_simulation : public corona_simulation_interface
     {
 
         comm_bus_service* service;
@@ -909,8 +909,11 @@ namespace corona::apps::revolution
                             actor->dy += actor->ay;
                             actor->dz += actor->az;
                             actor->x += actor->dx;
-                            actor->y += actor->dy;
+                            actor->y += actor->dy; 
                             actor->z += actor->dz;
+                            actor->ax = 0.0;
+                            actor->ay = 0.0;
+                            actor->az = 0.0;
                             put_actor(actor);
                         }
                     }
@@ -978,9 +981,4 @@ namespace corona::apps::revolution
 
 }
 
-
-int main(int argc, char** argv)
-{
-    return corona::apps::service_main<corona::apps::revolution::revolution_server>(argc, argv);
-}
 
