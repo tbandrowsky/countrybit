@@ -508,6 +508,20 @@ namespace corona::apps::revolution
 
         comm_bus_service* service;
 
+        template <typename object_type> std::shared_ptr<object_type> from_object(json& _object)
+        {
+            std::shared_ptr<object_type> result = nullptr;
+
+            result = std::make_shared<object_type>();
+
+            if (_object.object())
+            {
+                result->put_json(_object);
+            }
+
+            return result;
+        }
+
         template <typename object_type> std::shared_ptr<object_type> get_object(std::string _class_name, int64_t _object_id, bool _include_children)
         {
             std::shared_ptr<object_type> result = nullptr;
@@ -528,8 +542,6 @@ namespace corona::apps::revolution
                 result->put_json(result_data);
             }
 
-            // This is a placeholder for the actual implementation
-            // that would retrieve a board by its ID.
             return result;
         }
 
@@ -623,7 +635,7 @@ namespace corona::apps::revolution
             if (ref.reference()) {
                 ref.reference_impl()->value.class_name;
                 ref.reference_impl()->value.object_id;
-                ret = get_board(_src_command, true);
+                ret = get_board(_src_command, _recursive);
             }
             return ret;
         }
@@ -860,8 +872,7 @@ namespace corona::apps::revolution
             if (pactor) {
 
             }
-
-        }
+        }                           
 
         void exit_game(json& _command)
         {
