@@ -82,17 +82,17 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
 
 
 
-void RunConsole()
+void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation)
 {
     exit_flag = false;
-
+    simulation = _simulation;
     SvcReportEvent("Running Console");
 
     if (SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
         try
         {
             std::cout << "Running in console mode. Type '?' for help." << std::endl;
-            service = std::make_shared<corona::comm_bus_service>(config_filename, false);
+            service = std::make_shared<corona::comm_bus_service>(_simulation, config_filename, false);
             while (not exit_flag)
             {
                 service->run_frame();
@@ -403,9 +403,9 @@ VOID SvcReportEvent(const char *szFunction)
     }
 }
 
-void RunService()
+void RunService(std::shared_ptr<corona::corona_simulation_interface> _simulation)
 {
-
+    simulation = _simulation;
     // If command-line parameter is "install", install the service. 
     // Otherwise, the service is probably being started by the SCM.
 
@@ -428,9 +428,7 @@ void RunService()
 
 }
 
-
-
-int service_main(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[])
+int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[])
 {
 
     char szUnquotedPath[MAX_PATH];
@@ -495,13 +493,9 @@ int service_main(std::shared_ptr<corona::corona_simulation_interface> _simulatio
     }
     else
     {
-        RunService();
+        RunService(_simulation);
         return 0;
     }
 }
 
 
-int main(int argc, char *argv[])
-{
-    return service_main(nullptr, argc, argv);
-}

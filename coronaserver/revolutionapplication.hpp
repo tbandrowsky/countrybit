@@ -981,4 +981,12 @@ namespace corona::apps::revolution
 
 }
 
+int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[]);
+
+int main(int argc, char* argv[])
+{
+    std::shared_ptr<corona::apps::revolution::revolution_simulation> simulation = std::make_shared<corona::apps::revolution::revolution_simulation>();
+    return CoronaMain(simulation, argc, argv);
+}
+
 
