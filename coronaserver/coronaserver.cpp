@@ -16,6 +16,11 @@ SERVICE_STATUS          gSvcStatus;
 SERVICE_STATUS_HANDLE   gSvcStatusHandle;
 HANDLE                  ghSvcStopEvent = NULL;
 
+std::shared_ptr<corona::corona_simulation_interface> simulation;
+std::shared_ptr<corona::comm_bus_service> service;
+bool exit_flag = false;
+std::string config_filename = "config.json";
+
 VOID InstallService(void);
 VOID WINAPI SvcCtrlHandler(DWORD);
 VOID WINAPI SvcMain(DWORD, LPTSTR*);
@@ -24,15 +29,6 @@ VOID ReportSvcStatus(DWORD, DWORD, DWORD);
 
 VOID SvcInit(DWORD, LPTSTR*);
 VOID SvcReportEvent(const char*);
-
-SERVICE_STATUS          gSvcStatus;
-SERVICE_STATUS_HANDLE   gSvcStatusHandle;
-HANDLE                  ghSvcStopEvent = NULL;
-
-std::shared_ptr<corona::corona_simulation_interface> simulation;
-std::shared_ptr<corona::comm_bus_service> service;
-bool exit_flag = false;
-std::string config_filename = "config.json";
 
 void corona_console_command()
 {
