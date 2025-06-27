@@ -29,6 +29,7 @@ SERVICE_STATUS          gSvcStatus;
 SERVICE_STATUS_HANDLE   gSvcStatusHandle;
 HANDLE                  ghSvcStopEvent = NULL;
 
+std::shared_ptr<corona::corona_simulation_interface> simulation;
 std::shared_ptr<corona::comm_bus_service> service;
 bool exit_flag = false;
 std::string config_filename = "config.json";
@@ -267,12 +268,11 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
 
     try 
     {        
-        corona::comm_bus_service corona_service(config_filename, true);
-        service = &corona_service;
+        service = std::make_shared<corona::comm_bus_service>(config_filename, false);
         while (not exit_flag)
         {
             ::Sleep(1);
-            corona_service.run_frame();
+            service->run_frame();
         }
     }
     catch (std::exception exc)
@@ -430,7 +430,7 @@ void RunService()
 
 
 
-int service_main(corona::corona_simulation_interface *_simulation, int argc, char* argv[])
+int service_main(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[])
 {
 
     char szUnquotedPath[MAX_PATH];
@@ -446,7 +446,7 @@ int service_main(corona::corona_simulation_interface *_simulation, int argc, cha
 
     if (argc <= 1)
     {
-        RunService();
+        RunService(_simulation);
         return 0;
     }
     else if (_strcmpi(argv[1], "install") == 0)
@@ -490,7 +490,7 @@ int service_main(corona::corona_simulation_interface *_simulation, int argc, cha
     }
     else if (_strcmpi(argv[1], "console") == 0)
     {
-        RunConsole();
+        RunConsole(_simulation);
         return 0;
     }
     else
