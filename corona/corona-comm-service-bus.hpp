@@ -331,6 +331,35 @@ namespace corona
 			return result;
 		}
 
+		json delete_data(std::string _class_name, int _object_id)
+		{
+			json_parser jp;
+			json result;
+
+			std::string token = system_login();
+
+			if (token.empty()) {
+				return result;
+			}
+
+			json request = R"(
+{
+	"token":"",
+	"class_name": "",
+	"object_id": 
+}
+)"_jobject;
+
+			request = jp.create_object();
+            request.put_member(token_field, token);
+
+			request.put_member("token", token);
+			json from = request["from"].get_element(0);
+			from.put_member(class_name_field, _class_name);
+			result = local_db->query(request);
+
+			return result;
+		}
 
 		json get_data(std::string _class_name)
 		{
@@ -437,7 +466,13 @@ namespace corona
 				}
 
                 if (simulation) {
-                    simulation->run_frame();
+					json commands = get_data("sys_command");
+					json data = commands[data_field];
+					simulation->run_frame(data);
+					for (auto idata : data)
+					{
+						local_db->delete_object(idata);
+					}
                 }
 			}
 		}
