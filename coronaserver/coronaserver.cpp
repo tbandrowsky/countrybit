@@ -264,7 +264,7 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
 
     try 
     {        
-        service = std::make_shared<corona::comm_bus_service>(config_filename, false);
+        service = std::make_shared<corona::comm_bus_service>(simulation, config_filename, false);
         while (not exit_flag)
         {
             ::Sleep(1);
