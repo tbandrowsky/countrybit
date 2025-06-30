@@ -1457,6 +1457,8 @@ namespace corona
 					_validation_errors.push_back(ve);
 					return false;
 				};
+
+				return is_legit;
 			}
 		}
 

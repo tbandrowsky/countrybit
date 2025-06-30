@@ -1686,6 +1686,9 @@ namespace corona
 			if (object_key.compare(_target) == 0) {
 				return _target;
 			}
+			json_parser jp;
+			json jx;
+			return jx;
 			});
 
 		object_key = jp.create_object();
@@ -1694,6 +1697,9 @@ namespace corona
 			if (object_key.compare(_target) == 0) {
 				return _target;
 			}
+			json_parser jp;
+			json jx;
+			return jx;
 			});
 
 		bool range_key_success = select_match_results.size() == count52;

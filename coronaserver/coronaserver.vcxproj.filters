@@ -15,10 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="coronaserver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="revolutionapplication.hpp">
+    <ClCompile Include="revolutionapplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,5 +32,10 @@
     <None Include="corona.postman_collection.json" />
     <None Include="revolution_schema.json" />
     <None Include="village_schema.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="coronaserver.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,8 +1,5 @@
 
-#include "corona.hpp"
-
-#include <windows.h>
-#include <iostream>
+#include "coronaserver.hpp"
 
 namespace corona::apps::revolution
 {   

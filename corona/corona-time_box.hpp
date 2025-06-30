@@ -474,7 +474,7 @@ namespace corona
 			return temp;
 		}
 
-		operator SYSTEMTIME& ()
+		operator SYSTEMTIME ()
 		{
 			SYSTEMTIME system_time;
 			sql_time_to_system_time(sql_date_time, system_time);

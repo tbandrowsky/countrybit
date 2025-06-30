@@ -153,8 +153,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="coronaserver.cpp" />
-    <ClCompile Include="revolutionapplication.hpp" />
+    <ClInclude Include="coronaserver.hpp" />
+    <ClCompile Include="revolutionapplication.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="config.json">
