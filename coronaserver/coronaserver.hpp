@@ -494,6 +494,8 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
         RunService(_simulation);
         return 0;
     }
+
+    return 1;
 }
 
 

@@ -497,6 +497,43 @@ namespace corona
 			return body;
 		}
 
+		json get_openapi()
+		{
+			json_parser jp;
+			json jopenapi = jp.create_object();
+			jopenapi.put_member("openapi", std::string("3.0.0"));
+
+			json jinfo = jp.create_object();
+			jinfo.put_member("title", std::string("Corona Database API"));
+			jinfo.put_member("version", std::string("1.0.0"));
+			jinfo.put_member("description", std::string("OpenAPI specification for the Corona Database API."));
+			jopenapi.put_member("info", jinfo);
+
+			// Example: /describe endpoint
+			json jendpoint = jp.create_object();
+
+			json post_op = jp.create_object();
+			post_op.put_member("summary", std::string("Returns the OpenAPI specification document."));
+			post_op.put_member("operationId", std::string("describe"));
+			json response = jp.parse_object(R"({
+        "200": {
+            "description": "OpenAPI document",
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            }
+        }
+    })"));
+			post_op.put_member("responses", response);
+			jendpoint.put_member("post", post_op);
+			json jpaths = jp.create_object();
+			jpaths.put_member("/describe", jendpoint);
+			return jopenapi;
+		}
+
 		http_handler_function corona_test = [this](http_action_request _request)-> void {
 			json parsed_request = parse_request(_request.request);
 			if (parsed_request.error()) {
@@ -637,6 +674,20 @@ namespace corona
 			_request.send_response(200, "Ok", fn_response);
 			};
 
+		http_handler_function corona_describe = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.error()) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
+			json fn_response = describe();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+
 		http_handler_function corona_objects_query = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
 			if (parsed_request.error()) {
@@ -733,7 +784,7 @@ namespace corona
 		}
 
 		http_response check_parse_error(json _request)
-		{
+		{ 
 			http_response response;
 
 			response.content_type = "application/json";
@@ -845,6 +896,11 @@ namespace corona
 				path = _root_path + "objects/copy/";
 				api_paths.push_back(path);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
+
+				path = _root_path + "describe/";
+				api_paths.push_back(path);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
+
 			}
 			catch (std::exception exc)
 			{

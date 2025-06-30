@@ -1457,6 +1457,8 @@ namespace corona
 					_validation_errors.push_back(ve);
 					return false;
 				};
+
+				return is_legit;
 			}
 		}
 
@@ -6774,6 +6776,7 @@ private:
 			}
 			return response;
 		}
+
 
 		virtual json create_object(json create_object_request)
 		{
