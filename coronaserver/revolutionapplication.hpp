@@ -152,7 +152,7 @@ namespace corona::apps::revolution
             for (auto& jc : selection) {
                 json jchild = jp.create_object();
                 corona::apps::revolution::get_json(jchild, jc);
-                jselection.push_back(jc);
+                jselection.push_back(jchild);
             }
             _dest.put_member("selections", jselection);
         }
@@ -503,14 +503,30 @@ namespace corona::apps::revolution
 
     };
 
-    class revolution_server : public corona_simulation_interface
+    class revolution_simulation : public corona_simulation_interface
     {
 
-        template <typename object_type> std::shared_ptr<object_type> get_object(comm_bus_service* _service, std::string _class_name, int64_t _object_id, bool _include_children)
+        comm_bus_service* service;
+
+        template <typename object_type> std::shared_ptr<object_type> from_object(json& _object)
         {
             std::shared_ptr<object_type> result = nullptr;
 
-            json response = _service->get_object(_class_name, _object_id, _include_children);
+            result = std::make_shared<object_type>();
+
+            if (_object.object())
+            {
+                result->put_json(_object);
+            }
+
+            return result;
+        }
+
+        template <typename object_type> std::shared_ptr<object_type> get_object(std::string _class_name, int64_t _object_id, bool _include_children)
+        {
+            std::shared_ptr<object_type> result = nullptr;
+
+            json response = service->get_object(_class_name, _object_id, _include_children);
 
             if ((bool)response[success_field] == false)
             {
@@ -526,19 +542,17 @@ namespace corona::apps::revolution
                 result->put_json(result_data);
             }
 
-            // This is a placeholder for the actual implementation
-            // that would retrieve a board by its ID.
             return result;
         }
 
-        template <typename object_type> void put_object(comm_bus_service* _service, std::shared_ptr<object_type> _obj)
+        template <typename object_type> void put_object(std::shared_ptr<object_type> _obj)
         {
             json_parser jp;
             json obj = jp.create_object();
 
             _obj->get_json(obj);
 
-            json response = _service->put_object(obj);
+            json response =service->put_object(obj);
 
             if (response[success_field])
             {
@@ -551,12 +565,12 @@ namespace corona::apps::revolution
             }
         }
 
-        template <typename object_type> std::shared_ptr<object_type> create_object(comm_bus_service* _service, std::string _class_name)
+        template <typename object_type> std::shared_ptr<object_type> create_object(std::string _class_name)
         {
             json_parser jp;
             std::shared_ptr<object_type> result = nullptr;
 
-            json response = _service->create_object(_class_name);
+            json response = service->create_object(_class_name);
 
             if (response[success_field])
             {
@@ -579,11 +593,11 @@ namespace corona::apps::revolution
 
         double selection_distance = 5.0;
 
-        std::shared_ptr<inventory> get_selection(comm_bus_service* _service, std::shared_ptr<actor> _actor)
+        std::shared_ptr<inventory> get_selection(std::shared_ptr<actor> _actor)
         {
             std::shared_ptr<inventory> inv = std::make_shared<inventory>();
             for (auto sel : _actor->selection) {
-                auto target = get_actor(_service, sel, false);
+                auto target = get_actor(sel, false);
                 if (target) {
                     inv->add(target);
                 }
@@ -591,28 +605,28 @@ namespace corona::apps::revolution
             return inv;
         }
 
-        std::shared_ptr<board> get_board(comm_bus_service* _service, object_reference_type& _ort, bool _recursive)
+        std::shared_ptr<board> get_board(object_reference_type& _ort, bool _recursive)
         {
             // This is a placeholder for the actual implementation
             // that would retrieve a board by its ID.
-            return get_object<board>(_service, "board", _ort.object_id, _recursive);
+            return get_object<board>("board", _ort.object_id, _recursive);
         }
 
-        std::shared_ptr<game> get_game(comm_bus_service* _service, object_reference_type& _ort, bool _recursive)
+        std::shared_ptr<game> get_game(object_reference_type& _ort, bool _recursive)
         {
             // This is a placeholder for the actual implementation 
             // that would retrieve a board by its ID.
-            return get_object<game>(_service, "game", _ort.object_id, _recursive);
+            return get_object<game>("game", _ort.object_id, _recursive);
         }
 
-        std::shared_ptr<actor> get_actor(comm_bus_service* _service, object_reference_type& _ort, bool _recursive)
+        std::shared_ptr<actor> get_actor(object_reference_type& _ort, bool _recursive)
         {
             // This is a placeholder for the actual implementation 
             // that would retrieve a board by its ID.
-            return get_object<actor>(_service, "actor", _ort.object_id, _recursive);
+            return get_object<actor>("actor", _ort.object_id, _recursive);
         }
 
-        std::shared_ptr<board> get_board(comm_bus_service* _service, json& _src_command, bool _recursive)
+        std::shared_ptr<board> get_board(json& _src_command, bool _recursive)
         {
             std::shared_ptr<board> ret;
             // This is a placeholder for the actual implementation
@@ -621,12 +635,12 @@ namespace corona::apps::revolution
             if (ref.reference()) {
                 ref.reference_impl()->value.class_name;
                 ref.reference_impl()->value.object_id;
-                ret = get_board(_service, _src_command, true);
+                ret = get_board(_src_command, _recursive);
             }
             return ret;
         }
 
-        std::shared_ptr<game> get_game(comm_bus_service* _service, json& _src_command, bool _recursive)
+        std::shared_ptr<game> get_game(json& _src_command, bool _recursive)
         {
             std::shared_ptr<game> ret;
             // This is a placeholder for the actual implementation
@@ -635,12 +649,12 @@ namespace corona::apps::revolution
             if (ref.reference()) {
                 ref.reference_impl()->value.class_name;
                 ref.reference_impl()->value.object_id;
-                ret = get_game(_service, _src_command, true);
+                ret = get_game(_src_command, true);
             }
             return ret;
         }
 
-        std::shared_ptr<actor> get_actor(comm_bus_service* _service, json& _src_command, bool _recursive)
+        std::shared_ptr<actor> get_actor(json& _src_command, bool _recursive)
         {
             // This is a placeholder for the actual implementation 
             // that would retrieve a board by its ID.
@@ -651,41 +665,41 @@ namespace corona::apps::revolution
             if (ref.reference()) {
                 ref.reference_impl()->value.class_name;
                 ref.reference_impl()->value.object_id;
-                ret = get_actor(_service, _src_command, true);
+                ret = get_actor(_src_command, true);
             }
             return ret;
         }
 
-        std::shared_ptr<actor> put_actor(comm_bus_service* _service, std::shared_ptr<actor> _actor)
+        std::shared_ptr<actor> put_actor(std::shared_ptr<actor> _actor)
         {
-            put_object(_service, _actor);
+            put_object(_actor);
             return _actor;
         }
 
-        std::shared_ptr<board> put_board(comm_bus_service* _service, std::shared_ptr<board> _actor)
+        std::shared_ptr<board> put_board(std::shared_ptr<board> _actor)
         {
-            put_object(_service, _actor);
+            put_object(_actor);
             return _actor;
         }
 
-        std::shared_ptr<game> put_game(comm_bus_service* _service, std::shared_ptr<game> _actor)
+        std::shared_ptr<game> put_game(std::shared_ptr<game> _actor)
         {
-            put_object(_service, _actor);
+            put_object(_actor);
             return _actor;
         }
 
-        void clear_selection(comm_bus_service* _service, json& _command)
+        void clear_selection(json& _command)
         {
-            auto pactor = get_actor(_service, _command, true);
+            auto pactor = get_actor(_command, true);
             if (pactor) {
                 pactor->selection.clear();
-                put_actor(_service, pactor);
+                put_actor(pactor);
             }
         }
 
-        void extend_selection(comm_bus_service* _service, json& _command)
+        void extend_selection(json& _command)
         {
-            auto pactor = get_actor(_service, _command, true);
+            auto pactor = get_actor(_command, true);
             if (pactor) {
                 json_parser jp;
                 json add_actors = _command["add_actors"];
@@ -694,7 +708,7 @@ namespace corona::apps::revolution
                     {
                         object_reference_type xsort;
                         corona::apps::revolution::put_json(xsort, jactor);
-                        auto target = get_actor(_service, jactor, false);
+                        auto target = get_actor(jactor, false);
                         if (target)
                         {
                             double distance = point_math::distance({ target->x, target->y, target->z }, { target->x, target->y, target->z });
@@ -704,16 +718,16 @@ namespace corona::apps::revolution
                             }
                         }
                     }
-                    put_actor(_service, pactor);
+                    put_actor(pactor);
                 }
             }
         }
 
-        void compose(comm_bus_service* _service, json& _command)
+        void compose(json& _command)
         {
-            auto pactor = get_actor(_service, _command, true);
-            auto pgame = get_game(_service, _command, true);
-            auto actor_selection = get_selection(_service, pactor);
+            auto pactor = get_actor(_command, true);
+            auto pgame = get_game(_command, true);
+            auto actor_selection = get_selection(pactor);
 
             if (pactor and pgame) {
                 std::vector<inventory_transaction> transactions;
@@ -729,30 +743,30 @@ namespace corona::apps::revolution
                         if (tran.actor)
                         {
                             tran.actor->quantity = tran.quantity;
-                            put_actor(_service, tran.actor);
+                            put_actor(tran.actor);
                         }
                     }
                     // then add the new things
                     for (auto& dish : my_recipe->dishes)
                     {
-                        std::shared_ptr<actor> new_actor = create_object<actor>(_service, dish->create_class_name);
+                        std::shared_ptr<actor> new_actor = create_object<actor>(dish->create_class_name);
                         if (new_actor) {
                             new_actor->quantity = dish->amount_made;
                             new_actor->x = 0;
                             new_actor->y = 0;
                             new_actor->z = 0;
                             new_actor->parent = pactor->object_id; // parent is the actor that composed it
-                            put_actor(_service, new_actor);
+                            put_actor(new_actor);
                         }
                     }
                 }
             }
         }
 
-        void take(comm_bus_service* _service, json& _command)
+        void take(json& _command)
         {
-            auto pactor = get_actor(_service, _command, true);
-            auto board = get_board(_service, _command, true);
+            auto pactor = get_actor(_command, true);
+            auto board = get_board(_command, true);
 
             if (pactor and board) {
 
@@ -762,7 +776,7 @@ namespace corona::apps::revolution
                     {
                         object_reference_type xsort;
                         corona::apps::revolution::put_json(xsort, jactor);
-                        auto target = get_actor(_service, jactor, false);
+                        auto target = get_actor(jactor, false);
 
                         // simple takeability constraint that we will refine later
                         if (target)
@@ -771,7 +785,7 @@ namespace corona::apps::revolution
                             if (distance < selection_distance)
                             {
                                 target->parent = pactor->object_id; // take the actor
-                                put_actor(_service, target);
+                                put_actor(target);
                             }
                         }
                     }
@@ -779,10 +793,10 @@ namespace corona::apps::revolution
             }
         }
 
-        void drop(comm_bus_service* _service, json& _command)
+        void drop(json& _command)
         {
-            auto pactor = get_actor(_service, _command, true);
-            auto board = get_board(_service, _command, true);
+            auto pactor = get_actor(_command, true);
+            auto board = get_board(_command, true);
 
             if (pactor and board) {
                 json drop_actors = _command["drop_actors"];
@@ -791,7 +805,7 @@ namespace corona::apps::revolution
                     {
                         object_reference_type xsort;
                         corona::apps::revolution::put_json(xsort, jactor);
-                        auto target = get_actor(_service, jactor, false);
+                        auto target = get_actor(jactor, false);
 
                         // simple drop constraint that we will refine later
                         if (target and target->parent == pactor->object_id)
@@ -800,17 +814,17 @@ namespace corona::apps::revolution
                             target->x = pactor->x; // drop it at the actor's location
                             target->y = pactor->y;
                             target->z = pactor->z;
-                            put_actor(_service, target);
+                            put_actor(target);
                         }
                     }
                 }
             }
         }
 
-        void accelerate(comm_bus_service* _service, json& _command)
+        void accelerate(json& _command)
         {
-            auto pactor = get_actor(_service, _command, true);
-            auto board = get_board(_service, _command, true);
+            auto pactor = get_actor(_command, true);
+            auto board = get_board(_command, true);
             if (pactor) {
                 if (pactor and board) {
                     json accelerate_actors = _command["accelerate_actors"];
@@ -819,7 +833,7 @@ namespace corona::apps::revolution
                         {
                             object_reference_type xsort;
                             corona::apps::revolution::put_json(xsort, jactor);
-                            auto target = get_actor(_service, jactor, false);
+                            auto target = get_actor(jactor, false);
 
                             // simple constraint that we will refine later
                             if (target and target->parent == pactor->object_id)
@@ -827,7 +841,7 @@ namespace corona::apps::revolution
                                 target->ax = _command["ax"];
                                 target->ay = _command["ay"];
                                 target->az = _command["az"];
-                                put_actor(_service, target);
+                                put_actor(target);
                             }
                         }
                     }
@@ -836,95 +850,143 @@ namespace corona::apps::revolution
 
         }
 
-        void activate(comm_bus_service* _service, json& _command)
+        void activate(json& _command)
         {
-            auto pactor = get_actor(_service, _command, true);
+            auto pactor = get_actor(_command, true);
             if (pactor) {
             }
         }
 
-        void navigate(comm_bus_service* _service, json& _command)
+        void navigate(json& _command)
         {
-            auto pactor = get_actor(_service, _command, true);
-            if (pactor) {
-                pactor->selection.clear();
-                put_actor(_service, pactor);
-            }
-        }
-
-        void join_game(comm_bus_service* _service, json& _command)
-        {
-            auto pactor = get_actor(_service, _command, true);
-            if (pactor) {
-
-            }
-
-        }
-
-        void exit_game(comm_bus_service* _service, json& _command)
-        {
-            auto pactor = get_actor(_service, _command, true);
+            auto pactor = get_actor(_command, true);
             if (pactor) {
                 pactor->selection.clear();
-                put_actor(_service, pactor);
+                put_actor(pactor);
             }
         }
 
-        bool operator()(comm_bus_service* _service, json& _command)
+        void join_game(json& _command)
+        {
+            auto pactor = get_actor(_command, true);
+            if (pactor) {
+
+            }
+        }                           
+
+        void exit_game(json& _command)
+        {
+            auto pactor = get_actor(_command, true);
+            if (pactor) {
+                pactor->selection.clear();
+                put_actor(pactor);
+            }
+        }
+
+        virtual void on_frame(json& _commands)
+        {
+            if (_commands.object()) 
+            {
+                execute(_commands);
+            }
+            else if (_commands.array()) 
+            {
+                for (auto command : _commands)
+                {
+                    execute(command);
+                }
+            }
+            json games = service->get_data("game");
+            if (games.array()) {
+                for (auto jgame : games) {
+                    std::shared_ptr<game> pgame = std::make_shared<game>();
+                    pgame->put_json(jgame);
+                    for (auto& board_pair : pgame->boards) {
+                        auto& board = board_pair.second;
+                        for (auto& actor_pair : board->actors) {
+                            auto& actor = actor_pair.second;
+                            actor->dx += actor->ax;
+                            actor->dy += actor->ay;
+                            actor->dz += actor->az;
+                            actor->x += actor->dx;
+                            actor->y += actor->dy; 
+                            actor->z += actor->dz;
+                            actor->ax = 0.0;
+                            actor->ay = 0.0;
+                            actor->az = 0.0;
+                            put_actor(actor);
+                        }
+                    }
+                    put_game(pgame);
+                }
+            }
+        }
+
+        virtual void execute(json& _command)
         {
             std::string class_name = _command["class_name"];
+            int64_t object_id = (int64_t)_command["object_id"];
 
-            if (class_name == "select_clear_command")
-            {
-                clear_selection(_service, _command);
-            }
-            else if (class_name == "select_extend_command")
-            {
-                extend_selection(_service, _command);;
-            }
-            else if (class_name == "compose_command")
-            {
-                compose(_service, _command);
-            }
-            else if (class_name == "take_command")
-            {
-                take(_service, _command);
-            }
-            else if (class_name == "drop_command")
-            {
-                drop(_service, _command);
-            }
-            else if (class_name == "accelerate_command")
-            {
-                accelerate(_service, _command);
-            }
-            else if (class_name == "activate_command")
-            {
-                activate(_service, _command);
-            }
-            else if (class_name == "navigate_command")
-            {
-                navigate(_service, _command);
-            }
-            else if (class_name == "join_game_command")
-            {
-                join_game(_service, _command);
-            }
-            else if (class_name == "exit_game_command")
-            {
-                exit_game(_service, _command);
-            }
+            try {
 
-            return true;
+                if (class_name == "select_clear_command")
+                {
+                    clear_selection(_command);
+                }
+                else if (class_name == "select_extend_command")
+                {
+                    extend_selection(_command);;
+                }
+                else if (class_name == "compose_command")
+                {
+                    compose(_command);
+                }
+                else if (class_name == "take_command")
+                {
+                    take(_command);
+                }
+                else if (class_name == "drop_command")
+                {
+                    drop(_command);
+                }
+                else if (class_name == "accelerate_command")
+                {
+                    accelerate(_command);
+                }
+                else if (class_name == "activate_command")
+                {
+                    activate(_command);
+                }
+                else if (class_name == "navigate_command")
+                {
+                    navigate(_command);
+                }
+                else if (class_name == "join_game_command")
+                {
+                    join_game(_command);
+                }
+                else if (class_name == "exit_game_command")
+                {
+                    exit_game(_command);
+                }
+
+                service->delete_object(class_name, object_id);
+            }
+            catch (std::exception& e)
+            {
+                service->log_exception(e, __FILE__, __LINE__);
+            }
         }
     };
 
-
 }
 
+int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[]);
 
-int main(int argc, char** argv)
+int main(int argc, char* argv[])
 {
-    return corona::apps::service_main<corona::apps::revolution::revolution_server>(argc, argv);
+    std::shared_ptr<corona::apps::revolution::revolution_simulation> simulation = std::make_shared<corona::apps::revolution::revolution_simulation>();
+    return CoronaMain(simulation, argc, argv);
 }
+
 

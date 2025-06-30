@@ -7,9 +7,28 @@
 #include <windows.h>
 #include <iostream>
 
-corona::comm_bus_service* service;
+char SVCNAME[] = "Corona Database";
+char SVCEVENTDISP[] = "StartServiceCtrlDispatcher";
+
+#pragma comment(lib, "advapi32.lib")
+
+SERVICE_STATUS          gSvcStatus;
+SERVICE_STATUS_HANDLE   gSvcStatusHandle;
+HANDLE                  ghSvcStopEvent = NULL;
+
+std::shared_ptr<corona::corona_simulation_interface> simulation;
+std::shared_ptr<corona::comm_bus_service> service;
 bool exit_flag = false;
 std::string config_filename = "config.json";
+
+VOID InstallService(void);
+VOID WINAPI SvcCtrlHandler(DWORD);
+VOID WINAPI SvcMain(DWORD, LPTSTR*);
+
+VOID ReportSvcStatus(DWORD, DWORD, DWORD);
+
+VOID SvcInit(DWORD, LPTSTR*);
+VOID SvcReportEvent(const char*);
 
 void corona_console_command()
 {
@@ -57,36 +76,22 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
     }
 }
 
-#pragma comment(lib, "advapi32.lib")
-
-SERVICE_STATUS          gSvcStatus;
-SERVICE_STATUS_HANDLE   gSvcStatusHandle;
-HANDLE                  ghSvcStopEvent = NULL;
-
-VOID SvcInstall(void);
-VOID WINAPI SvcCtrlHandler(DWORD);
-VOID WINAPI SvcMain(DWORD, LPTSTR*);
-
-VOID ReportSvcStatus(DWORD, DWORD, DWORD);
-// Update the SVCNAME definition to use a compatible type
-char SVCNAME[] = "Corona Database";
-char SVCEVENTDISP[] = "StartServiceCtrlDispatcher";
-VOID SvcInit(DWORD, LPTSTR*);
-VOID SvcReportEvent(const char *);
 
 
-void RunConsole()
+void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation)
 {
     exit_flag = false;
-
+    simulation = _simulation;
     SvcReportEvent("Running Console");
 
     if (SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
-        try {
-            corona::comm_bus_service corona_service(config_filename, false);
+        try
+        {
+            std::cout << "Running in console mode. Type '?' for help." << std::endl;
+            service = std::make_shared<corona::comm_bus_service>(_simulation, config_filename, false);
             while (not exit_flag)
             {
-                corona_service.run_frame();
+                service->run_frame();
             }
         }
         catch (std::exception exc)
@@ -111,7 +116,7 @@ void RunConsole()
 // Return value:
 //   None
 //
-VOID SvcInstall()
+VOID InstallService()
 {
     SC_HANDLE schSCManager;
     SC_HANDLE schService;
@@ -259,11 +264,11 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
 
     try 
     {        
-        corona::comm_bus_service corona_service(config_filename, true);
+        service = std::make_shared<corona::comm_bus_service>(simulation, config_filename, false);
         while (not exit_flag)
         {
             ::Sleep(1);
-            corona_service.run_frame();
+            service->run_frame();
         }
     }
     catch (std::exception exc)
@@ -394,9 +399,9 @@ VOID SvcReportEvent(const char *szFunction)
     }
 }
 
-void RunService()
+void RunService(std::shared_ptr<corona::corona_simulation_interface> _simulation)
 {
-
+    simulation = _simulation;
     // If command-line parameter is "install", install the service. 
     // Otherwise, the service is probably being started by the SCM.
 
@@ -419,7 +424,7 @@ void RunService()
 
 }
 
-int main(int argc, char *argv[])
+int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[])
 {
 
     char szUnquotedPath[MAX_PATH];
@@ -435,56 +440,58 @@ int main(int argc, char *argv[])
 
     if (argc <= 1)
     {
-        RunService();
+        RunService(_simulation);
         return 0;
     }
     else if (_strcmpi(argv[1], "install") == 0)
     {
-        SvcInstall();
+        InstallService();
         return 0;
-	}
-	else if (_strcmpi(argv[1], "uninstall") == 0)
-	{
-		SC_HANDLE schSCManager;
-		SC_HANDLE schService;
-		// Get a handle to the SCM database. 
-		schSCManager = OpenSCManager(
-			NULL,                    // local computer
-			NULL,                    // ServicesActive database 
-			SC_MANAGER_ALL_ACCESS);  // full access rights 
-		if (NULL == schSCManager)
-		{
-			printf("OpenSCManager failed (%d)\n", GetLastError());
-			return 1;
-		}
-		// Get a handle to the service.
-		schService = OpenService(
-			schSCManager,   // SCM database 
-			SVCNAME,        // name of service 
-			DELETE);        // need delete access 
-		if (schService == NULL)
-		{
-			printf("OpenService failed (%d)\n", GetLastError());
-			CloseServiceHandle(schSCManager);
-			return 1;
-		}
-		// Delete the service.
-		if (!DeleteService(schService))
-		{
-			printf("DeleteService failed (%d)\n", GetLastError());
-		}
-		else printf("Service deleted successfully\n");
-		CloseServiceHandle(schService);
-		CloseServiceHandle(schSCManager);
-	}
+    }
+    else if (_strcmpi(argv[1], "uninstall") == 0)
+    {
+        SC_HANDLE schSCManager;
+        SC_HANDLE schService;
+        // Get a handle to the SCM database. 
+        schSCManager = OpenSCManager(
+            NULL,                    // local computer
+            NULL,                    // ServicesActive database 
+            SC_MANAGER_ALL_ACCESS);  // full access rights 
+        if (NULL == schSCManager)
+        {
+            printf("OpenSCManager failed (%d)\n", GetLastError());
+            return 1;
+        }
+        // Get a handle to the service.
+        schService = OpenService(
+            schSCManager,   // SCM database 
+            SVCNAME,        // name of service 
+            DELETE);        // need delete access 
+        if (schService == NULL)
+        {
+            printf("OpenService failed (%d)\n", GetLastError());
+            CloseServiceHandle(schSCManager);
+            return 1;
+        }
+        // Delete the service.
+        if (!DeleteService(schService))
+        {
+            printf("DeleteService failed (%d)\n", GetLastError());
+        }
+        else printf("Service deleted successfully\n");
+        CloseServiceHandle(schService);
+        CloseServiceHandle(schSCManager);
+    }
     else if (_strcmpi(argv[1], "console") == 0)
     {
-        RunConsole();
+        RunConsole(_simulation);
         return 0;
-	}
-	else 
-	{
-		RunService();
-		return 0;
-	}
+    }
+    else
+    {
+        RunService(_simulation);
+        return 0;
+    }
 }
+
+

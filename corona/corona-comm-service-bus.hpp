@@ -20,7 +20,7 @@ For Future Consideration
 
 namespace corona
 {
-	template <typename simulation_interface> class comm_bus_service : public system_monitoring_interface
+	class comm_bus_service : public system_monitoring_interface
 	{
 
 	public:
@@ -29,7 +29,7 @@ namespace corona
 		std::shared_ptr<application>		app;
 		std::shared_ptr<file>				db_file;
 
-		std::shared_ptr<simulation_interface> simulation;
+		std::shared_ptr<corona_simulation_interface> simulation;
 
 		std::string database_schema_filename;
 		std::string database_config_filename;
@@ -50,13 +50,14 @@ namespace corona
 
 		std::string listen_point;
 
-		comm_bus_service(std::string _config_filename, bool _is_service = false)
+		comm_bus_service(std::shared_ptr<corona_simulation_interface>& _simulation, std::string _config_filename, bool _is_service = false)
 		{
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
 			date_time t = date_time::now();
 			json_parser jp;
 
+			simulation = _simulation;
 			is_service = _is_service;
 
 			log_command_start("comm_service_bus", "startup", t);
@@ -293,6 +294,25 @@ namespace corona
 			return result;
 		}
 
+		json delete_object(std::string _class_name, int64_t _object_id)
+		{
+			json_parser jp;
+			json result;
+
+			std::string token = system_login();
+
+			if (token.empty()) {
+				return result;
+			}
+
+			json request = jp.create_object();
+			request.put_member(token_field, token);
+			request.put_member(class_name_field, _class_name);
+			request.put_member_i64(object_id_field, _object_id);
+			result = local_db->delete_object(request);
+			return result;
+		}
+
 		json create_object(std::string _class_name)
 		{
 			json_parser jp;
@@ -331,35 +351,6 @@ namespace corona
 			return result;
 		}
 
-		json delete_data(std::string _class_name, int _object_id)
-		{
-			json_parser jp;
-			json result;
-
-			std::string token = system_login();
-
-			if (token.empty()) {
-				return result;
-			}
-
-			json request = R"(
-{
-	"token":"",
-	"class_name": "",
-	"object_id": 
-}
-)"_jobject;
-
-			request = jp.create_object();
-            request.put_member(token_field, token);
-
-			request.put_member("token", token);
-			json from = request["from"].get_element(0);
-			from.put_member(class_name_field, _class_name);
-			result = local_db->query(request);
-
-			return result;
-		}
 
 		json get_data(std::string _class_name)
 		{
@@ -466,12 +457,10 @@ namespace corona
 				}
 
                 if (simulation) {
-					json commands = get_data("sys_command");
-					json data = commands[data_field];
-					simulation->run_frame(data);
-					for (auto idata : data)
-					{
-						local_db->delete_object(idata);
+					json result = get_data("sys_command");
+					if (result["success"]) {
+						json data = result["data"];
+						simulation->on_frame(data);
 					}
                 }
 			}
