@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="coronaserver.cpp">
+    <ClCompile Include="revolutionapplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -34,7 +34,7 @@
     <None Include="village_schema.json" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="revolutionapplication.hpp">
+    <ClInclude Include="coronaserver.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

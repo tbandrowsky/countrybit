@@ -21,9 +21,11 @@ std::shared_ptr<corona::comm_bus_service> service;
 bool exit_flag = false;
 std::string config_filename = "config.json";
 
+int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[]);
+
 VOID InstallService(void);
-VOID WINAPI SvcCtrlHandler(DWORD);
-VOID WINAPI SvcMain(DWORD, LPTSTR*);
+VOID SvcCtrlHandler(DWORD);
+VOID SvcMain(DWORD, LPTSTR*);
 
 VOID ReportSvcStatus(DWORD, DWORD, DWORD);
 
@@ -493,5 +495,6 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
         return 0;
     }
 }
+
 
 
