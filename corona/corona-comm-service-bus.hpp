@@ -823,6 +823,8 @@ namespace corona
 			std::string path;
 			std::string name;
 			std::string description;
+			std::string request;
+			std::string response;
 		};
 
 		std::vector<api_definition> api_paths;
