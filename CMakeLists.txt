@@ -15,3 +15,5 @@ project ("countrybit")
 add_subdirectory ("zxing")
 
 add_subdirectory("zxinglib")
+
+
