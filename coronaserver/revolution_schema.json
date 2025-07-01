@@ -1,6 +1,6 @@
 {
-  "schema_name": "Country Video Games Revolution",
-  "schema_description": "Schema for the Revolution Server.",
+  "schema_name": "Revolution",
+  "schema_description": "Schema for the Revolution.",
   "schema_version": "1.0",
   "schema_authors": [
     "TJ Bandrowsky"
@@ -72,7 +72,7 @@
       "class_name": "actor",
       "class_description": "an item on the board",
       "base_class_name": "sys_object",
-      "parents": [ "parent" ],
+      "parents": [ "actor" ],
       "fields": {
         "name": "string",
         "type": "string",
@@ -382,10 +382,7 @@
       "class_description": "offices to influence or control",
       "base_class_name": "public_office",
       "fields": {
-        "name": "string",
-        "description": "string",
-        "corporation": "string",
-        "incumbent": "contact"
+        "corporation": "string"
       }
     },
     {

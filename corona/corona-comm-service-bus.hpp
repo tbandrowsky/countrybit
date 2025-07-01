@@ -504,18 +504,20 @@ namespace corona
 			jopenapi.put_member("openapi", std::string("3.0.0"));
 
 			json jinfo = jp.create_object();
-			jinfo.put_member("title", std::string("Corona Database API"));
-			jinfo.put_member("version", std::string("1.0.0"));
-			jinfo.put_member("description", std::string("OpenAPI specification for the Corona Database API."));
+			jinfo.put_member("title", local_db->default_api_title);
+			jinfo.put_member("version", local_db->default_api_version);
+			jinfo.put_member("description", local_db->default_api_description);
 			jopenapi.put_member("info", jinfo);
 
 			// Example: /describe endpoint
 			json jendpoint = jp.create_object();
 
-			json post_op = jp.create_object();
-			post_op.put_member("summary", std::string("Returns the OpenAPI specification document."));
-			post_op.put_member("operationId", std::string("describe"));
-			json response = jp.parse_object(R"({
+			for (auto path : api_paths) {
+				json post_op = jp.create_object();
+			
+				post_op.put_member("summary", std::string("Returns the OpenAPI specification document."));
+				post_op.put_member("operationId", std::string("describe"));
+				json response = jp.parse_object(R"({
         "200": {
             "description": "OpenAPI document",
             "content": {
@@ -526,11 +528,13 @@ namespace corona
                 }
             }
         }
-    })"));
-			post_op.put_member("responses", response);
-			jendpoint.put_member("post", post_op);
-			json jpaths = jp.create_object();
-			jpaths.put_member("/describe", jendpoint);
+    })");
+				post_op.put_member("responses", response);
+				jendpoint.put_member("post", post_op);
+				json jpaths = jp.create_object();
+				jpaths.put_member("/describe", jendpoint);
+			}
+
 			return jopenapi;
 		}
 
@@ -682,7 +686,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
-			json fn_response = describe();
+			json fn_response = get_openapi();
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -813,7 +817,17 @@ namespace corona
 			return response;
 		}
 
-		std::vector<std::string> api_paths;
+		class api_definition
+		{
+		public:
+			std::string path;
+			std::string name;
+			std::string description;
+			std::string request;
+			std::string response;
+		};
+
+		std::vector<api_definition> api_paths;
 
 		void bind_web_server(http_server& _server)
 		{
@@ -825,81 +839,132 @@ namespace corona
 					_root_path += "/";
 				}
 
+                api_definition new_api;
+
 				std::string path = _root_path;
-				api_paths.push_back(path);
+				new_api.name = "Home";
+				new_api.description = "Returns test handler for this server.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
 
 				path = _root_path + "test/";
-				api_paths.push_back(path);
+				new_api.name = "Test";
+				new_api.description = "Returns test handler for this server.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
 
 				path = _root_path + "login/createuser/";
-				api_paths.push_back(path);
+				new_api.name = "Create User";
+				new_api.description = "Creates a user, sending, if possible, a sign on email for the new user.  The proposed user name will be adjusted to a new user name.  Can be used by users signing themselves up.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_create);
 
 				path = _root_path + "login/loginuser/";
-				api_paths.push_back(path);
+				new_api.name = "Login User";
+				new_api.description = "Attempt to access the system.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_login);
 
 				path = _root_path + "login/confirmuser/";
-				api_paths.push_back(path);
+				new_api.name = "Confirm User";
+				new_api.description = "Validate a code sent previously to a user's email.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_confirm);
 
 				path = _root_path + "login/senduser/";
-				api_paths.push_back(path);
+				new_api.name = "Send User";
+				new_api.description = "Send a secret code to a user's email so they can login again or confirm a password change.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_send_confirm);
 
 				path = _root_path + "login/passworduser/";
-				api_paths.push_back(path);
+				new_api.name = "Change Password";
+				new_api.description = "Changes a user's password.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_user_password);
 
 				path = _root_path + "classes/get/";
-				api_paths.push_back(path);
+				new_api.name = "Get Classes";
+				new_api.description = "Retrieves all the classes on the server that the user can access.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
 
 				path = _root_path + "classes/get/details/";
-				api_paths.push_back(path);
+				new_api.name = "Get Classes";
+				new_api.description = "Retrieves details of classes on the server that the user can access.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_class_get);
 
 				path = _root_path + "classes/put/";
-				api_paths.push_back(path);
+				new_api.name = "Put Class";
+				new_api.description = "Updates a class definition and its data.  If a base class has new fields, they are added to the descedendants as well.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
 
 				path = _root_path + "objects/get/";
-				api_paths.push_back(path);
+				new_api.name = "Get Object";
+				new_api.description = "Fetches an object by class_name and object_id.";
+				new_api.path = path;
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_get);
 
 				path = _root_path + "objects/query/";
-				api_paths.push_back(path);
+				new_api.name = "Query Objects";
+				new_api.description = "Returns a stream of objects based on a query composed of where, joins, and project.";
+				new_api.path = path;
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
 
 				path = _root_path + "objects/create/";
-				api_paths.push_back(path);
+				new_api.name = "Create Object";
+				new_api.description = "Constructs a new object of a given class.";
+				new_api.path = path;
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_create);
 
 				path = _root_path + "objects/put/";
-				api_paths.push_back(path);
+				new_api.name = "Put Object";
+				new_api.description = "Updates one or more objects, validating each.";
+				new_api.path = path;
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_put);
 
 				path = _root_path + "objects/delete/";
-				api_paths.push_back(path);
+				new_api.name = "Delete Object";
+				new_api.description = "Delete an object by class name and id.";
+				new_api.path = path;
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_delete);
 
 				path = _root_path + "objects/edit/";
-				api_paths.push_back(path);
+				new_api.name = "Get Object";
+				new_api.description = "Fetches an object by class_name and object_id, also returning its schema and edit options.";
+				new_api.path = path;
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
 
 				path = _root_path + "objects/run/";
-				api_paths.push_back(path);
+				new_api.name = "Run Object";
+				new_api.description = "Puts an object, validating and updating it, and rerunning any query methods on the object, and return it..";
+				new_api.path = path;
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_run);
 
 				path = _root_path + "objects/copy/";
-				api_paths.push_back(path);
+				new_api.name = "Copy Object";
+				new_api.description = "Creates a copy of an object.  This actually can cast an object to something else as well.";
+				new_api.path = path;
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
 
 				path = _root_path + "describe/";
-				api_paths.push_back(path);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
+				new_api.name = "Describe";
+				new_api.description = "Returns this open api specification.";
+				new_api.path = path;
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_describe);
 
 			}
 			catch (std::exception exc)

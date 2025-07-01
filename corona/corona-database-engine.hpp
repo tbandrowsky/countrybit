@@ -5080,6 +5080,11 @@ private:
 		std::string default_guest_team;
 		time_span token_life;
 
+		std::string default_api_title;
+		std::string default_api_description;
+		std::string default_api_version;
+		std::string default_api_author;
+
 		std::string sendgrid_sender;
 		std::string sendgrid_sender_email;
 		std::string user_confirmation_title;
@@ -5131,6 +5136,11 @@ private:
 				default_password = server[sys_user_password_field];
 				default_email_address = server[sys_user_email_field];
 				default_guest_team = server[sys_default_team_field];
+				default_api_title = server[sys_default_api_title_field];
+				default_api_description = server[sys_default_api_description_field];
+				default_api_version = server[sys_default_api_version_field];
+				default_api_author = server[sys_default_api_author_field];
+
 				if (server.has_member(sys_record_cache_field)) {
 					maximum_record_cache_size_bytes = (int64_t)server[sys_record_cache_field];
 					if (cache) {

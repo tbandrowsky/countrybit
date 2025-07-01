@@ -645,6 +645,11 @@ namespace corona
 	const std::string parse_error_class = "sys_parse_error";
 	const std::string sys_record_cache_field = "sys_record_cache_bytes";
 
+	const std::string sys_default_api_title_field = "api_title";
+	const std::string sys_default_api_description_field = "api_description";
+	const std::string sys_default_api_version_field = "api_version";
+	const std::string sys_default_api_author_field = "api_author";
+
 	enum class field_types {
 		ft_none = 0,
 		ft_wildcard = 'w',
