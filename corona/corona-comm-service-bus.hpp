@@ -840,6 +840,8 @@ namespace corona
 					_root_path += "/";
 				}
 
+				api_paths.clear();
+
                 api_definition new_api;
 
 				std::string path = _root_path;

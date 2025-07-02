@@ -704,6 +704,7 @@ namespace corona
 		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _class_name, json & _object) = 0;
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
+		virtual json get_openapi_schema(corona_database_interface* _db) = 0;
 	};
 
 	class field_interface {
@@ -741,6 +742,8 @@ namespace corona
 
 		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _class_name, json& _object) = 0;
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
+
+        virtual json get_openapi_schema(corona_database_interface* _db) = 0;
 	};
 
 
@@ -807,6 +810,7 @@ namespace corona
 		virtual void	clear_queries(json& _target) = 0;
 
 		virtual json	get_info(corona_database_interface* _db) = 0;
+        virtual json	get_openapi_schema(corona_database_interface* _db) = 0;
 	};
 
 	using read_class_sp = read_locked_sp<class_interface>;
@@ -988,6 +992,15 @@ namespace corona
 		{
 			return nullptr;
 		}
+
+		virtual json get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+			json schema = jp.create_object();
+			schema.put_member("type", std::string("string"));
+			return schema;
+		}
+
 	};
 
 	class child_bridge_implementation : public child_bridge_interface
@@ -1372,6 +1385,46 @@ namespace corona
 		{
 			return bridges;
 		}
+
+		virtual json get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+			json schema = jp.create_object();
+			schema.put_member("type", std::string("array"));
+
+			json jitems = jp.create_object();
+			json joneof = jp.create_array();
+			for (auto& bc : bridges->base_constructors) {
+				json joneofi = jp.create_object();
+				joneofi.put_member("$ref", "#/components/schemas/" + bc.first);
+				joneof.push_back(joneofi);
+			}
+
+			json joneofi = jp.create_object();
+			switch (fundamental_type)
+			{
+			case field_types::ft_datetime:
+			case field_types::ft_string:
+				joneofi.put_member("type", "string");
+				break;
+			case field_types::ft_double:
+				joneofi.put_member("type", "number");
+				break;
+			case field_types::ft_int64:
+				joneofi.put_member("type", "integer");
+				break;
+			}
+			if (joneofi.has_member("type")) {
+				joneof.push_back(joneofi);
+			}
+						
+						
+			jitems.put_member("oneOf", joneof);
+			schema.put_member("items", jitems);
+
+            return schema;
+		}
+
 	};
 
 	class object_field_options : public field_options_base
@@ -1465,6 +1518,25 @@ namespace corona
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() override
 		{
 			return bridges;
+		}
+
+		virtual json get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+			json schema = jp.create_object();
+			schema.put_member("type", std::string("array"));
+
+			json jitems = jp.create_object();
+			json joneof = jp.create_array();
+			for (auto& bc : bridges->base_constructors) {
+				json joneofi = jp.create_object();
+				joneofi.put_member("$ref", "#/components/schemas/" + bc.first);
+				joneof.push_back(joneofi);
+			}
+			jitems.put_member("oneOf", joneof);
+			schema.put_member("items", jitems);
+
+			return schema;
 		}
 
 	};
@@ -1576,6 +1648,25 @@ namespace corona
 
 		}
 
+		virtual json get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+			json schema = jp.create_object();
+			schema.put_member("type", std::string("array"));
+
+			json jitems = jp.create_object();
+			json joneof = jp.create_array();
+			for (auto& bc : bridges->base_constructors) {
+				json joneofi = jp.create_object();
+				joneofi.put_member("$ref", "#/components/schemas/" + bc.first);
+				joneof.push_back(joneofi);
+			}
+			jitems.put_member("oneOf", joneof);
+			schema.put_member("items", jitems);
+
+			return schema;
+		}
+
 	};
 
 	class int64_field_options : public field_options_base
@@ -1631,6 +1722,25 @@ namespace corona
 				};
 			}
 			return false;
+		}
+
+		virtual json get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+			json schema = jp.create_object();
+			schema.put_member("type", std::string("array"));
+
+			json jitems = jp.create_object();
+			json joneof = jp.create_array();
+			for (auto& bc : bridges->base_constructors) {
+				json joneofi = jp.create_object();
+				joneofi.put_member("$ref", "#/components/schemas/" + bc.first);
+				joneof.push_back(joneofi);
+			}
+			jitems.put_member("oneOf", joneof);
+			schema.put_member("items", jitems);
+
+			return schema;
 		}
 
 	};
@@ -1892,6 +2002,8 @@ namespace corona
 			query_body = _src["query"];
 		}
 
+
+
 		virtual json run_queries(corona_database_interface* _db, std::string& _token, std::string& _classname, json& _object)
 		{
 			using namespace std::literals;
@@ -1985,6 +2097,17 @@ namespace corona
 				return options->accepts(_db, _validation_errors, _class_name, _field_name, _object_to_test);
 			}
 			return true;
+		}
+
+		virtual json get_openapi_schema(corona_database_interface* _db)
+		{
+			json result;
+
+			if (options) {
+				result = options->get_openapi_schema(_db);
+			}
+
+			return result;
 		}
 
 		virtual void get_json(json& _dest)
@@ -2499,6 +2622,8 @@ namespace corona
 			else
 				return get_xtable(_db);
 		}
+
+
 
 		virtual std::map<std::string, bool>  const& get_descendants() const override
 		{
@@ -3617,6 +3742,26 @@ namespace corona
 				}
 			}
 			return matching_objects;
+		}
+
+		virtual json	get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+            json schema = jp.create_object();
+			json definition = jp.create_object();
+			json properties = jp.create_object();
+
+			definition.put_member("type", std::string("object"));
+
+            for (auto fld : fields) {
+				json property = jp.create_object();
+				auto field = fld.second;
+                json field_definition = jp.create_object();
+                field->get_openapi_schema(field_definition);
+                properties.put_member(field->get_field_name(), field_definition);
+            }
+
+			schema.put_member(class_name, definition);
 		}
 	};
 
