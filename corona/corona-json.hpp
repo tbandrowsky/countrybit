@@ -1969,6 +1969,12 @@ namespace corona
 			return *this;
 		}
 
+
+		json put_member_string(std::string _key, std::string _value)
+		{
+			return put_member(_key, _value);
+		}
+
 		json put_member(std::string _key, std::string _value)
 		{
 			if (not object_impl()) {

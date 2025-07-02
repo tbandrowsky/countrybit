@@ -901,6 +901,7 @@ namespace corona
 		virtual json save_class(write_class_sp& _class_to_save) = 0;
 		virtual json save_class(class_interface* _class_to_save) = 0;
 		virtual bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name) = 0;
+		virtual json get_openapi_schema(std::string _user_name) = 0;
 	};
 
 	class corona_db_header_struct
@@ -936,7 +937,8 @@ namespace corona
 	class field_options_base : public field_options_interface
 	{
 	public:
-		bool required;
+		bool		required;
+		std::string format;
 
 		field_options_base() = default;
 		field_options_base(const field_options_base& _src) = default;
@@ -948,11 +950,13 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			_dest.put_member("required", required);
+			_dest.put_member("format", format);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			required = (bool)_src["required"];
+			format = (std::string)_src["format"];
 		}
 
 		virtual void init_validation() override
@@ -1193,6 +1197,9 @@ namespace corona
 
 	};
 
+	/// <summary>
+	/// models the jsony idea that an array can be of a fundamental type or objects
+	/// </summary>
 	class array_field_options : public field_options_base
 	{
 	public:
@@ -1405,13 +1412,13 @@ namespace corona
 			{
 			case field_types::ft_datetime:
 			case field_types::ft_string:
-				joneofi.put_member("type", "string");
+				joneofi.put_member_string("type", "string");
 				break;
 			case field_types::ft_double:
-				joneofi.put_member("type", "number");
+				joneofi.put_member_string("type", "number");
 				break;
 			case field_types::ft_int64:
-				joneofi.put_member("type", "integer");
+				joneofi.put_member_string("type", "integer");
 				break;
 			}
 			if (joneofi.has_member("type")) {
@@ -1533,6 +1540,7 @@ namespace corona
 				joneofi.put_member("$ref", "#/components/schemas/" + bc.first);
 				joneof.push_back(joneofi);
 			}
+
 			jitems.put_member("oneOf", joneof);
 			schema.put_member("items", jitems);
 
@@ -1652,18 +1660,17 @@ namespace corona
 		{
 			json_parser jp;
 			json schema = jp.create_object();
-			schema.put_member("type", std::string("array"));
+			schema.put_member("type", std::string("string"));
 
-			json jitems = jp.create_object();
-			json joneof = jp.create_array();
-			for (auto& bc : bridges->base_constructors) {
-				json joneofi = jp.create_object();
-				joneofi.put_member("$ref", "#/components/schemas/" + bc.first);
-				joneof.push_back(joneofi);
+			if (minimum_length > 0) {
+				schema.put_member("minLength", minimum_length);
 			}
-			jitems.put_member("oneOf", joneof);
-			schema.put_member("items", jitems);
-
+			if (maximum_length > 0) {
+				schema.put_member("maxLength", maximum_length);
+			}
+			if (not match_pattern.empty()) {
+				schema.put_member("pattern", match_pattern);
+			}
 			return schema;
 		}
 
@@ -1728,18 +1735,14 @@ namespace corona
 		{
 			json_parser jp;
 			json schema = jp.create_object();
-			schema.put_member("type", std::string("array"));
+			schema.put_member("type", std::string("integer"));
 
-			json jitems = jp.create_object();
-			json joneof = jp.create_array();
-			for (auto& bc : bridges->base_constructors) {
-				json joneofi = jp.create_object();
-				joneofi.put_member("$ref", "#/components/schemas/" + bc.first);
-				joneof.push_back(joneofi);
+			if (min_value > 0) {
+				schema.put_member("minimum", min_value);
 			}
-			jitems.put_member("oneOf", joneof);
-			schema.put_member("items", jitems);
-
+			if (max_value > 0) {
+				schema.put_member("maximum", max_value);
+			}
 			return schema;
 		}
 
@@ -1817,6 +1820,15 @@ namespace corona
 			return false;
 		}
 
+		virtual json get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+			json schema = jp.create_object();
+			schema.put_member("type", std::string("string"));
+
+			return schema;
+		}
+
 	};
 
 	template <typename scalar_type> 
@@ -1874,6 +1886,22 @@ namespace corona
 			}
 			return false;
 		}
+
+		virtual json get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+			json schema = jp.create_object();
+			schema.put_member("type", std::string("number"));
+
+			if (min_value > 0) {
+				schema.put_member("minimum", min_value);
+			}
+			if (max_value > 0) {
+				schema.put_member("maximum", max_value);
+			}
+			return schema;
+		}
+
 
 	};
 
@@ -1975,6 +2003,14 @@ namespace corona
 			return false;
 		}
 
+		virtual json get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+			json schema = jp.create_object();
+			schema.put_member("type", std::string("string"));
+			return schema;
+		}
+
 	};
 
 	class query_field_options : public field_options_base
@@ -2036,6 +2072,16 @@ namespace corona
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test)
 		{
 			return false;
+		}
+
+
+		virtual json get_openapi_schema(corona_database_interface* _db) override
+		{
+			json_parser jp;
+			json schema = jp.create_object();
+			schema.put_member("type", std::string("object"));
+
+			return schema;
 		}
 
 	};
@@ -3754,14 +3800,14 @@ namespace corona
 			definition.put_member("type", std::string("object"));
 
             for (auto fld : fields) {
-				json property = jp.create_object();
 				auto field = fld.second;
-                json field_definition = jp.create_object();
-                field->get_openapi_schema(field_definition);
+                json field_definition = field->get_openapi_schema(_db);
                 properties.put_member(field->get_field_name(), field_definition);
             }
 
-			schema.put_member(class_name, definition);
+			definition.put_member("properties", properties);
+
+			return definition;
 		}
 	};
 
@@ -4890,6 +4936,43 @@ private:
 			}
 
 			return is_ok;
+		}
+
+		virtual json get_openapi_schema(std::string user_name) override
+		{
+			json schema;
+			json_parser jp;
+
+			json result_list = classes->select([this, user_name](int _index, json& _item) {
+				auto permission = get_class_permission(user_name, _item[class_name_field]);
+				json_parser jp;
+
+				if (permission.get_grant != class_grants::grant_none)
+				{
+					return _item;
+				}
+				else
+				{
+					json empty = jp.create_object("Skip", "this");
+					return empty;
+				}
+				});
+
+			if (result_list.array()) 
+			{
+				schema = jp.create_object();
+				for (auto items : result_list)
+				{
+					std::string class_name = items[class_name_field];
+					auto ptr = write_lock_class(class_name);
+					if (ptr) {
+						json class_schema = ptr->get_openapi_schema(this);
+						schema.put_member(class_name, class_schema);
+					}
+				}
+			}
+
+			return schema;
 		}
 
 		protected:
