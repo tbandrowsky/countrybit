@@ -1085,7 +1085,7 @@ namespace corona
 
 		std::shared_ptr<json_double> double_impl() const {
 			return std::dynamic_pointer_cast<json_double>(value_base);
-		} 
+		}
 
 		std::shared_ptr<json_string> string_impl() const {
 			return std::dynamic_pointer_cast<json_string>(value_base);
@@ -1189,7 +1189,7 @@ namespace corona
 					good = false;
 					_missing.push_back(s);
 				}
-				else 
+				else
 				{
 					auto member = object_impl()->members[s];
 					if (member->is_empty()) {
@@ -1328,7 +1328,7 @@ namespace corona
 					{
 						date_time dt = (date_time)(m);
 						LARGE_INTEGER li;
-						li.QuadPart= dt.get_time_t();
+						li.QuadPart = dt.get_time_t();
 						temp = li.HighPart;
 					}
 					else if (m.is_double())
@@ -1425,7 +1425,7 @@ namespace corona
 			return hash;
 		}
 
-		uint64_t get_weak_ordered_hash( std::vector<std::string> _keys )
+		uint64_t get_weak_ordered_hash(std::vector<std::string> _keys)
 		{
 			switch (_keys.size()) {
 			case 0:
@@ -1438,6 +1438,35 @@ namespace corona
 				return get_weak_ordered_hash2(_keys);
 			}
 			return 0;
+		}
+
+		json make_path(std::string_view _path, std::string& _name)
+		{
+			json_parser jp;
+			std::vector<std::string_view> items = split(_path, '.');
+			json start = *this;
+			int sz = items.size();
+
+			for (int i = 0; i < sz - 1; i++) {
+				auto item = items[i];
+
+				json child = start.get_member(item.data());
+
+				if (child.object())
+				{
+					start = child;
+				}
+				else
+				{
+					child = jp.create_object();
+					start.put_member(item.data(), child);
+				}
+			}
+			if (sz) {
+				_name = items[sz - 1].data();
+			}
+
+			return start;
 		}
 
 		bool is_int64() const
@@ -1584,7 +1613,7 @@ namespace corona
 
 		std::string format_member(std::string _member, std::string _format)
 		{
-			if (not object()) 
+			if (not object())
 			{
 				return value_base->format(_format);
 			}
@@ -1606,7 +1635,7 @@ namespace corona
 
 		buffer to_buffer()
 		{
-			if (not empty()) 
+			if (not empty())
 			{
 				std::string temp_s = to_json(); // this is probably wrong for some applications, but right for others
 				int sz = temp_s.size();
@@ -1669,7 +1698,7 @@ namespace corona
 			return empty;
 		}
 
-		json operator[](const char *_key)  const
+		json operator[](const char* _key)  const
 		{
 			if (object_impl() and object_impl()->members.contains(_key)) {
 				json jn(object_impl()->members[_key]);
@@ -1697,7 +1726,7 @@ namespace corona
 				return;
 			}
 
-			if (_member.object() and object()) 
+			if (_member.object() and object())
 			{
 				auto members = _member.get_members_raw();
 
@@ -1716,7 +1745,7 @@ namespace corona
 						array_impl()->elements.push_back(item.value_base->clone());
 					}
 				}
-				else 
+				else
 				{
 					array_impl()->elements.push_back(_src.value_base->clone());
 				}
@@ -1728,13 +1757,13 @@ namespace corona
 			set(_member.value_base);
 		}
 
-		bool has_member(std::string _key) 
+		bool has_member(std::string _key)
 		{
 			bool has_value = !_key.empty() and object_impl() and object_impl()->members.contains(_key);
 			return has_value;
 		}
 
-		bool is_member(std::string _key, const char *_value) 
+		bool is_member(std::string _key, const char* _value)
 		{
 			bool has_value = object_impl() and object_impl()->members.contains(_key);
 			if (has_value) {
@@ -1745,7 +1774,7 @@ namespace corona
 			return has_value;
 		}
 
-		bool is_member(std::string _key, std::string _value) 
+		bool is_member(std::string _key, std::string _value)
 		{
 			bool has_value = object_impl() and object_impl()->members.contains(_key);
 			if (has_value) {
@@ -1755,7 +1784,7 @@ namespace corona
 			return has_value;
 		}
 
-		bool is_member(std::string _key, int64_t _value) 
+		bool is_member(std::string _key, int64_t _value)
 		{
 			bool has_value = object_impl() and object_impl()->members.contains(_key);
 			if (has_value) {
@@ -1765,7 +1794,7 @@ namespace corona
 			return has_value;
 		}
 
-		bool is_member(std::string _key, bool _value) 
+		bool is_member(std::string _key, bool _value)
 		{
 			bool has_value = object_impl() and object_impl()->members.contains(_key);
 			if (has_value) {
@@ -1775,7 +1804,7 @@ namespace corona
 			return has_value;
 		}
 
-		json get_first_element() 
+		json get_first_element()
 		{
 			json result;
 			if (array_impl() and array_impl()->elements.size() > 0) {
@@ -1784,18 +1813,18 @@ namespace corona
 			return result;
 		}
 
-		json get_last_element() 
+		json get_last_element()
 		{
 			return get_element(array_impl()->elements.size() - 1);
 		}
 
-		json get_element(int _index) 
+		json get_element(int _index)
 		{
 			json jn(array_impl()->elements[_index]);
 			return jn;
 		}
 
-		json get_member(std::string _key) 
+		json get_member(std::string _key)
 		{
 			json jn, jx;
 
@@ -1807,7 +1836,7 @@ namespace corona
 			return jn;
 		}
 
-		int get_member_int(std::string _key) 
+		int get_member_int(std::string _key)
 		{
 			if (not object_impl()) {
 				throw std::logic_error("Not an object");
@@ -1842,7 +1871,7 @@ namespace corona
 
 			auto members = _member.get_members_raw();
 
-			for (auto src : members) 
+			for (auto src : members)
 			{
 				put_member_value(src.first, src.second);
 			}
@@ -1886,6 +1915,44 @@ namespace corona
 				bool b = (bool)get_member(_key);
 				put_member(_key, b);
 			}
+		}
+
+		json build_member(std::string _key)
+		{
+			std::string key;
+			json_parser jp;
+			json obj = make_path(_key, key);
+			json child = jp.create_object();
+            obj.put_member(key, child);
+			return child;
+		}
+
+		json build_member(std::string _key, json& _member)
+		{
+			json obj = make_path(_key);
+            obj.put_member(_key, _member);
+			return obj;
+		}
+
+		json build_member(std::string _key, std::string _value)
+		{
+			json obj = make_path(_key);
+			obj.put_member(_key, _value);
+			return obj;
+		}
+
+		json build_member(std::string _key, double _value)
+		{
+			json obj = make_path(_key);
+			obj.put_member(_key, _value);
+			return obj;
+		}
+
+		json build_member_int64(std::string _key, double _value)
+		{
+			json obj = make_path(_key);
+			obj.put_member_i64(_key, _value);
+			return obj;
 		}
 
 		json put_member(std::string _key, json& _member)
@@ -1977,6 +2044,7 @@ namespace corona
 
 		json put_member(std::string _key, std::string _value)
 		{
+
 			if (not object_impl()) {
 				throw std::logic_error("Not an object");
 			}
@@ -3650,6 +3718,7 @@ namespace corona
 
 			return r;
 		}
+
 
 		bool parse_value(std::shared_ptr<json_value>& _value, const char* _src, const char** _modified)
 		{

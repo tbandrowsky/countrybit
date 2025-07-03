@@ -390,32 +390,32 @@ namespace corona
 			return result;
 		}
 
-        std::function<bool(comm_bus_service *_service, json& _command)> command_handler = [this](comm_bus_service* _service, json& _command)->bool {
-            // this is the default command handler, which does nothing.
-            // it can be overridden by the application.
-            // 
-            // _command is a json object with the command and parameters.
-            // 
-            // if you want to handle commands, you can do so here.
-            // 
-            // if you want to handle commands in the application, you can do so by overriding this function.
-            // 
-            // if you want to handle commands in the service, you can do so by overriding this function.
-            // 
-            // if you want to handle commands in the database, you can do so by overriding this function.
+		std::function<bool(comm_bus_service* _service, json& _command)> command_handler = [this](comm_bus_service* _service, json& _command)->bool {
+			// this is the default command handler, which does nothing.
+			// it can be overridden by the application.
+			// 
+			// _command is a json object with the command and parameters.
+			// 
+			// if you want to handle commands, you can do so here.
+			// 
+			// if you want to handle commands in the application, you can do so by overriding this function.
+			// 
+			// if you want to handle commands in the service, you can do so by overriding this function.
+			// 
+			// if you want to handle commands in the database, you can do so by overriding this function.
 			// return true if the command can be deleted
 			return true;
-        };
+			};
 
 		void frame_db()
 		{
-			if (ready_for_polling) 
+			if (ready_for_polling)
 			{
 				// get all commands, deleting them as we go.
 				// 
 
-                json jcommands = get_data("sys_command");
-				if (jcommands.array()) 
+				json jcommands = get_data("sys_command");
+				if (jcommands.array())
 				{
 					for (auto jcommand : jcommands)
 					{
@@ -456,13 +456,13 @@ namespace corona
 					}
 				}
 
-                if (simulation) {
+				if (simulation) {
 					json result = get_data("sys_command");
 					if (result["success"]) {
 						json data = result["data"];
 						simulation->on_frame(data);
 					}
-                }
+				}
 			}
 		}
 
@@ -500,40 +500,39 @@ namespace corona
 		json get_openapi()
 		{
 			json_parser jp;
-			json jopenapi = jp.create_object();
-			jopenapi.put_member("openapi", std::string("3.0.0"));
 
-			json jinfo = jp.create_object();
+			json jopenapi = jp.create_object();
+			jopenapi.put_member("openapi", std::string("3.0.4"));
+
+			json jinfo = jopenapi.build_member("info");
 			jinfo.put_member("title", local_db->default_api_title);
 			jinfo.put_member("version", local_db->default_api_version);
 			jinfo.put_member("description", local_db->default_api_description);
-			jopenapi.put_member("info", jinfo);
+
+			json jpaths = jopenapi.build_member("paths");
 
 			// Example: /describe endpoint
-			json jendpoint = jp.create_object();
-
 			for (auto path : api_paths) {
-				json post_op = jp.create_object();
-			
-				post_op.put_member("summary", std::string("Returns the OpenAPI specification document."));
-				post_op.put_member("operationId", std::string("describe"));
-				json response = jp.parse_object(R"({
-        "200": {
-            "description": "OpenAPI document",
-            "content": {
-                "application/json": {
-                    "schema": {
-                        "type": "object"
-                    }
-                }
-            }
-        }
-    })");
-				post_op.put_member("responses", response);
-				jendpoint.put_member("post", post_op);
-				json jpaths = jp.create_object();
-				jpaths.put_member("/describe", jendpoint);
+
+				json jpath = jpaths.build_member(path.path);
+				json jverb = jpath.build_member(path.verb);
+		
+				jverb.put_member("summary", path.description);
+                json jrequest = jverb.build_member("requestBody");
+
+				jrequest.build_member("description", path.description);
+				jrequest.build_member("required", true);
+				jrequest.build_member("content.application/json.schema.$ref", "#/components/schemas/" + path.request);
+
+				json jresponse = jverb.build_member("responses.200");
+				jresponse.build_member("content.application/json.schema.$ref", "#/components/schemas/" + path.response);
+
+				jresponse = jverb.build_member("responses.default");
+				jresponse.build_member("content.application/json.schema.$ref", "#/components/schemas/" + path.response);
 			}
+
+			json jschema = local_db->get_openapi_schema("");
+			json jschemas = jopenapi.build_member("components.schemas", jschema);
 
 			return jopenapi;
 		}

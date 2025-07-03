@@ -707,6 +707,7 @@ namespace corona
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
 		virtual json get_openapi_schema(corona_database_interface* _db) = 0;
+        virtual bool is_required() = 0;
 	};
 
 	class field_interface {
@@ -1005,6 +1006,11 @@ namespace corona
 			json schema = jp.create_object();
 			schema.put_member("type", std::string("string"));
 			return schema;
+		}
+
+		virtual bool is_required() override 
+		{ 
+			return is_required; 
 		}
 
 	};
@@ -3804,13 +3810,20 @@ namespace corona
             json schema = jp.create_object();
 			json definition = jp.create_object();
 			json properties = jp.create_object();
+			json required = jp.create_array();
 
+			definition.put_member("description", get_class_description());
 			definition.put_member("type", std::string("object"));
 
             for (auto fld : fields) {
 				auto field = fld.second;
                 json field_definition = field->get_openapi_schema(_db);
                 properties.put_member(field->get_field_name(), field_definition);
+
+				auto options = field->get_options();
+				if (options and options->is_required()) {
+					required.push_back(field->get_field_name());
+				}
             }
 
 			definition.put_member("properties", properties);
@@ -4950,6 +4963,10 @@ private:
 		{
 			json schema;
 			json_parser jp;
+
+			if (user_name.empty()) {
+				user_name = default_user;
+            }
 
 			json result_list = classes->select([this, user_name](int _index, json& _item) {
 				auto permission = get_class_permission(user_name, _item[class_name_field]);
