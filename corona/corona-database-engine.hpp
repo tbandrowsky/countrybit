@@ -42,6 +42,8 @@ the great module disaster.
 
 ***********************************************/
 
+template <typename T>
+constexpr bool is_convertible_to_int = std::is_convertible_v<T, int>;
 
 namespace corona
 {
@@ -1893,12 +1895,18 @@ namespace corona
 			json schema = jp.create_object();
 			schema.put_member("type", std::string("number"));
 
-			if (min_value > 0) {
-				schema.put_member("minimum", min_value);
+			if constexpr (is_convertible_to_int<scalar_type>)
+			{ 	
+				int imin = min_value;
+				int imax = max_value;
+				if (imin) {
+					schema.put_member("minimum", min_value);
+				}
+				if (imax) {
+					schema.put_member("maximum", max_value);
+				}
 			}
-			if (max_value > 0) {
-				schema.put_member("maximum", max_value);
-			}
+
 			return schema;
 		}
 

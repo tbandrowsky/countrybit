@@ -145,7 +145,7 @@ namespace corona
 
 			log_information("listening on :" + listen_point, __FILE__, __LINE__);
 			for (auto path : api_paths) {
-				log_information(path, __FILE__, __LINE__);
+				log_information(path.path, __FILE__, __LINE__);
 			}
 			log_command_stop("comm_service_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
@@ -452,7 +452,7 @@ namespace corona
 				if (show_listen) {
 					log_information("updated server, and listening on :" + listen_point, __FILE__, __LINE__);
 					for (auto path : api_paths) {
-						log_information(path, __FILE__, __LINE__);
+						log_information(path.path, __FILE__, __LINE__);
 					}
 				}
 
