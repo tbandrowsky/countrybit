@@ -904,8 +904,8 @@ namespace corona
 				new_api.description = "Changes a user's password.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_password_user_request)";
+				new_api.response_class = R"(sys_password_user_response)";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_user_password);
 
@@ -914,8 +914,8 @@ namespace corona
 				new_api.description = "Retrieves all the classes on the server that the user can access.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_get_classes_request)";
+				new_api.response_class = R"(sys_get_classes_response)";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
 
@@ -924,8 +924,8 @@ namespace corona
 				new_api.description = "Retrieves details of classes on the server that the user can access.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_get_classes_request)";
+				new_api.response_class = R"(sys_get_classes_response)";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_class_get);
 
@@ -934,8 +934,8 @@ namespace corona
 				new_api.description = "Updates a class definition and its data.  If a base class has new fields, they are added to the descedendants as well.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_put_classes_request)";
+				new_api.response_class = R"(sys_put_classes_response)";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
 
@@ -944,8 +944,8 @@ namespace corona
 				new_api.description = "Fetches an object by class_name and object_id.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_get_objects_request)";
+				new_api.response_class = R"(sys_get_objects_response)";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_get);
 
@@ -953,8 +953,8 @@ namespace corona
 				new_api.name = "query_objects";
 				new_api.description = "Returns a stream of objects based on a query composed of where, joins, and project.";
 				new_api.path = path;
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_query_objects_request)";
+				new_api.response_class = R"(sys_query_objects_response)";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
 
@@ -962,8 +962,8 @@ namespace corona
 				new_api.name = "create_objects";
 				new_api.description = "Constructs a new object of a given class.";
 				new_api.path = path;
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_create_objects_request)";
+				new_api.response_class = R"(sys_create_objects_response)";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_create);
 
@@ -971,8 +971,8 @@ namespace corona
 				new_api.name = "put_objects";
 				new_api.description = "Updates one or more objects, validating each.";
 				new_api.path = path;
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_put_objects_request)";
+				new_api.response_class = R"(sys_put_objects_response)";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_put);
 
@@ -980,8 +980,8 @@ namespace corona
 				new_api.name = "delete_object";
 				new_api.description = "Delete an object by class name and id.";
 				new_api.path = path;
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_delete_objects_request)";
+				new_api.response_class = R"(sys_delete_objects_response)";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_delete);
 
@@ -989,8 +989,8 @@ namespace corona
 				new_api.name = "get_object";
 				new_api.description = "Fetches an object by class_name and object_id, also returning its schema and edit options.";
 				new_api.path = path;
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_edit_objects_request)";
+				new_api.response_class = R"(sys_edit_objects_response)";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
 
@@ -998,8 +998,8 @@ namespace corona
 				new_api.name = "run_object";
 				new_api.description = "Puts an object, validating and updating it, and rerunning any query methods on the object, and return it..";
 				new_api.path = path;
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_edit_objects_request)";
+				new_api.response_class = R"(sys_edit_objects_response)";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_run);
 
@@ -1007,8 +1007,8 @@ namespace corona
 				new_api.name = "copy_object";
 				new_api.description = "Creates a copy of an object.  This actually can cast an object to something else as well.";
 				new_api.path = path;
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_edit_objects_request)";
+				new_api.response_class = R"(sys_edit_objects_response)";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
 
@@ -1017,8 +1017,8 @@ namespace corona
 				new_api.description = "Returns this open api specification.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_class = R"()";
-				new_api.response_class = R"()";
+				new_api.request_class = R"(sys_edit_objects_request)";
+				new_api.response_class = R"(sys_edit_objects_response)";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_describe);
 			}
 			catch (std::exception exc)
