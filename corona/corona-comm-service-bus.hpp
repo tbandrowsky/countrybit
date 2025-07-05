@@ -848,6 +848,8 @@ namespace corona
 				new_api.description = "Returns test handler for this server.";
 				new_api.path = path;
 				new_api.verb = "get";
+				new_api.request_class = {};
+				new_api.response_class = {};
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
 
@@ -856,6 +858,8 @@ namespace corona
 				new_api.description = "Returns test handler for this server.";
 				new_api.path = path;
 				new_api.verb = "get";
+				new_api.request_class = {};
+				new_api.response_class = {};
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
 
@@ -998,8 +1002,8 @@ namespace corona
 				new_api.name = "run_object";
 				new_api.description = "Puts an object, validating and updating it, and rerunning any query methods on the object, and return it..";
 				new_api.path = path;
-				new_api.request_class = R"(sys_edit_objects_request)";
-				new_api.response_class = R"(sys_edit_objects_response)";
+				new_api.request_class = R"(sys_run_objects_request)";
+				new_api.response_class = R"(sys_run_objects_response)";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_run);
 
@@ -1007,8 +1011,8 @@ namespace corona
 				new_api.name = "copy_object";
 				new_api.description = "Creates a copy of an object.  This actually can cast an object to something else as well.";
 				new_api.path = path;
-				new_api.request_class = R"(sys_edit_objects_request)";
-				new_api.response_class = R"(sys_edit_objects_response)";
+				new_api.request_class = R"(sys_copy_objects_request)";
+				new_api.response_class = R"(sys_copy_objects_response)";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
 
@@ -1017,8 +1021,8 @@ namespace corona
 				new_api.description = "Returns this open api specification.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_class = R"(sys_edit_objects_request)";
-				new_api.response_class = R"(sys_edit_objects_response)";
+				new_api.request_class = {};
+				new_api.response_class = {};
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_describe);
 			}
 			catch (std::exception exc)
