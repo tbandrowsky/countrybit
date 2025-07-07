@@ -2514,19 +2514,23 @@ namespace corona
 		{
 			copy_from(_src);
 		}
+
 		class_implementation(const class_implementation& _src)
 		{
 			copy_from(&_src);
-		};
+		}
+
 		class_implementation(class_implementation&& _src)
 		{
 			copy_from(&_src);
 		}
+
 		class_implementation& operator = (const class_implementation& _src)
 		{
 			copy_from(&_src);
 			return *this;
 		}
+
 		class_implementation& operator = (class_implementation&& _src)
 		{
 			copy_from(&_src);
