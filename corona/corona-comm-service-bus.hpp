@@ -845,6 +845,10 @@ namespace corona
 
                 api_definition new_api;
 
+
+/**************
+Bind home
+***************/
 				std::string path = _root_path;
 				new_api.name = "home";
 				new_api.description = "Returns test handler for this server.";
@@ -857,6 +861,9 @@ namespace corona
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
 
+/**************
+Bind test
+***************/
 				path = _root_path + "test/";
 				new_api.name = "test";
 				new_api.description = "Returns test handler for this server.";
@@ -869,13 +876,10 @@ namespace corona
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
 
-				/*
-							std::string user_name = data[user_name_field];
-			std::string user_email = data[user_email_field];
-			std::string user_password1 = data["password1"];
-			std::string user_password2 = data["password2"];
-			std::string user_class = "sys_user";		
-			*/
+
+/**************
+Bind createuser
+***************/
 				path = _root_path + "login/createuser/";
 				new_api.name = "create_user";
 				new_api.description = "Creates a user, sending, if possible, a sign on email for the new user.  The proposed user name will be adjusted to a new user name.  Can be used by users signing themselves up.";
@@ -928,6 +932,10 @@ namespace corona
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_create);
 
+/**************
+Bind loginuser
+***************/
+
 				path = _root_path + "login/loginuser/";
 				new_api.name = "login_user";
 				new_api.description = "Attempt to access the system.";
@@ -973,6 +981,9 @@ namespace corona
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_login);
 
+/**************
+Bind confirmuser
+***************/
 				path = _root_path + "login/confirmuser/";
 				new_api.name = "confirm_user";
 				new_api.description = "Validate a code sent previously to a user's email.";
@@ -1014,6 +1025,10 @@ namespace corona
 })";
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
+
+/**************
+Bind loginuser
+***************/
 
 				path = _root_path + "login/loginuser/";
 				new_api.name = "login_user";
@@ -1058,6 +1073,10 @@ namespace corona
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_confirm);
 
+/**************
+Bind SENDUSER
+***************/
+
 				path = _root_path + "login/senduser/";
 				new_api.name = "send_user";
 				new_api.description = "Send a secret code to a user's email so they can login again or confirm a password change.";
@@ -1095,6 +1114,11 @@ namespace corona
 	}
   }
 })";
+
+/**************
+Bind confirmuser
+***************/
+
 
 				path = _root_path + "login/confirmuser/";
 				new_api.name = "confirm_user";
@@ -1139,6 +1163,10 @@ namespace corona
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_send_confirm);
+
+/**************
+Bind passworduser
+***************/
 
 				path = _root_path + "login/passworduser/";
 				new_api.name = "change_password";
@@ -1195,6 +1223,10 @@ namespace corona
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_user_password);
 
+/**************
+Bind get classes
+***************/
+
 				path = _root_path + "classes/get/";
 				new_api.name = "get_classes";
 				new_api.description = "Retrieves all the classes on the server that the user can access.";
@@ -1226,6 +1258,13 @@ namespace corona
 })";
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
+				api_paths.push_back(new_api);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
+
+
+/**************
+Bind confirm user
+***************/
 
 				path = _root_path + "login/confirmuser/";
 				new_api.name = "confirm_user";
@@ -1272,9 +1311,14 @@ namespace corona
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
 
+
+				/**************
+				Bind get class details
+				***************/
+
 				path = _root_path + "classes/get/details/";
 				new_api.name = "get_class_details";
-				new_api.description = "Retrieves details of classes on the server that the user can access.";
+				new_api.description = "Retrieves details of classes on the server that the user can access.  This class provides a physical map over and above what just get_classes does, but the map really, isn't something you'll need that much.";
 				new_api.path = path;
 				new_api.verb = "post";
 				new_api.request_schema = R"({
@@ -1306,6 +1350,11 @@ namespace corona
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_class_get);
+
+
+				/**************
+				Bind put_class 
+				***************/
 
 				path = _root_path + "classes/put/";
 				new_api.name = "put_class_details";
@@ -1346,6 +1395,11 @@ namespace corona
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
+
+
+				/**************
+				Bind get_object
+				***************/
 
 				path = _root_path + "objects/get/";
 				new_api.name = "get_object";
@@ -1391,6 +1445,13 @@ namespace corona
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_get);
 
+
+
+
+				/**************
+				Bind query objects
+				***************/
+
 				path = _root_path + "objects/query/";
                 new_api.verb = "post";
 				new_api.name = "query_objects";
@@ -1435,6 +1496,12 @@ namespace corona
   }
 })";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
+				api_paths.push_back(new_api);
+
+				/**************
+				Bind get class details
+				***************/
+
 
 				path = _root_path + "objects/create/";
 				new_api.name = "create_objects";
@@ -1478,7 +1545,13 @@ namespace corona
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				new_api.verb = "post";
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_create);
+
+
+				/**************
+				Bind get class details
+				***************/
 
 				path = _root_path + "objects/put/";
 				new_api.name = "put_objects";
@@ -1514,7 +1587,13 @@ namespace corona
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				new_api.verb = "post";
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_put);
+
+
+				/**************
+				Bind get class details
+				***************/
 
 				path = _root_path + "objects/delete/";
 				new_api.name = "delete_object";
@@ -1556,7 +1635,13 @@ namespace corona
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				new_api.verb = "post";
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_delete);
+
+
+				/**************
+				Bind get class details
+				***************/
 
 				path = _root_path + "objects/edit/";
 				new_api.name = "get_object";
@@ -1602,7 +1687,13 @@ namespace corona
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				new_api.verb = "post";
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
+
+
+				/**************
+				Bind get class details
+				***************/
 
 				path = _root_path + "objects/run/";
 				new_api.name = "run_object";
@@ -1639,6 +1730,7 @@ namespace corona
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				new_api.verb = "post";
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_run);
 
 				path = _root_path + "objects/copy/";
@@ -1666,15 +1758,15 @@ namespace corona
 			}
 		},
 	  "to": {
-			"type": "number",
+			"type": "object",
 			"properties": {
 				"class_name": {
 					"type": "string",
-					"description": "class of object to copy."
+					"description": "class of destination."
 				},
 				"object_id": {
 					"type": "number",
-					"description": "id of object to copy."
+					"description": "id of destination."
 				},
 				"path": {
 					"type": "string",
@@ -1713,6 +1805,7 @@ namespace corona
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				new_api.verb = "post";
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
 
 				path = _root_path + "describe/";
@@ -1724,6 +1817,7 @@ namespace corona
 				new_api.response_schema = {};
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
+				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_describe);
 			}
 			catch (std::exception exc)
