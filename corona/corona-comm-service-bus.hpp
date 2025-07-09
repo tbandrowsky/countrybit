@@ -881,14 +881,11 @@ namespace corona
 				new_api.description = "Creates a user, sending, if possible, a sign on email for the new user.  The proposed user name will be adjusted to a new user name.  Can be used by users signing themselves up.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_schema = {};
-				new_api.response_schema = {};
-				new_api.request_schema = R"({})";
-				new_api.response_schema = R"({})";
+				new_api.request_class_name = {};
+				new_api.response_class_name = {};
 
 				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
 	"user_name": {
 	  "type": "string",
@@ -913,7 +910,6 @@ namespace corona
 })";
 				new_api.response_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
 	"success": {
 	  "type": "boolean",
@@ -939,7 +935,6 @@ namespace corona
 				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
 	"user_name": {
 	  "type": "string",
@@ -954,7 +949,6 @@ namespace corona
 })";
 				new_api.response_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
 	"success": {
 	  "type": "boolean",
@@ -986,7 +980,6 @@ namespace corona
 				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
 	"user_name": {
 	  "type": "string",
@@ -1000,7 +993,6 @@ namespace corona
 })";
 				new_api.response_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
 	"success": {
 	  "type": "boolean",
@@ -1030,7 +1022,6 @@ namespace corona
 				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
 	"user_name": {
 	  "type": "string",
@@ -1045,7 +1036,6 @@ namespace corona
 })";
 				new_api.response_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
 	"success": {
 	  "type": "boolean",
@@ -1073,16 +1063,10 @@ namespace corona
 				new_api.description = "Send a secret code to a user's email so they can login again or confirm a password change.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_schema = {};
-				new_api.response_schema = {};
-				path = _root_path + "login/confirmuser/";
-				new_api.name = "confirm_user";
-				new_api.description = "Validate a code sent previously to a user's email.";
-				new_api.path = path;
-				new_api.verb = "post";
+				new_api.request_class_name = "";
+				new_api.response_class_name = "";
 				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
 	"user_name": {
 	  "type": "string",
@@ -1092,7 +1076,48 @@ namespace corona
 })";
 				new_api.response_schema = R"({
   "type": "object",
-  "required": [],
+  "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if sent successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object",
+	  "description": "Result object or objects."
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
+  }
+})";
+
+				path = _root_path + "login/confirmuser/";
+				new_api.name = "confirm_user";
+				new_api.description = "Validate a code sent previously to a user's email.";
+				new_api.path = path;
+				new_api.verb = "post";
+				new_api.request_class_name = "";
+				new_api.response_class_name = "";
+				new_api.request_schema = R"({
+  "type": "object",
+  "properties": {
+	"user_name": {
+	  "type": "string",
+	  "description": "Your user name."
+	},
+	"validation_code": {
+	  "type": "string",
+	  "description": "Code you received in email."
+	}
+  }
+})";
+				new_api.response_schema = R"({
+  "type": "object",
   "properties": {
 	"success": {
 	  "type": "boolean",
@@ -1120,18 +1145,51 @@ namespace corona
 				new_api.description = "Changes a user's password.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_schema = {};
-				new_api.response_schema = {};
-				new_api.request_class_name = R"({
+				new_api.request_class_name = "";
+				new_api.response_class_name = "";
+				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
+  "required": [ "user_name", "password1", "password2" ],
   "properties": {
+	"user_name": {
+	  "type": "string",
+	  "description": "Your user name."
+	},
+	"password1": {
+	  "type": "string",
+	  "description": "Code you received in email.",
+	  "format": "password"
+	},
+	"password2": {
+	  "type": "string",
+	  "description": "Code you received in email.",
+	  "format": "password"
+	},
+	"validation_code": {
+	  "type": "string",
+	  "description": "Code you received in email."
+	}
   }
 })";
-				new_api.response_class_name = R"({
+				new_api.response_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if changed successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object",
+	  "description": "Result object or objects."
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
   }
 })";
 				api_paths.push_back(new_api);
@@ -1142,8 +1200,32 @@ namespace corona
 				new_api.description = "Retrieves all the classes on the server that the user can access.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_schema = {};
-				new_api.response_schema = {};
+				new_api.request_schema = R"({
+  "type": "object"
+})";
+				new_api.response_schema = R"({
+  "type": "object",
+  "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True, so data should have results in it."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "array",
+	  "description": "Result object or objects."
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
+  }
+})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
 
 				path = _root_path + "login/confirmuser/";
 				new_api.name = "confirm_user";
@@ -1152,7 +1234,7 @@ namespace corona
 				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
+  "required": [ "user_name", "validation_code" ],
   "properties": {
 	"user_name": {
 	  "type": "string",
@@ -1166,7 +1248,125 @@ namespace corona
 })";
 				new_api.response_schema = R"({
   "type": "object",
-  "required": [],
+  "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "Indicates if operation was successful."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object",
+	  "description": "Result object or objects."
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
+  }
+})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
+				api_paths.push_back(new_api);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
+
+				path = _root_path + "classes/get/details/";
+				new_api.name = "get_class_details";
+				new_api.description = "Retrieves details of classes on the server that the user can access.";
+				new_api.path = path;
+				new_api.verb = "post";
+				new_api.request_schema = R"({
+  "type": "object"
+
+})";
+				new_api.response_schema = R"({
+  "type": "object",
+  "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "true if successful."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object",
+	  "description": "Result object or objects."
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
+  }
+})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
+				api_paths.push_back(new_api);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_class_get);
+
+				path = _root_path + "classes/put/";
+				new_api.name = "put_class_details";
+				new_api.description = "Updates a class definition and its data.  If a base class has new fields, they are added to the descedendants as well.";
+				new_api.path = path;
+				new_api.verb = "post";
+				new_api.request_schema = R"({
+  "type": "object",
+  "properties": {
+		"data": {
+		  "type": "object",
+		  "description": "The class definition to update."
+		}
+  }
+})";
+				new_api.response_schema = R"({
+  "type": "object",
+  "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if the class was updated successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object",
+	  "description": "Result class."
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
+  }
+})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
+				api_paths.push_back(new_api);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
+
+				path = _root_path + "objects/get/";
+				new_api.name = "get_object";
+				new_api.description = "Fetches an object by class_name and object_id.";
+				new_api.path = path;
+				new_api.verb = "post";
+				new_api.request_schema = R"({
+  "type": "object",
+  "properties": {
+		"class_name": {
+		  "type": "string",
+		  "description": "The class of the object to get."
+		},
+		"object_id": {
+		  "type": "integer",
+		  "description": "The id of the object to get."
+		}
+  }
+})";
+				new_api.response_schema = R"({
+  "type": "object",
   "properties": {
 	"success": {
 	  "type": "boolean",
@@ -1186,122 +1386,97 @@ namespace corona
 	}
   }
 })";
-				new_api.request_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
-				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
-
-				path = _root_path + "classes/get/details/";
-				new_api.name = "get_class_details";
-				new_api.description = "Retrieves details of classes on the server that the user can access.";
-				new_api.path = path;
-				new_api.verb = "post";
-				new_api.request_schema = {};
-				new_api.response_schema = {};
-
-				new_api.request_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
-				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_class_get);
-
-				path = _root_path + "classes/put/";
-				new_api.name = "put_class_details";
-				new_api.description = "Updates a class definition and its data.  If a base class has new fields, they are added to the descedendants as well.";
-				new_api.path = path;
-				new_api.verb = "post";
-				new_api.request_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
-				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
-
-				path = _root_path + "objects/get/";
-				new_api.name = "get_object";
-				new_api.description = "Fetches an object by class_name and object_id.";
-				new_api.path = path;
-				new_api.verb = "post";
-				new_api.request_schema = {};
-				new_api.response_schema = {};
-
-				new_api.request_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_get);
 
 				path = _root_path + "objects/query/";
+                new_api.verb = "post";
 				new_api.name = "query_objects";
 				new_api.description = "Returns a stream of objects based on a query composed of where, joins, and project.";
 				new_api.path = path;
-				new_api.request_class_name = R"({
+				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
+		"from": {
+		  "type": "array",
+		  "description": "classes that contain data."
+		},
+		"stages": {
+		  "type": "array",
+		  "description": "stages such as filter, join, project."
+		}
   }
 })";
-				new_api.response_class_name = R"({
+
+				new_api.response_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if the query was successful."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "array",
+	  "description": "Result objects.",
+	  "items": {
+			"type":"object"
+	  }
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
   }
 })";
-				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
 
 				path = _root_path + "objects/create/";
 				new_api.name = "create_objects";
 				new_api.description = "Constructs a new object of a given class.";
 				new_api.path = path;
-				new_api.request_class_name = R"({
+				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
   "properties": {
+		"data": {
+		  "type": "object",
+		  "description": "contains .",
+		  "properties" : {
+			"class_name" : {
+				"type" : "string"
+			}
+		  }
+		}
+	}
+})";
+				new_api.response_schema = R"({
+  "type": "object",
+  "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if the object was created successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+		  "type": "object",
+		  "description": "object that was created."		  
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
   }
 })";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_create);
 
@@ -1309,21 +1484,35 @@ namespace corona
 				new_api.name = "put_objects";
 				new_api.description = "Updates one or more objects, validating each.";
 				new_api.path = path;
-				new_api.request_schema = {};
-				new_api.response_schema = {};
-
-				new_api.request_class_name = R"({
+				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
+  "data": {
+		"type": "array",
+		"description": "classes that contain data."
+	}
+})";
+				new_api.response_schema = R"({
+  "type": "object",
   "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if the object was saved successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object"
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
   }
 })";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_put);
 
@@ -1331,18 +1520,41 @@ namespace corona
 				new_api.name = "delete_object";
 				new_api.description = "Delete an object by class name and id.";
 				new_api.path = path;
-				new_api.request_class_name = R"({
+				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
+	"properties": {
+	  "class_name": {
+			"type": "string",
+			"description": "class of object to delete."
+		},
+	  "object_id": {
+			"type": "number",
+			"description": "id of object to delete."
+		}
+	}
+})";
+				new_api.response_schema = R"({
+  "type": "object",
   "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if the object was deleted successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object"
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
   }
 })";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_delete);
 
@@ -1350,21 +1562,45 @@ namespace corona
 				new_api.name = "get_object";
 				new_api.description = "Fetches an object by class_name and object_id, also returning its schema and edit options.";
 				new_api.path = path;
-				new_api.request_schema = {};
-				new_api.response_schema = {};
-
-				new_api.request_class_name = R"({
+				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
+	"properties": {
+	  "class_name": {
+			"type": "string",
+			"description": "class of object to get."
+		},
+	  "object_id": {
+			"type": "number",
+			"description": "id of object to get."
+		},
+	  "include_children": {
+			"type": "boolean",
+			"description": "If true, include children of the object."
+		}
+	}
+})";
+				new_api.response_schema = R"({
+  "type": "object",
   "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if the object was deleted successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object"
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
   }
 })";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
 
@@ -1372,18 +1608,36 @@ namespace corona
 				new_api.name = "run_object";
 				new_api.description = "Puts an object, validating and updating it, and rerunning any query methods on the object, and return it..";
 				new_api.path = path;
-				new_api.request_class_name = R"({
+				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
+  "data": {
+		"type": "object",
+		"description": "object to run."
+	},
+   "include_children": "boolean"
+})";
+				new_api.response_schema = R"({
+  "type": "object",
   "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if the object was deleted successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object"
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
   }
 })";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_run);
 
@@ -1391,21 +1645,73 @@ namespace corona
 				new_api.name = "copy_object";
 				new_api.description = "Creates a copy of an object.  This actually can cast an object to something else as well.";
 				new_api.path = path;
-				new_api.request_schema = {};
-				new_api.response_schema = {};
-
-				new_api.request_class_name = R"({
+				new_api.request_schema = R"({
   "type": "object",
-  "required": [],
+	"properties": {
+	  "from": {
+			"type": "object",
+			"properties": {
+				"class_name": {
+					"type": "string",
+					"description": "class of object to copy."
+				},
+				"object_id": {
+					"type": "number",
+					"description": "id of object to copy."
+				},
+				"path": {
+					"type": "string",
+					"description": "member of object to copy."
+				}
+			}
+		},
+	  "to": {
+			"type": "number",
+			"properties": {
+				"class_name": {
+					"type": "string",
+					"description": "class of object to copy."
+				},
+				"object_id": {
+					"type": "number",
+					"description": "id of object to copy."
+				},
+				"path": {
+					"type": "string",
+					"description": "member of object to copy."
+				}
+			}
+		},
+		"transform": {
+			"class_name": {
+				"type": "string",
+				"description": "class of object to copy."
+			}
+		}
+	}
+})";
+				new_api.response_schema = R"({
+  "type": "object",
   "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if the object was deleted successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object"
+	},
+	"token": {
+	  "type": "string",
+	  "description": "Token for the user to use in subsequent requests."
+	}
   }
 })";
-				new_api.response_class_name = R"({
-  "type": "object",
-  "required": [],
-  "properties": {
-  }
-})";
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
 				new_api.verb = "post";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
 
@@ -1414,8 +1720,10 @@ namespace corona
 				new_api.description = "Returns this open api specification.";
 				new_api.path = path;
 				new_api.verb = "post";
-				new_api.request_class_name = {};
-				new_api.response_class_name = {};
+				new_api.request_schema = {};
+				new_api.response_schema = {};
+				new_api.request_class_name = R"()";
+				new_api.response_class_name = R"()";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_describe);
 			}
 			catch (std::exception exc)

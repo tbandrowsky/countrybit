@@ -6472,7 +6472,7 @@ private:
 			if (not check_message(_run_object_request, { auth_general }, user_name))
 			{
 				response = create_response(_run_object_request, false, "Denied", jp.create_object(), errors, tx.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -6480,7 +6480,7 @@ private:
 			json result = put_object(_run_object_request);
 			if (result.error())
 			{
-				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 			json key = jp.create_object();
