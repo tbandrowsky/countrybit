@@ -1010,7 +1010,7 @@ namespace corona
 
 		virtual bool is_required() override 
 		{ 
-			return is_required; 
+			return required; 
 		}
 
 	};

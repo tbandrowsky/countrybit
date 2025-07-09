@@ -1442,6 +1442,12 @@ namespace corona
 
 		json make_path(std::string_view _path, std::string& _name);
 
+		json make_path(std::string_view _path)
+		{
+			std::string result;
+			return make_path(_path, result);
+		}
+
 		bool is_int64() const
 		{
 			return int64_impl() != nullptr;
@@ -1890,15 +1896,7 @@ namespace corona
 			}
 		}
 
-		json build_member(std::string _key)
-		{
-			std::string key;
-			json_parser jp;
-			json obj = make_path(_key, key);
-			json child = jp.create_object();
-            obj.put_member(key, child);
-			return child;
-		}
+		json build_member(std::string _key);
 
 		json build_member(std::string _key, json& _member)
 		{
@@ -4436,6 +4434,16 @@ namespace corona
 		json j = _src.clone();
 		j = jp.from_double(0.0) - j;
 		return j;
+	}
+
+	json json::build_member(std::string _key)
+	{
+		std::string key;
+		json_parser jp;
+		json obj = make_path(_key, key);
+		json child = jp.create_object();
+		obj.put_member(key, child);
+		return child;
 	}
 
 	json json::make_path(std::string_view _path, std::string& _name)
