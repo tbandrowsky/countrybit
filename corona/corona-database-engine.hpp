@@ -4100,6 +4100,37 @@ namespace corona
 
 			created_classes.put_member("sys_object", true);
 
+			response = create_class(R"(
+{	
+	"class_name" : "sys_server",
+	"class_description" : "all corona servers known by this one",
+	"base_class_name" : "sys_object",
+	"fields" : {
+			"server_name" : "string",
+			"server_description" : "string",
+			"server_url" : "string",
+			"server_version": "string"
+	}
+}
+)");
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("sys_server put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_server"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_server after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			created_classes.put_member("sys_server", true);
+
+
 
 			response = create_class(R"(
 {	

@@ -509,6 +509,31 @@ namespace corona
 			jinfo.put_member("version", local_db->default_api_version);
 			jinfo.put_member("description", local_db->default_api_description);
 
+			json jservers = jp.create_array();
+
+			std::string server_url;
+			std::string server_description;
+
+			server_url = listen_point;
+			server_description = local_db->default_api_description;
+
+			json jserver = jp.create_object();
+			jserver.put_member("url", server_url);
+			jserver.put_member("description", server_description);
+            jservers.push_back(jserver);
+
+            auto server_list = get_data("sys_server");
+			for (auto server : server_list) {
+				server_url = server["server_url"];
+				server_description = server["server_description"];
+				jserver = jp.create_object();
+				jserver.put_member("url", server_url);
+				jserver.put_member("description", server_description);
+				jservers.push_back(jserver);
+			}
+
+			jopenapi.put_member("servers", jservers);
+
 			json jpaths = jopenapi.build_member("paths");
 
 			// Example: /describe endpoint
@@ -516,19 +541,18 @@ namespace corona
 
 				json jpath = jpaths.build_member(path.path);
 				json jverb = jpath.build_member(path.verb);
-		
-				jverb.put_member("summary", path.description);
-                json jrequest = jverb.build_member("requestBody");
 
-				jrequest.build_member("description", path.description);
+				jverb.put_member("summary", path.description);
+
+				json jrequest = jverb.build_member("requestBody");
 				jrequest.build_member("required", true);
-				jrequest.build_member("content.application/json.schema.$ref", "#/components/schemas/" + path.request_schema);
+				jrequest.build_member("content.application/json", path.request_schema);
 
 				json jresponse = jverb.build_member("responses.200");
-				jresponse.build_member("content.application/json.schema.$ref", "#/components/schemas/" + path.response_class_name);
+				jresponse.build_member("content.application/json", path.response_schema);
 
 				jresponse = jverb.build_member("responses.default");
-				jresponse.build_member("content.application/json.schema.$ref", "#/components/schemas/" + path.response_class_name);
+				jresponse.build_member("content.application/json", path.response_schema);
 			}
 
 			json jschema = local_db->get_openapi_schema("");
@@ -699,6 +723,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
+
 			json fn_response = local_db->query(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -849,41 +874,38 @@ namespace corona
 /**************
 Bind home
 ***************/
-				std::string path = _root_path;
+				new_api.path = "";
 				new_api.name = "home";
 				new_api.description = "Returns test handler for this server.";
-				new_api.path = path;
 				new_api.verb = "get";
 				new_api.request_schema = {};
 				new_api.response_schema = {};
 				new_api.request_class_name = {};
 				new_api.response_class_name = {};
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
+				_server.put_handler(HTTP_VERB::HttpVerbGET, _root_path + new_api.path, corona_test);
 
 /**************
 Bind test
 ***************/
-				path = _root_path + "test/";
 				new_api.name = "test";
 				new_api.description = "Returns test handler for this server.";
-				new_api.path = path;
+				new_api.path = "test/";
 				new_api.verb = "get";
 				new_api.request_schema = {};
 				new_api.response_schema = {};
 				new_api.request_class_name = {};
 				new_api.response_class_name = {};
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbGET, path, corona_test);
+				_server.put_handler(HTTP_VERB::HttpVerbGET, _root_path + new_api.path, corona_test);
 
 
 /**************
 Bind createuser
 ***************/
-				path = _root_path + "login/createuser/";
 				new_api.name = "create_user";
 				new_api.description = "Creates a user, sending, if possible, a sign on email for the new user.  The proposed user name will be adjusted to a new user name.  Can be used by users signing themselves up.";
-				new_api.path = path;
+				new_api.path = "login/createuser/";
 				new_api.verb = "post";
 				new_api.request_class_name = {};
 				new_api.response_class_name = {};
@@ -930,17 +952,16 @@ Bind createuser
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_create);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_create);
 
 /**************
 Bind loginuser
 ***************/
 
-				path = _root_path + "login/loginuser/";
+				new_api.path = "login/loginuser/";
+				new_api.verb = "post";
 				new_api.name = "login_user";
 				new_api.description = "Attempt to access the system.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
   "properties": {
@@ -979,16 +1000,15 @@ Bind loginuser
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_login);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_login);
 
 /**************
 Bind confirmuser
 ***************/
-				path = _root_path + "login/confirmuser/";
+				new_api.path = "login/confirmuser/";
+				new_api.verb = "post";
 				new_api.name = "confirm_user";
 				new_api.description = "Validate a code sent previously to a user's email.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
   "properties": {
@@ -1030,11 +1050,10 @@ Bind confirmuser
 Bind loginuser
 ***************/
 
-				path = _root_path + "login/loginuser/";
+				new_api.path = "login/loginuser/";
+				new_api.verb = "post";
 				new_api.name = "login_user";
 				new_api.description = "Attempt to access the system.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
   "properties": {
@@ -1071,17 +1090,16 @@ Bind loginuser
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_confirm);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_confirm);
 
 /**************
 Bind SENDUSER
 ***************/
 
-				path = _root_path + "login/senduser/";
+				new_api.path = "login/senduser/";
+				new_api.verb = "post";
 				new_api.name = "send_user";
 				new_api.description = "Send a secret code to a user's email so they can login again or confirm a password change.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_class_name = "";
 				new_api.response_class_name = "";
 				new_api.request_schema = R"({
@@ -1120,10 +1138,9 @@ Bind confirmuser
 ***************/
 
 
-				path = _root_path + "login/confirmuser/";
+				new_api.path = "login/confirmuser/";
 				new_api.name = "confirm_user";
 				new_api.description = "Validate a code sent previously to a user's email.";
-				new_api.path = path;
 				new_api.verb = "post";
 				new_api.request_class_name = "";
 				new_api.response_class_name = "";
@@ -1162,17 +1179,16 @@ Bind confirmuser
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_send_confirm);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_send_confirm);
 
 /**************
 Bind passworduser
 ***************/
 
-				path = _root_path + "login/passworduser/";
+				new_api.path = "login/passworduser/";
+				new_api.verb = "post";
 				new_api.name = "change_password";
 				new_api.description = "Changes a user's password.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_class_name = "";
 				new_api.response_class_name = "";
 				new_api.request_schema = R"({
@@ -1221,17 +1237,16 @@ Bind passworduser
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_user_password);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_user_password);
 
 /**************
 Bind get classes
 ***************/
 
-				path = _root_path + "classes/get/";
+				new_api.path = "classes/get/";
+				new_api.verb = "post";
 				new_api.name = "get_classes";
 				new_api.description = "Retrieves all the classes on the server that the user can access.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object"
 })";
@@ -1259,18 +1274,17 @@ Bind get classes
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_classes_get);
 
 
 /**************
 Bind confirm user
 ***************/
 
-				path = _root_path + "login/confirmuser/";
+				new_api.path = "login/confirmuser/";
+				new_api.verb = "post";
 				new_api.name = "confirm_user";
 				new_api.description = "Validate a code sent previously to a user's email.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
   "required": [ "user_name", "validation_code" ],
@@ -1309,18 +1323,17 @@ Bind confirm user
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_classes_get);
 
 
 				/**************
 				Bind get class details
 				***************/
 
-				path = _root_path + "classes/get/details/";
+				new_api.path = "classes/get/details/";
+				new_api.verb = "post";
 				new_api.name = "get_class_details";
 				new_api.description = "Retrieves details of classes on the server that the user can access.  This class provides a physical map over and above what just get_classes does, but the map really, isn't something you'll need that much.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object"
 
@@ -1349,18 +1362,17 @@ Bind confirm user
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_class_get);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_class_get);
 
 
 				/**************
 				Bind put_class 
 				***************/
 
-				path = _root_path + "classes/put/";
+				new_api.path = "classes/put/";
+				new_api.verb = "post";
 				new_api.name = "put_class_details";
 				new_api.description = "Updates a class definition and its data.  If a base class has new fields, they are added to the descedendants as well.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
   "properties": {
@@ -1394,18 +1406,17 @@ Bind confirm user
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_classes_put);
 
 
 				/**************
 				Bind get_object
 				***************/
 
-				path = _root_path + "objects/get/";
+				new_api.path = "objects/get/";
+				new_api.verb = "post";
 				new_api.name = "get_object";
 				new_api.description = "Fetches an object by class_name and object_id.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_schema = R"({
   "type": "object",
   "properties": {
@@ -1443,7 +1454,7 @@ Bind confirm user
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_get);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_get);
 
 
 
@@ -1452,11 +1463,10 @@ Bind confirm user
 				Bind query objects
 				***************/
 
-				path = _root_path + "objects/query/";
-                new_api.verb = "post";
+				new_api.path = "objects/query/";
+				new_api.verb = "post";
 				new_api.name = "query_objects";
 				new_api.description = "Returns a stream of objects based on a query composed of where, joins, and project.";
-				new_api.path = path;
 				new_api.request_schema = R"({
   "type": "object",
   "properties": {
@@ -1495,18 +1505,18 @@ Bind confirm user
 	}
   }
 })";
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_query);
 				api_paths.push_back(new_api);
 
 				/**************
-				Bind get class details
+				Bind create object
 				***************/
 
 
-				path = _root_path + "objects/create/";
+				new_api.path = "objects/create/";
+				new_api.verb = "post";
 				new_api.name = "create_objects";
 				new_api.description = "Constructs a new object of a given class.";
-				new_api.path = path;
 				new_api.request_schema = R"({
   "type": "object",
   "properties": {
@@ -1544,19 +1554,18 @@ Bind confirm user
 })";
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
-				new_api.verb = "post";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_create);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_create);
 
 
 				/**************
 				Bind get class details
 				***************/
 
-				path = _root_path + "objects/put/";
+				new_api.path = "objects/put/";
+				new_api.verb = "post";
 				new_api.name = "put_objects";
 				new_api.description = "Updates one or more objects, validating each.";
-				new_api.path = path;
 				new_api.request_schema = R"({
   "type": "object",
   "data": {
@@ -1586,19 +1595,18 @@ Bind confirm user
 })";
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
-				new_api.verb = "post";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_put);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_put);
 
 
 				/**************
 				Bind get class details
 				***************/
 
-				path = _root_path + "objects/delete/";
+				new_api.path = "objects/delete/";
+				new_api.verb = "post";
 				new_api.name = "delete_object";
 				new_api.description = "Delete an object by class name and id.";
-				new_api.path = path;
 				new_api.request_schema = R"({
   "type": "object",
 	"properties": {
@@ -1634,19 +1642,18 @@ Bind confirm user
 })";
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
-				new_api.verb = "post";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_delete);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_delete);
 
 
 				/**************
 				Bind get class details
 				***************/
 
-				path = _root_path + "objects/edit/";
+				new_api.path = "objects/edit/";
+				new_api.verb = "post";
 				new_api.name = "get_object";
 				new_api.description = "Fetches an object by class_name and object_id, also returning its schema and edit options.";
-				new_api.path = path;
 				new_api.request_schema = R"({
   "type": "object",
 	"properties": {
@@ -1688,17 +1695,17 @@ Bind confirm user
 				new_api.response_class_name = R"()";
 				new_api.verb = "post";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_edit);
 
 
 				/**************
 				Bind get class details
 				***************/
 
-				path = _root_path + "objects/run/";
+				new_api.path = "objects/run/";
+				new_api.verb = "post";
 				new_api.name = "run_object";
 				new_api.description = "Puts an object, validating and updating it, and rerunning any query methods on the object, and return it..";
-				new_api.path = path;
 				new_api.request_schema = R"({
   "type": "object",
   "data": {
@@ -1729,14 +1736,13 @@ Bind confirm user
 })";
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
-				new_api.verb = "post";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_run);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_run);
 
-				path = _root_path + "objects/copy/";
+				new_api.path = "objects/copy/";
 				new_api.name = "copy_object";
+				new_api.verb = "post";
 				new_api.description = "Creates a copy of an object.  This actually can cast an object to something else as well.";
-				new_api.path = path;
 				new_api.request_schema = R"({
   "type": "object",
 	"properties": {
@@ -1804,21 +1810,19 @@ Bind confirm user
 })";
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
-				new_api.verb = "post";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_copy);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_copy);
 
-				path = _root_path + "describe/";
+				new_api.path = "describe/";
+				new_api.verb = "post";
 				new_api.name = "describe";
 				new_api.description = "Returns this open api specification.";
-				new_api.path = path;
-				new_api.verb = "post";
 				new_api.request_schema = {};
 				new_api.response_schema = {};
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_describe);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_describe);
 			}
 			catch (std::exception exc)
 			{
