@@ -4455,8 +4455,8 @@ namespace corona
 
 		for (int i = 0; i < sz - 1; i++) {
 			auto item = items[i];
-
-			json child = start.get_member(item.data());
+			std::string member_name(item);
+			json child = start.get_member(member_name);
 
 			if (child.object())
 			{
@@ -4465,7 +4465,8 @@ namespace corona
 			else
 			{
 				child = jp.create_object();
-				start.put_member(item.data(), child);
+				
+				start.put_member(member_name, child);
 			}
 		}
 		if (sz) {

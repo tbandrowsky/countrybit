@@ -549,22 +549,27 @@ namespace corona
 				jverb.put_member("summary", path.description);
 
 				json jrschema = jp.parse_object(path.request_schema);
-				if (jrschema.object()) {
+				if (jrschema.object() and not jrschema.error()) {
 					json jrequest = jverb.build_member("requestBody");
 					jrequest.build_member("required", true);
 					jrequest.build_member("content.application/json", jrschema);
 				}
+				else if (jrschema.error() and path.request_schema.size() > 0) {
+					log_error(jrschema, __FILE__, __LINE__);
+				}
 
 				jrschema = jp.parse_object(path.response_schema);
-				if (jrschema.object())
+				if (jrschema.object() and not jrschema.error())
 				{
 					json jresponse = jverb.build_member("responses.200");
 					jresponse.build_member("content.application/json", jrschema);
 					jresponse = jverb.build_member("responses.default");
 					jresponse.build_member("content.application/json", jrschema);
 				}
+				else if (jrschema.error() and path.request_schema.size() > 0) {
+					log_error(jrschema, __FILE__, __LINE__);
+				}
 			}
-
 			json jschema = local_db->get_openapi_schema("");
 			json jschemas = jopenapi.build_member("components.schemas", jschema);
 
