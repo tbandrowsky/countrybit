@@ -1440,34 +1440,7 @@ namespace corona
 			return 0;
 		}
 
-		json make_path(std::string_view _path, std::string& _name)
-		{
-			json_parser jp;
-			std::vector<std::string_view> items = split(_path, '.');
-			json start = *this;
-			int sz = items.size();
-
-			for (int i = 0; i < sz - 1; i++) {
-				auto item = items[i];
-
-				json child = start.get_member(item.data());
-
-				if (child.object())
-				{
-					start = child;
-				}
-				else
-				{
-					child = jp.create_object();
-					start.put_member(item.data(), child);
-				}
-			}
-			if (sz) {
-				_name = items[sz - 1].data();
-			}
-
-			return start;
-		}
+		json make_path(std::string_view _path, std::string& _name);
 
 		bool is_int64() const
 		{
@@ -4464,6 +4437,36 @@ namespace corona
 		j = jp.from_double(0.0) - j;
 		return j;
 	}
+
+	json json::make_path(std::string_view _path, std::string& _name)
+	{
+		json_parser jp;
+		std::vector<std::string_view> items = split(_path, '.');
+		json start = *this;
+		int sz = items.size();
+
+		for (int i = 0; i < sz - 1; i++) {
+			auto item = items[i];
+
+			json child = start.get_member(item.data());
+
+			if (child.object())
+			{
+				start = child;
+			}
+			else
+			{
+				child = jp.create_object();
+				start.put_member(item.data(), child);
+			}
+		}
+		if (sz) {
+			_name = items[sz - 1].data();
+		}
+
+		return start;
+	}
+
 
 	json json::query(std::string_view _path)
 	{
