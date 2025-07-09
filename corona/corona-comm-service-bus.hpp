@@ -227,7 +227,7 @@ namespace corona
 			std::string sa_password = server_config[sys_user_password_field];
 			json login_request = jp.create_object();
 			login_request.put_member(user_name_field, sa_user);
-			login_request.put_member(sys_user_password_field, sa_password);
+			login_request.put_member(user_password_field, sa_password);
 			json login_result = local_db->login_user(login_request);
 			bool success = (bool)login_result[success_field];
 			if (not success) {
@@ -369,13 +369,14 @@ namespace corona
 	"from": [
 		{ 
 			"class_name" : "",
-			"name" : "datax"
+			"name" : "data_source"
 		}
 	],
 	"stages": [
 		{
+			"name" : "filter_it",
 			"class_name" : "filter",
-			"stage_input_name" : "datax"			
+			"input" : "data_source"			
 		}
 	]
 }
@@ -520,18 +521,21 @@ namespace corona
 			json jserver = jp.create_object();
 			jserver.put_member("url", server_url);
 			jserver.put_member("description", server_description);
-            jservers.push_back(jserver);
+			jservers.push_back(jserver);
 
-            auto server_list = get_data("sys_server");
-			for (auto server : server_list) {
-				server_url = server["server_url"];
-				server_description = server["server_description"];
-				jserver = jp.create_object();
-				jserver.put_member("url", server_url);
-				jserver.put_member("description", server_description);
-				jservers.push_back(jserver);
+			auto slistresp = get_data("sys_server");
+			auto server_list = slistresp["data"];
+			if (server_list.array())
+			{
+				for (auto server : server_list) {
+					server_url = server["server_url"];
+					server_description = server["server_description"];
+					jserver = jp.create_object();
+					jserver.put_member("url", server_url);
+					jserver.put_member("description", server_description);
+					jservers.push_back(jserver);
+				}
 			}
-
 			jopenapi.put_member("servers", jservers);
 
 			json jpaths = jopenapi.build_member("paths");
@@ -544,15 +548,21 @@ namespace corona
 
 				jverb.put_member("summary", path.description);
 
-				json jrequest = jverb.build_member("requestBody");
-				jrequest.build_member("required", true);
-				jrequest.build_member("content.application/json", path.request_schema);
+				json jrschema = jp.parse_object(path.request_schema);
+				if (jrschema.object()) {
+					json jrequest = jverb.build_member("requestBody");
+					jrequest.build_member("required", true);
+					jrequest.build_member("content.application/json", jrschema);
+				}
 
-				json jresponse = jverb.build_member("responses.200");
-				jresponse.build_member("content.application/json", path.response_schema);
-
-				jresponse = jverb.build_member("responses.default");
-				jresponse.build_member("content.application/json", path.response_schema);
+				jrschema = jp.parse_object(path.response_schema);
+				if (jrschema.object())
+				{
+					json jresponse = jverb.build_member("responses.200");
+					jresponse.build_member("content.application/json", jrschema);
+					jresponse = jverb.build_member("responses.default");
+					jresponse.build_member("content.application/json", jrschema);
+				}
 			}
 
 			json jschema = local_db->get_openapi_schema("");
@@ -1045,50 +1055,6 @@ Bind confirmuser
 })";
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
-
-/**************
-Bind loginuser
-***************/
-
-				new_api.path = "login/loginuser/";
-				new_api.verb = "post";
-				new_api.name = "login_user";
-				new_api.description = "Attempt to access the system.";
-				new_api.request_schema = R"({
-  "type": "object",
-  "properties": {
-	"user_name": {
-	  "type": "string",
-	  "description": "The user name of the new user."
-	},
-	"password": {
-	  "type": "string",
-	  "description": "Password",
-	  "format": "password"
-	}
-  }
-})";
-				new_api.response_schema = R"({
-  "type": "object",
-  "properties": {
-	"success": {
-	  "type": "boolean",
-	  "description": "True if the user was created successfully."
-	},
-	"message": {
-	  "type": "string",
-	  "description": "Text of message."
-	},
-	"data": {
-	  "type": "object",
-	  "description": "Result object or objects, user object result."
-	},
-	"token": {
-	  "type": "string",
-	  "description": "Token for the user to use in subsequent requests."
-	}
-  }
-})";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_confirm);
 
@@ -1133,53 +1099,11 @@ Bind SENDUSER
   }
 })";
 
-/**************
-Bind confirmuser
-***************/
 
-
-				new_api.path = "login/confirmuser/";
-				new_api.name = "confirm_user";
-				new_api.description = "Validate a code sent previously to a user's email.";
-				new_api.verb = "post";
-				new_api.request_class_name = "";
-				new_api.response_class_name = "";
-				new_api.request_schema = R"({
-  "type": "object",
-  "properties": {
-	"user_name": {
-	  "type": "string",
-	  "description": "Your user name."
-	},
-	"validation_code": {
-	  "type": "string",
-	  "description": "Code you received in email."
-	}
-  }
-})";
-				new_api.response_schema = R"({
-  "type": "object",
-  "properties": {
-	"success": {
-	  "type": "boolean",
-	  "description": "True if sent successfully."
-	},
-	"message": {
-	  "type": "string",
-	  "description": "Text of message."
-	},
-	"data": {
-	  "type": "object",
-	  "description": "Result object or objects."
-	},
-	"token": {
-	  "type": "string",
-	  "description": "Token for the user to use in subsequent requests."
-	}
-  }
-})";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_send_confirm);
+
+
 
 /**************
 Bind passworduser
@@ -1263,55 +1187,6 @@ Bind get classes
 	},
 	"data": {
 	  "type": "array",
-	  "description": "Result object or objects."
-	},
-	"token": {
-	  "type": "string",
-	  "description": "Token for the user to use in subsequent requests."
-	}
-  }
-})";
-				new_api.request_class_name = R"()";
-				new_api.response_class_name = R"()";
-				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_classes_get);
-
-
-/**************
-Bind confirm user
-***************/
-
-				new_api.path = "login/confirmuser/";
-				new_api.verb = "post";
-				new_api.name = "confirm_user";
-				new_api.description = "Validate a code sent previously to a user's email.";
-				new_api.request_schema = R"({
-  "type": "object",
-  "required": [ "user_name", "validation_code" ],
-  "properties": {
-	"user_name": {
-	  "type": "string",
-	  "description": "Your user name."
-	},
-	"validation_code": {
-	  "type": "string",
-	  "description": "The code you received via email."
-	}
-  }
-})";
-				new_api.response_schema = R"({
-  "type": "object",
-  "properties": {
-	"success": {
-	  "type": "boolean",
-	  "description": "Indicates if operation was successful."
-	},
-	"message": {
-	  "type": "string",
-	  "description": "Text of message."
-	},
-	"data": {
-	  "type": "object",
 	  "description": "Result object or objects."
 	},
 	"token": {
@@ -1814,7 +1689,7 @@ Bind confirm user
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_copy);
 
 				new_api.path = "describe/";
-				new_api.verb = "post";
+				new_api.verb = "get";
 				new_api.name = "describe";
 				new_api.description = "Returns this open api specification.";
 				new_api.request_schema = {};
@@ -1822,7 +1697,7 @@ Bind confirm user
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_describe);
+				_server.put_handler(HTTP_VERB::HttpVerbGET, _root_path + new_api.path, corona_describe);
 			}
 			catch (std::exception exc)
 			{
@@ -1841,7 +1716,7 @@ Bind confirm user
 		}
 
 		double frame_seconds = 1.0 / 20.0; // 60 frames per second	
-		double poll_seconds = 1.0;
+		double poll_seconds = 12.0;
 
 		std::chrono::steady_clock::time_point last_frame_time = std::chrono::high_resolution_clock::now();
 		std::chrono::steady_clock::time_point last_poll_time = std::chrono::high_resolution_clock::now();

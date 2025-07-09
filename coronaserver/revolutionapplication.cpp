@@ -503,7 +503,6 @@ namespace corona::apps::revolution
     class revolution_simulation : public corona_simulation_interface
     {
 
-        comm_bus_service* service;
 
         template <typename object_type> std::shared_ptr<object_type> from_object(json& _object)
         {

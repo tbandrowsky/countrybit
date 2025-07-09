@@ -4443,7 +4443,7 @@ namespace corona
 		json obj = make_path(_key, key);
 		json child = jp.create_object();
 		obj.put_member(key, child);
-		return child;
+		return obj[key];
 	}
 
 	json json::make_path(std::string_view _path, std::string& _name)
