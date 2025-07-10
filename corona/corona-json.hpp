@@ -4452,12 +4452,8 @@ namespace corona
 		std::vector<std::string_view> items = split(_path, '.');
 		json start = *this;
 
-		if (_new_object.empty())
-		{
-			_new_object = jp.create_object();
-        }
-
 		int sz = items.size();
+		int sze = sz - 1;
 
 		for (int i = 0; i < sz; i++) {
 			auto item = items[i];
@@ -4470,9 +4466,15 @@ namespace corona
 			{
 				start = child;
 			}
-			else
+			else if (i < sze or _new_object.empty())
 			{
 				child = jp.create_object();				
+				start.put_member(member_name, child);
+				start = child;
+			}
+			else
+			{
+				child = _new_object;
 				start.put_member(member_name, child);
 				start = child;
 			}
