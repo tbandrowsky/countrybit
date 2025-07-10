@@ -709,6 +709,18 @@ namespace corona
 { field_types::ft_query, "query"  }
 	};
 
+	std::map<field_types, std::string> field_type_names_openapi = {
+{ field_types::ft_object, "object"  },
+{ field_types::ft_array , "array" },
+{ field_types::ft_double, "number"  },
+{ field_types::ft_int64, "number"  },
+{ field_types::ft_string, "string"  },
+{ field_types::ft_bool, "boolean"  },
+{ field_types::ft_datetime, "string"  },
+{ field_types::ft_function, "array"  },
+{ field_types::ft_query, "array"  }
+	};
+
 	auto toHex(unsigned char i)
 	{
 		struct char_pair

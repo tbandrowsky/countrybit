@@ -2166,6 +2166,12 @@ namespace corona
 			if (options) {
 				result = options->get_openapi_schema(_db);
 			}
+			else {
+				json_parser jp;
+
+				result = jp.create_object();
+				result.put_member("type", field_type_names_openapi[field_type]);
+			}
 
 			return result;
 		}

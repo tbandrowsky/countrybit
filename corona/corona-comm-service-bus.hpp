@@ -567,7 +567,7 @@ namespace corona
 				else if (jrschema.error() and path.response_schema.size() > 0) {
 					log_error(jrschema, __FILE__, __LINE__);
 				}
-			}
+			} 
 			json jschema = local_db->get_openapi_schema("");
 			json jschemas = jopenapi.build_member("components.schemas", jschema);
 

@@ -2095,6 +2095,11 @@ namespace corona
 				auto new_object = existing_object->clone();
 				object_impl()->members[_key] = new_object;
 			}
+			else 
+			{
+				auto new_object = std::make_shared<json_object>();
+				object_impl()->members[_key] = new_object;
+			}
 			return *this;
 		}
 
@@ -2124,8 +2129,16 @@ namespace corona
 				throw std::logic_error("Not an object");
 			}
 			std::shared_ptr<json_array> existing_array = _array.array_impl();
-			auto new_array = existing_array->clone();
-			object_impl()->members[_key] = new_array;
+
+			if (existing_array) {
+				auto new_array = existing_array->clone();
+				object_impl()->members[_key] = new_array;
+			}
+			else 
+			{
+				auto new_array = std::make_shared<json_array>();
+				object_impl()->members[_key] = new_array;
+			}
 			return *this;
 		}
 
