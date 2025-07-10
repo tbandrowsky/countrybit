@@ -538,7 +538,7 @@ namespace corona
 			}
 			jopenapi.put_member("servers", jservers);
 
-			json jpaths = jopenapi.build_member("paths");
+			json jpaths = jp.create_object(); // jopenapi.build_member("paths");
 
 			// Example: /describe endpoint
 			for (auto path : api_paths) {

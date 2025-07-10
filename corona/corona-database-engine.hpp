@@ -4376,14 +4376,14 @@ namespace corona
 				"field_name":"first_name",
 				"required" : true,
 				"max_length" : 50,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"
 			},
 			"last_name" : {
 				"field_type":"string",
 				"field_name":"last_name",
 				"required" : true,
 				"max_length" : 50,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"
 			},
 			"user_name" : {
 				"field_type":"string",
@@ -4397,49 +4397,49 @@ namespace corona
 				"field_name":"email",
 				"required" : true,
 				"max_length" : 100,
-				"match_pattern": "(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+"	
+				"match_pattern": "(\\\\w+)(\\\\.|_)?(\\\\w*)@(\\\\w+)(\\\\.(\\\\w+))+"	
 			},
 			"mobile" : {
 				"field_type":"string",
 				"field_name":"mobile",
 				"required" : true,
 				"max_length" : 15,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"street1" : {
 				"field_type":"string",
 				"field_name":"street1",
 				"required" : true,
 				"max_length" : 100,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"street2" : {
 				"field_type":"string",
 				"field_name":"street2",
 				"required" : true,
 				"max_length" : 100,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"city" : {
 				"field_type":"string",
 				"field_name":"city",
 				"required" : true,
 				"max_length" : 100,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"state" : {
 				"field_type":"string",
 				"field_name":"state",
 				"required" : true,
 				"max_length" : 50,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"zip" : {
 				"field_type":"string",
 				"field_name":"zip",
 				"required" : true,
 				"max_length" : 15,
-				"match_pattern": "^\d{5}(?:[-\s]\d{4})?$"	
+				"match_pattern": "^\\\\d{5}(?:[-\\\\s]\\\\d{4})?$"	
 			},
 			"password" : "string",
 			"team_name" : "string",

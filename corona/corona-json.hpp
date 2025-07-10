@@ -4470,13 +4470,13 @@ namespace corona
 			{
 				child = jp.create_object();				
 				start.put_member(member_name, child);
-				start = child;
+				start = start[member_name];
 			}
 			else
 			{
 				child = _new_object;
 				start.put_member(member_name, child);
-				start = child;
+				start = start[member_name];
 			}
 		}
 
