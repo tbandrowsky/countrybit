@@ -561,12 +561,10 @@ namespace corona
 				jrschema = jp.parse_object(path.response_schema);
 				if (jrschema.object() and not jrschema.error())
 				{
-					json jresponse = jverb.build_member("responses.200");
-					jresponse.build_member("content.application/json", jrschema);
-					jresponse = jverb.build_member("responses.default");
-					jresponse.build_member("content.application/json", jrschema);
+					json jresponse = jverb.build_member("responses.200.content.application/json", jrschema);
+					jresponse = jverb.build_member("responses.default.content.application/json", jrschema);
 				}
-				else if (jrschema.error() and path.request_schema.size() > 0) {
+				else if (jrschema.error() and path.response_schema.size() > 0) {
 					log_error(jrschema, __FILE__, __LINE__);
 				}
 			}

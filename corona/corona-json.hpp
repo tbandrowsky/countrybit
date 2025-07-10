@@ -1440,13 +1440,8 @@ namespace corona
 			return 0;
 		}
 
-		json make_path(std::string_view _path, std::string& _name);
+		json make_path(std::string_view _path, std::string& _name, json _value);
 
-		json make_path(std::string_view _path)
-		{
-			std::string result;
-			return make_path(_path, result);
-		}
 
 		bool is_int64() const
 		{
@@ -1900,29 +1895,35 @@ namespace corona
 
 		json build_member(std::string _key, json& _member)
 		{
-			json obj = make_path(_key);
-            obj.put_member(_key, _member);
+			std::string tail;
+			json obj = make_path(_key, tail, _member);
 			return obj;
 		}
 
 		json build_member(std::string _key, std::string _value)
 		{
-			json obj = make_path(_key);
-			obj.put_member(_key, _value);
+			std::string tail;
+			json jv = json(std::make_shared<json_string>());
+			jv.string_impl()->value = _value;
+			json obj = make_path(_key, tail, jv);
 			return obj;
 		}
 
 		json build_member(std::string _key, double _value)
 		{
-			json obj = make_path(_key);
-			obj.put_member(_key, _value);
+			std::string tail;
+			json jv = json(std::make_shared<json_double>());
+			jv.double_impl()->value = _value;
+			json obj = make_path(_key, tail, jv);
 			return obj;
 		}
 
-		json build_member_int64(std::string _key, double _value)
+		json build_member_int64(std::string _key, int64_t _value)
 		{
-			json obj = make_path(_key);
-			obj.put_member_i64(_key, _value);
+			std::string tail;
+			json jv = json(std::make_shared<json_int64>());
+			jv.int64_impl()->value = _value;
+			json obj = make_path(_key, tail, jv);
 			return obj;
 		}
 
@@ -4440,23 +4441,30 @@ namespace corona
 	{
 		std::string key;
 		json_parser jp;
-		json obj = make_path(_key, key);
-		json child = jp.create_object();
-		obj.put_member(key, child);
-		return obj[key];
+		json empty = jp.create_object();
+		json obj = make_path(_key, key, empty);
+		return obj;
 	}
 
-	json json::make_path(std::string_view _path, std::string& _name)
+	json json::make_path(std::string_view _path, std::string& _name, json _new_object)
 	{
 		json_parser jp;
 		std::vector<std::string_view> items = split(_path, '.');
 		json start = *this;
+
+		if (_new_object.empty())
+		{
+			_new_object = jp.create_object();
+        }
+
 		int sz = items.size();
 
-		for (int i = 0; i < sz - 1; i++) {
+		for (int i = 0; i < sz; i++) {
 			auto item = items[i];
 			std::string member_name(item);
-			json child = start.get_member(member_name);
+			_name = member_name;
+
+			json child = start[member_name];
 
 			if (child.object())
 			{
@@ -4464,18 +4472,14 @@ namespace corona
 			}
 			else
 			{
-				child = jp.create_object();
-				
+				child = jp.create_object();				
 				start.put_member(member_name, child);
+				start = child;
 			}
-		}
-		if (sz) {
-			_name = items[sz - 1].data();
 		}
 
 		return start;
 	}
-
 
 	json json::query(std::string_view _path)
 	{
