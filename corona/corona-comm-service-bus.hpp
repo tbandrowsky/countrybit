@@ -1752,6 +1752,11 @@ Bind get classes
             }
 		}
 
+		void run_swagger()
+		{
+			std::string system_command;
+		}
+
 		void run(runnable _runnable)
 		{
 			general_job* gj = new general_job(_runnable);

@@ -197,6 +197,7 @@ namespace corona {
 
 		HANDLE      request_queue;
 		bool shutdown;
+		std::string swagger_url;
 
 	public:
 
@@ -291,6 +292,11 @@ namespace corona {
 				HttpCloseRequestQueue(request_queue);
 				request_queue = nullptr;
 			}
+		}
+
+		void put_swagger(std::string _url)
+		{
+
 		}
 
 		void put_handler(HTTP_VERB _verb, std::string _url, http_handler_function _handler)
