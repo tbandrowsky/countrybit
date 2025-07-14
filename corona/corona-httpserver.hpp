@@ -532,6 +532,7 @@ namespace corona {
 
 			cors_header.pRawValue = cors_header_value.c_str();
 			cors_header.RawValueLength = cors_header_value.size();
+
 			response.Headers.UnknownHeaderCount = 1;
 			response.Headers.pUnknownHeaders = &cors_header;
 			
