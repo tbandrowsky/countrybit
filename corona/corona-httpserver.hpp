@@ -494,6 +494,7 @@ namespace corona {
 
 			istring<1025> reason = _reason;
 			istring<1025> content_type = _content_type;
+			istring<256> access_control_allow;
 
 			response.StatusCode = _status_code;
 			response.ReasonLength = reason.size();
@@ -521,7 +522,19 @@ namespace corona {
 			response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentType].pRawValue = content_type.c_str();
 			response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentType].RawValueLength = content_type.size();
 
+			// Add CORS header
+			std::string cors_header_name = "Access-Control-Allow-Origin";
+			std::string cors_header_value = "*";
+			HTTP_UNKNOWN_HEADER cors_header = {};
 
+			cors_header.pName = cors_header_name.c_str();
+			cors_header.NameLength = cors_header_name.size();
+
+			cors_header.pRawValue = cors_header_value.c_str();
+			cors_header.RawValueLength = cors_header_value.size();
+			response.Headers.UnknownHeaderCount = 1;
+			response.Headers.pUnknownHeaders = &cors_header;
+			
 			// 
 			// Because the entity body is sent in one call, it is not
 			// required to specify the Content-Length.

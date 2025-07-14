@@ -571,7 +571,11 @@ namespace corona
 			json jschema = local_db->get_openapi_schema("");
 			json jschemas = jopenapi.build_member("components.schemas", jschema);
 
-			run_swagger();
+//			this has way more problems being baked into here than this is possibly worth.
+//			just a lot of stuff to control their process and we will need to develop
+// 			some proxy capabilities.
+// 
+//			run_swagger();
 
 			return jopenapi;
 		}
