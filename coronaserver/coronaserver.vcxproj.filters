@@ -30,7 +30,6 @@
     <None Include="packages.config" />
     <None Include="corona.postman_collection.json" />
     <None Include="revolution_schema.json" />
-    <None Include="village_schema.json" />
     <None Include="config.json" />
   </ItemGroup>
   <ItemGroup>

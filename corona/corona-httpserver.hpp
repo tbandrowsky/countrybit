@@ -294,11 +294,6 @@ namespace corona {
 			}
 		}
 
-		void put_swagger(std::string _url)
-		{
-
-		}
-
 		void put_handler(HTTP_VERB _verb, std::string _url, http_handler_function _handler)
 		{
 			std::shared_ptr<http_handler_list> handler_list;
