@@ -571,6 +571,8 @@ namespace corona
 			json jschema = local_db->get_openapi_schema("");
 			json jschemas = jopenapi.build_member("components.schemas", jschema);
 
+			run_swagger();
+
 			return jopenapi;
 		}
 
@@ -1752,9 +1754,37 @@ Bind get classes
             }
 		}
 
+		HANDLE swagger_process = nullptr;
+		lockable swagger_lock;
+
 		void run_swagger()
 		{
+			scope_lock lock_me(swagger_lock);
+
 			std::string system_command;
+			std::string describe_url = listen_point + "/describe";
+
+			if (swagger_process != nullptr) 
+			{
+				// check to see if we are busy.  if so, then, cool, but if not, then, we need to close the handle and create another 
+				// process.
+				int msg = ::WaitForSingleObject(swagger_process, 50);
+
+				if (msg == WAIT_OBJECT_0) {
+					CloseHandle(swagger_process);
+					swagger_process = nullptr;
+				}
+			}
+
+			if (swagger_process == nullptr)
+			{
+                swagger_process = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+				system_command = R"(docker run -p 6677:8080 -e SWAGGER_JSON_URL=)";
+				system_command += describe_url;
+				system_command += R"( -e BASE_URL=/api -e SWAGGER_ALLOW_ORIGIN=* swaggerapi/swagger-ui)";
+				system_job* sj = new system_job(system_command, swagger_process);
+				global_job_queue->add_job(sj);
+			}
 		}
 
 		void run(runnable _runnable)
