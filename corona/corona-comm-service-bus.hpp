@@ -559,15 +559,15 @@ namespace corona
 				jverb.put_member("summary", path.description);
 
 				if (path.request_class_name.size() > 0) {
-					jverb.put_member("requestBody.content.application/json.schema.$ref", "#/components/schemas/" + path.request_class_name);
+					jverb.build_member("requestBody.content.application/json.schema.$ref", "#/components/schemas/" + path.request_class_name);
                 }
 
 				if (path.response_class_name.size() > 0) {
-					jverb.put_member("responses.200.content.application/json.schema.$ref", "#/components/schemas/" + path.request_class_name);
+					jverb.build_member("responses.200.content.application/json.schema.$ref", "#/components/schemas/" + path.response_class_name);
 				}
 
 				if (path.response_class_name.size() > 0) {
-					jverb.put_member("responses.default.content.application/json.schema.$ref", "#/components/schemas/" + path.request_class_name);
+					jverb.build_member("responses.default.content.application/json.schema.$ref", "#/components/schemas/" + path.response_class_name);
 				}
 
 			} 
@@ -588,7 +588,7 @@ namespace corona
 				}
 
 				std::string response_class_name = path.response_class_name;
-				jrschema = jp.parse_object(path.request_schema);
+				jrschema = jp.parse_object(path.response_schema);
 				if (jrschema.object() and not jrschema.error()) {
 					jschemas.put_member(response_class_name, jrschema);
 				}
@@ -1621,13 +1621,15 @@ Bind get classes
 
 
 				/**************
-				Bind get class details
+				Bind run
 				***************/
 
 				new_api.path = "objects/run/";
 				new_api.verb = "post";
 				new_api.name = "run_object";
-				new_api.description = "Puts an object, validating and updating it, and rerunning any query methods on the object, and return it..";
+				new_api.description = "Puts an object, validating and updating it.  Then, runs any query methods on the object, returning the resultant object.";
+				new_api.request_class_name = R"(sys_run_object_request)";
+				new_api.response_class_name = R"(sys_run_object_response)";
 				new_api.request_schema = R"({
   "type": "object",
   "data": {
@@ -1656,8 +1658,6 @@ Bind get classes
 	}
   }
 })";
-				new_api.request_class_name = R"()";
-				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_run);
 
@@ -1665,6 +1665,8 @@ Bind get classes
 				new_api.name = "copy_object";
 				new_api.verb = "post";
 				new_api.description = "Creates a copy of an object.  This actually can cast an object to something else as well.";
+				new_api.request_class_name = R"(sys_copy_object_request)";
+				new_api.response_class_name = R"(sys_copy_object_response)";
 				new_api.request_schema = R"({
   "type": "object",
 	"properties": {
@@ -1733,8 +1735,6 @@ Bind get classes
 	}
   }
 })";
-				new_api.request_class_name = R"()";
-				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_copy);
 
