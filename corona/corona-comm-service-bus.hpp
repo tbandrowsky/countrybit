@@ -542,28 +542,12 @@ namespace corona
 
 			// Example: /describe endpoint
 			for (auto path : api_paths) {
+				json jendpoint = jp.create_object();
 				json post_op = jp.create_object();
 			
 				post_op.put_member("summary", std::string("Returns the OpenAPI specification document."));
 				post_op.put_member("operationId", std::string("describe"));
-
-				std::string response_text = std::format(R"("description": "{0}",
-					"content" : {{
-					"application/json": {{
-						"schema": {{
-							"$ref": "{1}"
-						}}
-					}}
-				}})", api_purpose,
-					api_reference);
-
-				json response = jp.parse_object(response_text);
-
-				post_op.put_member("responses", response);
 				jendpoint.put_member("post", post_op);
-				json jpaths = jp.create_object();
-				jpaths.put_member("/describe", jendpoint);
-			}
 
 				json jpath = jpaths.build_member(path.path);
 				json jverb = jpath.build_member(path.verb);
@@ -893,6 +877,13 @@ namespace corona
 			std::string response_class_name;
 			std::string request_schema;
 			std::string response_schema;
+
+			api_definition() = default;
+			api_definition(const api_definition& _src) = default;
+			api_definition(api_definition&& _src) = default;
+			api_definition &operator =(const api_definition& _src) = default;
+			api_definition &operator =(api_definition&& _src) = default;
+			~api_definition() = default;
 		};
 
 		std::vector<api_definition> api_paths;
