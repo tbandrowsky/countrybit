@@ -144,8 +144,8 @@ namespace corona
 			db_api_server.start();
 
 			log_information("listening on :" + listen_point, __FILE__, __LINE__);
-			for (auto path : api_paths) {
-				log_information(path, __FILE__, __LINE__);
+			for (auto ipath : api_paths) {
+				log_information(ipath.path, __FILE__, __LINE__);
 			}
 			log_command_stop("comm_service_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
@@ -451,8 +451,8 @@ namespace corona
 
 				if (show_listen) {
 					log_information("updated server, and listening on :" + listen_point, __FILE__, __LINE__);
-					for (auto path : api_paths) {
-						log_information(path, __FILE__, __LINE__);
+					for (auto ipath : api_paths) {
+						log_information(ipath.path, __FILE__, __LINE__);
 					}
 				}
 
@@ -517,18 +517,19 @@ namespace corona
 			
 				post_op.put_member("summary", std::string("Returns the OpenAPI specification document."));
 				post_op.put_member("operationId", std::string("describe"));
-				json response = jp.parse_object(R"({
-        "200": {
-            "description": "OpenAPI document",
-            "content": {
-                "application/json": {
-                    "schema": {
-                        "type": "object"
-                    }
-                }
-            }
-        }
-    })");
+
+				std::string response_text = std::format(R"("description": "{0}",
+					"content" : {{
+					"application/json": {{
+						"schema": {{
+							"$ref": "{1}"
+						}}
+					}}
+				}})", api_purpose,
+					api_reference);
+
+				json response = jp.parse_object(response_text);
+
 				post_op.put_member("responses", response);
 				jendpoint.put_member("post", post_op);
 				json jpaths = jp.create_object();
