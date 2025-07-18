@@ -42,6 +42,8 @@ the great module disaster.
 
 ***********************************************/
 
+template <typename T>
+constexpr bool is_convertible_to_int = std::is_convertible_v<T, int>;
 
 namespace corona
 {
@@ -705,6 +707,7 @@ namespace corona
 		virtual bool accepts(corona_database_interface* _db, std::vector<validation_error>& _validation_errors, std::string _class_name, std::string _field_name, json& _object_to_test) = 0;
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
 		virtual json get_openapi_schema(corona_database_interface* _db) = 0;
+        virtual bool is_required() = 0;
 	};
 
 	class field_interface {
@@ -1003,6 +1006,11 @@ namespace corona
 			json schema = jp.create_object();
 			schema.put_member("type", std::string("string"));
 			return schema;
+		}
+
+		virtual bool is_required() override 
+		{ 
+			return required; 
 		}
 
 	};
@@ -1893,12 +1901,18 @@ namespace corona
 			json schema = jp.create_object();
 			schema.put_member("type", std::string("number"));
 
-			if (min_value > 0) {
-				schema.put_member("minimum", min_value);
+			if constexpr (is_convertible_to_int<scalar_type>)
+			{ 	
+				int imin = min_value;
+				int imax = max_value;
+				if (imin) {
+					schema.put_member("minimum", min_value);
+				}
+				if (imax) {
+					schema.put_member("maximum", max_value);
+				}
 			}
-			if (max_value > 0) {
-				schema.put_member("maximum", max_value);
-			}
+
 			return schema;
 		}
 
@@ -2151,6 +2165,12 @@ namespace corona
 
 			if (options) {
 				result = options->get_openapi_schema(_db);
+			}
+			else {
+				json_parser jp;
+
+				result = jp.create_object();
+				result.put_member("type", field_type_names_openapi[field_type]);
 			}
 
 			return result;
@@ -2500,19 +2520,23 @@ namespace corona
 		{
 			copy_from(_src);
 		}
+
 		class_implementation(const class_implementation& _src)
 		{
 			copy_from(&_src);
-		};
+		}
+
 		class_implementation(class_implementation&& _src)
 		{
 			copy_from(&_src);
 		}
+
 		class_implementation& operator = (const class_implementation& _src)
 		{
 			copy_from(&_src);
 			return *this;
 		}
+
 		class_implementation& operator = (class_implementation&& _src)
 		{
 			copy_from(&_src);
@@ -3796,13 +3820,20 @@ namespace corona
             json schema = jp.create_object();
 			json definition = jp.create_object();
 			json properties = jp.create_object();
+			json required = jp.create_array();
 
+			definition.put_member("description", get_class_description());
 			definition.put_member("type", std::string("object"));
 
             for (auto fld : fields) {
 				auto field = fld.second;
                 json field_definition = field->get_openapi_schema(_db);
                 properties.put_member(field->get_field_name(), field_definition);
+
+				auto options = field->get_options();
+				if (options and options->is_required()) {
+					required.push_back(field->get_field_name());
+				}
             }
 
 			definition.put_member("properties", properties);
@@ -4075,6 +4106,37 @@ namespace corona
 
 			created_classes.put_member("sys_object", true);
 
+			response = create_class(R"(
+{	
+	"class_name" : "sys_server",
+	"class_description" : "all corona servers known by this one",
+	"base_class_name" : "sys_object",
+	"fields" : {
+			"server_name" : "string",
+			"server_description" : "string",
+			"server_url" : "string",
+			"server_version": "string"
+	}
+}
+)");
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("sys_server put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_server"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_server after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			created_classes.put_member("sys_server", true);
+
+
 
 			response = create_class(R"(
 {	
@@ -4320,14 +4382,14 @@ namespace corona
 				"field_name":"first_name",
 				"required" : true,
 				"max_length" : 50,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"
 			},
 			"last_name" : {
 				"field_type":"string",
 				"field_name":"last_name",
 				"required" : true,
 				"max_length" : 50,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"
 			},
 			"user_name" : {
 				"field_type":"string",
@@ -4341,49 +4403,49 @@ namespace corona
 				"field_name":"email",
 				"required" : true,
 				"max_length" : 100,
-				"match_pattern": "(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+"	
+				"match_pattern": "(\\\\w+)(\\\\.|_)?(\\\\w*)@(\\\\w+)(\\\\.(\\\\w+))+"	
 			},
 			"mobile" : {
 				"field_type":"string",
 				"field_name":"mobile",
 				"required" : true,
 				"max_length" : 15,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"street1" : {
 				"field_type":"string",
 				"field_name":"street1",
 				"required" : true,
 				"max_length" : 100,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"street2" : {
 				"field_type":"string",
 				"field_name":"street2",
 				"required" : true,
 				"max_length" : 100,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"city" : {
 				"field_type":"string",
 				"field_name":"city",
 				"required" : true,
 				"max_length" : 100,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"state" : {
 				"field_type":"string",
 				"field_name":"state",
 				"required" : true,
 				"max_length" : 50,
-				"match_pattern": "[a-zA-Z0-9_\\-\\s]+"	
+				"match_pattern": "[a-zA-Z0-9_\\\\-\\\\s]+"	
 			},
 			"zip" : {
 				"field_type":"string",
 				"field_name":"zip",
 				"required" : true,
 				"max_length" : 15,
-				"match_pattern": "^\d{5}(?:[-\s]\d{4})?$"	
+				"match_pattern": "^\\\\d{5}(?:[-\\\\s]\\\\d{4})?$"	
 			},
 			"password" : "string",
 			"team_name" : "string",
@@ -4942,6 +5004,10 @@ private:
 		{
 			json schema;
 			json_parser jp;
+
+			if (user_name.empty()) {
+				user_name = default_user;
+            }
 
 			json result_list = classes->select([this, user_name](int _index, json& _item) {
 				auto permission = get_class_permission(user_name, _item[class_name_field]);
@@ -6443,7 +6509,7 @@ private:
 			if (not check_message(_run_object_request, { auth_general }, user_name))
 			{
 				response = create_response(_run_object_request, false, "Denied", jp.create_object(), errors, tx.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -6451,7 +6517,7 @@ private:
 			json result = put_object(_run_object_request);
 			if (result.error())
 			{
-				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 			json key = jp.create_object();

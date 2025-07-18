@@ -95,6 +95,20 @@ namespace corona {
 		friend class job_queue;
 	};
 
+	class system_job : public job
+	{
+	public:
+		HANDLE notification_handle;
+		std::string system_command;
+
+		system_job();
+		system_job(std::string _system_command, HANDLE _notification_handle = nullptr);
+
+		virtual ~system_job();
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
+		friend class job_queue;
+	};
+
 	class finish_job : public job {
 
 	public:
@@ -160,6 +174,7 @@ namespace corona {
 		bool listen_job(job *_jobMessage);
 		void add_job(job* _jobMessage);
 		void add_job(runnable _function, HANDLE handle);
+		void add_system(std::string _system_command);
 		void shutDown();
 		void kill();
 
@@ -287,6 +302,51 @@ namespace corona {
 		{
 			function_to_run();
 		}
+
+		jobNotify.shouldDelete = true;
+
+		return jobNotify;
+	}
+
+	// -------------------------------------------------------------------------------
+
+	system_job::system_job()
+	{
+		notification_handle = nullptr;
+	}
+
+	system_job::system_job(std::string _system_command, HANDLE _notification_handle)
+	{
+        system_command = _system_command;
+		notification_handle = _notification_handle;
+	}
+
+	system_job::~system_job()
+	{
+		;
+	}
+
+	job_notify system_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+	{
+		job_notify jobNotify;
+
+		if (notification_handle) {
+			jobNotify.setSignal(notification_handle);
+		}
+
+		try 
+		{
+			if (not system_command.empty()) {
+				std::system(system_command.c_str());
+            }
+		}
+		catch (std::exception & exc) 
+		{
+			jobNotify.repost = false;
+			jobNotify.shouldDelete = true;
+			system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+			return jobNotify;
+        }
 
 		jobNotify.shouldDelete = true;
 

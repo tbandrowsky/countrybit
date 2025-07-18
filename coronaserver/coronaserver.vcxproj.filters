@@ -20,7 +20,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="config.json" />
     <CopyFileToFolders Include="candidate_schema.json" />
     <CopyFileToFolders Include="CoronaApplicationServer.docx" />
   </ItemGroup>
@@ -31,7 +30,7 @@
     <None Include="packages.config" />
     <None Include="corona.postman_collection.json" />
     <None Include="revolution_schema.json" />
-    <None Include="village_schema.json" />
+    <None Include="config.json" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="coronaserver.hpp">

@@ -161,13 +161,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="config.json">
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DeploymentContent>
-      <FileType>Document</FileType>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</DeploymentContent>
-    </CopyFileToFolders>
     <CopyFileToFolders Include="candidate_schema.json">
       <FileType>Document</FileType>
     </CopyFileToFolders>
@@ -176,6 +169,7 @@
     <None Include="ccl.csv" />
     <None Include="cm.csv" />
     <None Include="cn.csv" />
+    <None Include="config.json" />
     <None Include="corona.postman_collection.json" />
     <CopyFileToFolders Include="CoronaApplicationServer.docx">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
@@ -184,7 +178,6 @@
     </CopyFileToFolders>
     <None Include="packages.config" />
     <None Include="revolution_schema.json" />
-    <None Include="village_schema.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
