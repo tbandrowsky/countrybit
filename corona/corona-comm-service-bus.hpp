@@ -518,6 +518,8 @@ namespace corona
 			server_url = listen_point;
 			server_description = local_db->default_api_description;
 
+			// now we're building the servers tag.
+
 			json jserver = jp.create_object();
 			jserver.put_member("url", server_url);
 			jserver.put_member("description", server_description);
@@ -537,6 +539,8 @@ namespace corona
 				}
 			}
 			jopenapi.put_member("servers", jservers);
+
+			// now we're building the paths tag.
 
 			json jpaths = jopenapi.build_member("paths");
 
@@ -574,8 +578,13 @@ namespace corona
 					log_error(jrschema, __FILE__, __LINE__);
 				}
 			} 
+
+			// and now we're building the schema itself.
+
 			json jschema = local_db->get_openapi_schema("");
 			json jschemas = jopenapi.build_member("components.schemas", jschema);
+
+
 
 //			this has way more problems being baked into here than this is possibly worth.
 //			just a lot of stuff to control their process and we will need to develop
