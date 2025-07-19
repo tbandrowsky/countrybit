@@ -1,4 +1,4 @@
-
+#ifdef CORONA_BUILD
 #include "coronaserver.hpp"
 
 namespace corona::apps::revolution
@@ -977,10 +977,13 @@ namespace corona::apps::revolution
 
 }
 
+
+
 int main(int argc, char* argv[])
 {
     std::shared_ptr<corona::apps::revolution::revolution_simulation> simulation = std::make_shared<corona::apps::revolution::revolution_simulation>();
     return CoronaMain(simulation, argc, argv);
 }
 
+#endif
 
