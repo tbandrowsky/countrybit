@@ -176,6 +176,7 @@
       <FileType>Document</FileType>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
     </CopyFileToFolders>
+    <None Include="insurance_schema.json" />
     <None Include="packages.config" />
     <None Include="revolution_schema.json" />
   </ItemGroup>

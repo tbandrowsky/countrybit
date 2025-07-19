@@ -31,6 +31,7 @@
     <None Include="corona.postman_collection.json" />
     <None Include="revolution_schema.json" />
     <None Include="config.json" />
+    <None Include="insurance_schema.json" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="coronaserver.hpp">

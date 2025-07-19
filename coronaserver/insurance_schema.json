@@ -1,0 +1,172 @@
+{
+  "schema_name": "Insurance",
+  "schema_description": "Demonstration for Insurance.",
+  "schema_version": "1.0",
+  "schema_authors": [
+    "TJ Bandrowsky"
+  ],
+  "classes": [
+    {
+      "class_name": "article",
+      "class_description": "a communication",
+      "base_class_name": "sys_object",
+      "parents": [ "topic" ],
+      "fields": {
+        "article_body": "string"
+      }
+    },
+    {
+      "class_name": "topic",
+      "class_description": "something to talk about",
+      "base_class_name": "sys_object",
+      "fields": {
+        "topic_name": "string",
+        "topic_description": "string",
+        "articles": "[ article ]"
+      }
+    },
+    {
+      "class_name": "address",
+      "class_description": "a place where something is",
+      "base_class_name": "topic",
+      "fields": {
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "country": "string"
+      }
+    },
+    {
+      "class_name": "contact",
+      "class_description": "a someone",
+      "base_class_name": "topic",
+      "parents": [ "location" ],
+      "fields": {
+        "first_name": "string",
+        "last_name": "string",
+        "mobile_phone": "string",
+        "other_phone": "string",
+        "current_email": "string",
+        "other_email": "string"
+      }
+    },
+    {
+      "class_name": "location",
+      "class_description": "a place where people are",
+      "base_class_name": "address",
+      "parents": [ "partner" ],
+      "fields": {
+        "contacts": "[ contact ]"
+      }
+    },
+    {
+      "class_name": "partner",
+      "class_description": "someone who transacts with the company",
+      "base_class_name": "topic",
+      "fields": {
+        "locations": "[ location ]",
+        "contacts": "[ contact ]"
+      }
+    },
+    {
+      "class_name": "customer",
+      "class_description": "a comment on an article",
+      "base_class_name": "partner",
+      "fields": {
+        
+      }
+    },
+    {
+      "class_name": "regulator",
+      "class_description": "a comment on an article",
+      "base_class_name": "partner",
+      "fields": {
+        
+      }
+    },
+    {
+      "class_name": "employees",
+      "class_description": "a comment on an article",
+      "base_class_name": "partner",
+      "fields": {
+        
+      }
+    },
+    {
+      "class_name": "transaction_detail",
+      "class_description": "an amount to be applied to an account",
+      "base_class_name": "sys_object",
+      "parents": [ "transaction", "base_account" ],
+      "fields": {
+        "amount": "number"
+      }
+    },
+    {
+      "class_name": "transaction",
+      "class_description": "a comment on an article",
+      "base_class_name": "sys_object",
+      "parents": [ "partner" ],
+      "fields": {
+        "credits": "number",
+        "debits": "number",
+        "balance": "number",
+        "details": [ "transaction_detail" ]
+      }
+    },
+    {
+      "class_name": "base_account",
+      "class_description": "an entity which can be posted to",
+      "base_class_name": "sys_object",
+      "parents": [ "base_account" ],
+      "fields": {
+        "account_number": "string",
+        "account_name": "string",
+        "credits": "number",
+        "debits": "number",
+        "balance": "number",
+        "accounts": "[ base_account ]",
+        "transactions": "[ transaction ]"
+      }
+    },
+    {
+      "class_name": "general_ledger_account",
+      "class_description": "a comment on an article",
+      "base_class_name": "base_account",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "asset_account",
+      "class_description": "a comment on an article",
+      "base_class_name": "general_ledger_account",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "liability_account",
+      "class_description": "a comment on an article",
+      "base_class_name": "general_ledger_account",
+      "fields": {
+
+      }
+    },
+    {
+      "class_name": "equity_account",
+      "class_description": "a comment on an article",
+      "base_class_name": "general_ledger_account",
+      "fields": {
+
+      }
+    }
+  ],
+  "users": [
+
+  ],
+  "datasets": [
+
+  ]
+}
