@@ -559,7 +559,7 @@ namespace corona {
 		timer tx;
 		system_monitoring_interface::global_mon->log_function_start("lock proof", "start", st, __FILE__, __LINE__);
 
-		int test_seconds = 2;
+		int test_seconds = 10;
 		int test_milliseconds = test_seconds * 1000;
 
 		json_parser jp;

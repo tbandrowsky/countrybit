@@ -18,10 +18,16 @@
     <ClCompile Include="revolutionapplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="insuranceapplication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="candidate_schema.json" />
     <CopyFileToFolders Include="CoronaApplicationServer.docx" />
+    <CopyFileToFolders Include="config.json" />
+    <CopyFileToFolders Include="insurance_schema.json" />
+    <CopyFileToFolders Include="revolution_schema.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ccl.csv" />
@@ -29,9 +35,7 @@
     <None Include="cn.csv" />
     <None Include="packages.config" />
     <None Include="corona.postman_collection.json" />
-    <None Include="revolution_schema.json" />
-    <None Include="config.json" />
-    <None Include="insurance_schema.json" />
+    <None Include="deploy.ps1" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="coronaserver.hpp">
