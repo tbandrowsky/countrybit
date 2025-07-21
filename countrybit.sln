@@ -11,6 +11,8 @@ Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "colorparty", "colorpartyset
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "revolutionwin32", "revolutionwin32\revolutionwin32.vcxproj", "{F7EC08EB-7E3D-4B1F-975A-6338E0BD5867}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "coronasetup", "coronasetup\coronasetup.vdproj", "{1C4F442C-1B92-6566-E558-4CC9D026810D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -173,6 +175,26 @@ Global
 		{F7EC08EB-7E3D-4B1F-975A-6338E0BD5867}.RelWithDebInfo|x64.Build.0 = Release|x64
 		{F7EC08EB-7E3D-4B1F-975A-6338E0BD5867}.RelWithDebInfo|x86.ActiveCfg = Release|Win32
 		{F7EC08EB-7E3D-4B1F-975A-6338E0BD5867}.RelWithDebInfo|x86.Build.0 = Release|Win32
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Debug|Any CPU.ActiveCfg = Debug
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Debug|ARM.ActiveCfg = Debug
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Debug|ARM64.ActiveCfg = Debug
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Debug|x64.ActiveCfg = Debug
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Debug|x86.ActiveCfg = Debug
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.MinSizeRel|Any CPU.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.MinSizeRel|ARM.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.MinSizeRel|ARM64.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.MinSizeRel|x64.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.MinSizeRel|x86.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Release|Any CPU.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Release|ARM.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Release|ARM64.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Release|x64.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.Release|x86.ActiveCfg = Release
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.RelWithDebInfo|Any CPU.ActiveCfg = Debug
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.RelWithDebInfo|ARM.ActiveCfg = Debug
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.RelWithDebInfo|ARM64.ActiveCfg = Debug
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.RelWithDebInfo|x64.ActiveCfg = Debug
+		{1C4F442C-1B92-6566-E558-4CC9D026810D}.RelWithDebInfo|x86.ActiveCfg = Debug
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
