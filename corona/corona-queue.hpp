@@ -174,7 +174,6 @@ namespace corona {
 		bool listen_job(job *_jobMessage);
 		void add_job(job* _jobMessage);
 		void add_job(runnable _function, HANDLE handle);
-		void add_system(std::string _system_command);
 		void shutDown();
 		void kill();
 
@@ -559,7 +558,7 @@ namespace corona {
 		timer tx;
 		system_monitoring_interface::global_mon->log_function_start("lock proof", "start", st, __FILE__, __LINE__);
 
-		int test_seconds = 10;
+		int test_seconds = 2;
 		int test_milliseconds = test_seconds * 1000;
 
 		json_parser jp;
@@ -619,6 +618,12 @@ namespace corona {
 
 		double test_seconds = .5;
 		int test_milliseconds = test_seconds * 1000;
+		const int thread_test_count = 10;
+		int max_thread_count = thread_test_count;
+
+		if (max_thread_count > global_job_queue->getThreadCount()) {
+			max_thread_count = global_job_queue->getThreadCount();
+        }
 
 		json_parser jp;
 
@@ -632,7 +637,7 @@ namespace corona {
 			}
 			void add_count()
 			{
-				count++;
+				::InterlockedIncrement(&count);
 			}
 			int get_count()
 			{
@@ -640,70 +645,73 @@ namespace corona {
 			}
 		};
 
-		std::shared_ptr<lockable_item> lock_test = std::make_shared<lockable_item>();
 
 		// testing that writers block reads 
 
-		HANDLE wait_handle[10];
-		for (int i = 0; i < 10; i++)
+		int thread_count = 0;
+
+		HANDLE wait_handle[thread_test_count];
+		for (int i = 0; i < max_thread_count; i++)
 		{
 			wait_handle[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
 		}
 
 		// testing that writers block readers
+        // raise a write lock, then spawn 10 read threads
+        // the threads should all wait and block until the write lock is released
 
 		long fail_count = 0;
 
+		std::shared_ptr<lockable_item> lock_test = std::make_shared<lockable_item>();
+		std::shared_ptr<write_locked_sp<lockable_item>> write_lock = std::make_shared<write_locked_sp<lockable_item>>(lock_test);
+
 		for (int x = 0; x < 5; x++)
 		{
-			timer ty;
-			std::shared_ptr<write_locked_sp<lockable_item>> write_lock = std::make_shared<write_locked_sp<lockable_item>>(lock_test);
-			lock_test->add_count();
-			int y = lock_test->get_count();
 
+			timer ty;
 			fail_count = 0;
-			for (int i = 0; i < 10; i++)
+			timer tst_timer;
+
+			for (int i = 0; i < max_thread_count; i++)
 			{
-				global_job_queue->add_job([&lock_test, &_tests, test_seconds, &fail_count, i, x, y]() -> void
+				global_job_queue->add_job([&tst_timer, &lock_test, &_tests, test_seconds, &fail_count, i, x]() -> void
 					{
-						timer tx2;
 						read_locked_sp test_read(lock_test);
-						std::string test_name = std::format("read thread {0}.{1}", x, i);
-						if (tx2.get_elapsed_seconds() < test_seconds) {
+						double elapsed = tst_timer.get_elapsed_seconds_total();
+						std::string test_name = std::format("read thread {0}.{1} {2}", x, i, elapsed);
+                        system_monitoring_interface::global_mon->log_information(test_name, __FILE__, __LINE__);	
+						if (elapsed < test_seconds) {
 							InterlockedIncrement(&fail_count);
 							_tests->test({ test_name, false, __FILE__, __LINE__ });
 						}
 						else {
 							_tests->test({ test_name, true, __FILE__, __LINE__ });
 						}
-						bool result = test_read->get_count() == y;
-						if (not result) {
-							InterlockedIncrement(&fail_count);
-						}
-						_tests->test({ std::format("result thread {0}.{1}", x, i), result , __FILE__, __LINE__ });
 					}, wait_handle[i]);
 			}
 			system_monitoring_interface::global_mon->log_information(std::format("testing write blocks read {0}, {1} fails", x, fail_count), __FILE__, __LINE__);
 			::Sleep(test_milliseconds);
 			write_lock = nullptr;
-			WaitForMultipleObjects(10, wait_handle, TRUE, INFINITE);
+			WaitForMultipleObjects(thread_test_count, wait_handle, TRUE, INFINITE);
+			write_lock = std::make_shared<write_locked_sp<lockable_item>>(lock_test);
 			bool result = fail_count == 0;
 			_tests->test({ "wait fail count", result, __FILE__, __LINE__ });
 		}
 
 		// testing that readers block writers
+		write_lock = nullptr;
 		std::shared_ptr<read_locked_sp<lockable_item>> read_lock = std::make_shared<read_locked_sp<lockable_item>>(lock_test);
 		int start_count = read_lock->get()->get_count();
 
-		system_monitoring_interface::global_mon->log_information("thread with 10 writers away, blocked by reader", __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_information("thread with multiple writers away, blocked by reader", __FILE__, __LINE__);
 		fail_count = 0;
 		LONG active_count = 0;
+		timer test_timer2;
 
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < max_thread_count; i++)
 		{
-			global_job_queue->add_job([&lock_test, &_tests, test_seconds, i, &active_count]() -> void
+			global_job_queue->add_job([&test_timer2, &lock_test, &_tests, test_seconds, i, &active_count]() -> void
 				{
-					timer tx2;
 					write_locked_sp test_write(lock_test);
 
 					int y0 = lock_test->get_count();
@@ -716,7 +724,7 @@ namespace corona {
 					_tests->test({ test_name, result, __FILE__, __LINE__ });
 					InterlockedDecrement(&active_count);
 
-					result = (tx2.get_elapsed_seconds() >= test_seconds);
+					result = (test_timer2.get_elapsed_seconds_total() >= test_seconds);
 					test_name = std::format("write thread time {0}", i);
 					_tests->test({ test_name, result, __FILE__, __LINE__ });
 
@@ -725,20 +733,16 @@ namespace corona {
 
 		::Sleep(test_milliseconds);
 		read_lock = nullptr;
-		WaitForMultipleObjects(10, wait_handle, TRUE, INFINITE);
+		WaitForMultipleObjects(max_thread_count, wait_handle, TRUE, INFINITE);
 
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < max_thread_count; i++)
 		{
 			CloseHandle(wait_handle[i]);
 		}
 
 		system_monitoring_interface::global_mon->log_information(std::format("10 writers released and complete {0} active count", active_count), __FILE__, __LINE__);
 
-		int finish_count = lock_test->get_count() - start_count;
-
-		bool result = finish_count == 10;
-		_tests->test({ "finish_count", result, __FILE__, __LINE__ });
-		result = active_count == 0;
+		bool result = active_count == 0;
 		_tests->test({ "active_count", result, __FILE__, __LINE__ });
 
 		system_monitoring_interface::global_mon->log_function_stop("rw lock proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);

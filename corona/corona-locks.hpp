@@ -93,8 +93,20 @@ namespace corona
 	class shared_lockable
 	{
 		SRWLOCK lock;
+		bool write_locked = false;
+		bool read_locked = false;
 
 	public:
+
+		bool is_read_locked() const
+		{
+			return read_locked;
+        }
+
+		bool is_write_locked() const
+		{
+			return read_locked;
+		}
 
 		shared_lockable()
 		{
@@ -103,21 +115,25 @@ namespace corona
 
 		inline void write_lock()
 		{
+            write_locked = true;
 			::AcquireSRWLockExclusive(&lock);
 		}
 
 		inline void write_unlock()
 		{
+            write_locked = false;
 			::ReleaseSRWLockExclusive(&lock);
 		}
 
 		inline void read_lock()
 		{
+			read_locked = true;
 			::AcquireSRWLockShared(&lock);
 		}
 
 		inline void read_unlock()
 		{
+			read_locked = false;
 			::ReleaseSRWLockShared(&lock);
 		}
 	};

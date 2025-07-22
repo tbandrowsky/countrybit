@@ -845,6 +845,14 @@ namespace corona
 			return elapsed;
 		}
 
+		double get_elapsed_seconds_total()
+		{
+			LARGE_INTEGER current_time;
+			::QueryPerformanceCounter(&current_time);
+			double elapsed = (double)(current_time.QuadPart - last_time.QuadPart) / (double)frequency.QuadPart;
+			return elapsed;
+		}
+
 		bool check(double _elapsed_seconds)
 		{
 			LARGE_INTEGER current_time;
