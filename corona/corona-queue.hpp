@@ -176,6 +176,7 @@ namespace corona {
 		void add_job(runnable _function, HANDLE handle);
 		void shutDown();
 		void kill();
+		void run_job(job* _jobMessage);
 
 		static unsigned int jobQueueThread(job_queue* jobQueue);
 		void waitForThreadFinished();
@@ -220,8 +221,14 @@ namespace corona {
 
 	void job_notify::setSignal(HANDLE signal)
 	{
-		notification = setevent;
-		msg.lParam = (LPARAM)(signal);
+		if (signal and signal != INVALID_HANDLE_VALUE) {
+			notification = setevent;
+			msg.lParam = (LPARAM)(signal);
+		}
+		else 
+		{
+			system_monitoring_interface::global_mon->log_warning("job_notify: setSignal called with invalid handle.", __FILE__, __LINE__);
+		}
 	}
 
 	void job_notify::setPostMsg(HWND _hwnd, UINT _message, WPARAM _wParam, LPARAM _lParam)
@@ -270,6 +277,8 @@ namespace corona {
 
 		return jobNotify;
 	}
+
+	
 
 	// -------------------------------------------------------------------------------
 
@@ -395,6 +404,7 @@ namespace corona {
 		shutDownOrdered = false;
 
 		int threadCount = job_queue::numberOfProcessors();
+		threadCount = 2;
 
 		if (_numThreads > maxWorkerThreads or _numThreads == 0) _numThreads = threadCount;
 
@@ -552,6 +562,17 @@ namespace corona {
 		return threadCount;
 	}
 
+	void job_queue::run_job(job* _jobMessage)
+	{
+		if (_jobMessage) {
+			if (_jobMessage->queued(this)) {
+				++num_outstanding_jobs;
+				ResetEvent(empty_queue_event);
+				LONG result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
+			}
+		}
+    }
+	
 	void test_locks(std::shared_ptr<test_set> _tests)
 	{
 		date_time st = date_time::now();
@@ -618,12 +639,7 @@ namespace corona {
 
 		double test_seconds = .5;
 		int test_milliseconds = test_seconds * 1000;
-		const int thread_test_count = 10;
-		int max_thread_count = thread_test_count;
-
-		if (max_thread_count > global_job_queue->getThreadCount()) {
-			max_thread_count = global_job_queue->getThreadCount();
-        }
+		int max_job_count = global_job_queue->getThreadCount() * 4;
 
 		json_parser jp;
 
@@ -649,9 +665,10 @@ namespace corona {
 		// testing that writers block reads 
 
 		int thread_count = 0;
+		std::vector<HANDLE> wait_handle;
 
-		HANDLE wait_handle[thread_test_count];
-		for (int i = 0; i < max_thread_count; i++)
+		wait_handle.resize(max_job_count);
+		for (int i = 0; i < max_job_count; i++)
 		{
 			wait_handle[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
 		}
@@ -672,7 +689,7 @@ namespace corona {
 			fail_count = 0;
 			timer tst_timer;
 
-			for (int i = 0; i < max_thread_count; i++)
+			for (int i = 0; i < max_job_count; i++)
 			{
 				global_job_queue->add_job([&tst_timer, &lock_test, &_tests, test_seconds, &fail_count, i, x]() -> void
 					{
@@ -692,7 +709,7 @@ namespace corona {
 			system_monitoring_interface::global_mon->log_information(std::format("testing write blocks read {0}, {1} fails", x, fail_count), __FILE__, __LINE__);
 			::Sleep(test_milliseconds);
 			write_lock = nullptr;
-			WaitForMultipleObjects(thread_test_count, wait_handle, TRUE, INFINITE);
+			WaitForMultipleObjects(max_job_count, wait_handle.data(), TRUE, INFINITE);
 			write_lock = std::make_shared<write_locked_sp<lockable_item>>(lock_test);
 			bool result = fail_count == 0;
 			_tests->test({ "wait fail count", result, __FILE__, __LINE__ });
@@ -705,10 +722,10 @@ namespace corona {
 
 		system_monitoring_interface::global_mon->log_information("thread with multiple writers away, blocked by reader", __FILE__, __LINE__);
 		fail_count = 0;
-		LONG active_count = 0;
+		LONG active_count = max_job_count;
 		timer test_timer2;
 
-		for (int i = 0; i < max_thread_count; i++)
+		for (int i = 0; i < max_job_count; i++)
 		{
 			global_job_queue->add_job([&test_timer2, &lock_test, &_tests, test_seconds, i, &active_count]() -> void
 				{
@@ -717,7 +734,6 @@ namespace corona {
 					int y0 = lock_test->get_count();
 					lock_test->add_count();
 					int y1 = lock_test->get_count();
-					InterlockedIncrement(&active_count);
 
 					std::string test_name = std::format("write thread {0}", i);
 					bool result = y1 - y0 == 1;
@@ -733,14 +749,14 @@ namespace corona {
 
 		::Sleep(test_milliseconds);
 		read_lock = nullptr;
-		WaitForMultipleObjects(max_thread_count, wait_handle, TRUE, INFINITE);
+		WaitForMultipleObjects(max_job_count, wait_handle.data(), TRUE, INFINITE);
 
-		for (int i = 0; i < max_thread_count; i++)
+		for (int i = 0; i < max_job_count; i++)
 		{
 			CloseHandle(wait_handle[i]);
 		}
 
-		system_monitoring_interface::global_mon->log_information(std::format("10 writers released and complete {0} active count", active_count), __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_information(std::format("{0} writers released and complete {1} active count", max_job_count, active_count), __FILE__, __LINE__);
 
 		bool result = active_count == 0;
 		_tests->test({ "active_count", result, __FILE__, __LINE__ });

@@ -40,6 +40,12 @@ namespace corona
 			global_job_queue->start(0);
 		}
 
+		application(int _max_threads)
+		{
+			global_job_queue = std::make_unique<job_queue>();
+			global_job_queue->start(_max_threads);
+		}
+
 		~application()
 		{
 			global_job_queue->shutDown();
