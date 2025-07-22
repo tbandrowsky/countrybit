@@ -629,7 +629,7 @@ namespace corona {
 
 		class lockable_item : public shared_lockable
 		{
-			int count;
+			LONG count;
 		public:
 			lockable_item()
 			{
