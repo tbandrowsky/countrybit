@@ -2319,6 +2319,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_58586FC0BA384E58A524406FAE8BD1C5"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_58D12571C7FE5EF6E8E2CBC9CB23E664"
         "OwnerKey" = "8:_DA8FDD9A2D98461E8EAD574F9E5FE9D1"
         "MsmSig" = "8:_UNDEFINED"
@@ -2369,6 +2375,12 @@
         {
         "MsmKey" = "8:_6A62274D1F648CC20CB13BBBBA36098E"
         "OwnerKey" = "8:_942FA6A46925EEC55568D435938BCBD8"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_6F8B171A00134842BDD80D1D5E2EA337"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -2513,6 +2525,12 @@
         {
         "MsmKey" = "8:_9E9C536B7084B05E3A2BEFF8E67AC686"
         "OwnerKey" = "8:_DA8FDD9A2D98461E8EAD574F9E5FE9D1"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A053C12DA17C4AD3B273FC83837713AE"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -3065,6 +3083,12 @@
         {
         "MsmKey" = "8:_B492AAC36B8B4DB7BF6FF689A46BF3E2"
         "OwnerKey" = "8:_DA8FDD9A2D98461E8EAD574F9E5FE9D1"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_B4EB525FA55B4C4FBA5FAB3CDC7C16A7"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -5038,6 +5062,14 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
             }
         }
     }
@@ -6468,6 +6500,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_58586FC0BA384E58A524406FAE8BD1C5"
+            {
+            "SourcePath" = "8:..\\coronaserver\\revolutionapplication.cpp"
+            "TargetName" = "8:revolutionapplication.cpp"
+            "Tag" = "8:"
+            "Folder" = "8:_3E7B8F4DBD0F45DA8EC18B7FA04FB832"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_58D12571C7FE5EF6E8E2CBC9CB23E664"
             {
             "AssemblyRegister" = "3:1"
@@ -6661,6 +6713,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6F8B171A00134842BDD80D1D5E2EA337"
+            {
+            "SourcePath" = "8:..\\coronaserver\\insurance_schema.json"
+            "TargetName" = "8:insurance_schema.json"
+            "Tag" = "8:"
+            "Folder" = "8:_3E7B8F4DBD0F45DA8EC18B7FA04FB832"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_71F166C1994561E60C66362D94749668"
@@ -7299,6 +7371,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A053C12DA17C4AD3B273FC83837713AE"
+            {
+            "SourcePath" = "8:..\\coronaserver\\CoronaApplicationServer.docx"
+            "TargetName" = "8:CoronaApplicationServer.docx"
+            "Tag" = "8:"
+            "Folder" = "8:_3E7B8F4DBD0F45DA8EC18B7FA04FB832"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_A1A52E661A4450FEB582FD8F734D5CF7"
             {
             "AssemblyRegister" = "3:1"
@@ -7472,6 +7564,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B4EB525FA55B4C4FBA5FAB3CDC7C16A7"
+            {
+            "SourcePath" = "8:..\\coronaserver\\country_village.json"
+            "TargetName" = "8:country_village.json"
+            "Tag" = "8:"
+            "Folder" = "8:_3E7B8F4DBD0F45DA8EC18B7FA04FB832"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_BC77D75425DF41F4B6B89FDFF4EA1230"
@@ -8596,7 +8708,7 @@
             }
             "{3C67513D-01DD-4637-8A68-80971EB9504F}:_3E7B8F4DBD0F45DA8EC18B7FA04FB832"
             {
-            "DefaultLocation" = "8:[ProgramFilesFolder][Manufacturer]\\[ProductName]"
+            "DefaultLocation" = "8:[ProgramFiles64Folder][Manufacturer]\\[ProductName]"
             "Name" = "8:#1925"
             "AlwaysCreate" = "11:FALSE"
             "Condition" = "8:"
@@ -8621,9 +8733,9 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:coronasetup"
+        "ProductName" = "8:Corona Dataserver"
         "ProductCode" = "8:{6BBC5166-056C-4AB8-BD56-F9591105BBE5}"
-        "PackageCode" = "8:{BFF7690C-040C-41C6-A998-BCFD19000327}"
+        "PackageCode" = "8:{F691ECC8-80F5-4D53-8E49-F40ACC81BC47}"
         "UpgradeCode" = "8:{9FABB293-F188-4905-B784-6550F9987267}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -8633,18 +8745,18 @@
         "ProductVersion" = "8:1.0.0"
         "Manufacturer" = "8:todd.bandrowsky@gmail.com"
         "ARPHELPTELEPHONE" = "8:"
-        "ARPHELPLINK" = "8:"
-        "Title" = "8:coronasetup"
+        "ARPHELPLINK" = "8:https://countryvideogames.com"
+        "Title" = "8:Corona Dataserver"
         "Subject" = "8:"
         "ARPCONTACT" = "8:todd.bandrowsky@gmail.com"
         "Keywords" = "8:"
-        "ARPCOMMENTS" = "8:"
-        "ARPURLINFOABOUT" = "8:"
+        "ARPCOMMENTS" = "8:Corona Dataserver"
+        "ARPURLINFOABOUT" = "8:https://countryvideogames.com"
         "ARPPRODUCTICON" = "8:"
         "ARPIconIndex" = "3:0"
         "SearchPath" = "8:"
         "UseSystemSearchPath" = "11:TRUE"
-        "TargetPlatform" = "3:0"
+        "TargetPlatform" = "3:1"
         "PreBuildEvent" = "8:"
         "PostBuildEvent" = "8:"
         "RunPostBuildEvent" = "3:0"
