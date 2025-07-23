@@ -41,6 +41,7 @@ namespace corona
 		json local_db_config;
 
 		std::string database_filename;
+        bool database_recreate;
 
 		bool ready_for_polling;
 
@@ -85,6 +86,7 @@ namespace corona
 			database_filename = server_config["database_filename"];
 			database_schema_filename = server_config["schema_filename"];
             database_threads = (int)server_config["database_threads"];
+			database_recreate = (bool)server_config["database_recreate"];
 
 			if (database_filename.empty() or database_schema_filename.empty())
 			{
@@ -114,7 +116,7 @@ namespace corona
 				log_information("Startup user name " + app->get_user_display_name());
 			}
 
-			if (not app->file_exists(database_filename))
+			if (database_recreate or not app->file_exists(database_filename))
 			{
 				db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(db_file);

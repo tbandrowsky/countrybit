@@ -737,7 +737,7 @@ namespace corona {
 		wait_handle.resize(max_job_count);
 		for (int i = 0; i < max_job_count; i++)
 		{
-			wait_handle[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
+			wait_handle[i] = CreateEvent(NULL, TRUE, FALSE, NULL);
 		}
 
 		// testing that writers block readers
@@ -776,10 +776,16 @@ namespace corona {
 			system_monitoring_interface::global_mon->log_information(std::format("testing write blocks read {0}, {1} fails", x, fail_count), __FILE__, __LINE__);
 			::Sleep(test_milliseconds);
 			write_lock = nullptr;
-			WaitForMultipleObjects(max_job_count, wait_handle.data(), TRUE, INFINITE);
+			for (auto wh : wait_handle) {
+				WaitForSingleObject(wh, INFINITE);			
+			}
 			write_lock = std::make_shared<write_locked_sp<lockable_item>>(lock_test);
 			bool result = fail_count == 0;
 			_tests->test({ "wait fail count", result, __FILE__, __LINE__ });
+		}
+
+		for (auto wh : wait_handle) {
+			ResetEvent(wh);
 		}
 
 		// testing that readers block writers
@@ -816,11 +822,9 @@ namespace corona {
 
 		::Sleep(test_milliseconds);
 		read_lock = nullptr;
-		WaitForMultipleObjects(max_job_count, wait_handle.data(), TRUE, INFINITE);
-
-		for (int i = 0; i < max_job_count; i++)
-		{
-			CloseHandle(wait_handle[i]);
+		for (auto wh : wait_handle) {
+			WaitForSingleObject(wh, INFINITE);
+			CloseHandle(wh);
 		}
 
 		system_monitoring_interface::global_mon->log_information(std::format("{0} writers released and complete {1} active count", max_job_count, active_count), __FILE__, __LINE__);
