@@ -547,7 +547,7 @@ namespace corona {
 		job_notify jobNotify;
 
 		if (!wasShutDownOrdered()) {
-			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
+			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 100);
 			if (success and lpov) {
 				container = (job_container*)lpov;
 				if (container) {
