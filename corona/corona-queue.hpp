@@ -386,7 +386,6 @@ namespace corona {
 		shutDownOrdered = false;
 
 		int threadCount = job_queue::numberOfProcessors();
-		threadCount = 2;
 
 		if (_numThreads > maxWorkerThreads or _numThreads == 0) _numThreads = threadCount;
 

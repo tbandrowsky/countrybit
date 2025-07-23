@@ -33,6 +33,7 @@ namespace corona
 
 		std::string database_schema_filename;
 		std::string database_config_filename;
+		int database_threads;
 
 		json_file_watcher database_schema_mon;
 		json_file_watcher database_config_mon;
@@ -74,7 +75,8 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning(std::format("config file {0} not found", database_config_filename), __FILE__, __LINE__);
 				throw std::invalid_argument("config file not found");
 			}
-			else {
+			else 
+			{
 				system_monitoring_interface::global_mon->log_information(std::format("using config file {0}", database_config_filename), __FILE__, __LINE__);
 			}
 
@@ -82,6 +84,7 @@ namespace corona
 
 			database_filename = server_config["database_filename"];
 			database_schema_filename = server_config["schema_filename"];
+            database_threads = (int)server_config["database_threads"];
 
 			if (database_filename.empty() or database_schema_filename.empty())
 			{
@@ -90,7 +93,7 @@ namespace corona
 
 			database_schema_mon.filename = database_schema_filename;
 
-			app = std::make_shared<application>();
+			app = std::make_shared<application>(database_threads);
 			app->application_name = server_config["application_name"];
 			listen_point = server_config["listen_point"];
 
@@ -111,7 +114,7 @@ namespace corona
 				log_information("Startup user name " + app->get_user_display_name());
 			}
 
-			if (true or not app->file_exists(database_filename))
+			if (not app->file_exists(database_filename))
 			{
 				db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(db_file);
