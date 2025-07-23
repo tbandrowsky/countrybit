@@ -57,8 +57,9 @@ namespace corona {
 	public:
 		OVERLAPPED ovp;
 		job* jobdata;
+		HANDLE parent;
 
-		job_container() :jobdata(nullptr)
+		job_container() :jobdata(nullptr), parent(nullptr)
 		{
 			ovp = {};
 		}
@@ -121,25 +122,6 @@ namespace corona {
 		friend class job_queue;
 	};
 
-	class io_job : public job
-	{
-	public:
-		std::coroutine_handle<> handle;
-
-		io_job(std::coroutine_handle<> _handle) : handle(_handle)
-		{
-			;
-		}
-
-		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
-		{
-			job_notify jn;
-			jn.shouldDelete = false;
-			return jn;
-		}
-	};
-
-
 	const int maxWorkerThreads = 63;
 
 	class job_queue : public lockable
@@ -177,7 +159,7 @@ namespace corona {
 		void shutDown();
 		void kill();
 		void run_job(job* _jobMessage);
-
+		unsigned int run_next_job();
 		static unsigned int jobQueueThread(job_queue* jobQueue);
 		void waitForThreadFinished();
 		void waitForEmptyQueue();
@@ -513,11 +495,20 @@ namespace corona {
 					waiting_job = container->jobdata;
 
 					if (waiting_job) {
-						jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
-						jobNotify.notify();
-						if (jobNotify.repost and (!jobQueue->wasShutDownOrdered())) {
-							jobQueue->add_job(waiting_job);
+						try {
+							jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
+							jobNotify.notify();
+							if (jobNotify.repost and (!jobQueue->wasShutDownOrdered())) {
+								jobQueue->add_job(waiting_job);
+							}
 						}
+						catch (std::exception exc)
+						{
+							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+						}
+						if (waiting_job->container.parent) {
+							SetEvent(waiting_job->container.parent);
+                        }
 					}
 
 					if (jobNotify.shouldDelete) {
@@ -538,7 +529,64 @@ namespace corona {
 #endif
 
 		return 0;
-		};
+	};
+
+	unsigned int job_queue::run_next_job()
+	{
+
+		LPOVERLAPPED lpov = {};
+		job* waiting_job;
+		job_container* container;
+
+		BOOL success;
+		DWORD bytesTransferred;
+		ULONG_PTR compKey;
+
+		job_notify jobNotify;
+
+		if (!wasShutDownOrdered()) {
+			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
+			if (success and lpov) {
+				container = (job_container*)lpov;
+				if (container) {
+					waiting_job = container->jobdata;
+
+					if (waiting_job) {
+						try {
+							jobNotify = waiting_job->execute(this, bytesTransferred, success);
+							jobNotify.notify();
+							if (jobNotify.repost and (!wasShutDownOrdered())) {
+								add_job(waiting_job);
+							}
+						}
+						catch (std::exception exc)
+						{
+							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+						}
+						if (waiting_job->container.parent) {
+							::SetEvent(waiting_job->container.parent);
+						}
+					}
+
+					if (jobNotify.shouldDelete) {
+						delete waiting_job;
+					}
+				}
+
+				LONG numJobs = --num_outstanding_jobs;
+
+				if (not numJobs) {
+					::SetEvent(empty_queue_event);
+				}
+			}
+		}
+
+#ifdef COM_INITIALIZATION
+		::CoUninitialize();
+#endif
+
+		return num_outstanding_jobs;
+	};
 
 	void job_queue::waitForThreadFinished()
 	{
@@ -563,13 +611,29 @@ namespace corona {
 	}
 
 	void job_queue::run_job(job* _jobMessage)
-	{
-		if (_jobMessage) {
-			if (_jobMessage->queued(this)) {
-				++num_outstanding_jobs;
+	{		
+        HANDLE wait_handle = CreateEventA(NULL, FALSE, FALSE, NULL);
+		if (_jobMessage && _jobMessage->queued(this)) {
+			_jobMessage->container.parent = wait_handle;
+			try {
 				ResetEvent(empty_queue_event);
-				LONG result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
+				PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
+				bool complete = false;
+				while (not complete) {
+					DWORD result = WaitForSingleObject(wait_handle, 100);
+					if (result == 0) {
+						complete = true;
+					}
+					else {
+						run_next_job();
+					}
+				}
 			}
+			catch (std::exception& exc) 
+			{
+				system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+            }			
+			CloseHandle(wait_handle);
 		}
     }
 	

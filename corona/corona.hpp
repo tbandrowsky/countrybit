@@ -68,6 +68,8 @@ For Future Consideration
 
 // these are all miscellaneous utility classes and the ever abused core constants
 
+#include <ciso646>
+
 namespace corona {
 	void log_warning(const std::string &_src);
 }
