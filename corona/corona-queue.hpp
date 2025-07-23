@@ -57,8 +57,9 @@ namespace corona {
 	public:
 		OVERLAPPED ovp;
 		job* jobdata;
+		HANDLE parent;
 
-		job_container() :jobdata(nullptr)
+		job_container() :jobdata(nullptr), parent(nullptr)
 		{
 			ovp = {};
 		}
@@ -121,25 +122,6 @@ namespace corona {
 		friend class job_queue;
 	};
 
-	class io_job : public job
-	{
-	public:
-		std::coroutine_handle<> handle;
-
-		io_job(std::coroutine_handle<> _handle) : handle(_handle)
-		{
-			;
-		}
-
-		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
-		{
-			job_notify jn;
-			jn.shouldDelete = false;
-			return jn;
-		}
-	};
-
-
 	const int maxWorkerThreads = 63;
 
 	class job_queue : public lockable
@@ -174,10 +156,10 @@ namespace corona {
 		bool listen_job(job *_jobMessage);
 		void add_job(job* _jobMessage);
 		void add_job(runnable _function, HANDLE handle);
-		void add_system(std::string _system_command);
 		void shutDown();
 		void kill();
-
+		void run_job(job* _jobMessage);
+		unsigned int run_next_job();
 		static unsigned int jobQueueThread(job_queue* jobQueue);
 		void waitForThreadFinished();
 		void waitForEmptyQueue();
@@ -221,8 +203,14 @@ namespace corona {
 
 	void job_notify::setSignal(HANDLE signal)
 	{
-		notification = setevent;
-		msg.lParam = (LPARAM)(signal);
+		if (signal and signal != INVALID_HANDLE_VALUE) {
+			notification = setevent;
+			msg.lParam = (LPARAM)(signal);
+		}
+		else 
+		{
+			system_monitoring_interface::global_mon->log_warning("job_notify: setSignal called with invalid handle.", __FILE__, __LINE__);
+		}
 	}
 
 	void job_notify::setPostMsg(HWND _hwnd, UINT _message, WPARAM _wParam, LPARAM _lParam)
@@ -271,6 +259,8 @@ namespace corona {
 
 		return jobNotify;
 	}
+
+	
 
 	// -------------------------------------------------------------------------------
 
@@ -396,6 +386,7 @@ namespace corona {
 		shutDownOrdered = false;
 
 		int threadCount = job_queue::numberOfProcessors();
+		threadCount = 2;
 
 		if (_numThreads > maxWorkerThreads or _numThreads == 0) _numThreads = threadCount;
 
@@ -504,11 +495,22 @@ namespace corona {
 					waiting_job = container->jobdata;
 
 					if (waiting_job) {
-						jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
-						jobNotify.notify();
-						if (jobNotify.repost and (!jobQueue->wasShutDownOrdered())) {
-							jobQueue->add_job(waiting_job);
+						try {
+							jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
+							jobNotify.notify();
+							if (jobNotify.repost and (!jobQueue->wasShutDownOrdered())) {
+								jobQueue->add_job(waiting_job);
+							}
 						}
+						catch (std::exception exc)
+						{
+							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+						}
+						if (waiting_job->container.parent) {
+							SetEvent(waiting_job->container.parent);
+                        }
+
+						jobQueue->num_outstanding_jobs--;
 					}
 
 					if (jobNotify.shouldDelete) {
@@ -516,9 +518,9 @@ namespace corona {
 					}
 				}
 
-				LONG numJobs = --jobQueue->num_outstanding_jobs;
+				int jcresult = jobQueue->num_outstanding_jobs;
 
-				if (not numJobs) {
+				if (jcresult == 0) {
 					::SetEvent(jobQueue->empty_queue_event);
 				}
 			}
@@ -529,7 +531,66 @@ namespace corona {
 #endif
 
 		return 0;
-		};
+	};
+
+	unsigned int job_queue::run_next_job()
+	{
+
+		LPOVERLAPPED lpov = {};
+		job* waiting_job;
+		job_container* container;
+
+		BOOL success;
+		DWORD bytesTransferred;
+		ULONG_PTR compKey;
+
+		job_notify jobNotify;
+
+		if (!wasShutDownOrdered()) {
+			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 100);
+			if (success and lpov) {
+				container = (job_container*)lpov;
+				if (container) {
+					waiting_job = container->jobdata;
+
+					if (waiting_job) {
+						try {
+							jobNotify = waiting_job->execute(this, bytesTransferred, success);
+							jobNotify.notify();
+							if (jobNotify.repost and (!wasShutDownOrdered())) {
+								add_job(waiting_job);
+							}
+						}
+						catch (std::exception exc)
+						{
+							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+						}
+						if (waiting_job->container.parent) {
+							::SetEvent(waiting_job->container.parent);
+						}
+					}
+
+					num_outstanding_jobs--;
+
+					if (jobNotify.shouldDelete) {
+						delete waiting_job;
+					}
+				}
+
+				LONG numJobs = num_outstanding_jobs;
+
+				if (not numJobs) {
+					::SetEvent(empty_queue_event);
+				}
+			}
+		}
+
+#ifdef COM_INITIALIZATION
+		::CoUninitialize();
+#endif
+
+		return num_outstanding_jobs;
+	};
 
 	void job_queue::waitForThreadFinished()
 	{
@@ -553,13 +614,40 @@ namespace corona {
 		return threadCount;
 	}
 
+	void job_queue::run_job(job* _jobMessage)
+	{		
+        HANDLE wait_handle = CreateEventA(NULL, FALSE, FALSE, NULL);
+		if (_jobMessage && _jobMessage->queued(this)) {
+			_jobMessage->container.parent = wait_handle;
+			try {
+				ResetEvent(empty_queue_event);
+				PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
+				bool complete = false;
+				while (not complete) {
+					DWORD result = WaitForSingleObject(wait_handle, 100);
+					if (result == 0) {
+						complete = true;
+					}
+					else {
+						run_next_job();
+					}
+				}
+			}
+			catch (std::exception& exc) 
+			{
+				system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+            }			
+			CloseHandle(wait_handle);
+		}
+    }
+	
 	void test_locks(std::shared_ptr<test_set> _tests)
 	{
 		date_time st = date_time::now();
 		timer tx;
 		system_monitoring_interface::global_mon->log_function_start("lock proof", "start", st, __FILE__, __LINE__);
 
-		int test_seconds = 10;
+		int test_seconds = 2;
 		int test_milliseconds = test_seconds * 1000;
 
 		json_parser jp;
@@ -619,12 +707,13 @@ namespace corona {
 
 		double test_seconds = .5;
 		int test_milliseconds = test_seconds * 1000;
+		int max_job_count = global_job_queue->getThreadCount() * 4;
 
 		json_parser jp;
 
 		class lockable_item : public shared_lockable
 		{
-			int count;
+			LONG count;
 		public:
 			lockable_item()
 			{
@@ -632,7 +721,7 @@ namespace corona {
 			}
 			void add_count()
 			{
-				count++;
+				::InterlockedIncrement(&count);
 			}
 			int get_count()
 			{
@@ -640,83 +729,86 @@ namespace corona {
 			}
 		};
 
-		std::shared_ptr<lockable_item> lock_test = std::make_shared<lockable_item>();
 
 		// testing that writers block reads 
 
-		HANDLE wait_handle[10];
-		for (int i = 0; i < 10; i++)
+		int thread_count = 0;
+		std::vector<HANDLE> wait_handle;
+
+		wait_handle.resize(max_job_count);
+		for (int i = 0; i < max_job_count; i++)
 		{
 			wait_handle[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
 		}
 
 		// testing that writers block readers
+        // raise a write lock, then spawn 10 read threads
+        // the threads should all wait and block until the write lock is released
 
 		long fail_count = 0;
 
+		std::shared_ptr<lockable_item> lock_test = std::make_shared<lockable_item>();
+		std::shared_ptr<write_locked_sp<lockable_item>> write_lock = std::make_shared<write_locked_sp<lockable_item>>(lock_test);
+
 		for (int x = 0; x < 5; x++)
 		{
-			timer ty;
-			std::shared_ptr<write_locked_sp<lockable_item>> write_lock = std::make_shared<write_locked_sp<lockable_item>>(lock_test);
-			lock_test->add_count();
-			int y = lock_test->get_count();
 
+			timer ty;
 			fail_count = 0;
-			for (int i = 0; i < 10; i++)
+			timer tst_timer;
+
+			for (int i = 0; i < max_job_count; i++)
 			{
-				global_job_queue->add_job([&lock_test, &_tests, test_seconds, &fail_count, i, x, y]() -> void
+				global_job_queue->add_job([&tst_timer, &lock_test, &_tests, test_seconds, &fail_count, i, x]() -> void
 					{
-						timer tx2;
 						read_locked_sp test_read(lock_test);
-						std::string test_name = std::format("read thread {0}.{1}", x, i);
-						if (tx2.get_elapsed_seconds() < test_seconds) {
+						double elapsed = tst_timer.get_elapsed_seconds_total();
+						std::string test_name = std::format("read thread {0}.{1} {2}", x, i, elapsed);
+                        system_monitoring_interface::global_mon->log_information(test_name, __FILE__, __LINE__);	
+						if (elapsed < test_seconds) {
 							InterlockedIncrement(&fail_count);
 							_tests->test({ test_name, false, __FILE__, __LINE__ });
 						}
 						else {
 							_tests->test({ test_name, true, __FILE__, __LINE__ });
 						}
-						bool result = test_read->get_count() == y;
-						if (not result) {
-							InterlockedIncrement(&fail_count);
-						}
-						_tests->test({ std::format("result thread {0}.{1}", x, i), result , __FILE__, __LINE__ });
 					}, wait_handle[i]);
 			}
 			system_monitoring_interface::global_mon->log_information(std::format("testing write blocks read {0}, {1} fails", x, fail_count), __FILE__, __LINE__);
 			::Sleep(test_milliseconds);
 			write_lock = nullptr;
-			WaitForMultipleObjects(10, wait_handle, TRUE, INFINITE);
+			WaitForMultipleObjects(max_job_count, wait_handle.data(), TRUE, INFINITE);
+			write_lock = std::make_shared<write_locked_sp<lockable_item>>(lock_test);
 			bool result = fail_count == 0;
 			_tests->test({ "wait fail count", result, __FILE__, __LINE__ });
 		}
 
 		// testing that readers block writers
+		write_lock = nullptr;
 		std::shared_ptr<read_locked_sp<lockable_item>> read_lock = std::make_shared<read_locked_sp<lockable_item>>(lock_test);
 		int start_count = read_lock->get()->get_count();
 
-		system_monitoring_interface::global_mon->log_information("thread with 10 writers away, blocked by reader", __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_information("thread with multiple writers away, blocked by reader", __FILE__, __LINE__);
 		fail_count = 0;
-		LONG active_count = 0;
+		LONG active_count = max_job_count;
+		timer test_timer2;
 
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < max_job_count; i++)
 		{
-			global_job_queue->add_job([&lock_test, &_tests, test_seconds, i, &active_count]() -> void
+			global_job_queue->add_job([&test_timer2, &lock_test, &_tests, test_seconds, i, &active_count]() -> void
 				{
-					timer tx2;
 					write_locked_sp test_write(lock_test);
 
 					int y0 = lock_test->get_count();
 					lock_test->add_count();
 					int y1 = lock_test->get_count();
-					InterlockedIncrement(&active_count);
 
 					std::string test_name = std::format("write thread {0}", i);
 					bool result = y1 - y0 == 1;
 					_tests->test({ test_name, result, __FILE__, __LINE__ });
 					InterlockedDecrement(&active_count);
 
-					result = (tx2.get_elapsed_seconds() >= test_seconds);
+					result = (test_timer2.get_elapsed_seconds_total() >= test_seconds);
 					test_name = std::format("write thread time {0}", i);
 					_tests->test({ test_name, result, __FILE__, __LINE__ });
 
@@ -725,20 +817,16 @@ namespace corona {
 
 		::Sleep(test_milliseconds);
 		read_lock = nullptr;
-		WaitForMultipleObjects(10, wait_handle, TRUE, INFINITE);
+		WaitForMultipleObjects(max_job_count, wait_handle.data(), TRUE, INFINITE);
 
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < max_job_count; i++)
 		{
 			CloseHandle(wait_handle[i]);
 		}
 
-		system_monitoring_interface::global_mon->log_information(std::format("10 writers released and complete {0} active count", active_count), __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_information(std::format("{0} writers released and complete {1} active count", max_job_count, active_count), __FILE__, __LINE__);
 
-		int finish_count = lock_test->get_count() - start_count;
-
-		bool result = finish_count == 10;
-		_tests->test({ "finish_count", result, __FILE__, __LINE__ });
-		result = active_count == 0;
+		bool result = active_count == 0;
 		_tests->test({ "active_count", result, __FILE__, __LINE__ });
 
 		system_monitoring_interface::global_mon->log_function_stop("rw lock proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);

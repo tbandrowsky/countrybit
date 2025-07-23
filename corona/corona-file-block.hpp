@@ -157,24 +157,21 @@ namespace corona
 	public:
 		file_block_interface* fb;
 		std::shared_ptr<file_buffer> write_buffer;
-		HANDLE	job_signal;
 
-		buffer_commit_job(file_block_interface*_fb, std::shared_ptr<file_buffer>&& _write_buffer, HANDLE _job_signal) :
-			fb(_fb), write_buffer(_write_buffer), job_signal(_job_signal)
+		buffer_commit_job(file_block_interface*_fb, std::shared_ptr<file_buffer>&& _write_buffer) :
+			fb(_fb), write_buffer(_write_buffer)
 		{
 			;
 		}
 
 		buffer_commit_job()
 		{
-			job_signal = {};
+			;
 		}
 
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
 			job_notify jn;
-
-			jn.setSignal(job_signal);
 
 			try
 			{
@@ -196,20 +193,15 @@ namespace corona
 
 	class trans_commit_job : public job
 	{
-		std::vector<HANDLE> buffer_job_signals;
 		std::vector<std::shared_ptr<file_buffer>> buffers;
 
 	public:
 
 		file_block_interface* fb;
-		HANDLE		event_wait_for,
-					event_set;
 
-		trans_commit_job(file_block_interface*_fb, HANDLE _event_wait_for, HANDLE _event_set, std::shared_ptr<file_buffer>& _append, std::vector<std::shared_ptr<file_buffer>>& _buffers)
+		trans_commit_job(file_block_interface*_fb, std::shared_ptr<file_buffer>& _append, std::vector<std::shared_ptr<file_buffer>>& _buffers)
 		{
 			fb = _fb;
-			event_wait_for = _event_wait_for;
-			event_set = _event_set;
 			std::shared_ptr<file_buffer> new_buffer;
 			if (_append) {
 				new_buffer = std::make_shared<file_buffer>(*_append.get());
@@ -223,9 +215,7 @@ namespace corona
 
 		virtual ~trans_commit_job()
 		{
-			for (auto hsignal : buffer_job_signals) {
-				::CloseHandle(hsignal);
-			}
+			;
 		}
 
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
@@ -234,28 +224,14 @@ namespace corona
 
 			try
 			{
-				WaitForSingleObject(event_wait_for, INFINITE);
-				jn.setSignal(event_set);
 				int i = 0;
-				int j = 0;
 
 				while (i < buffers.size())
 				{
-					std::vector<HANDLE> this_set;
-					for (j = 0; (i < buffers.size()) and (j < MAXIMUM_WAIT_OBJECTS); j++, i++)
-					{
-						HANDLE buffer_wait = CreateEvent(NULL, FALSE, FALSE, FALSE);
-						buffer_job_signals.push_back(buffer_wait);
-						this_set.push_back(buffer_wait);
-						auto& trans_buff = buffers[i];
-						buffer_commit_job* fcj = new buffer_commit_job(fb, std::move(trans_buff), buffer_wait);
-						_callingQueue->add_job(fcj);
-						
-					}
-					while (::WaitForMultipleObjects(this_set.size(), this_set.data(), TRUE, 5000) == WAIT_TIMEOUT)
-					{
-						system_monitoring_interface::global_mon->log_warning("Wait for I/O timed out, checking again", __FILE__, __LINE__);
-					}
+					auto& trans_buff = buffers[i];
+					buffer_commit_job* fcj = new buffer_commit_job(fb, std::move(trans_buff));
+					_callingQueue->run_job(fcj);
+					i++;
 				}
 			}
 			catch (...)
@@ -273,7 +249,6 @@ namespace corona
 		std::vector<std::shared_ptr<file_buffer>> buffers;
 		std::shared_ptr<file> fp;
 		std::shared_ptr<file_buffer> append_buffer;
-		HANDLE	commit_complete;
 		lockable block_lock;
 		int64_t block_size = 65536;
 		int64_t append_size = 65536 * 16;
@@ -367,7 +342,6 @@ namespace corona
 		file_block(std::shared_ptr<file> _fp)
 		{
 			fp = _fp;
-			commit_complete = CreateEvent(NULL, TRUE, TRUE, NULL);
 		}
 
 		file_block(const file_block& _src) = delete;
@@ -536,7 +510,6 @@ namespace corona
 		virtual void commit() override
 		{
 			scope_lock feast_lock(block_lock);
-			HANDLE new_commit = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 			std::shared_ptr<file_buffer> dirty_append;
 			std::vector<std::shared_ptr<file_buffer>> dirty_buffers;
@@ -553,21 +526,9 @@ namespace corona
 			}
 
 			if (dirty_buffers.size() > 0 or dirty_append) {
-				trans_commit_job* tcj = new trans_commit_job(this, commit_complete, new_commit, dirty_append, dirty_buffers);
-				commit_complete = new_commit;
-				global_job_queue->add_job(tcj);
+				trans_commit_job* tcj = new trans_commit_job(this, dirty_append, dirty_buffers);
+				global_job_queue->run_job(tcj);
 			}
-			else 
-			{
-				SetEvent(commit_complete);
-			}
-		}
-
-		virtual void wait() override
-		{
-			WaitForSingleObject(commit_complete, INFINITE);
-			CloseHandle(commit_complete);
-			commit_complete = nullptr;
 		}
 
 		virtual int buffer_count() override
@@ -587,6 +548,11 @@ namespace corona
 		{
 			return fp->size();
 		}
+
+		virtual void wait() override
+		{
+		}
+
 	};
 
 }
