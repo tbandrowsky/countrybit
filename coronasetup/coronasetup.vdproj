@@ -8735,7 +8735,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Corona Dataserver"
         "ProductCode" = "8:{6BBC5166-056C-4AB8-BD56-F9591105BBE5}"
-        "PackageCode" = "8:{F59C8838-1262-456D-9CB3-29FBC6F889C0}"
+        "PackageCode" = "8:{35DCF85B-697C-4A98-999D-8135B3978B3B}"
         "UpgradeCode" = "8:{9FABB293-F188-4905-B784-6550F9987267}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
