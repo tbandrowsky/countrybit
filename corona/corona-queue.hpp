@@ -509,6 +509,8 @@ namespace corona {
 						if (waiting_job->container.parent) {
 							SetEvent(waiting_job->container.parent);
                         }
+
+						jobQueue->num_outstanding_jobs--;
 					}
 
 					if (jobNotify.shouldDelete) {
@@ -516,9 +518,9 @@ namespace corona {
 					}
 				}
 
-				LONG numJobs = --jobQueue->num_outstanding_jobs;
+				int jcresult = jobQueue->num_outstanding_jobs;
 
-				if (not numJobs) {
+				if (jcresult == 0) {
 					::SetEvent(jobQueue->empty_queue_event);
 				}
 			}
@@ -568,12 +570,14 @@ namespace corona {
 						}
 					}
 
+					num_outstanding_jobs--;
+
 					if (jobNotify.shouldDelete) {
 						delete waiting_job;
 					}
 				}
 
-				LONG numJobs = --num_outstanding_jobs;
+				LONG numJobs = num_outstanding_jobs;
 
 				if (not numJobs) {
 					::SetEvent(empty_queue_event);
