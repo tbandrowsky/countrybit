@@ -896,8 +896,8 @@ namespace corona
 			response.content_length = response.response_body.get_size();
 			response.server = "Corona 1.0";
 			response.system_result = os_result(0);
-			response.headers.put_member("Allow", "POST");
-			response.headers.put_member("Access-Control-Allow-Origin", "*");
+			response.headers["Allow"]="POST";
+			response.headers["Access-Control-Allow-Origin"] = "*";
 			return response;
 		}
 
