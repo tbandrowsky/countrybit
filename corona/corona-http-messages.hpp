@@ -33,6 +33,7 @@ namespace corona
 		std::string             content_type;
 		std::string             content_length;
 		std::string             server;
+        std::map<std::string, std::string> headers;	
 	};
 
 	class http_request

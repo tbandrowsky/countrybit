@@ -623,6 +623,13 @@ namespace corona
 			_request.send_response(200, "Ok", fn_response);
 			};
 
+		http_handler_function corona_options = [this](http_action_request _request)-> void {
+			json_parser jp;
+            json fn_response = jp.create_object();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
 		http_handler_function corona_login = [this](http_action_request _request)-> void {
 			json parsed_request = parse_request(_request.request);
 			if (parsed_request.error()) {
@@ -889,6 +896,8 @@ namespace corona
 			response.content_length = response.response_body.get_size();
 			response.server = "Corona 1.0";
 			response.system_result = os_result(0);
+			response.headers.put_member("Allow", "POST");
+			response.headers.put_member("Access-Control-Allow-Origin", "*");
 			return response;
 		}
 
@@ -942,6 +951,7 @@ Bind home
 				new_api.response_class_name = {};
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, _root_path + new_api.path, corona_test);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 /**************
 Bind test
@@ -956,6 +966,7 @@ Bind test
 				new_api.response_class_name = {};
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, _root_path + new_api.path, corona_test);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 /**************
@@ -1011,6 +1022,7 @@ Bind createuser
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_create);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 /**************
 Bind loginuser
@@ -1059,6 +1071,7 @@ Bind loginuser
 				new_api.response_class_name = "sys_login_user_response";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_login);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 /**************
 Bind confirmuser
@@ -1105,6 +1118,7 @@ Bind confirmuser
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_confirm);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 /**************
 Bind SENDUSER
@@ -1150,6 +1164,7 @@ Bind SENDUSER
 
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_send_confirm);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 
@@ -1210,6 +1225,7 @@ Bind passworduser
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_user_password);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 /**************
 Bind get classes
@@ -1247,6 +1263,7 @@ Bind get classes
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_classes_get);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 				/**************
@@ -1286,6 +1303,7 @@ Bind get classes
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_class_get);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 				/**************
@@ -1330,6 +1348,7 @@ Bind get classes
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_classes_put);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 				/**************
@@ -1378,6 +1397,7 @@ Bind get classes
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_get);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 
@@ -1431,6 +1451,7 @@ Bind get classes
   }
 })";
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_query);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 				api_paths.push_back(new_api);
 
 				/**************
@@ -1481,6 +1502,7 @@ Bind get classes
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_create);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 				/**************
@@ -1522,6 +1544,7 @@ Bind get classes
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_put);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 				/**************
@@ -1569,6 +1592,7 @@ Bind get classes
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_delete);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 				/**************
@@ -1623,6 +1647,7 @@ Bind get classes
 				new_api.verb = "post";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_edit);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 
 				/**************
@@ -1665,6 +1690,7 @@ Bind get classes
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_run);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 				new_api.path = "objects/copy/";
 				new_api.name = "copy_object";
@@ -1742,6 +1768,7 @@ Bind get classes
 })";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_copy);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 
 				new_api.path = "describe/";
 				new_api.verb = "get";
@@ -1753,6 +1780,7 @@ Bind get classes
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, _root_path + new_api.path, corona_describe);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
 			}
 			catch (std::exception exc)
 			{

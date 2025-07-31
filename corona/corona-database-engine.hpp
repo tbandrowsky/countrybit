@@ -942,6 +942,7 @@ namespace corona
 	public:
 		bool		required;
 		std::string format;
+		std::string input_mask;
 
 		field_options_base() = default;
 		field_options_base(const field_options_base& _src) = default;
@@ -954,12 +955,14 @@ namespace corona
 		{
 			_dest.put_member("required", required);
 			_dest.put_member("format", format);
+			_dest.put_member("input_mask", input_mask);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			required = (bool)_src["required"];
 			format = (std::string)_src["format"];
+            input_mask = (std::string)_src["input_mask"];	
 		}
 
 		virtual void init_validation() override
