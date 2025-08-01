@@ -301,25 +301,23 @@ namespace corona {
 			if (api_handlers.contains(_url)) 
 			{
 				handler_list = api_handlers[_url];
+				http_handler_method method;
+				method.method = _verb;
+				method.func = _handler;
+				handler_list->functions.push_back(method);
 			}
 			else 
 			{
 				handler_list = std::make_shared<http_handler_list>();
 				api_handlers.insert_or_assign(_url, handler_list);
-			}
-
-			http_handler_method method;
-			method.method = _verb;
-			method.func = _handler;
-			handler_list->functions.push_back(method);
-
-			HTTP_URL_CONTEXT context = (HTTP_URL_CONTEXT)handler_list.get();
-			iwstring<2048> url = _url;
-			DWORD error = HttpAddUrlToUrlGroup(group_id, url.c_str(), context, 0);
-			if (error != NO_ERROR) {
-				os_result orx(error);
-				std::string message = "Exception:" + _url + " " + orx.message;
-				throw std::logic_error(message.c_str());
+				HTTP_URL_CONTEXT context = (HTTP_URL_CONTEXT)handler_list.get();
+				iwstring<2048> url = _url;
+				DWORD error = HttpAddUrlToUrlGroup(group_id, url.c_str(), context, 0);
+				if (error != NO_ERROR) {
+					os_result orx(error);
+					std::string message = "Exception:" + _url + " " + orx.message;
+					throw std::logic_error(message.c_str());
+				}
 			}
 
 		}

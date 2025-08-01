@@ -9,12 +9,13 @@
     "AdventureWorks2016": "Driver={ODBC Driver 17 for SQL Server};Server=BANDROWSKY-RIPP\\DEV01;Database=AdventureWorks2016;Trusted_Connection=yes;TrustServerCertificate=yes"
   },
   "Server": {
-    "listen_point": "http://mightyware.com:80/insurance",
+    "listen_point": "http://localhost:1234/corona/insurance",
+    "listen_point2": "http://mightyware.com:80/insurance",
     "application_name": "insurance",
     "schema_filename": "insurance_schema.json",
     "database_filename": "insurance_database.cdb",
     "database_threads": 4,
-    "database_recreate":  true,
+    "database_recreate": true,
     "sys_user_name": "system",
     "sys_user_password": "systempassword1!",
     "sys_user_email": "todd.bandrowsky@gmail.com",
