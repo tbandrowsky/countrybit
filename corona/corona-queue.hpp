@@ -807,14 +807,16 @@ namespace corona {
 					int y0 = lock_test->get_count();
 					lock_test->add_count();
 					int y1 = lock_test->get_count();
+					int dy = y1 - y0;
+					bool result = dy == 1;
 
-					std::string test_name = std::format("write thread {0}", i);
-					bool result = y1 - y0 == 1;
+					std::string test_name = std::format("write thread {0}, count:{1}", i, dy);
 					_tests->test({ test_name, result, __FILE__, __LINE__ });
 					InterlockedDecrement(&active_count);
 
-					result = (test_timer2.get_elapsed_seconds_total() >= test_seconds);
-					test_name = std::format("write thread time {0}", i);
+					double dt = test_timer2.get_elapsed_seconds_total() - test_seconds;
+					result = dt > 0.0;
+					test_name = std::format("write thread {0}, time: {1}, ", i, dt);
 					_tests->test({ test_name, result, __FILE__, __LINE__ });
 
 				}, wait_handle[i]);
