@@ -42,7 +42,6 @@ namespace corona
 		std::string                  host;
 		int                          port;
 		std::string                  path;
-		std::vector<std::string>     rest_path;
 		std::string                  http_method;
 		std::vector<std::string>     allowed_types;
 		std::string                  headers;

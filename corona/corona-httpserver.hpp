@@ -309,6 +309,11 @@ namespace corona {
 			else 
 			{
 				handler_list = std::make_shared<http_handler_list>();
+				handler_list->url = _url;
+				http_handler_method method;
+				method.method = _verb;
+				method.func = _handler;
+				handler_list->functions.push_back(method);
 				api_handlers.insert_or_assign(_url, handler_list);
 				HTTP_URL_CONTEXT context = (HTTP_URL_CONTEXT)handler_list.get();
 				iwstring<2048> url = _url;
@@ -445,10 +450,6 @@ namespace corona {
 					{
 						if (handler.method == _request->Verb)
 						{
-							int szk = hhl->url.size();
-							int szp = sabsPath.size();
-							std::string remaining_path = sabsPath.substr(szk, szp - szk);
-							request.rest_path = split(remaining_path, '/');
 							http_action_request harhar;
 							harhar.request_id = _request->RequestId;
 							harhar.request = request;
