@@ -50,28 +50,11 @@ namespace corona {
 		friend class job_queue;
 	};
 
-	class job;
-
-	class job_container
-	{
-	public:
-		job* jobdata;
-		int job_id;
-
-		job_container() :jobdata(nullptr), job_id(0)
-		{
-			ovp = {};
-		}
-
-		~job_container()
-		{
-		}
-	};
-
 	class job
 	{
 	public:
 		OVERLAPPED ovp;
+		int job_id;
 
 		job();
 		virtual ~job();
@@ -132,19 +115,20 @@ namespace corona {
 		HANDLE ioCompPort;
 
 		std::vector<std::thread> threads;
-		int numWorkerThreads;
 
 		bool shutDownOrdered;
 
-		std::atomic_int num_outstanding_jobs, job_id;
 		HANDLE empty_queue_event;
 
 		DWORD thread_id;
+		std::atomic<int> job_id = { 0 };
+
+		std::map<int, job*> jobs;
 
 	public:
 
 		inline HANDLE getPort() { return ioCompPort; }
-		inline DWORD getThreadCount() { return numWorkerThreads; }
+		inline DWORD getThreadCount() { return threads.size(); }
 		inline bool wasShutDownOrdered() { return shutDownOrdered; }
 
 		job_queue();
@@ -370,7 +354,6 @@ namespace corona {
 	job_queue::job_queue()
 	{
 		ioCompPort = nullptr;
-		num_outstanding_jobs = 0;
 		empty_queue_event = CreateEventW(nullptr, true, true, nullptr);
 		thread_id = ::GetCurrentThreadId();
 	}
@@ -440,8 +423,11 @@ namespace corona {
 		LONG result;
 		if (not _jobMessage)
 			return;
+
 		if (_jobMessage->queued(this)) {
-			++num_outstanding_jobs;
+			job_id++;
+			_jobMessage->job_id = job_id;
+			jobs[job_id] = _jobMessage;
 			ResetEvent(empty_queue_event);
 			result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
 		}
@@ -452,7 +438,9 @@ namespace corona {
 		LONG result;
 		general_job* _job_message = new general_job(_function, handle);
 		if (_job_message->queued(this)) {
-			++num_outstanding_jobs;
+			job_id++;
+			_jobMessage->job_id = job_id;
+			jobs[job_id] = _jobMessage;
 			ResetEvent(empty_queue_event);
 			result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_job_message->container));
 		}
@@ -490,38 +478,30 @@ namespace corona {
 
 		while (!jobQueue->wasShutDownOrdered()) {
 			success = ::GetQueuedCompletionStatus(jobQueue->ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
-			if (success and lpov) {
-				container = (job_container*)lpov;
-				if (container) {
-					waiting_job = container->jobdata;
-
-					if (waiting_job) {
-						try {
-							// if waiting_job is whacked, that means the pointer for the job was actually deleted.
-							jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
-							jobNotify.notify();
-							if (jobNotify.repost and (!jobQueue->wasShutDownOrdered())) {
-								jobQueue->add_job(waiting_job);
-							}
+			if (success and compKey) {
+                int job_id = (int)compKey;
+				auto job_entry = jobs.find(job_id);
+                if (job_entry != jobs.end()) {
+					waiting_job = job_entry->second;
+					try {
+						// if waiting_job is whacked, that means the pointer for the job was actually deleted.
+						jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
+						jobNotify.notify();
+						if (jobNotify.repost and (!jobQueue->wasShutDownOrdered())) {
+							jobQueue->add_job(waiting_job);
 						}
-						catch (std::exception exc)
-						{
-							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
-						}
-
-						--jobQueue->num_outstanding_jobs;
 					}
-
+					catch (std::exception exc)
+					{
+						system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+					}
 					if (jobNotify.shouldDelete) {
 						delete waiting_job;
 					}
-				}
-
-				int jcresult = jobQueue->num_outstanding_jobs;
-
-				if (jcresult <= 0) {
-					::SetEvent(jobQueue->empty_queue_event);
-					jobQueue->num_outstanding_jobs = 0;
+                    jobs.erase(job_entry);
+					if (jobs.size() == 0) {
+						::SetEvent(jobQueue->empty_queue_event);
+                    }
 				}
 			}
 		}
@@ -567,19 +547,11 @@ namespace corona {
 						}
 					}
 
-					num_outstanding_jobs--;
-
 					if (jobNotify.shouldDelete) {
 						delete waiting_job;
 					}
 				}
 
-				LONG numJobs = num_outstanding_jobs;
-
-				if (numJobs <=0 ) {
-					::SetEvent(empty_queue_event);
-                    num_outstanding_jobs = 0;
-				}
 			}
 		}
 

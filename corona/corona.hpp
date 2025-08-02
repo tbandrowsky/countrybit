@@ -115,6 +115,7 @@ namespace corona {
 
 // generalized json representation used as lingua fraca throughout the bus
 
+#include "corona-threadsafe-map.hpp"
 #include "corona-json.hpp"
 #include "corona-json-serialization.hpp"
 #include "corona-locks.hpp"
