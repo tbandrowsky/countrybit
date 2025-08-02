@@ -55,11 +55,10 @@ namespace corona {
 	class job_container
 	{
 	public:
-		OVERLAPPED ovp;
 		job* jobdata;
-		HANDLE parent;
+		int job_id;
 
-		job_container() :jobdata(nullptr), parent(nullptr)
+		job_container() :jobdata(nullptr), job_id(0)
 		{
 			ovp = {};
 		}
@@ -72,10 +71,13 @@ namespace corona {
 	class job
 	{
 	public:
-		job_container container;
+		OVERLAPPED ovp;
+
 		job();
 		virtual ~job();
-		virtual bool queued(job_queue* _callingQueue) { return true; }
+		virtual bool queued(job_queue* _callingQueue) { 
+			return true;
+		}
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
 		friend class job_queue;
 	};
@@ -134,7 +136,7 @@ namespace corona {
 
 		bool shutDownOrdered;
 
-		std::atomic_int num_outstanding_jobs;
+		std::atomic_int num_outstanding_jobs, job_id;
 		HANDLE empty_queue_event;
 
 		DWORD thread_id;
@@ -369,7 +371,7 @@ namespace corona {
 	{
 		ioCompPort = nullptr;
 		num_outstanding_jobs = 0;
-		empty_queue_event = CreateEventW(nullptr, false, true, nullptr);
+		empty_queue_event = CreateEventW(nullptr, true, true, nullptr);
 		thread_id = ::GetCurrentThreadId();
 	}
 
@@ -495,6 +497,7 @@ namespace corona {
 
 					if (waiting_job) {
 						try {
+							// if waiting_job is whacked, that means the pointer for the job was actually deleted.
 							jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
 							jobNotify.notify();
 							if (jobNotify.repost and (!jobQueue->wasShutDownOrdered())) {
@@ -505,11 +508,8 @@ namespace corona {
 						{
 							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
 						}
-						if (waiting_job->container.parent) {
-							SetEvent(waiting_job->container.parent);
-                        }
 
-						jobQueue->num_outstanding_jobs--;
+						--jobQueue->num_outstanding_jobs;
 					}
 
 					if (jobNotify.shouldDelete) {
@@ -519,8 +519,9 @@ namespace corona {
 
 				int jcresult = jobQueue->num_outstanding_jobs;
 
-				if (jcresult == 0) {
+				if (jcresult <= 0) {
 					::SetEvent(jobQueue->empty_queue_event);
+					jobQueue->num_outstanding_jobs = 0;
 				}
 			}
 		}
@@ -564,9 +565,6 @@ namespace corona {
 						{
 							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
 						}
-						if (waiting_job->container.parent) {
-							::SetEvent(waiting_job->container.parent);
-						}
 					}
 
 					num_outstanding_jobs--;
@@ -578,8 +576,9 @@ namespace corona {
 
 				LONG numJobs = num_outstanding_jobs;
 
-				if (not numJobs) {
+				if (numJobs <=0 ) {
 					::SetEvent(empty_queue_event);
+                    num_outstanding_jobs = 0;
 				}
 			}
 		}
@@ -600,7 +599,10 @@ namespace corona {
 
 	void job_queue::waitForEmptyQueue()
 	{
-		WaitForSingleObject(empty_queue_event, INFINITE);
+		int x = num_outstanding_jobs;
+		if (x > 0) {
+			WaitForSingleObject(empty_queue_event, INFINITE);
+		}
 	}
 
 	int job_queue::numberOfProcessors()
@@ -617,7 +619,6 @@ namespace corona {
 	{		
         HANDLE wait_handle = CreateEventA(NULL, FALSE, FALSE, NULL);
 		if (_jobMessage && _jobMessage->queued(this)) {
-			_jobMessage->container.parent = wait_handle;
 			try {
 				ResetEvent(empty_queue_event);
 				PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
@@ -664,15 +665,16 @@ namespace corona {
 
 			scope_multilock lock2 = locker.lock(lock_keys);
 			system_monitoring_interface::global_mon->log_information("2nd lock on same thread", __FILE__, __LINE__);
+			timer job_timer;
 
 			_tests->test({ "same thread", true, __FILE__, __LINE__ });
 
-			global_job_queue->add_job([&locker, &_tests, test_seconds]() -> void
+			global_job_queue->add_job([&locker, &job_timer, &_tests, test_seconds]() -> void
 				{
-					timer tx2;
 					system_monitoring_interface::global_mon->log_information("waiting for lock", __FILE__, __LINE__);
 					scope_multilock locko = locker.lock({ object_lock_types::lock_table, 0, 0 });
-					if (tx2.get_elapsed_seconds() < test_seconds) {
+                    double elapsed = job_timer.get_elapsed_seconds();	
+					if (elapsed < test_seconds) {
 						system_monitoring_interface::global_mon->log_warning("thread skipped lock", __FILE__, __LINE__);
 						_tests->test({ "thread wait", false, __FILE__, __LINE__ });
 					}
@@ -734,10 +736,10 @@ namespace corona {
 		int thread_count = 0;
 		std::vector<HANDLE> wait_handle;
 
-		wait_handle.resize(max_job_count);
 		for (int i = 0; i < max_job_count; i++)
 		{
-			wait_handle[i] = CreateEvent(NULL, TRUE, FALSE, NULL);
+            HANDLE handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+			wait_handle.push_back(handle);
 		}
 
 		// testing that writers block readers
@@ -782,10 +784,6 @@ namespace corona {
 			write_lock = std::make_shared<write_locked_sp<lockable_item>>(lock_test);
 			bool result = fail_count == 0;
 			_tests->test({ "wait fail count", result, __FILE__, __LINE__ });
-		}
-
-		for (auto wh : wait_handle) {
-			ResetEvent(wh);
 		}
 
 		// testing that readers block writers

@@ -309,7 +309,7 @@ namespace corona
 		scope_multilock(std::vector<HANDLE> &&_signals)
 		{
 			signals = std::move(_signals);
-			for (auto signal : signals) 
+			for (auto& signal : signals) 
 			{
 				::WaitForSingleObject(signal, INFINITE);
 			}
