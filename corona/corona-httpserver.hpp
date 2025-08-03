@@ -132,10 +132,10 @@ namespace corona
 
 			LARGE_INTEGER li;
 			li.QuadPart = 0;
-			container.ovp.Offset = li.LowPart;
-			container.ovp.OffsetHigh = li.HighPart;
+			ovp.Offset = li.LowPart;
+			ovp.OffsetHigh = li.HighPart;
 			PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
-			DWORD error = HttpReceiveHttpRequest(request.requestQueue, request.requestId, request.flags, prequest, buff.get_size(), nullptr, &container.ovp);
+			DWORD error = HttpReceiveHttpRequest(request.requestQueue, request.requestId, request.flags, prequest, buff.get_size(), nullptr, &ovp);
 
 			if (error == ERROR_IO_PENDING) {
 				success = true;

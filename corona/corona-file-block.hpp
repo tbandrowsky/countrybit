@@ -193,6 +193,8 @@ namespace corona
 
 	class trans_commit_job : public job
 	{
+
+		HANDLE wait_handle;
 		std::vector<std::shared_ptr<file_buffer>> buffers;
 
 	public:
@@ -201,6 +203,7 @@ namespace corona
 
 		trans_commit_job(file_block_interface*_fb, std::shared_ptr<file_buffer>& _append, std::vector<std::shared_ptr<file_buffer>>& _buffers)
 		{
+			wait_handle = CreateEventW(NULL, false, false, NULL);
 			fb = _fb;
 			std::shared_ptr<file_buffer> new_buffer;
 			if (_append) {
@@ -215,7 +218,7 @@ namespace corona
 
 		virtual ~trans_commit_job()
 		{
-			;
+			CloseHandle(wait_handle);
 		}
 
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
@@ -230,7 +233,7 @@ namespace corona
 				{
 					auto& trans_buff = buffers[i];
 					buffer_commit_job* fcj = new buffer_commit_job(fb, std::move(trans_buff));
-					_callingQueue->run_job(fcj);
+					_callingQueue->run_io_job(fcj, wait_handle);
 					i++;
 				}
 			}
@@ -527,7 +530,7 @@ namespace corona
 
 			if (dirty_buffers.size() > 0 or dirty_append) {
 				trans_commit_job* tcj = new trans_commit_job(this, dirty_append, dirty_buffers);
-				global_job_queue->run_job(tcj);
+				global_job_queue->run_io_job(tcj, nullptr);
 			}
 		}
 

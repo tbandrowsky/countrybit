@@ -205,8 +205,7 @@ namespace corona
 
 		file_command_result run()
 		{
-			global_job_queue->listen_job(this);
-            WaitForSingleObject(io_complete_event, INFINITE);
+			global_job_queue->run_io_job(this, io_complete_event);
 			return result;
 		}
 

@@ -124,7 +124,7 @@ namespace corona {
 		std::atomic<int> job_id = { 0 };
 
 		thread_safe_map<int, job*> compute_jobs;
-		thread_safe_map<OVERL, job*> io_jobs;
+		thread_safe_map<LPOVERLAPPED, job*> io_jobs;
 
 	public:
 
@@ -141,7 +141,8 @@ namespace corona {
 
 		void post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam);
 		bool listen_job(job *_jobMessage);
-		void run_job(job* _jobMessage);
+		void run_compute_job(job* _jobMessage, HANDLE _event);
+		void run_io_job(job* _jobMessage, HANDLE _event);
 		void submit_job(job* _jobMessage);
 		void submit_job(runnable _function, HANDLE handle);
 		void shutDown();
@@ -438,9 +439,70 @@ namespace corona {
 		LONG result;
 		general_job* _job_message = new general_job(_function, handle);
 		if (_job_message->queued(this)) {
+			job_id++;
 			_job_message->job_id = job_id;
 			compute_jobs.insert(job_id, _job_message);
 			result = PostQueuedCompletionStatus(ioCompPort, 0, job_id, nullptr);
+		}
+	}
+
+	void job_queue::run_compute_job(job* _jobMessage, HANDLE _wait_handle)
+	{
+		if (_jobMessage && _jobMessage->queued(this)) {
+
+			try {
+				job_id++;
+				_jobMessage->job_id = job_id;
+				compute_jobs.insert(job_id, _jobMessage);
+				PostQueuedCompletionStatus(ioCompPort, 0, job_id, nullptr);
+				if (_wait_handle) {
+					bool complete = false;
+					while (not complete) {
+						DWORD result = WaitForSingleObject(_wait_handle, 100);
+						if (result == 0) {
+							complete = true;
+						}
+						else {
+							run_next_job();
+						}
+					}
+				}
+			}
+			catch (std::exception& exc)
+			{
+				system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+			}
+		}
+	}
+
+	void job_queue::run_io_job(job* _jobMessage, HANDLE _wait_handle)
+	{
+		if (_jobMessage) {
+			io_jobs.insert(&_jobMessage->ovp, _jobMessage);
+			if (_jobMessage->queued(this)) {
+				try {
+					if (_wait_handle) {
+						bool complete = false;
+						while (not complete) {
+							DWORD result = WaitForSingleObject(_wait_handle, 100);
+							if (result == 0) {
+								complete = true;
+							}
+							else {
+								run_next_job();
+							}
+						}
+					}
+				}
+				catch (std::exception& exc)
+				{
+					system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+				}
+			}
+			else 
+			{
+                io_jobs.erase(&_jobMessage->ovp);
+			}
 		}
 	}
 
@@ -754,6 +816,8 @@ namespace corona {
 
 		system_monitoring_interface::global_mon->log_function_stop("rw lock proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
+
+
 
 }
 
