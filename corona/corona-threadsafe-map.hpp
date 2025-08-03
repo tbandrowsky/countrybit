@@ -1,7 +1,10 @@
-#pragma once
+
+#ifndef CORONA_THREAD_SAFE_MAP_H
+#define CORONA_THREAD_SAFE_MAP_H
 
 #include <map>
 #include <mutex>
+
 
 namespace corona {
 
@@ -29,9 +32,10 @@ public:
         return false;
     }
 
-    void erase(const K& key) {
+    bool erase(const K& key) {
         std::lock_guard<std::mutex> lock(mtx);
         data.erase(key);
+        return size() == 0;
     }
 
     size_t size() const {
@@ -46,3 +50,5 @@ public:
 };
 
 }
+
+#endif

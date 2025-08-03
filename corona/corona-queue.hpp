@@ -123,7 +123,7 @@ namespace corona {
 		DWORD thread_id;
 		std::atomic<int> job_id = { 0 };
 
-		std::map<int, job*> jobs;
+		thread_safe_map<int, job*> jobs;
 
 	public:
 
@@ -145,7 +145,7 @@ namespace corona {
 		void shutDown();
 		void kill();
 		void run_job(job* _jobMessage);
-		unsigned int run_next_job();
+		bool run_next_job();
 		static unsigned int jobQueueThread(job_queue* jobQueue);
 		void waitForThreadFinished();
 		void waitForEmptyQueue();
@@ -229,7 +229,8 @@ namespace corona {
 
 	job::job()
 	{
-		container.jobdata = this;
+        job_id = 0;
+		ovp = {};
 	}
 
 	job::~job()
@@ -376,12 +377,10 @@ namespace corona {
 
 		if (not ioCompPort) {
 
-			numWorkerThreads = _numThreads;
-
 			ioCompPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, _numThreads);
 
 			if (ioCompPort) {
-				for (i = 0; i < numWorkerThreads; i++) {
+				for (i = 0; i < _numThreads; i++) {
 					threads.push_back(std::thread(jobQueueThread, this));
 				}
 			}
@@ -427,9 +426,9 @@ namespace corona {
 		if (_jobMessage->queued(this)) {
 			job_id++;
 			_jobMessage->job_id = job_id;
-			jobs[job_id] = _jobMessage;
+			jobs.insert(job_id, _jobMessage);
+			result = PostQueuedCompletionStatus(ioCompPort, 0, job_id, nullptr);
 			ResetEvent(empty_queue_event);
-			result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
 		}
 	}
 
@@ -438,11 +437,10 @@ namespace corona {
 		LONG result;
 		general_job* _job_message = new general_job(_function, handle);
 		if (_job_message->queued(this)) {
-			job_id++;
-			_jobMessage->job_id = job_id;
-			jobs[job_id] = _jobMessage;
+			_job_message->job_id = job_id;
+			jobs.insert(job_id, _job_message);
+			result = PostQueuedCompletionStatus(ioCompPort, 0, job_id, nullptr);
 			ResetEvent(empty_queue_event);
-			result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_job_message->container));
 		}
 	}
 
@@ -461,34 +459,44 @@ namespace corona {
 	unsigned int job_queue::jobQueueThread(job_queue* jobQueue)
 	{
 
-		LPOVERLAPPED lpov = {};
-		job* waiting_job;
-		job_container* container;
-
-		BOOL success;
-		DWORD bytesTransferred;
-		ULONG_PTR compKey;
-
-		job_notify jobNotify;
-
+		
 #ifdef COM_INITIALIZATION
 		//	::CoInitializeEx( NULL, COINIT_MULTITHREADED );
 		CoInitialize(NULL);
 #endif
 
-		while (!jobQueue->wasShutDownOrdered()) {
-			success = ::GetQueuedCompletionStatus(jobQueue->ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
+		while (jobQueue->run_next_job());
+
+#ifdef COM_INITIALIZATION
+		::CoUninitialize();
+#endif
+
+		return 0;
+	};
+
+	bool job_queue::run_next_job()
+	{
+
+		LPOVERLAPPED lpov = {};
+		job* waiting_job;
+
+		BOOL success = false;
+		DWORD bytesTransferred;
+		ULONG_PTR compKey;
+
+		job_notify jobNotify;
+
+		if (!wasShutDownOrdered()) {
+			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
 			if (success and compKey) {
-                int job_id = (int)compKey;
-				auto job_entry = jobs.find(job_id);
-                if (job_entry != jobs.end()) {
-					waiting_job = job_entry->second;
+				int job_id = (int)compKey;
+				if (jobs.try_get(job_id, waiting_job)) {
 					try {
 						// if waiting_job is whacked, that means the pointer for the job was actually deleted.
-						jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
+						jobNotify = waiting_job->execute(this, bytesTransferred, success);
 						jobNotify.notify();
-						if (jobNotify.repost and (!jobQueue->wasShutDownOrdered())) {
-							jobQueue->add_job(waiting_job);
+						if (jobNotify.repost and (!wasShutDownOrdered())) {
+							add_job(waiting_job);
 						}
 					}
 					catch (std::exception exc)
@@ -498,68 +506,14 @@ namespace corona {
 					if (jobNotify.shouldDelete) {
 						delete waiting_job;
 					}
-                    jobs.erase(job_entry);
-					if (jobs.size() == 0) {
-						::SetEvent(jobQueue->empty_queue_event);
-                    }
-				}
-			}
-		}
-
-#ifdef COM_INITIALIZATION
-		::CoUninitialize();
-#endif
-
-		return 0;
-	};
-
-	unsigned int job_queue::run_next_job()
-	{
-
-		LPOVERLAPPED lpov = {};
-		job* waiting_job;
-		job_container* container;
-
-		BOOL success;
-		DWORD bytesTransferred;
-		ULONG_PTR compKey;
-
-		job_notify jobNotify;
-
-		if (!wasShutDownOrdered()) {
-			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 100);
-			if (success and lpov) {
-				container = (job_container*)lpov;
-				if (container) {
-					waiting_job = container->jobdata;
-
-					if (waiting_job) {
-						try {
-							jobNotify = waiting_job->execute(this, bytesTransferred, success);
-							jobNotify.notify();
-							if (jobNotify.repost and (!wasShutDownOrdered())) {
-								add_job(waiting_job);
-							}
-						}
-						catch (std::exception exc)
-						{
-							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
-						}
-					}
-
-					if (jobNotify.shouldDelete) {
-						delete waiting_job;
+					if (jobs.erase(job_id)) {
+						::SetEvent(empty_queue_event);
 					}
 				}
-
 			}
+			success = true;
 		}
-
-#ifdef COM_INITIALIZATION
-		::CoUninitialize();
-#endif
-
-		return num_outstanding_jobs;
+		return success;
 	};
 
 	void job_queue::waitForThreadFinished()
@@ -571,10 +525,7 @@ namespace corona {
 
 	void job_queue::waitForEmptyQueue()
 	{
-		int x = num_outstanding_jobs;
-		if (x > 0) {
-			WaitForSingleObject(empty_queue_event, INFINITE);
-		}
+		WaitForSingleObject(empty_queue_event, INFINITE);
 	}
 
 	int job_queue::numberOfProcessors()
@@ -589,27 +540,14 @@ namespace corona {
 
 	void job_queue::run_job(job* _jobMessage)
 	{		
-        HANDLE wait_handle = CreateEventA(NULL, FALSE, FALSE, NULL);
 		if (_jobMessage && _jobMessage->queued(this)) {
 			try {
-				ResetEvent(empty_queue_event);
-				PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
-				bool complete = false;
-				while (not complete) {
-					DWORD result = WaitForSingleObject(wait_handle, 100);
-					if (result == 0) {
-						complete = true;
-					}
-					else {
-						run_next_job();
-					}
-				}
+				_jobMessage->execute(this, 0, true);
 			}
 			catch (std::exception& exc) 
 			{
 				system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
             }			
-			CloseHandle(wait_handle);
 		}
     }
 	

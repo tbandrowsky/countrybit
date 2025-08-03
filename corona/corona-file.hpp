@@ -154,12 +154,12 @@ namespace corona
 			file_result = false;
 
 			LARGE_INTEGER li;
-			container.ovp = {};
+			ovp = {};
 
 			li.QuadPart = request.location;
-			container.ovp.Offset = li.LowPart;
-			container.ovp.OffsetHigh = li.HighPart;
-			container.ovp.hEvent = CreateEvent(NULL, FALSE, FALSE, FALSE);
+			ovp.Offset = li.LowPart;
+			ovp.OffsetHigh = li.HighPart;
+			ovp.hEvent = CreateEvent(NULL, FALSE, FALSE, FALSE);
 
 			result.buffer = (char*)request.buffer;
 			result.bytes_transferred = 0;
