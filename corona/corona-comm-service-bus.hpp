@@ -462,7 +462,7 @@ namespace corona
 					}
 				}
 
-				if (simulation) {
+				if (false && simulation) {
 					json result = get_data("sys_command");
 					if (result["success"]) {
 						json data = result["data"];

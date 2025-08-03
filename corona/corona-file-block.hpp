@@ -256,7 +256,7 @@ namespace corona
 		int64_t block_size = 65536;
 		int64_t append_size = 65536 * 16;
 
-		std::shared_ptr<file_buffer> feast(int64_t _start, int64_t _length, feast_types _feast)
+		std::shared_ptr<file_buffer> acquire_buffer(int64_t _start, int64_t _length, feast_types _feast)
 		{
 			scope_lock feast_lock(block_lock);
 
@@ -380,7 +380,7 @@ namespace corona
 			}
 			else 
 			{
-				fb = feast(_location, _buffer_length, feast_types::feast_write);
+				fb = acquire_buffer(_location, _buffer_length, feast_types::feast_write);
 			}
 
 			fb->is_dirty = true;
@@ -424,7 +424,7 @@ namespace corona
 
 				int64_t final_length = block_end - block_start;
 
-				fb = feast(block_start, final_length, feast_types::feast_read);
+				fb = acquire_buffer(block_start, final_length, feast_types::feast_read);
 			}
 
 			unsigned char* src = (unsigned char*)fb->buff.get_ptr() + _location - fb->start;
@@ -528,10 +528,12 @@ namespace corona
 				}
 			}
 
+            HANDLE job_completed = CreateEventW(NULL, false, false, NULL);
 			if (dirty_buffers.size() > 0 or dirty_append) {
 				trans_commit_job* tcj = new trans_commit_job(this, dirty_append, dirty_buffers);
-				global_job_queue->run_io_job(tcj, nullptr);
+				global_job_queue->run_io_job(tcj, job_completed);
 			}
+			CloseHandle(job_completed);
 		}
 
 		virtual int buffer_count() override

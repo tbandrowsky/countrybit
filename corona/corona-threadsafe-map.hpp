@@ -11,19 +11,19 @@ namespace corona {
 template<typename K, typename V>
 class thread_safe_map {
     std::map<K, V> data;
-    mutable std::mutex mtx;
+    mutable lockable locker;
 
 public:
     thread_safe_map() = default;
     ~thread_safe_map() = default;
 
     void insert(const K& key, const V& value) {
-        std::lock_guard<std::mutex> lock(mtx);
+        scope_lock lock(locker);
         data[key] = value;
     }
 
     bool try_get(const K& key, V& value) const {
-        std::lock_guard<std::mutex> lock(mtx);
+        scope_lock lock(locker);
         auto it = data.find(key);
         if (it != data.end()) {
             value = it->second;
@@ -33,18 +33,21 @@ public:
     }
 
     bool erase(const K& key) {
-        std::lock_guard<std::mutex> lock(mtx);
-        data.erase(key);
+        scope_lock lock(locker);
+        auto it = data.find(key);
+        if (it != data.end()) {
+            data.erase(it);
+        }
         return size() == 0;
     }
 
     size_t size() const {
-        std::lock_guard<std::mutex> lock(mtx);
+        scope_lock lock(locker);
         return data.size();
     }
 
     void clear() {
-        std::lock_guard<std::mutex> lock(mtx);
+        scope_lock lock(locker);
         data.clear();
     }
 };
