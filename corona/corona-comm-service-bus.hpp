@@ -1861,20 +1861,20 @@ Bind get classes
 				system_command += describe_url;
 				system_command += R"( -e BASE_URL=/api -e SWAGGER_ALLOW_ORIGIN=* swaggerapi/swagger-ui)";
 				system_job* sj = new system_job(system_command, swagger_process);
-				global_job_queue->add_job(sj);
+				global_job_queue->submit_job(sj);
 			}
 		}
 
 		void run(runnable _runnable)
 		{
 			general_job* gj = new general_job(_runnable);
-			global_job_queue->add_job(gj);
+			global_job_queue->submit_job(gj);
 		}
 
 		void run_http(runnable_http_request _runnable, runnable_http_response _ui_complete)
 		{
 			general_http_ui_job* guj = new general_http_ui_job(_runnable, _ui_complete);
-			global_job_queue->add_job(guj);
+			global_job_queue->submit_job(guj);
 		}
 
 		template <typename dest, typename item> void run_each(dest* _targets, std::vector<item>& _items, std::function<void(dest* _target, item& _src)> _on_each)
@@ -1901,7 +1901,7 @@ Bind get classes
 						_on_each(d, itm);
 					}
 					}, handle);
-				global_job_queue->add_job(gj);
+				global_job_queue->submit_job(gj);
 				idx = end;
 			}
 
@@ -1935,7 +1935,7 @@ Bind get classes
 						_on_each(itm);
 					}
 					}, handle);
-				global_job_queue->add_job(gj);
+				global_job_queue->submit_job(gj);
 				idx = end;
 			}
 
@@ -1971,7 +1971,7 @@ Bind get classes
 						_on_each(px, py, itm);
 					}
 					}, handle);
-				global_job_queue->add_job(gj);
+				global_job_queue->submit_job(gj);
 				idx = end;
 			}
 

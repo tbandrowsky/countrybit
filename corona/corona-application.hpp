@@ -167,9 +167,9 @@ namespace corona
 			return f;
 		}
 
-		void add_job(job* _job)
+		void submit_job(job* _job)
 		{
-			global_job_queue->add_job(_job);
+			global_job_queue->submit_job(_job);
 		}
 
 		virtual void log(const char* _msg)

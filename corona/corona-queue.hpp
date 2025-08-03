@@ -140,11 +140,11 @@ namespace corona {
 
 		void post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam);
 		bool listen_job(job *_jobMessage);
-		void add_job(job* _jobMessage);
-		void add_job(runnable _function, HANDLE handle);
+		void run_job(job* _jobMessage);
+		void submit_job(job* _jobMessage);
+		void submit_job(runnable _function, HANDLE handle);
 		void shutDown();
 		void kill();
-		void run_job(job* _jobMessage);
 		bool run_next_job();
 		static unsigned int jobQueueThread(job_queue* jobQueue);
 		void waitForThreadFinished();
@@ -417,7 +417,7 @@ namespace corona {
 		shutDown();
 	}
 
-	void job_queue::add_job(job* _jobMessage)
+	void job_queue::submit_job(job* _jobMessage)
 	{
 		LONG result;
 		if (not _jobMessage)
@@ -432,7 +432,7 @@ namespace corona {
 		}
 	}
 
-	void job_queue::add_job(runnable _function, HANDLE handle)
+	void job_queue::submit_job(runnable _function, HANDLE handle)
 	{
 		LONG result;
 		general_job* _job_message = new general_job(_function, handle);
@@ -448,7 +448,21 @@ namespace corona {
 	{
 		if (not _jobMessage)
 			return false;
+        io_jobs.insert(&_jobMessage->ovp, _jobMessage);
 		return _jobMessage->queued(this);
+	}
+
+	void job_queue::run_job(job* _jobMessage)
+	{
+		if (_jobMessage && _jobMessage->queued(this)) {
+			try {
+				_jobMessage->execute(this, 0, true);
+			}
+			catch (std::exception& exc)
+			{
+				system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+			}
+		}
 	}
 
 	void job_queue::post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam)
@@ -496,7 +510,7 @@ namespace corona {
 						jobNotify = waiting_job->execute(this, bytesTransferred, success);
 						jobNotify.notify();
 						if (jobNotify.repost and (!wasShutDownOrdered())) {
-							add_job(waiting_job);
+							submit_job(waiting_job);
 						}
 					}
 					catch (std::exception exc)
@@ -519,7 +533,7 @@ namespace corona {
 	void job_queue::waitForThreadFinished()
 	{
 		finish_job fj;
-		add_job(&fj);
+		submit_job(&fj);
 		WaitForSingleObject(fj.handle, INFINITE);
 	}
 
@@ -538,18 +552,6 @@ namespace corona {
 		return threadCount;
 	}
 
-	void job_queue::run_job(job* _jobMessage)
-	{		
-		if (_jobMessage && _jobMessage->queued(this)) {
-			try {
-				_jobMessage->execute(this, 0, true);
-			}
-			catch (std::exception& exc) 
-			{
-				system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
-            }			
-		}
-    }
 	
 	void test_locks(std::shared_ptr<test_set> _tests)
 	{
@@ -579,7 +581,7 @@ namespace corona {
 
 			_tests->test({ "same thread", true, __FILE__, __LINE__ });
 
-			global_job_queue->add_job([&locker, &job_timer, &_tests, test_seconds]() -> void
+			global_job_queue->submit_job([&locker, &job_timer, &_tests, test_seconds]() -> void
 				{
 					system_monitoring_interface::global_mon->log_information("waiting for lock", __FILE__, __LINE__);
 					scope_multilock locko = locker.lock({ object_lock_types::lock_table, 0, 0 });
@@ -670,7 +672,7 @@ namespace corona {
 
 			for (int i = 0; i < max_job_count; i++)
 			{
-				global_job_queue->add_job([&tst_timer, &lock_test, &_tests, test_seconds, &fail_count, i, x]() -> void
+				global_job_queue->submit_job([&tst_timer, &lock_test, &_tests, test_seconds, &fail_count, i, x]() -> void
 					{
 						read_locked_sp test_read(lock_test);
 						double elapsed = tst_timer.get_elapsed_seconds_total();
@@ -708,7 +710,7 @@ namespace corona {
 
 		for (int i = 0; i < max_job_count; i++)
 		{
-			global_job_queue->add_job([&test_timer2, &lock_test, &_tests, test_seconds, i, &active_count]() -> void
+			global_job_queue->submit_job([&test_timer2, &lock_test, &_tests, test_seconds, i, &active_count]() -> void
 				{
 					write_locked_sp test_write(lock_test);
 

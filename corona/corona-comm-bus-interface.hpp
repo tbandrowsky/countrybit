@@ -327,26 +327,26 @@ namespace corona
 		void run(runnable _runnable)
 		{
 			general_job* gj = new general_job(_runnable);
-			global_job_queue->add_job(gj);
+			global_job_queue->submit_job(gj);
 		}
 
 		void run_ui(runnable _ui_complete)
 		{
 			runnable temp;
 			general_ui_job* guj = new general_ui_job(temp, _ui_complete);
-			global_job_queue->add_job(guj);
+			global_job_queue->submit_job(guj);
 		}
 
 		void run_complete(runnable _runnable, runnable _ui_complete)
 		{
 			general_ui_job* guj = new general_ui_job(_runnable, _ui_complete);
-			global_job_queue->add_job(guj);
+			global_job_queue->submit_job(guj);
 		}
 
 		void run_http(runnable_http_request _runnable, runnable_http_response _ui_complete)
 		{
 			general_http_ui_job* guj = new general_http_ui_job(_runnable, _ui_complete);
-			global_job_queue->add_job(guj);
+			global_job_queue->submit_job(guj);
 		}
 
 		template <typename dest, typename item> void run_each(dest* _targets, std::vector<item>& _items, std::function<void(dest* _target, item& _src)> _on_each)
@@ -373,7 +373,7 @@ namespace corona
 						_on_each(d, itm);
 					}
 					}, handle);
-				global_job_queue->add_job(gj);
+				global_job_queue->submit_job(gj);
 				idx = end;
 			}
 
@@ -407,7 +407,7 @@ namespace corona
 						_on_each(itm);
 					}
 					}, handle);
-				global_job_queue->add_job(gj);
+				global_job_queue->submit_job(gj);
 				idx = end;
 			}
 
@@ -443,7 +443,7 @@ namespace corona
 						_on_each(px, py, itm);
 					}
 					}, handle);
-				global_job_queue->add_job(gj);
+				global_job_queue->submit_job(gj);
 				idx = end;
 			}
 
