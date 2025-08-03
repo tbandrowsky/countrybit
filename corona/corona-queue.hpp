@@ -123,7 +123,8 @@ namespace corona {
 		DWORD thread_id;
 		std::atomic<int> job_id = { 0 };
 
-		thread_safe_map<int, job*> jobs;
+		thread_safe_map<int, job*> compute_jobs;
+		thread_safe_map<OVERL, job*> io_jobs;
 
 	public:
 
@@ -148,6 +149,7 @@ namespace corona {
 		bool run_next_job();
 		static unsigned int jobQueueThread(job_queue* jobQueue);
 		void waitForThreadFinished();
+
 		void waitForEmptyQueue();
 
 		int numberOfProcessors();
@@ -355,7 +357,7 @@ namespace corona {
 	job_queue::job_queue()
 	{
 		ioCompPort = nullptr;
-		empty_queue_event = CreateEventW(nullptr, true, true, nullptr);
+		empty_queue_event = CreateEventW(nullptr, false, false, nullptr);
 		thread_id = ::GetCurrentThreadId();
 	}
 
@@ -426,9 +428,8 @@ namespace corona {
 		if (_jobMessage->queued(this)) {
 			job_id++;
 			_jobMessage->job_id = job_id;
-			jobs.insert(job_id, _jobMessage);
+			compute_jobs.insert(job_id, _jobMessage);
 			result = PostQueuedCompletionStatus(ioCompPort, 0, job_id, nullptr);
-			ResetEvent(empty_queue_event);
 		}
 	}
 
@@ -438,9 +439,8 @@ namespace corona {
 		general_job* _job_message = new general_job(_function, handle);
 		if (_job_message->queued(this)) {
 			_job_message->job_id = job_id;
-			jobs.insert(job_id, _job_message);
+			compute_jobs.insert(job_id, _job_message);
 			result = PostQueuedCompletionStatus(ioCompPort, 0, job_id, nullptr);
-			ResetEvent(empty_queue_event);
 		}
 	}
 
@@ -448,7 +448,11 @@ namespace corona {
 	{
 		if (not _jobMessage)
 			return false;
-		return _jobMessage->queued(this);
+		
+		io_jobs.insert(&_jobMessage->ovp, _jobMessage);
+		if (not _jobMessage->queued(this)) {
+            io_jobs.erase(&_jobMessage->ovp);
+		}
 	}
 
 	void job_queue::post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam)
@@ -488,9 +492,9 @@ namespace corona {
 
 		if (!wasShutDownOrdered()) {
 			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
-			if (success and compKey) {
+			if (success) {
 				int job_id = (int)compKey;
-				if (jobs.try_get(job_id, waiting_job)) {
+				if (compute_jobs.try_get(job_id, waiting_job)) {
 					try {
 						// if waiting_job is whacked, that means the pointer for the job was actually deleted.
 						jobNotify = waiting_job->execute(this, bytesTransferred, success);
@@ -503,11 +507,29 @@ namespace corona {
 					{
 						system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
 					}
+					if (compute_jobs.erase(job_id)) {
+						::SetEvent(empty_queue_event);
+					}
 					if (jobNotify.shouldDelete) {
 						delete waiting_job;
 					}
-					if (jobs.erase(job_id)) {
+				}
+				else if (io_jobs.try_get(lpov, waiting_job))
+				{
+					try {
+						// if waiting_job is whacked, that means the pointer for the job was actually deleted.
+						jobNotify = waiting_job->execute(this, bytesTransferred, success);
+						jobNotify.notify();
+					}
+					catch (std::exception exc)
+					{
+						system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+					}
+					if (io_jobs.erase(lpov)) {
 						::SetEvent(empty_queue_event);
+					}
+					if (jobNotify.shouldDelete) {
+						delete waiting_job;
 					}
 				}
 			}

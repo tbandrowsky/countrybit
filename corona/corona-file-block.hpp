@@ -551,7 +551,7 @@ namespace corona
 
 		virtual void wait() override
 		{
-            global_job_queue->waitForEmptyQueue();
+            ;
 		}
 
 	};

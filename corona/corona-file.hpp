@@ -166,7 +166,7 @@ namespace corona
 			result.location = request.location;
 			result.result = os_result(0);
 
-			LPOVERLAPPED lp = &container.ovp;
+			LPOVERLAPPED lp = &ovp;
 
 			switch (request.command) {
 			case file_commands::read:
