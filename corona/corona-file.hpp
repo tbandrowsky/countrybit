@@ -252,9 +252,9 @@ namespace corona
 			return jn;
 		}
 
-		virtual io_job_key get_job_key() override
+		virtual int64_t get_job_key() override
 		{
-			return io_job_key(request.hfile, request.command == file_commands::write, request.location, &overlapped);
+			return (int64_t)&overlapped;
         }
 
 		operator file_command_result()
@@ -354,7 +354,7 @@ namespace corona
 				}
 			}
 			HANDLE hport = queue->getPort();
-			auto hfileport = ::CreateIoCompletionPort(hfile, hport, completion_key_io, 0);
+			auto hfileport = ::CreateIoCompletionPort(hfile, hport, completion_key_file, 0);
 			if (hfileport == NULL)
 			{
 				os_result osr;

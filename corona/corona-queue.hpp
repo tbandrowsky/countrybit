@@ -26,7 +26,8 @@ namespace corona {
 	class job_queue;
 
 	ULONG_PTR completion_key_compute = 1;
-	ULONG_PTR completion_key_io = 2;
+	ULONG_PTR completion_key_file = 2;
+	ULONG_PTR completion_key_http = 3;
 
 	class job_notify {
 
@@ -71,35 +72,10 @@ namespace corona {
 	using runnable_http_request = std::function<call_status()>;
 	using runnable_http_response = std::function<void(call_status)>;
 
-	class io_job_key
-	{
-	public:
-		HANDLE			hfile;
-		bool			write;
-		int64_t			location;
-        OVERLAPPED		*overlapped;
-
-		io_job_key(HANDLE _hfile, bool _write, int64_t _location, OVERLAPPED *_overlapped) : 
-			hfile(_hfile), write(_write), location(_location), overlapped(_overlapped)
-		{
-
-		}
-
-		io_job_key() = default;
-		io_job_key(const io_job_key& ) = default;
-		io_job_key(io_job_key&&) = default;
-		io_job_key& operator = (const io_job_key&) = default;
-		io_job_key& operator = (io_job_key&&) = default;
-
-		bool operator < (const io_job_key& _src) const {
-            return overlapped < _src.overlapped;
-        }
-	};
-
 	class io_job : public job
 	{
 	public:
-		virtual io_job_key get_job_key() = 0;
+		virtual int64_t get_job_key() = 0;
 	};
 
 	class general_job : public job
@@ -168,8 +144,8 @@ namespace corona {
 		DWORD thread_id;
 		std::atomic<int> job_id = { 0 };
 
-		thread_safe_map<int, job*> compute_jobs;
-		thread_safe_map<LPOVERLAPPED, job*> io_jobs;
+		thread_safe_map<int64_t, job*> compute_jobs;
+		thread_safe_map<int64_t, job*> io_jobs;
 
 	public:
 
@@ -182,7 +158,7 @@ namespace corona {
 		virtual ~job_queue();
 
 		void start(int _numThreads);
-		void listen(HANDLE _otherQueue);
+		void listen(HANDLE _otherQueue, ULONG_PTR _completion_key);
 
 		void post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam);
 		bool listen_job(io_job *_jobMessage);
@@ -437,9 +413,9 @@ namespace corona {
 		}
 	}
 
-	void job_queue::listen(HANDLE _otherQueue)
+	void job_queue::listen(HANDLE _otherQueue, ULONG_PTR _completion_key)
 	{
-		if (CreateIoCompletionPort(_otherQueue, ioCompPort, completion_key_io, 0) == NULL) {
+		if (CreateIoCompletionPort(_otherQueue, ioCompPort, _completion_key, 0) == NULL) {
 			throw std::invalid_argument("job_queue:cannot listen.");
 		}
 	}
@@ -499,9 +475,9 @@ namespace corona {
 			return false;
 		
 		auto key = _jobMessage->get_job_key();
-		io_jobs.insert(key.overlapped, _jobMessage);
+		io_jobs.insert(key, _jobMessage);
 		if (not _jobMessage->queued(this)) {
-            io_jobs.erase(key.overlapped);
+            io_jobs.erase(key);
 		}
 	}
 
@@ -544,9 +520,10 @@ namespace corona {
 			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
 			if (success) {
 
-				if (compKey == completion_key_io) 
+				if (compKey == completion_key_file) 
 				{
-					if (io_jobs.try_get(lpov, waiting_job))
+                    int64_t job_key = (int64_t)lpov;
+					if (io_jobs.try_get(job_key, waiting_job))
 					{
 						try {
 							// if waiting_job is whacked, that means the pointer for the job was actually deleted.
@@ -557,7 +534,7 @@ namespace corona {
 						{
 							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
 						}
-						if (io_jobs.erase(lpov)) {
+						if (io_jobs.erase(job_key)) {
 							::SetEvent(empty_queue_event);
 						}
 						if (jobNotify.shouldDelete) {

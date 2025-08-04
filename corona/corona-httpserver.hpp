@@ -111,18 +111,20 @@ namespace corona
 		ULONG				flags;
 	};
 
-	class http_command : public job
+	class http_command : public io_job
 	{
 	public:
 		buffer						buff;
 		http_command_request		request;
 		int							bytes_transferred;
 		bool						success;
+        OVERLAPPED 					overlapped;
 
-		http_command(http_command_request& _request) : job()
+		http_command(http_command_request& _request) : io_job()
 		{
 			request = _request;
 			buff = buffer(16384);
+			overlapped = {};
 		}
 		
 		virtual bool queued(job_queue *_calling_queue) override
@@ -132,10 +134,10 @@ namespace corona
 
 			LARGE_INTEGER li;
 			li.QuadPart = 0;
-			ovp.Offset = li.LowPart;
-			ovp.OffsetHigh = li.HighPart;
+			overlapped.Offset = li.LowPart;
+			overlapped.OffsetHigh = li.HighPart;
 			PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
-			DWORD error = HttpReceiveHttpRequest(request.requestQueue, request.requestId, request.flags, prequest, buff.get_size(), nullptr, &ovp);
+			DWORD error = HttpReceiveHttpRequest(request.requestQueue, request.requestId, request.flags, prequest, buff.get_size(), nullptr, &overlapped);
 
 			if (error == ERROR_IO_PENDING) {
 				success = true;
@@ -176,6 +178,11 @@ namespace corona
 
 			jn.shouldDelete = true;
 			return jn;
+		}
+
+		virtual int64_t get_job_key() override
+		{
+			return (int64_t)&overlapped;
 		}
 
 
@@ -329,7 +336,7 @@ namespace corona {
 
 		void start()
 		{
-			global_job_queue->listen(request_queue);
+			global_job_queue->listen(request_queue, completion_key_file);
 			next_request();
 		}
 
