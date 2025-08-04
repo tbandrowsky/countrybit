@@ -249,16 +249,18 @@ namespace corona
 
 	class file_block : public file_block_interface
 	{
-		std::vector<std::shared_ptr<file_buffer>> buffers;
 		std::shared_ptr<file> fp;
+		std::vector<std::shared_ptr<file_buffer>> buffers;
 		std::shared_ptr<file_buffer> append_buffer;
-		lockable block_lock;
 		int64_t block_size = 65536;
 		int64_t append_size = 65536 * 16;
 
+		lockable disk_io_lock;
+		lockable buffer_lock;
+
 		std::shared_ptr<file_buffer> acquire_buffer(int64_t _start, int64_t _length, feast_types _feast)
 		{
-			scope_lock feast_lock(block_lock);
+			scope_lock dlock(disk_io_lock);
 
 			int64_t _stop = _start + _length;
 
@@ -352,7 +354,6 @@ namespace corona
 
 		virtual ~file_block()
 		{
-			scope_lock feast_lock(block_lock);
 			wait();
 		}
 
@@ -363,7 +364,7 @@ namespace corona
 
 		virtual file_command_result write(int64_t _location, void* _buffer, int _buffer_length) override
 		{
-			scope_lock feast_lock(block_lock);
+			scope_lock lockme(buffer_lock);
 
 			file_command_result result;
 
@@ -400,7 +401,7 @@ namespace corona
 
 		virtual file_command_result read(int64_t _location, void* _buffer, int _buffer_length) override
 		{
-			scope_lock feast_lock(block_lock);
+			scope_lock lockme(buffer_lock);
 
 			file_command_result result;
 
@@ -443,7 +444,7 @@ namespace corona
 		virtual relative_ptr_type allocate_space(int64_t _size, int64_t* _actual_size) override
 		{
 
-			scope_lock feast_lock(block_lock);
+			scope_lock lockme(buffer_lock);
 
 			if (_size < 0)
 				throw std::logic_error("allocate_space < 0");
@@ -460,7 +461,8 @@ namespace corona
 
 		virtual int64_t add(int _bytes_to_add) override
 		{
-			scope_lock feast_lock(block_lock);
+			scope_lock lockme(buffer_lock);
+			scope_lock reallylockme(disk_io_lock);
 
 			if (_bytes_to_add < 0)
 				throw std::logic_error("add < 0");
@@ -496,7 +498,7 @@ namespace corona
 
 		virtual file_command_result append(void* _buffer, int _buffer_length) override
 		{
-			scope_lock feast_lock(block_lock);
+			scope_lock lockme(buffer_lock);
 
 			int64_t file_position = add(_buffer_length);
 
@@ -512,7 +514,8 @@ namespace corona
 
 		virtual void commit() override
 		{
-			scope_lock feast_lock(block_lock);
+			scope_lock lockme(buffer_lock);
+			scope_lock reallylockme(disk_io_lock);
 
 			std::shared_ptr<file_buffer> dirty_append;
 			std::vector<std::shared_ptr<file_buffer>> dirty_buffers;
@@ -543,7 +546,7 @@ namespace corona
 
 		virtual void clear() override
 		{
-			scope_lock feast_lock(block_lock);
+			scope_lock lockme(buffer_lock);
 			wait();
 			append_buffer = nullptr;
 			buffers.clear();
@@ -556,7 +559,7 @@ namespace corona
 
 		virtual void wait() override
 		{
-            ;
+			scope_lock reallylockme(disk_io_lock);
 		}
 
 	};
