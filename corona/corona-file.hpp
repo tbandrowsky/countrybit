@@ -149,7 +149,7 @@ namespace corona
 			;
 		}
 
-		virtual bool queued(job_queue* _callingQueue)
+		virtual bool queued(job_queue* _callingQueue) override
 		{
 			file_result = false;
 

@@ -198,6 +198,10 @@ namespace corona
 			;
 		}
 
+		virtual bool queued(job_queue* _callingQueue) override {
+			return true;
+		}
+
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
 			job_notify jn;
@@ -245,6 +249,10 @@ namespace corona
 			on_gui(_on_gui)
 		{
 			;
+		}
+
+		virtual bool queued(job_queue* _callingQueue) override {
+			return true;
 		}
 
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)

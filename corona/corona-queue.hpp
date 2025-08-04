@@ -58,9 +58,7 @@ namespace corona {
 
 		job();
 		virtual ~job();
-		virtual bool queued(job_queue* _callingQueue) { 
-			return true;
-		}
+		virtual bool queued(job_queue* _callingQueue) = 0;
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
 		friend class job_queue;
 	};
@@ -76,6 +74,9 @@ namespace corona {
 		runnable function_to_run;
 		general_job();
 		general_job(runnable _runnable, HANDLE _notification_handle = nullptr);
+		virtual bool queued(job_queue* _callingQueue) override {
+			return true;
+		}
 		virtual ~general_job();
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
 		friend class job_queue;
@@ -91,6 +92,10 @@ namespace corona {
 		system_job(std::string _system_command, HANDLE _notification_handle = nullptr);
 
 		virtual ~system_job();
+		virtual bool queued(job_queue* _callingQueue) override {
+			return true;
+		}
+
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
 		friend class job_queue;
 	};
@@ -103,6 +108,11 @@ namespace corona {
 
 		finish_job();
 		virtual ~finish_job();
+
+		virtual bool queued(job_queue* _callingQueue) override {
+			return true;
+		}
+
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
 		friend class job_queue;
 	};

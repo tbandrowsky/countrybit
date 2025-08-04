@@ -152,101 +152,7 @@ namespace corona
 
 	};
 
-	class buffer_commit_job : public job
-	{
-	public:
-		file_block_interface* fb;
-		std::shared_ptr<file_buffer> write_buffer;
-
-		buffer_commit_job(file_block_interface*_fb, std::shared_ptr<file_buffer>&& _write_buffer) :
-			fb(_fb), write_buffer(_write_buffer)
-		{
-			;
-		}
-
-		buffer_commit_job()
-		{
-			;
-		}
-
-		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
-		{
-			job_notify jn;
-
-			try
-			{
-				auto result = fb->get_fp()->write(write_buffer->start, write_buffer->buff.get_ptr(), write_buffer->stop - write_buffer->start);
-				if (not result.success) {
-					system_monitoring_interface::global_mon->log_warning("write failed", __FILE__, __LINE__);
-				}
-			}
-			catch (...)
-			{
-				;
-			}
-
-			jn.shouldDelete = true;
-			return jn;
-		}
-
-	};
-
-	class trans_commit_job : public job
-	{
-
-		HANDLE wait_handle;
-		std::vector<std::shared_ptr<file_buffer>> buffers;
-
-	public:
-
-		file_block_interface* fb;
-
-		trans_commit_job(file_block_interface*_fb, std::shared_ptr<file_buffer>& _append, std::vector<std::shared_ptr<file_buffer>>& _buffers)
-		{
-			wait_handle = CreateEventW(NULL, false, false, NULL);
-			fb = _fb;
-			std::shared_ptr<file_buffer> new_buffer;
-			if (_append) {
-				new_buffer = std::make_shared<file_buffer>(*_append.get());
-				buffers.push_back(new_buffer);
-			}
-			for (auto &old_buff : _buffers) {
-				new_buffer = std::make_shared<file_buffer>(*old_buff.get());
-				buffers.push_back(new_buffer);
-			}
-		}
-
-		virtual ~trans_commit_job()
-		{
-			CloseHandle(wait_handle);
-		}
-
-		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
-		{
-			job_notify jn;
-
-			try
-			{
-				int i = 0;
-
-				while (i < buffers.size())
-				{
-					auto& trans_buff = buffers[i];
-					buffer_commit_job* fcj = new buffer_commit_job(fb, std::move(trans_buff));
-					_callingQueue->run_io_job(fcj, wait_handle);
-					i++;
-				}
-			}
-			catch (...)
-			{
-				;
-			}
-
-			jn.shouldDelete = true;
-			return jn;
-		}
-	};
-
+	
 	class file_block : public file_block_interface
 	{
 		std::shared_ptr<file> fp;
@@ -531,12 +437,15 @@ namespace corona
 				}
 			}
 
-            HANDLE job_completed = CreateEventW(NULL, false, false, NULL);
 			if (dirty_buffers.size() > 0 or dirty_append) {
-				trans_commit_job* tcj = new trans_commit_job(this, dirty_append, dirty_buffers);
-				global_job_queue->run_io_job(tcj, job_completed);
+				int i = 0;
+				while (i < buffers.size())
+				{
+					auto& trans_buff = buffers[i];
+					auto result = get_fp()->write(trans_buff->start, trans_buff->buff.get_ptr(), trans_buff->stop - trans_buff->start);
+					i++;
+				}
 			}
-			CloseHandle(job_completed);
 		}
 
 		virtual int buffer_count() override
