@@ -166,8 +166,6 @@ namespace corona
 
 		std::shared_ptr<file_buffer> acquire_buffer(int64_t _start, int64_t _length, feast_types _feast)
 		{
-			scope_lock dlock(disk_io_lock);
-
 			int64_t _stop = _start + _length;
 
 			int64_t new_start = _start,
@@ -211,14 +209,15 @@ namespace corona
 				// read and fill the gaps!
 				// but we can't do this, until everything in flight is written to the disk.
 				// clear would be an otherwise disaster.
-				wait();
+				scope_lock dlock(disk_io_lock);
+
 				for (auto fb : eaten_buffers)
 				{
 					if (fb->start > track_start) {
 						int64_t read_start = track_start;
 						int64_t read_length = fb->start - track_start;
 						unsigned char* dest = new_buffer->buff.get_uptr() + read_start - new_buffer->start;
-						fp->read(read_start, dest, read_length);
+						fp->read(read_start, dest, read_length, handler);
 					}
 					track_start = fb->stop;
 				}
@@ -228,7 +227,7 @@ namespace corona
 					int64_t read_start = track_start;
 					int64_t read_length = new_stop - track_start;
 					unsigned char* dest = new_buffer->buff.get_uptr() + read_start - new_buffer->start;
-					fp->read(read_start, dest, read_length);
+					fp->read(read_start, dest, read_length, handler);
 				}
 			}
 

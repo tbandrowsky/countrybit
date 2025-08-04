@@ -118,6 +118,9 @@ namespace corona
 			;
 		}
 	};
+	
+	using file_handler = std::function<void(file_command_result& _result)>;
+	using string_file_handler = std::function<void(std::string& _result)>;
 
 	class file_command : public job
 	{
@@ -127,6 +130,7 @@ namespace corona
 		file_command_result   result;
 
 		HANDLE io_complete_event;
+        file_handler handler;
 
 		file_command()
 		{
@@ -195,6 +199,10 @@ namespace corona
 			result.bytes_transferred = _bytesTransferred;
 			result.success = _success;
 
+			if (handler) {
+				handler(result);
+			}
+
 			return jn;
 		}
 
@@ -203,14 +211,12 @@ namespace corona
 			return result;
 		}
 
-		file_command_result run()
+		void run(file_handler _handler)
 		{
-			global_job_queue->run_io_job(this, io_complete_event);
-			return result;
+            handler = _handler;
+			global_job_queue->listen_job(this);
 		}
-
 	};
-
 
 	class file
 	{
@@ -381,7 +387,7 @@ namespace corona
 			}
 		}
 
-		std::string read()
+		void read(string_file_handler _handler)
 		{
 			file_command_result fcr;
 
@@ -392,40 +398,58 @@ namespace corona
 			buffer_bytes = std::make_unique<char[]>(file_size + 8);
 			char* s = buffer_bytes.get();
 			std::fill(s, s + blen, 0);
-			read(0, s, file_size);
 
-			std::string temp = s;
-			return temp;
+			read(0, s, file_size, [s](auto& fcr) {
+				std::string temp = "";
+                if (fcr.success) {
+					temp = s;
+				}
+                else 
+				{
+                    os_result err;
+                    system_monitoring_interface::global_mon->log_warning(std::format("Read failed on {0} with error #{1} - {2}", fcr.filename, err.message, err.success), __FILE__, __LINE__);
+				}
+				_handler(_temp);
+			);
 		}
 
-		file_command_result write(const std::string& _src)
+		void write(const std::string& _src, string_file_handler _handler)
 		{
 			file_command_result fcr;
 
 			if (not _src.empty()) {
 				int length = _src.size();
 				int64_t location = add(length);
-				fcr = write(location, (void *)_src.c_str(), length);
+				fcr = write(location, (void*)_src.c_str(), length, [this, &_src](auto& _result)
+					{
+						std::string temp = "";
+						if (_result.success) {
+							temp = _src;
+						}
+						else
+						{
+							os_result err;
+							system_monitoring_interface::global_mon->log_warning(std::format("Read failed on {0} with error #{1} - {2}", _result.filename, _result.message, _result.success), __FILE__, __LINE__);
+						}
+						_handler(_temp);
+					});
 			}
-			return fcr;
 		}
 
-		file_command_result write(int64_t location, void* _buffer, int _buffer_length)
+		void write(int64_t location, void* _buffer, int _buffer_length, file_handler _handler)
 		{
 			file_command_request fcr(file_commands::write, filename, hfile, location, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
-			file_command_result result = fc.run();
-			return result;
+			fc.run(_handler);
 		}
 
-		file_command_result read(int64_t location, void* _buffer, int _buffer_length)
+		void read(int64_t location, void* _buffer, int _buffer_length, file_handler _handler)
 		{
 			file_command_request fcr(file_commands::read, filename, hfile, location, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
-			file_command_result result = fc.run();
-			return result;
+			fc.run(_handler);
 		}
 
 		int64_t add(int64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
@@ -468,14 +492,14 @@ namespace corona
 			return _location;
 		}
 
-		file_command_result append(void* _buffer, int _buffer_length)
+		void append(void* _buffer, int _buffer_length, file_handler _handler)
 		{
 			int64_t file_position = add(_buffer_length);
 
 			file_command_request fcr(file_commands::write, filename, hfile, file_position, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
-			return fc;
+			fc.run(_handler);
 		}
 
 		int64_t size()
