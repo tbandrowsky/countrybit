@@ -166,19 +166,21 @@ namespace corona
 		}
 	};
 
-	class file_command : public job
+	class file_command : public io_job
 	{
 	public:
 
 		file_command_request  request;
 		file_command_result   result;
 		io_fence* fence;
+		OVERLAPPED overlapped;
 
 		file_command()
 		{
 			request = {};
 			result = {};
 			fence = nullptr;
+			overlapped = {};
 		}
 
 		file_command(const file_command& _src) = default;
@@ -200,12 +202,11 @@ namespace corona
 			file_result = false;
 
 			LARGE_INTEGER li;
-			ovp = {};
 
 			li.QuadPart = request.location;
-			ovp.Offset = li.LowPart;
-			ovp.OffsetHigh = li.HighPart;
-			ovp.hEvent = CreateEvent(NULL, FALSE, FALSE, FALSE);
+			overlapped.Offset = li.LowPart;
+			overlapped.OffsetHigh = li.HighPart;
+			overlapped.hEvent = NULL;
 
 			result.buffer = (char*)request.buffer;
 			result.bytes_transferred = 0;
@@ -216,7 +217,7 @@ namespace corona
 				fence->watch(request.location);
 			}
 
-			LPOVERLAPPED lp = &ovp;
+			LPOVERLAPPED lp = &overlapped;
 
 			switch (request.command) {
 			case file_commands::read:
@@ -250,6 +251,11 @@ namespace corona
 
 			return jn;
 		}
+
+		virtual io_job_key get_job_key() override
+		{
+			return io_job_key(request.hfile, request.command == file_commands::write, request.location, &overlapped);
+        }
 
 		operator file_command_result()
 		{
@@ -348,7 +354,7 @@ namespace corona
 				}
 			}
 			HANDLE hport = queue->getPort();
-			auto hfileport = ::CreateIoCompletionPort(hfile, hport, 0, 0);
+			auto hfileport = ::CreateIoCompletionPort(hfile, hport, completion_key_io, 0);
 			if (hfileport == NULL)
 			{
 				os_result osr;

@@ -41,27 +41,20 @@ namespace corona
 
 			try {
 				if (_app->file_exists(filename)) {
-					file f = _app->open_file(filename, file_open_types::open_existing);
-					if (f.success()) {
-						f.read([this, _handler](std::string& _string) 
-							{
-								if (_string.empty()) {
-									return;
-								}
-								if (_string != last_contents) {
-									last_contents = _string;
-									json_parser jp;
-									json temp = jp.parse_object(_string);
-									contents = temp;
-									if (_handler) {
-										_handler(contents);
-									}
-								}
-							}
-						);
+					std::string file_string = read_all_string(filename);
+					if (file_string.empty()) {
+						return;
+					}
+					if (file_string != last_contents) {
+						last_contents = file_string;
+						json_parser jp;
+						json temp = jp.parse_object(file_string);
+						contents = temp;
+						if (_handler) {
+							_handler(contents);
+						}
 					}
 				}
-
 			}
 			catch (std::exception exc)
 			{
