@@ -1213,7 +1213,6 @@ namespace corona
 		_tests->test({ "append_continuity", result, __FILE__, __LINE__ });
 
 		fb.commit();
-		fb.wait();
 
 		char check_buffer[size];
 		fb.read(0, check_buffer, size);

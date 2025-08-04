@@ -121,6 +121,50 @@ namespace corona
 	
 	using file_handler = std::function<void(file_command_result& _result)>;
 	using string_file_handler = std::function<void(std::string& _result)>;
+	using json_file_handler = std::function<void(json& _result)>;
+
+	class io_fence
+	{
+		corona::thread_safe_map<int64_t, HANDLE> handles;
+
+	public:
+
+		io_fence() = default;
+		io_fence(const io_fence& _src) = delete;
+		io_fence(io_fence&& _src) = delete;
+
+        std::function<void(file_command_result& _result)> on_complete;
+
+		virtual ~io_fence()
+		{
+			wait();
+		}
+
+		void watch(int64_t _t)
+		{
+			HANDLE h = CreateEvent(NULL, FALSE, FALSE, NULL);
+            handles.insert(_t, h);
+		}
+
+		void operator()(file_command_result& _result)
+		{
+			HANDLE value = nullptr;
+			if (handles.try_get(_result.location, value)) {
+				SetEvent(value);
+			}
+			if (on_complete)
+				on_complete(_result);
+		}
+
+		virtual void wait()
+		{
+			handles.for_each<HANDLE>([](auto handle) {
+				WaitForSingleObject(handle, INFINITE);
+                CloseHandle(handle);
+				});
+            handles.clear();
+		}
+	};
 
 	class file_command : public job
 	{
@@ -128,15 +172,13 @@ namespace corona
 
 		file_command_request  request;
 		file_command_result   result;
-
-		HANDLE io_complete_event;
-        file_handler handler;
+		io_fence* fence;
 
 		file_command()
 		{
 			request = {};
 			result = {};
-			io_complete_event = CreateEvent(NULL, FALSE, FALSE, FALSE);
+			fence = nullptr;
 		}
 
 		file_command(const file_command& _src) = default;
@@ -170,6 +212,10 @@ namespace corona
 			result.location = request.location;
 			result.result = os_result(0);
 
+			if (fence) {
+				fence->watch(request.location);
+			}
+
 			LPOVERLAPPED lp = &ovp;
 
 			switch (request.command) {
@@ -194,13 +240,12 @@ namespace corona
 		{
 			job_notify jn;
 			jn.shouldDelete = false;
-			jn.setSignal(io_complete_event);
 
 			result.bytes_transferred = _bytesTransferred;
 			result.success = _success;
 
-			if (handler) {
-				handler(result);
+			if (fence) {
+				fence->operator()(result);
 			}
 
 			return jn;
@@ -211,9 +256,9 @@ namespace corona
 			return result;
 		}
 
-		void run(file_handler _handler)
+		void run(io_fence *_fence)
 		{
-            handler = _handler;
+			fence = _fence;
 			global_job_queue->listen_job(this);
 		}
 	};
@@ -389,67 +434,62 @@ namespace corona
 
 		void read(string_file_handler _handler)
 		{
-			file_command_result fcr;
+			io_fence fence;
 
-			std::unique_ptr<char[]> buffer_bytes;
+			auto fsize = size();
+			buffer b(fsize + 1);
+			char* s = b.get_ptr();
+			std::fill(s, s + fsize, 0);
 
-			int file_size = size();
-			int blen = file_size + 8;
-			buffer_bytes = std::make_unique<char[]>(file_size + 8);
-			char* s = buffer_bytes.get();
-			std::fill(s, s + blen, 0);
-
-			read(0, s, file_size, [s](auto& fcr) {
+			fence.on_complete = [this, s, &b, &_handler](file_command_result& fcr) {
 				std::string temp = "";
-                if (fcr.success) {
-					temp = s;
+				bool bsafe = b.is_safe_string();
+				if (fcr.success and bsafe) {
+					std::string temp = s;
 				}
-                else 
+				else 
 				{
-                    os_result err;
-                    system_monitoring_interface::global_mon->log_warning(std::format("Read failed on {0} with error #{1} - {2}", fcr.filename, err.message, err.success), __FILE__, __LINE__);
+					system_monitoring_interface::global_mon->log_warning(std::format("Read failed on {0} with error #{1}", filename, fcr.result.message), __FILE__, __LINE__);
 				}
-				_handler(_temp);
-			);
+				_handler(temp);
+            };
+
+			read(0, s, fsize, &fence);
 		}
 
-		void write(const std::string& _src, string_file_handler _handler)
+		void write(std::string _src, string_file_handler _handler)
 		{
-			file_command_result fcr;
+			io_fence fence;
 
 			if (not _src.empty()) {
 				int length = _src.size();
 				int64_t location = add(length);
-				fcr = write(location, (void*)_src.c_str(), length, [this, &_src](auto& _result)
-					{
-						std::string temp = "";
-						if (_result.success) {
-							temp = _src;
-						}
-						else
-						{
-							os_result err;
-							system_monitoring_interface::global_mon->log_warning(std::format("Read failed on {0} with error #{1} - {2}", _result.filename, _result.message, _result.success), __FILE__, __LINE__);
-						}
-						_handler(_temp);
-					});
+				fence.on_complete = [this, &_src, length, &_handler](file_command_result& fcr) {
+					if (fcr.success) {
+						_handler(_src);
+					}
+					else {
+						system_monitoring_interface::global_mon->log_warning(std::format("Write failed on {0} with error #{1}", filename, fcr.result.message), __FILE__, __LINE__);
+					}
+                };
+				write(location, (void*)_src.c_str(), length, &fence);
 			}
 		}
 
-		void write(int64_t location, void* _buffer, int _buffer_length, file_handler _handler)
+		void write(int64_t location, void* _buffer, int _buffer_length, io_fence *_fence)
 		{
 			file_command_request fcr(file_commands::write, filename, hfile, location, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
-			fc.run(_handler);
+			fc.run(_fence);
 		}
 
-		void read(int64_t location, void* _buffer, int _buffer_length, file_handler _handler)
+		void read(int64_t location, void* _buffer, int _buffer_length, io_fence* _fence)
 		{
 			file_command_request fcr(file_commands::read, filename, hfile, location, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
-			fc.run(_handler);
+			fc.run(_fence);
 		}
 
 		int64_t add(int64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
@@ -492,14 +532,14 @@ namespace corona
 			return _location;
 		}
 
-		void append(void* _buffer, int _buffer_length, file_handler _handler)
+		void append(void* _buffer, int _buffer_length, io_fence* _fence)
 		{
 			int64_t file_position = add(_buffer_length);
 
 			file_command_request fcr(file_commands::write, filename, hfile, file_position, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
-			fc.run(_handler);
+			fc.run(_fence);
 		}
 
 		int64_t size()

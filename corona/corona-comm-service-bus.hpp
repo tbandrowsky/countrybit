@@ -71,88 +71,83 @@ namespace corona
 			database_config_filename = _config_filename;
 
 			database_config_mon.filename = database_config_filename;
-			auto result = database_config_mon.poll_contents(app.get(), local_db_config);
-			if (result == null_row) {
-				system_monitoring_interface::global_mon->log_warning(std::format("config file {0} not found", database_config_filename), __FILE__, __LINE__);
-				throw std::invalid_argument("config file not found");
-			}
-			else 
-			{
+
+			database_config_mon.poll(app.get(), [this, &tx](json& _new_config) {
+				local_db_config = _new_config;
 				system_monitoring_interface::global_mon->log_information(std::format("using config file {0}", database_config_filename), __FILE__, __LINE__);
-			}
 
-			server_config = local_db_config["Server"];
+				server_config = local_db_config["Server"];
 
-			database_filename = server_config["database_filename"];
-			database_schema_filename = server_config["schema_filename"];
-            database_threads = (int)server_config["database_threads"];
-			database_recreate = (bool)server_config["database_recreate"];
+				database_filename = server_config["database_filename"];
+				database_schema_filename = server_config["schema_filename"];
+				database_threads = (int)server_config["database_threads"];
+				database_recreate = (bool)server_config["database_recreate"];
 
-			if (database_filename.empty() or database_schema_filename.empty())
-			{
-				throw std::logic_error("database file or schema file not specified");
-			}
-
-			database_schema_mon.filename = database_schema_filename;
-
-			app = std::make_shared<application>(database_threads);
-			app->application_name = server_config["application_name"];
-			listen_point = server_config["listen_point"];
-
-			if (app->application_name.empty())
-			{
-				throw std::logic_error("application_name not specified");
-			}
-
-			if (listen_point.empty())
-			{
-				throw std::logic_error("listen_point not specified");
-			}
-
-			if (not is_service)
-			{
-				log_information("Self test.");
-				prove_system();
-				log_information("Startup user name " + app->get_user_display_name());
-			}
-
-			if (database_recreate or not app->file_exists(database_filename))
-			{
-				db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
-				local_db = std::make_shared<corona_database>(db_file);
-				local_db->apply_config(local_db_config);
-
-				json create_database_response = local_db->create_database();
-
-				bool success = (bool)create_database_response[success_field];
-				if (!success) {
-					log_json(create_database_response);
-					throw std::exception("Coult not create database");
+				if (database_filename.empty() or database_schema_filename.empty())
+				{
+					throw std::logic_error("database file or schema file not specified");
 				}
 
-				relative_ptr_type result = database_config_mon.poll(app.get());
-				ready_for_polling = true;
-			}
-			else
-			{
-				db_file = app->open_file_ptr(database_filename, file_open_types::open_existing);
-				local_db = std::make_shared<corona_database>(db_file);
-				local_db->apply_config(local_db_config);
+				database_schema_mon.filename = database_schema_filename;
 
-				local_db->open_database(0);
+				app = std::make_shared<application>(database_threads);
+				app->application_name = server_config["application_name"];
+				listen_point = server_config["listen_point"];
 
-				relative_ptr_type result = database_config_mon.poll(app.get());
-				ready_for_polling = true;
-			}
+				if (app->application_name.empty())
+				{
+					throw std::logic_error("application_name not specified");
+				}
 
-			bind_web_server(db_api_server);
-			db_api_server.start();
+				if (listen_point.empty())
+				{
+					throw std::logic_error("listen_point not specified");
+				}
 
-			log_information("listening on :" + listen_point, __FILE__, __LINE__);
-			for (auto ipath : api_paths) {
-				log_information(ipath.path, __FILE__, __LINE__);
-			}
-			log_command_stop("comm_service_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				if (not is_service)
+				{
+					log_information("Self test.");
+					prove_system();
+					log_information("Startup user name " + app->get_user_display_name());
+				}
+
+				if (database_recreate or not app->file_exists(database_filename))
+				{
+					db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
+					local_db = std::make_shared<corona_database>(db_file);
+					local_db->apply_config(local_db_config);
+
+					json create_database_response = local_db->create_database();
+
+					bool success = (bool)create_database_response[success_field];
+					if (!success) {
+						log_json(create_database_response);
+						throw std::exception("Coult not create database");
+					}
+
+					ready_for_polling = true;
+				}
+				else
+				{
+					db_file = app->open_file_ptr(database_filename, file_open_types::open_existing);
+					local_db = std::make_shared<corona_database>(db_file);
+					local_db->apply_config(local_db_config);
+
+					local_db->open_database(0);
+
+					ready_for_polling = true;
+				}
+
+				bind_web_server(db_api_server);
+				db_api_server.start();
+
+				log_information("listening on :" + listen_point, __FILE__, __LINE__);
+				for (auto ipath : api_paths) {
+					log_information(ipath.path, __FILE__, __LINE__);
+				}
+				log_command_stop("comm_service_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+			});
 		}
 
 		void prove_system()
@@ -441,19 +436,20 @@ namespace corona
 
 				bool show_listen = false;
 
-				if (database_schema_mon.poll_contents(app.get(), temp) != null_row) {
+				database_schema_mon.poll(app.get(), [this, start_time, &tx, &show_listen](json& _new_schema) {
 					log_command_start("poll_db", "apply schema", start_time, __FILE__, __LINE__);
-					auto tempo = local_db->apply_schema(temp);
+					auto tempo = local_db->apply_schema(_new_schema);
 					log_command_stop("poll_db", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					show_listen = true;
-				}
+					});
+
 				timer tx2;
-				if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
+				database_config_mon.poll(app.get(), [this, start_time, &tx, &show_listen](json& _new_schema) {
 					log_command_start("poll_db", "apply config", start_time, __FILE__, __LINE__);
-					local_db->apply_config(temp);
+					local_db->apply_config(_new_schema);
 					log_command_stop("poll_db", "config applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					show_listen = true;
-				}
+					});
 
 				if (show_listen) {
 					log_information("updated server, and listening on :" + listen_point, __FILE__, __LINE__);

@@ -5397,7 +5397,6 @@ private:
 		virtual ~corona_database()
 		{
 			save();
-			wait();
 		}
 
 		void apply_config(json _config)

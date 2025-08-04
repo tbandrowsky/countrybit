@@ -27,9 +27,9 @@ For Future Consideration
 namespace corona
 {
 
-	enum feast_types {
-		feast_read = 1,
-		feast_write = 2
+	enum buffer_access_type {
+		access_read = 1,
+		access_write = 2
 	};
 
 
@@ -144,7 +144,6 @@ namespace corona
 		virtual file* get_fp() = 0;
 
 		virtual void commit() = 0;
-		virtual void wait() = 0;
 
 		virtual int buffer_count() = 0;
 		virtual void clear() = 0;
@@ -161,10 +160,9 @@ namespace corona
 		int64_t block_size = 65536;
 		int64_t append_size = 65536 * 16;
 
-		lockable disk_io_lock;
 		lockable buffer_lock;
 
-		std::shared_ptr<file_buffer> acquire_buffer(int64_t _start, int64_t _length, feast_types _feast)
+		std::shared_ptr<file_buffer> acquire_buffer(int64_t _start, int64_t _length, buffer_access_type _feast)
 		{
 			int64_t _stop = _start + _length;
 
@@ -204,20 +202,21 @@ namespace corona
 
 			int64_t track_start = new_start;
 
-			if (_feast == feast_types::feast_read)
+			io_fence fence;
+
+			if (_feast == buffer_access_type::access_read)
 			{
 				// read and fill the gaps!
 				// but we can't do this, until everything in flight is written to the disk.
 				// clear would be an otherwise disaster.
-				scope_lock dlock(disk_io_lock);
-
+				
 				for (auto fb : eaten_buffers)
 				{
 					if (fb->start > track_start) {
 						int64_t read_start = track_start;
 						int64_t read_length = fb->start - track_start;
 						unsigned char* dest = new_buffer->buff.get_uptr() + read_start - new_buffer->start;
-						fp->read(read_start, dest, read_length, handler);
+						fp->read(read_start, dest, read_length, &fence);
 					}
 					track_start = fb->stop;
 				}
@@ -227,9 +226,11 @@ namespace corona
 					int64_t read_start = track_start;
 					int64_t read_length = new_stop - track_start;
 					unsigned char* dest = new_buffer->buff.get_uptr() + read_start - new_buffer->start;
-					fp->read(read_start, dest, read_length, handler);
+					fp->read(read_start, dest, read_length, &fence);
 				}
 			}
+
+			fence.wait();
 
 			for (auto fb : eaten_buffers)
 			{
@@ -259,7 +260,7 @@ namespace corona
 
 		virtual ~file_block()
 		{
-			wait();
+			;
 		}
 
 		virtual file* get_fp() override
@@ -286,7 +287,7 @@ namespace corona
 			}
 			else 
 			{
-				fb = acquire_buffer(_location, _buffer_length, feast_types::feast_write);
+				fb = acquire_buffer(_location, _buffer_length, buffer_access_type::access_write);
 			}
 
 			fb->is_dirty = true;
@@ -330,7 +331,7 @@ namespace corona
 
 				int64_t final_length = block_end - block_start;
 
-				fb = acquire_buffer(block_start, final_length, feast_types::feast_read);
+				fb = acquire_buffer(block_start, final_length, buffer_access_type::access_read);
 			}
 
 			unsigned char* src = (unsigned char*)fb->buff.get_ptr() + _location - fb->start;
@@ -367,7 +368,6 @@ namespace corona
 		virtual int64_t add(int _bytes_to_add) override
 		{
 			scope_lock lockme(buffer_lock);
-			scope_lock reallylockme(disk_io_lock);
 
 			if (_bytes_to_add < 0)
 				throw std::logic_error("add < 0");
@@ -420,8 +420,8 @@ namespace corona
 		virtual void commit() override
 		{
 			scope_lock lockme(buffer_lock);
-			scope_lock reallylockme(disk_io_lock);
-
+            io_fence fence;
+			
 			std::shared_ptr<file_buffer> dirty_append;
 			std::vector<std::shared_ptr<file_buffer>> dirty_buffers;
 
@@ -429,21 +429,23 @@ namespace corona
 				dirty_append = append_buffer;
 				append_buffer->is_dirty = false;
 			}
+
 			for (auto bf : buffers) {
 				if (bf->is_dirty) {
 					dirty_buffers.push_back(bf);
-					bf->is_dirty = false;
+                    bf->is_dirty = false;
 				}
 			}
 
 			if (dirty_buffers.size() > 0 or dirty_append) {
 				int i = 0;
-				while (i < buffers.size())
+				while (i < dirty_buffers.size())
 				{
-					auto& trans_buff = buffers[i];
-					auto result = get_fp()->write(trans_buff->start, trans_buff->buff.get_ptr(), trans_buff->stop - trans_buff->start);
+					auto& trans_buff = dirty_buffers[i];
+					get_fp()->write(trans_buff->start, trans_buff->buff.get_ptr(), trans_buff->stop - trans_buff->start, &fence);
 					i++;
 				}
+				fence.wait();
 			}
 		}
 
@@ -455,7 +457,6 @@ namespace corona
 		virtual void clear() override
 		{
 			scope_lock lockme(buffer_lock);
-			wait();
 			append_buffer = nullptr;
 			buffers.clear();
 		}
@@ -463,11 +464,6 @@ namespace corona
 		virtual int64_t size() override
 		{
 			return fp->size();
-		}
-
-		virtual void wait() override
-		{
-			scope_lock reallylockme(disk_io_lock);
 		}
 
 	};

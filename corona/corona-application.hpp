@@ -187,14 +187,17 @@ namespace corona
 			auto my_file = app.create_file("file.txt");
 
 			my_file.add(32);
+			io_fence fence;
 
 			char buffer[10] = { 0 };
 
 			strcpy_s(buffer, "test1");
-			my_file.write( 0, buffer, 5);
+			my_file.write( 0, buffer, 5, &fence);
 			strcpy_s(buffer, "test2");
-			my_file.write( 5, buffer, 5);
-			my_file.read( 0, buffer, 5);
+			my_file.write( 5, buffer, 5, &fence);
+			fence.wait();
+			my_file.read( 0, buffer, 5, &fence);
+			fence.wait();
 
 			if (strcmp(buffer, "test1") != 0)
 			{

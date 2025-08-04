@@ -50,6 +50,14 @@ public:
         scope_lock lock(locker);
         data.clear();
     }
+
+    template<typename T>
+    void for_each(std::function<void(T)> _process) {
+        scope_lock lock(locker);
+        std::for_each(data.begin(), data.end(), [&](const auto& pair) {
+            _process(pair.second);
+            });
+    }
 };
 
 }
