@@ -125,7 +125,7 @@ namespace corona
 
 	class io_fence
 	{
-		corona::thread_safe_map<int64_t, HANDLE> handles;
+		corona::thread_safe_map<LPOVERLAPPED, HANDLE> handles;
 
 	public:
 
@@ -140,17 +140,17 @@ namespace corona
 			wait();
 		}
 
-		void watch(int64_t _t)
+		void watch(LPOVERLAPPED _t)
 		{
 			HANDLE h = CreateEvent(NULL, FALSE, FALSE, NULL);
             handles.insert(_t, h);
 		}
 
-		void operator()(file_command_result& _result)
+		void operator()(LPOVERLAPPED _overlapped, file_command_result& _result)
 		{
-			HANDLE value = nullptr;
-			if (handles.try_get(_result.location, value)) {
-				SetEvent(value);
+			HANDLE hvalue = nullptr;
+			if (handles.try_get(_overlapped, hvalue)) {
+				SetEvent(hvalue);
 			}
 			if (on_complete)
 				on_complete(_result);
@@ -213,7 +213,7 @@ namespace corona
 			result.result = os_result(0);
 
 			if (fence) {
-				fence->watch((int64_t)&overlapped);
+				fence->watch(&overlapped);
 			}
 
 			LPOVERLAPPED lp = &overlapped;
@@ -245,7 +245,8 @@ namespace corona
 			result.success = _success;
 
 			if (fence) {
-				fence->operator()(result);
+				LPOVERLAPPED lp = &overlapped;
+				fence->operator()(lp, result);
 			}
 
 			return jn;

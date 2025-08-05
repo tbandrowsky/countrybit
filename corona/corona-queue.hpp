@@ -496,7 +496,7 @@ namespace corona {
 		if (not _jobMessage)
 			return false;
 		
-		auto key = _jobMessage->get_job_key();
+        add_io_job(_jobMessage);
 		return _jobMessage->queued(this);
 	}
 
@@ -536,7 +536,7 @@ namespace corona {
 		job_notify jobNotify;
 
 		if (!wasShutDownOrdered()) {
-			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
+			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 10000);
 			if (success) {
 
 				io_job *completed_io = find_io_job(compKey, lpov);
@@ -544,7 +544,7 @@ namespace corona {
 					try {
 						// if waiting_job is whacked, that means the pointer for the job was actually deleted.
 						// this is the case where, Windows has completed the IO operation and we are handling the results
-						jobNotify = completed_io->execute(this, bytesTransferred, success);
+ 						jobNotify = completed_io->execute(this, bytesTransferred, success);
 						jobNotify.notify();
 					}
 					catch (std::exception exc)
@@ -634,8 +634,8 @@ namespace corona {
 		else 
 		{
             file_jobs = std::make_shared<job_file_request>();
-			file_jobs->jobs_by_ovp.insert(job_key, _jobMessage);
 			io_jobs.insert(file_handle, file_jobs);
+			file_jobs->jobs_by_ovp.insert(job_key, _jobMessage);
 		}
 		pending_io_jobs++;
 	}
