@@ -7,7 +7,7 @@ $ZipFileName = "coronaserver.zip"
 $ZipFilePath = Join-Path -Path $DestinationFolder -ChildPath $ZipFileName
 
 # Compress the source folder into a ZIP file
-Compress-Archive -Path $SourceFolder -DestinationPath $ZipFilePath
+Compress-Archive -Force -Path $SourceFolder -DestinationPath $ZipFilePath 
 
 # Verify if the ZIP file exists and copy it to the destination folder
 if (Test-Path $ZipFilePath) {
