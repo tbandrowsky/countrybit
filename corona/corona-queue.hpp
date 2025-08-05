@@ -58,7 +58,7 @@ namespace corona {
 	class job
 	{
 	public:
-		OVERLAPPED ovp;
+		OVERLAPPED overlapped;
 		int job_id;
 
 		job();
@@ -75,7 +75,8 @@ namespace corona {
 	class io_job : public job
 	{
 	public:
-		virtual int64_t get_job_key() = 0;
+		virtual LPOVERLAPPED get_job_key() = 0;
+		virtual HANDLE get_file_handle() = 0;
 	};
 
 	class general_job : public job
@@ -130,9 +131,16 @@ namespace corona {
 
 	const int maxWorkerThreads = 63;
 
+	class job_file_request
+	{
+    public:
+		thread_safe_map<LPOVERLAPPED, io_job*> jobs_by_ovp;
+	};
+
 	class job_queue : public lockable
 	{
 
+	protected:
 		HANDLE ioCompPort;
 
 		std::vector<std::thread> threads;
@@ -145,7 +153,11 @@ namespace corona {
 		std::atomic<int> job_id = { 0 };
 
 		thread_safe_map<int64_t, job*> compute_jobs;
-		thread_safe_map<int64_t, job*> io_jobs;
+		thread_safe_map<HANDLE, std::shared_ptr<job_file_request>> io_jobs;
+
+        void add_io_job(io_job* _jobMessage);
+		io_job *find_io_job(DWORD completionKey, LPOVERLAPPED overlapped);
+		bool remove_io_job(io_job* _jobMessage);
 
 	public:
 
@@ -154,16 +166,13 @@ namespace corona {
 		inline bool wasShutDownOrdered() { return shutDownOrdered; }
 
 		job_queue();
-
 		virtual ~job_queue();
 
 		void start(int _numThreads);
-		void listen(HANDLE _otherQueue, ULONG_PTR _completion_key);
 
 		void post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam);
+		HANDLE listen_file(HANDLE _otherQueue);
 		bool listen_job(io_job *_jobMessage);
-		void run_compute_job(job* _jobMessage, HANDLE _event);
-		void run_io_job(job* _jobMessage, HANDLE _event);
 		void submit_job(job* _jobMessage);
 		void submit_job(runnable _function, HANDLE handle);
 		void shutDown();
@@ -256,7 +265,7 @@ namespace corona {
 	job::job()
 	{
         job_id = 0;
-		ovp = {};
+		overlapped = {};
 	}
 
 	job::~job()
@@ -413,11 +422,24 @@ namespace corona {
 		}
 	}
 
-	void job_queue::listen(HANDLE _otherQueue, ULONG_PTR _completion_key)
+	HANDLE job_queue::listen_file(HANDLE _otherQueue)
 	{
-		if (CreateIoCompletionPort(_otherQueue, ioCompPort, _completion_key, 0) == NULL) {
-			throw std::invalid_argument("job_queue:cannot listen.");
+		HANDLE hport;
+
+		hport = CreateIoCompletionPort(_otherQueue, ioCompPort, (ULONG_PTR)_otherQueue, 0);
+
+        if (hport == NULL) {
+            os_result osr;
+            system_monitoring_interface::global_mon->log_warning(std::format("CreateIoCompletionPort failed with error #{0}", osr.message), __FILE__, __LINE__);
+            return NULL;
+        }
+
+        std::shared_ptr<job_file_request> jfr = std::make_shared<job_file_request>();
+		if (not io_jobs.try_get(_otherQueue, jfr)) {
+            io_jobs.insert(_otherQueue, jfr);
 		}
+
+		return hport;
 	}
 
 	void job_queue::shutDown()
@@ -475,10 +497,7 @@ namespace corona {
 			return false;
 		
 		auto key = _jobMessage->get_job_key();
-		io_jobs.insert(key, _jobMessage);
-		if (not _jobMessage->queued(this)) {
-            io_jobs.erase(key);
-		}
+		return _jobMessage->queued(this);
 	}
 
 	void job_queue::post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam)
@@ -520,26 +539,23 @@ namespace corona {
 			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
 			if (success) {
 
-				if (compKey == completion_key_file) 
-				{
-                    int64_t job_key = (int64_t)lpov;
-					if (io_jobs.try_get(job_key, waiting_job))
+				io_job *completed_io = find_io_job(compKey, lpov);
+				if (completed_io) {
+					try {
+						// if waiting_job is whacked, that means the pointer for the job was actually deleted.
+						// this is the case where, Windows has completed the IO operation and we are handling the results
+						jobNotify = completed_io->execute(this, bytesTransferred, success);
+						jobNotify.notify();
+					}
+					catch (std::exception exc)
 					{
-						try {
-							// if waiting_job is whacked, that means the pointer for the job was actually deleted.
-							jobNotify = waiting_job->execute(this, bytesTransferred, success);
-							jobNotify.notify();
-						}
-						catch (std::exception exc)
-						{
-							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
-						}
-						if (io_jobs.erase(job_key)) {
-							::SetEvent(empty_queue_event);
-						}
-						if (jobNotify.shouldDelete) {
-							delete waiting_job;
-						}
+						system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+					}
+					if (remove_io_job(completed_io)) {
+						::SetEvent(empty_queue_event);
+					}
+					if (jobNotify.shouldDelete) {
+						delete waiting_job;
 					}
 				}
 				else if (compKey == completion_key_compute) 
@@ -597,7 +613,66 @@ namespace corona {
 		return threadCount;
 	}
 
-	
+//	thread_safe_map<int64_t, job*> compute_jobs;
+	//thread_safe_map<HANDLE, std::shared_ptr<job_file_request>> io_jobs;
+
+	// There's actually potential races in each of these but I am thinking I might get away with it in this case.
+	// This might be an appalling belief to have...
+
+	std::atomic<int> pending_io_jobs;
+
+	void job_queue::add_io_job(io_job* _jobMessage)
+	{
+		std::shared_ptr<job_file_request> file_jobs;
+
+		auto file_handle = _jobMessage->get_file_handle();
+		auto job_key = _jobMessage->get_job_key();
+
+		if (io_jobs.try_get(file_handle, file_jobs)) {
+			file_jobs->jobs_by_ovp.insert(job_key, _jobMessage);
+		}
+		else 
+		{
+            file_jobs = std::make_shared<job_file_request>();
+			file_jobs->jobs_by_ovp.insert(job_key, _jobMessage);
+			io_jobs.insert(file_handle, file_jobs);
+		}
+		pending_io_jobs++;
+	}
+
+	io_job* job_queue::find_io_job(DWORD completionKey, LPOVERLAPPED overlapped)
+	{
+		io_job* my_job = nullptr;
+		HANDLE hfile = (HANDLE)completionKey;
+		std::shared_ptr<job_file_request> file_jobs;
+		if (io_jobs.try_get(hfile, file_jobs)) {
+			file_jobs->jobs_by_ovp.try_get(overlapped, my_job);
+		}
+		return my_job;
+	}
+
+	bool job_queue::remove_io_job(io_job* _jobMessage)
+	{
+		bool removed = false;
+		std::shared_ptr<job_file_request> file_jobs;
+
+		auto file_handle = _jobMessage->get_file_handle();
+		auto job_key = _jobMessage->get_job_key();
+
+		if (io_jobs.try_get(file_handle, file_jobs)) {
+			if (file_jobs->jobs_by_ovp.erase(job_key)) {
+				io_jobs.erase(file_handle);
+            }
+		}
+
+		pending_io_jobs--;
+        if (pending_io_jobs.load() == 0) {
+            ::SetEvent(empty_queue_event);
+			removed = true;
+        }
+		return removed;
+	}
+
 	void test_locks(std::shared_ptr<test_set> _tests)
 	{
 		date_time st = date_time::now();

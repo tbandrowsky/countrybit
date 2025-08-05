@@ -180,11 +180,15 @@ namespace corona
 			return jn;
 		}
 
-		virtual int64_t get_job_key() override
+		virtual LPOVERLAPPED get_job_key() override
 		{
-			return (int64_t)&overlapped;
+			return &overlapped;
 		}
 
+        virtual HANDLE get_file_handle() override
+        {
+            return request.requestQueue;
+        }
 
 	};
 
@@ -336,7 +340,7 @@ namespace corona {
 
 		void start()
 		{
-			global_job_queue->listen(request_queue, completion_key_file);
+			global_job_queue->listen_file(request_queue);
 			next_request();
 		}
 

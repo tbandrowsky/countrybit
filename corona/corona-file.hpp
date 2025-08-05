@@ -173,14 +173,16 @@ namespace corona
 		file_command_request  request;
 		file_command_result   result;
 		io_fence* fence;
-		OVERLAPPED overlapped;
+		bool  file_result;
+		DWORD file_last_error;
 
 		file_command()
 		{
 			request = {};
 			result = {};
 			fence = nullptr;
-			overlapped = {};
+			file_result = 0;
+			file_last_error = 0;
 			overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, FALSE);
 		}
 
@@ -189,9 +191,6 @@ namespace corona
 		file_command& operator = (const file_command& _src) = default;
 		file_command& operator = (file_command&& _src) = default;
 
-		BOOL file_result;
-
-		int file_last_error;
 
 		virtual ~file_command()  noexcept
 		{
@@ -229,7 +228,7 @@ namespace corona
 			}
 
 			// because these are asynch, 
-			if (not file_result) {
+			if (file_result == 0) {
 				file_last_error = ::GetLastError();
 				if (file_last_error == ERROR_IO_PENDING)
 					return true;
@@ -252,9 +251,14 @@ namespace corona
 			return jn;
 		}
 
-		virtual int64_t get_job_key() override
+		virtual HANDLE get_file_handle() override
 		{
-			return (int64_t)&overlapped;
+			return request.hfile;
+		}
+
+		virtual LPOVERLAPPED get_job_key() override
+		{
+			return &overlapped;
         }
 
 		operator file_command_result()
@@ -273,6 +277,7 @@ namespace corona
 	{
 		std::string		filename;
 		HANDLE			hfile;
+		HANDLE          hport;
 		lockable		size_locker;
 		HANDLE			resize_event;
 		job_queue*		queue;
@@ -353,9 +358,8 @@ namespace corona
 					throw std::logic_error(temp.c_str());
 				}
 			}
-			HANDLE hport = queue->getPort();
-			auto hfileport = ::CreateIoCompletionPort(hfile, hport, completion_key_file, 0);
-			if (hfileport == NULL)
+			hport = queue->listen_file(hfile);
+			if (hport == NULL)
 			{
 				os_result osr;
 				{
@@ -435,6 +439,12 @@ namespace corona
 			{
 				CloseHandle(hfile);
 				hfile = INVALID_HANDLE_VALUE;
+			}
+
+			if (hport != INVALID_HANDLE_VALUE)
+			{
+				CloseHandle(hport);
+				hport = INVALID_HANDLE_VALUE;
 			}
 		}
 

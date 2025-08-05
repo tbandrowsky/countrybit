@@ -1251,7 +1251,7 @@ namespace corona
 		// test lone block read.
 
 		memset(check_buffer, 0, sizeof(check_buffer));
-		fb.read(pattern1_length, check_buffer, pattern1_length);
+		fb.read(0, check_buffer, pattern1_length);
 		result = strcmp(pattern1, check_buffer) == 0;
 		_tests->test({ "checklone", result, __FILE__, __LINE__ });
 
