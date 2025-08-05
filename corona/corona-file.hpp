@@ -86,6 +86,12 @@ namespace corona
 		int64_t		location;
 		const char* buffer;
 		os_result	result;
+
+		file_command_result() = default;
+		file_command_result(const file_command_result&) = default;
+		file_command_result(file_command_result&&) = default;
+		file_command_result& operator =(const file_command_result&) = default;
+		file_command_result& operator =(file_command_result&&) = default;
 	};
 
 	class file_command_request
@@ -142,7 +148,7 @@ namespace corona
 
 		void watch(LPOVERLAPPED _t)
 		{
-			HANDLE h = CreateEvent(NULL, FALSE, FALSE, NULL);
+			HANDLE h = CreateEvent(NULL, TRUE, FALSE, NULL);
             handles.insert(_t, h);
 		}
 
@@ -442,11 +448,13 @@ namespace corona
 				hfile = INVALID_HANDLE_VALUE;
 			}
 
-			if (hport != INVALID_HANDLE_VALUE)
-			{
-				CloseHandle(hport);
-				hport = INVALID_HANDLE_VALUE;
-			}
+			// https://devblogs.microsoft.com/oldnewthing/20130823-00/?p=3423
+			// see why this is commented out, so we know, to never do this.
+//			if (hport != INVALID_HANDLE_VALUE)
+//			{
+//				CloseHandle(hport);
+//				hport = INVALID_HANDLE_VALUE;
+//			}
 		}
 
 		void read(string_file_handler _handler)

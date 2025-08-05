@@ -58,7 +58,8 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cerr << "Error:" << __FILE__ << " " << __LINE__ << " polling " << filename << " failed:" << exc.what() << std::endl;
+
+  				system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
 			}
 		}
 	};

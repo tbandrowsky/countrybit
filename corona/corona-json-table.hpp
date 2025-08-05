@@ -1244,6 +1244,7 @@ namespace corona
 		result = file_contents_check;
 		_tests->test({ "file_contents", result, __FILE__, __LINE__ });
 
+		fb.commit();
 		fb.clear();
 		result = fb.buffer_count() == 0;
 		_tests->test({ "clear_buffers", result, __FILE__, __LINE__ });
@@ -1556,7 +1557,7 @@ namespace corona
 
 		json_parser jp;
 
-		std::shared_ptr<file> dtest = _app->create_file_ptr(FOLDERID_Documents, "corona_data_block_test.ctb");
+		std::shared_ptr<file> dtest = _app->create_file_ptr("corona_data_block_test.ctb");
 
 		file_block fb(dtest);
 

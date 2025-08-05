@@ -422,11 +422,10 @@ namespace corona
 			scope_lock lockme(buffer_lock);
             io_fence fence;
 			
-			std::shared_ptr<file_buffer> dirty_append;
 			std::vector<std::shared_ptr<file_buffer>> dirty_buffers;
 
 			if (append_buffer and append_buffer->is_dirty) {
-				dirty_append = append_buffer;
+				dirty_buffers.push_back(append_buffer);
 				append_buffer->is_dirty = false;
 			}
 
@@ -437,7 +436,7 @@ namespace corona
 				}
 			}
 
-			if (dirty_buffers.size() > 0 or dirty_append) {
+			if (dirty_buffers.size() > 0) {
 				int i = 0;
 				while (i < dirty_buffers.size())
 				{
@@ -445,8 +444,8 @@ namespace corona
 					get_fp()->write(trans_buff->start, trans_buff->buff.get_ptr(), trans_buff->stop - trans_buff->start, &fence);
 					i++;
 				}
-				fence.wait();
 			}
+			fence.wait();
 		}
 
 		virtual int buffer_count() override

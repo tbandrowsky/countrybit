@@ -389,7 +389,7 @@ namespace corona {
 
 	job_queue::job_queue()
 	{
-		ioCompPort = nullptr;
+		ioCompPort = NULL;
 		empty_queue_event = CreateEventW(nullptr, false, false, nullptr);
 		thread_id = ::GetCurrentThreadId();
 	}
@@ -410,9 +410,9 @@ namespace corona {
 
 		if (_numThreads > maxWorkerThreads or _numThreads == 0) _numThreads = threadCount;
 
-		if (not ioCompPort) {
+		if (ioCompPort==NULL) {
 
-			ioCompPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, completion_key_compute, _numThreads);
+			ioCompPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, _numThreads);
 
 			if (ioCompPort) {
 				for (i = 0; i < _numThreads; i++) {
@@ -539,12 +539,12 @@ namespace corona {
 			success = ::GetQueuedCompletionStatus(ioCompPort, &bytesTransferred, &compKey, &lpov, 10000);
 			if (success) {
 
-				io_job *completed_io = find_io_job(compKey, lpov);
+				io_job* completed_io = find_io_job(compKey, lpov);
 				if (completed_io) {
 					try {
 						// if waiting_job is whacked, that means the pointer for the job was actually deleted.
 						// this is the case where, Windows has completed the IO operation and we are handling the results
- 						jobNotify = completed_io->execute(this, bytesTransferred, success);
+						jobNotify = completed_io->execute(this, bytesTransferred, success);
 						jobNotify.notify();
 					}
 					catch (std::exception exc)
@@ -558,7 +558,7 @@ namespace corona {
 						delete waiting_job;
 					}
 				}
-				else if (compKey == completion_key_compute) 
+				else if (compKey == completion_key_compute)
 				{
 					int job_id = (int)bytesTransferred;
 					if (compute_jobs.try_get(job_id, waiting_job)) {
@@ -583,7 +583,8 @@ namespace corona {
 					}
 				}
 				else {
-					system_monitoring_interface::global_mon->log_warning("Unknown completion key for job", __FILE__, __LINE__);
+					system_monitoring_interface::global_mon->log_warning("Unknown completion key for job, so, let's try again.", __FILE__, __LINE__);
+                    PostQueuedCompletionStatus(ioCompPort, bytesTransferred, compKey, lpov);
 				}
 			}
 			success = true;
