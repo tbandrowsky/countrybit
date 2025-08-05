@@ -181,6 +181,7 @@ namespace corona
 			result = {};
 			fence = nullptr;
 			overlapped = {};
+			overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, FALSE);
 		}
 
 		file_command(const file_command& _src) = default;
@@ -194,7 +195,7 @@ namespace corona
 
 		virtual ~file_command()  noexcept
 		{
-			;
+			CloseHandle(overlapped.hEvent);
 		}
 
 		virtual bool queued(job_queue* _callingQueue) override
@@ -206,7 +207,6 @@ namespace corona
 			li.QuadPart = request.location;
 			overlapped.Offset = li.LowPart;
 			overlapped.OffsetHigh = li.HighPart;
-			overlapped.hEvent = NULL;
 
 			result.buffer = (char*)request.buffer;
 			result.bytes_transferred = 0;
@@ -214,7 +214,7 @@ namespace corona
 			result.result = os_result(0);
 
 			if (fence) {
-				fence->watch(request.location);
+				fence->watch((int64_t)&overlapped);
 			}
 
 			LPOVERLAPPED lp = &overlapped;
@@ -240,7 +240,7 @@ namespace corona
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
 			job_notify jn;
-			jn.shouldDelete = false;
+			jn.shouldDelete = true;
 
 			result.bytes_transferred = _bytesTransferred;
 			result.success = _success;
@@ -485,17 +485,17 @@ namespace corona
 		void write(int64_t location, void* _buffer, int _buffer_length, io_fence *_fence)
 		{
 			file_command_request fcr(file_commands::write, filename, hfile, location, _buffer_length, _buffer);
-			file_command fc;
-			fc.request = fcr;
-			fc.run(_fence);
+			file_command *fc = new file_command();
+			fc->request = fcr;
+			fc->run(_fence);
 		}
 
 		void read(int64_t location, void* _buffer, int _buffer_length, io_fence* _fence)
 		{
 			file_command_request fcr(file_commands::read, filename, hfile, location, _buffer_length, _buffer);
-			file_command fc;
-			fc.request = fcr;
-			fc.run(_fence);
+			file_command* fc = new file_command();
+			fc->request = fcr;
+			fc->run(_fence);
 		}
 
 		int64_t add(int64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
@@ -543,9 +543,9 @@ namespace corona
 			int64_t file_position = add(_buffer_length);
 
 			file_command_request fcr(file_commands::write, filename, hfile, file_position, _buffer_length, _buffer);
-			file_command fc;
-			fc.request = fcr;
-			fc.run(_fence);
+			file_command* fc = new file_command();
+			fc->request = fcr;
+			fc->run(_fence);
 		}
 
 		int64_t size()
