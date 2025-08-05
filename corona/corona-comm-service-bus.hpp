@@ -554,7 +554,7 @@ namespace corona
 				post_op.put_member("operationId", std::string("describe"));
 				jendpoint.put_member("post", post_op);
 
-				json jpath = jpaths.build_member(path.path);
+				json jpath = jpaths.build_member("/"+path.path);
 				json jverb = jpath.build_member(path.verb);
 
 				jverb.put_member("summary", path.description);
