@@ -131,7 +131,8 @@ namespace corona
 
 	class io_fence
 	{
-		corona::thread_safe_map<LPOVERLAPPED, HANDLE> handles;
+		std::map<OVERLAPPED *, HANDLE> handles;
+		lockable fence_lock, wait_lock;
 
 	public:
 
@@ -148,27 +149,55 @@ namespace corona
 
 		void watch(LPOVERLAPPED _t)
 		{
-			HANDLE h = CreateEvent(NULL, TRUE, FALSE, NULL);
-            handles.insert(_t, h);
+            scope_lock lockme(fence_lock);
+			HANDLE h = CreateEvent(NULL, NULL, FALSE, NULL);
+            handles.insert_or_assign(_t, h);
 		}
 
 		void operator()(LPOVERLAPPED _overlapped, file_command_result& _result)
 		{
+			scope_lock lockme(fence_lock);
 			HANDLE hvalue = nullptr;
-			if (handles.try_get(_overlapped, hvalue)) {
-				SetEvent(hvalue);
+
+            auto it = handles.find(_overlapped);
+			if (it != std::end(handles)) {
+				SetEvent(it->second);
+				handles.erase(_overlapped);
 			}
-			if (on_complete)
+
+			if (on_complete) {
 				on_complete(_result);
+			}
+		}
+
+		virtual void clear_handles()
+		{
+			scope_lock lockme(fence_lock);
+			handles.clear();
+		}
+
+		virtual void get_handles(std::vector<HANDLE>& wait_handles)
+		{
+			scope_lock lockme(fence_lock);
+			for (auto handle : handles) {
+				wait_handles.push_back(handle.second);
+			}
+			
 		}
 
 		virtual void wait()
 		{
-			handles.for_each<HANDLE>([](auto handle) {
+			std::vector<HANDLE> wait_handles;
+			scope_lock lockme(wait_lock);
+
+			get_handles(wait_handles);
+
+			for (auto handle : wait_handles) {
 				WaitForSingleObject(handle, INFINITE);
                 CloseHandle(handle);
-				});
-            handles.clear();
+			}
+
+			clear_handles();
 		}
 	};
 
