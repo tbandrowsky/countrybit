@@ -325,10 +325,23 @@ namespace corona {
 			else 
 			{
 				handler_list = std::make_shared<http_handler_list>();
+				std::string windows_bind_path;
 				if (_api_path.starts_with("/") and _binding_url.ends_with("/")) {
-					_api_path = _api_path.substr(1); // remove leading slash
+					windows_bind_path = _binding_url; // add trailing wildcard
+					windows_bind_path += _api_path.substr(1); // remove leading slash
 				}
-                handler_list->url = _binding_url + _api_path;
+				else if (not _api_path.starts_with("/") and not _binding_url.ends_with("/"))
+				{
+					windows_bind_path += _binding_url; // add trailing wildcard
+					windows_bind_path += "/";
+					windows_bind_path = _api_path;
+				}
+				else 
+				{
+					windows_bind_path += _binding_url; // add trailing wildcard
+					windows_bind_path += _api_path;
+				}
+				handler_list->url = windows_bind_path;
                 handler_list->binding_url = _binding_url;
                 handler_list->root_path = _root_path;
                 handler_list->api_path = _api_path;
@@ -410,7 +423,15 @@ namespace corona {
 				queryString.copy(_request->CookedUrl.pQueryString, _request->CookedUrl.QueryStringLength);
 				sQueryString = queryString.c_str();
 			}
-			
+
+			if (sabsPath.starts_with("/")) {
+                sabsPath = sabsPath.substr(1); // remove leading slash
+			}
+
+			if (not sabsPath.ends_with("/")) {
+                sabsPath += "/"; // ensure trailing slash
+            }
+
 			std::string authorization = get_header_string(_request, HTTP_HEADER_ID::HttpHeaderAuthorization);
 			std::string content_type = get_header_string(_request, HTTP_HEADER_ID::HttpHeaderContentType);
 
