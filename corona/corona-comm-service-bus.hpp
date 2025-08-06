@@ -921,12 +921,32 @@ namespace corona
 
 		void bind_web_server(http_server& _server)
 		{
-			std::string _root_path = listen_point;
+			std::string root_path = listen_point;
+			std::string base_path;
 
 			try {
 
-				if (not _root_path.ends_with('/')) {
-					_root_path += "/";
+				base_path = root_path;
+
+				if (root_path.starts_with("http://")) {
+					base_path = base_path.substr(7);
+				}
+				else if (root_path.starts_with("https://")) {
+					base_path = base_path.substr(8);
+				}
+
+				int idx = base_path.find('/');
+
+				if (idx != std::string::npos) {
+					base_path = base_path.substr(idx+1);
+				}
+
+				if (not base_path.ends_with('/')) {
+					base_path += "/";
+				}
+
+				if (not root_path.ends_with('/')) {
+					root_path += "/";
 				}
 
 				api_paths.clear();
@@ -937,7 +957,7 @@ namespace corona
 /**************
 Bind home
 ***************/
-				new_api.path = "";
+				new_api.path = "/";
 				new_api.name = "home";
 				new_api.description = "Returns test handler for this server.";
 				new_api.verb = "get";
@@ -946,8 +966,8 @@ Bind home
 				new_api.request_class_name = {};
 				new_api.response_class_name = {};
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbGET, _root_path + new_api.path, corona_test);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbGET, root_path, base_path, new_api.path, corona_test);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 /**************
 Bind test
@@ -961,8 +981,8 @@ Bind test
 				new_api.request_class_name = {};
 				new_api.response_class_name = {};
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbGET, _root_path + new_api.path, corona_test);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbGET, root_path, base_path, new_api.path, corona_test);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 /**************
@@ -1017,8 +1037,8 @@ Bind createuser
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_create);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_users_create);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 /**************
 Bind loginuser
@@ -1066,8 +1086,8 @@ Bind loginuser
 				new_api.request_class_name = "sys_login_user_request";
 				new_api.response_class_name = "sys_login_user_response";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_login);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_login);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 /**************
 Bind confirmuser
@@ -1113,8 +1133,8 @@ Bind confirmuser
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_confirm);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_users_confirm);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 /**************
 Bind SENDUSER
@@ -1159,8 +1179,8 @@ Bind SENDUSER
 
 
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_users_send_confirm);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_users_send_confirm);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 
@@ -1220,8 +1240,8 @@ Bind passworduser
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_user_password);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_user_password);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 /**************
 Bind get classes
@@ -1258,8 +1278,8 @@ Bind get classes
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_classes_get);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_classes_get);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 				/**************
@@ -1298,8 +1318,8 @@ Bind get classes
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_class_get);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_class_get);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 				/**************
@@ -1343,8 +1363,8 @@ Bind get classes
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_classes_put);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_classes_put);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 				/**************
@@ -1392,8 +1412,8 @@ Bind get classes
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_get);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_objects_get);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 
@@ -1446,8 +1466,8 @@ Bind get classes
 	}
   }
 })";
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_query);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_objects_query);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 				api_paths.push_back(new_api);
 
 				/**************
@@ -1497,8 +1517,8 @@ Bind get classes
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_create);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_objects_create);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 				/**************
@@ -1539,8 +1559,8 @@ Bind get classes
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_put);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_objects_put);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 				/**************
@@ -1587,8 +1607,8 @@ Bind get classes
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_delete);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_objects_delete);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 				/**************
@@ -1642,8 +1662,8 @@ Bind get classes
 				new_api.response_class_name = "sys_edit_object_response";
 				new_api.verb = "post";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_edit);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_objects_edit);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 
 				/**************
@@ -1685,8 +1705,8 @@ Bind get classes
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_run);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_objects_run);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 				new_api.path = "objects/copy/";
 				new_api.name = "copy_object";
@@ -1763,8 +1783,8 @@ Bind get classes
   }
 })";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbPOST, _root_path + new_api.path, corona_objects_copy);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_objects_copy);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 
 				new_api.path = "describe/";
 				new_api.verb = "get";
@@ -1775,8 +1795,8 @@ Bind get classes
 				new_api.request_class_name = R"()";
 				new_api.response_class_name = R"()";
 				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbGET, _root_path + new_api.path, corona_describe);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, _root_path + new_api.path, corona_options);
+				_server.put_handler(HTTP_VERB::HttpVerbGET, root_path, base_path, new_api.path, corona_describe);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
 			}
 			catch (std::exception exc)
 			{

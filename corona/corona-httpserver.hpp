@@ -98,6 +98,9 @@ namespace corona
 	{
 	public:
 		std::string url;
+		std::string binding_url;
+		std::string root_path;
+		std::string api_path;
 		std::vector<http_handler_method> functions;
 	};
 
@@ -305,13 +308,15 @@ namespace corona {
 			}
 		}
 
-		void put_handler(HTTP_VERB _verb, std::string _url, http_handler_function _handler)
+		void put_handler(HTTP_VERB _verb, std::string _binding_url, std::string _root_path, std::string _api_path, http_handler_function _handler)
 		{
 			std::shared_ptr<http_handler_list> handler_list;
 
-			if (api_handlers.contains(_url)) 
+			std::string match_path = _root_path + _api_path;
+			
+			if (api_handlers.contains(match_path))
 			{
-				handler_list = api_handlers[_url];
+				handler_list = api_handlers[match_path];
 				http_handler_method method;
 				method.method = _verb;
 				method.func = _handler;
@@ -320,18 +325,24 @@ namespace corona {
 			else 
 			{
 				handler_list = std::make_shared<http_handler_list>();
-				handler_list->url = _url;
+				if (_api_path.starts_with("/") and _binding_url.ends_with("/")) {
+					_api_path = _api_path.substr(1); // remove leading slash
+				}
+                handler_list->url = _binding_url + _api_path;
+                handler_list->binding_url = _binding_url;
+                handler_list->root_path = _root_path;
+                handler_list->api_path = _api_path;
 				http_handler_method method;
 				method.method = _verb;
 				method.func = _handler;
 				handler_list->functions.push_back(method);
-				api_handlers.insert_or_assign(_url, handler_list);
+				api_handlers.insert_or_assign(match_path, handler_list);
 				HTTP_URL_CONTEXT context = (HTTP_URL_CONTEXT)handler_list.get();
-				iwstring<2048> url = _url;
+				iwstring<2048> url = handler_list->url;
 				DWORD error = HttpAddUrlToUrlGroup(group_id, url.c_str(), context, 0);
 				if (error != NO_ERROR) {
 					os_result orx(error);
-					std::string message = "Exception:" + _url + " " + orx.message;
+					std::string message = "Exception:" + handler_list->url + " " + orx.message;
 					throw std::logic_error(message.c_str());
 				}
 			}
