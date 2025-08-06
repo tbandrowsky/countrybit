@@ -484,6 +484,16 @@ namespace corona {
 			}
 		}
 
+		virtual void set_unknown_header(HTTP_UNKNOWN_HEADER *_dest, const char *_header_name, const char *_header_value)
+		{
+			_dest->pName = _header_name;
+			_dest->NameLength = std::strlen(_header_name) + 1;
+			_dest->pRawValue = _header_value;
+			_dest->RawValueLength = std::strlen(_header_value) + 1;
+
+
+		}
+
 		virtual DWORD send_response(
 			HTTP_REQUEST_ID _request_id, 
 			int _status_code,
@@ -527,18 +537,13 @@ namespace corona {
 			response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentType].pRawValue = content_type.c_str();
 			response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentType].RawValueLength = content_type.size();
 
-			// Add CORS header
-			std::string cors_header_name = "Access-Control-Allow-Origin";
-			std::string cors_header_value = "*";
-			HTTP_UNKNOWN_HEADER cors_header = {};
+			HTTP_UNKNOWN_HEADER cors_header[3] = {};
 
-			cors_header.pName = cors_header_name.c_str();
-			cors_header.NameLength = cors_header_name.size();
+			set_unknown_header(&cors_header[0], "Access-Control-Allow-Origin", "*");
+			set_unknown_header(&cors_header[1], "Access-Control-Allow-Methods", "GET, POST");
+			set_unknown_header(&cors_header[2], "Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-			cors_header.pRawValue = cors_header_value.c_str();
-			cors_header.RawValueLength = cors_header_value.size();
-
-			response.Headers.UnknownHeaderCount = 1;
+			response.Headers.UnknownHeaderCount = 3;
 			response.Headers.pUnknownHeaders = &cors_header;
 			
 			// 
