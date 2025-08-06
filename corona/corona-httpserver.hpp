@@ -392,7 +392,7 @@ namespace corona {
 			std::string sQueryString;
 			std::string sabsPath;
 
-			absPath.copy(_request->CookedUrl.pFullUrl, _request->CookedUrl.FullUrlLength);
+			absPath.copy(_request->CookedUrl.pAbsPath, _request->CookedUrl.FullUrlLength);
 			sabsPath = absPath.c_str();
 
 			if (_request->CookedUrl.pQueryString) {
@@ -455,19 +455,22 @@ namespace corona {
 			{
 
 				if (_request->UrlContext) {
-					http_handler_list* hhl = (http_handler_list*)_request->UrlContext;
 
-					for (auto handler : hhl->functions)
+                    auto foundit = api_handlers.find(sabsPath);
+					if (foundit != api_handlers.end())
 					{
-						if (handler.method == _request->Verb)
+						for (auto handler : foundit->second->functions)
 						{
-							http_action_request harhar;
-							harhar.request_id = _request->RequestId;
-							harhar.request = request;
-							harhar.authorization = authorization;
-							harhar.server = this;
-							handler.func(harhar);
-							unhandled = false;
+							if (handler.method == _request->Verb)
+							{
+								http_action_request harhar;
+								harhar.request_id = _request->RequestId;
+								harhar.request = request;
+								harhar.authorization = authorization;
+								harhar.server = this;
+								handler.func(harhar);
+								unhandled = false;
+							}
 						}
 					}
 				}
@@ -487,9 +490,9 @@ namespace corona {
 		virtual void set_unknown_header(HTTP_UNKNOWN_HEADER *_dest, const char *_header_name, const char *_header_value)
 		{
 			_dest->pName = _header_name;
-			_dest->NameLength = std::strlen(_header_name) + 1;
+			_dest->NameLength = std::strlen(_header_name);
 			_dest->pRawValue = _header_value;
-			_dest->RawValueLength = std::strlen(_header_value) + 1;
+			_dest->RawValueLength = std::strlen(_header_value);
 
 
 		}
