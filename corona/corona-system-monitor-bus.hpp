@@ -787,10 +787,8 @@ namespace corona
 			else if (_message.find("NVIDIA") != std::string::npos) {
 				xout << Lognvidia;
 			}
-			xout << std::format("{0:<45}{1:<10}{2:<25}",
-				trim(_message, 45),
-				GetCurrentThreadId(),
-				" "
+			xout << std::format("{0:<80}",
+				trim(_message, 80)
 			);
 			xout << Normal;
 			xout << std::endl;
@@ -819,10 +817,8 @@ namespace corona
 			xout << Logfunction;
 			xout << std::format("{0:<20}", " ");
 			xout << Logwarning;
-			xout << std::format("{0:<45}{1:<10}{2:<25}",
-				trim(_message, 45),
-				GetCurrentThreadId(),
-				" "
+			xout << std::format("{0:<80}",
+				trim(_message, 80)
 			);
 			file_line(_file, _line);
 			xout << Normal;
@@ -850,10 +846,8 @@ namespace corona
 			xout << Logfunction;
 			xout << std::format("{0:<20}", " ");
 			xout << Logexception;
-			xout << std::format("{0:<45}{1:<10}{2:<25}",
-				trim(exc.what(), 45),
-				GetCurrentThreadId(),
-				""
+			xout << std::format("{0:<80}",
+				trim(exc.what(), 80)
 			);
 			file_line(_file, _line);
 			xout << std::endl;
