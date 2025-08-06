@@ -544,7 +544,7 @@ namespace corona {
 			set_unknown_header(&cors_header[2], "Access-Control-Allow-Headers", "Content-Type, Authorization");
 
 			response.Headers.UnknownHeaderCount = 3;
-			response.Headers.pUnknownHeaders = &cors_header;
+			response.Headers.pUnknownHeaders = &cors_header[0];
 			
 			// 
 			// Because the entity body is sent in one call, it is not
