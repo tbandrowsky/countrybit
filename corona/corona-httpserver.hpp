@@ -151,18 +151,14 @@ namespace corona
 		job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
 			job_notify jn;
-			timer tx;
-			date_time thetime = date_time::now();
 
 			bytes_transferred = _bytesTransferred;
 			success = _success;
 			try {
 				if (_success and bytes_transferred > 0)
 				{
-					system_monitoring_interface::global_mon->log_command_start("http request", "start", thetime, __FILE__, __LINE__);
 					PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
 					request.server->execute_request(prequest);
-					system_monitoring_interface::global_mon->log_command_stop("http request", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 			catch (std::exception exc)
@@ -487,6 +483,9 @@ namespace corona {
 			{
 
 				if (_request->UrlContext) {
+                    date_time thetime = date_time::now();
+					timer tx;
+					system_monitoring_interface::global_mon->log_command_start(sabsPath, "start", thetime, __FILE__, __LINE__);
 
                     auto foundit = api_handlers.find(sabsPath);
 					if (foundit != api_handlers.end())
@@ -505,6 +504,8 @@ namespace corona {
 							}
 						}
 					}
+					system_monitoring_interface::global_mon->log_command_stop(sabsPath, "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 				}
 			}
 			catch (std::exception exc)
