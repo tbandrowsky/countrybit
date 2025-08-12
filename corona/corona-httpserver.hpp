@@ -151,18 +151,14 @@ namespace corona
 		job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
 			job_notify jn;
-			timer tx;
-			date_time thetime = date_time::now();
 
 			bytes_transferred = _bytesTransferred;
 			success = _success;
 			try {
 				if (_success and bytes_transferred > 0)
 				{
-					system_monitoring_interface::global_mon->log_command_start("http request", "start", thetime, __FILE__, __LINE__);
 					PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
 					request.server->execute_request(prequest);
-					system_monitoring_interface::global_mon->log_command_stop("http request", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 			catch (std::exception exc)
@@ -325,10 +321,23 @@ namespace corona {
 			else 
 			{
 				handler_list = std::make_shared<http_handler_list>();
+				std::string windows_bind_path;
 				if (_api_path.starts_with("/") and _binding_url.ends_with("/")) {
-					_api_path = _api_path.substr(1); // remove leading slash
+					windows_bind_path = _binding_url; // add trailing wildcard
+					windows_bind_path += _api_path.substr(1); // remove leading slash
 				}
-                handler_list->url = _binding_url + _api_path;
+				else if (not _api_path.starts_with("/") and not _binding_url.ends_with("/"))
+				{
+					windows_bind_path += _binding_url; // add trailing wildcard
+					windows_bind_path += "/";
+					windows_bind_path = _api_path;
+				}
+				else 
+				{
+					windows_bind_path += _binding_url; // add trailing wildcard
+					windows_bind_path += _api_path;
+				}
+				handler_list->url = windows_bind_path;
                 handler_list->binding_url = _binding_url;
                 handler_list->root_path = _root_path;
                 handler_list->api_path = _api_path;
@@ -410,7 +419,15 @@ namespace corona {
 				queryString.copy(_request->CookedUrl.pQueryString, _request->CookedUrl.QueryStringLength);
 				sQueryString = queryString.c_str();
 			}
-			
+
+			if (sabsPath.starts_with("/")) {
+                sabsPath = sabsPath.substr(1); // remove leading slash
+			}
+
+			if (not sabsPath.ends_with("/")) {
+                sabsPath += "/"; // ensure trailing slash
+            }
+
 			std::string authorization = get_header_string(_request, HTTP_HEADER_ID::HttpHeaderAuthorization);
 			std::string content_type = get_header_string(_request, HTTP_HEADER_ID::HttpHeaderContentType);
 
@@ -466,6 +483,9 @@ namespace corona {
 			{
 
 				if (_request->UrlContext) {
+                    date_time thetime = date_time::now();
+					timer tx;
+					system_monitoring_interface::global_mon->log_command_start(sabsPath, "start", thetime, __FILE__, __LINE__);
 
                     auto foundit = api_handlers.find(sabsPath);
 					if (foundit != api_handlers.end())
@@ -484,6 +504,8 @@ namespace corona {
 							}
 						}
 					}
+					system_monitoring_interface::global_mon->log_command_stop(sabsPath, "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 				}
 			}
 			catch (std::exception exc)

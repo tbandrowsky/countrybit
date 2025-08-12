@@ -957,7 +957,7 @@ namespace corona
 /**************
 Bind home
 ***************/
-				new_api.path = "/";
+				new_api.path = "";
 				new_api.name = "home";
 				new_api.description = "Returns test handler for this server.";
 				new_api.verb = "get";
