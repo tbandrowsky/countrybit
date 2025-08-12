@@ -988,7 +988,7 @@ namespace corona
 				validation_error ve;
 				ve.class_name = _class_name;
 				ve.field_name = _field_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "required field";
 				_validation_errors.push_back(ve);
@@ -1311,7 +1311,7 @@ namespace corona
 									validation_error ve;
 									ve.class_name = _class_name;
 									ve.field_name = _field_name;
-									ve.filename = __FILE__;
+									ve.filename = get_file_name(__FILE__);
 									ve.line_number = __LINE__;
 									ve.message = "This array does not accept child objects of " + object_class_name;
 									_validation_errors.push_back(ve);
@@ -1322,7 +1322,7 @@ namespace corona
 								validation_error ve;
 								ve.class_name = _class_name;
 								ve.field_name = _field_name;
-								ve.filename = __FILE__;
+								ve.filename = get_file_name(__FILE__);
 								ve.line_number = __LINE__;
 								ve.message = "elements of this array must be objects.";
 								_validation_errors.push_back(ve);
@@ -1337,7 +1337,7 @@ namespace corona
 								validation_error ve;
 								ve.class_name = _class_name;
 								ve.field_name = _field_name;
-								ve.filename = __FILE__;
+								ve.filename = get_file_name(__FILE__);
 								ve.line_number = __LINE__;
 								ve.message = "Element must be a string.";
 								_validation_errors.push_back(ve);
@@ -1350,7 +1350,7 @@ namespace corona
 								validation_error ve;
 								ve.class_name = _class_name;
 								ve.field_name = _field_name;
-								ve.filename = __FILE__;
+								ve.filename = get_file_name(__FILE__);
 								ve.line_number = __LINE__;
 								ve.message = "Element must be a int64.";
 								_validation_errors.push_back(ve);
@@ -1363,7 +1363,7 @@ namespace corona
 								validation_error ve;
 								ve.class_name = _class_name;
 								ve.field_name = _field_name;
-								ve.filename = __FILE__;
+								ve.filename = get_file_name(__FILE__);
 								ve.line_number = __LINE__;
 								ve.message = "Element must be a double.";
 								_validation_errors.push_back(ve);
@@ -1376,7 +1376,7 @@ namespace corona
 								validation_error ve;
 								ve.class_name = _class_name;
 								ve.field_name = _field_name;
-								ve.filename = __FILE__;
+								ve.filename = get_file_name(__FILE__);
 								ve.line_number = __LINE__;
 								ve.message = "Element must be a datetime.";
 								_validation_errors.push_back(ve);
@@ -1389,7 +1389,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = "Value must be an array for an array field.";
 					_validation_errors.push_back(ve);
@@ -1522,7 +1522,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = "value must be an object of correct type.";
 					_validation_errors.push_back(ve);
@@ -1648,7 +1648,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = std::format( "Value '{0}' must be between {1} and {2} characters long", chumpy, minimum_length, maximum_length);
 					if (match_pattern.size() > 0) {
@@ -1732,7 +1732,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = std::format("Value '{0}' must be between {1} and {2}", chumpy, min_value, max_value);
 					_validation_errors.push_back(ve);
@@ -1821,7 +1821,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = std::format("Value '{0}' must be derived from {1}", (std::string)chumpy, reference_class);
 					_validation_errors.push_back(ve);
@@ -1888,7 +1888,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = "value out of range";
 					_validation_errors.push_back(ve);
@@ -1977,7 +1977,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = "value is empty";
 					_validation_errors.push_back(ve);
@@ -1988,7 +1988,7 @@ namespace corona
 					validation_error ve;
 					ve.class_name = _class_name;
 					ve.field_name = _field_name;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = "validation list not loaded";
 					_validation_errors.push_back(ve);
@@ -2848,7 +2848,7 @@ namespace corona
 			else if (not jancestors.empty()) {
 				validation_error ve;
 				ve.class_name = class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "ancestors must be an array of strings";
 				_errors.push_back(ve);
@@ -2868,7 +2868,7 @@ namespace corona
 			{
 				validation_error ve;
 				ve.class_name = class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "descendants must be an array of strings";
 				_errors.push_back(ve);
@@ -2958,7 +2958,7 @@ namespace corona
 						ve.class_name = class_name;
 						ve.field_name = field->get_field_name();
 						ve.message = "Is not a valid field specification. Can either be a string or an object.";
-						ve.filename = __FILE__;
+						ve.filename = get_file_name(__FILE__);
 						ve.line_number = __LINE__;
 						_errors.push_back(ve);
 					}
@@ -2977,7 +2977,7 @@ namespace corona
 						ve.class_name = class_name;
 						ve.field_name = field->get_field_name();
 						ve.message = "Invalid field type '" + (std::string)jfield.second;
-						ve.filename = __FILE__;
+						ve.filename = get_file_name(__FILE__);
 						ve.line_number = __LINE__;
 						_errors.push_back(ve);
 					}
@@ -2987,7 +2987,7 @@ namespace corona
 			{
 				validation_error ve;
 				ve.class_name = class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "fields must be an object.  each field is a member, with a field as the '\"field_name\" : \"field_type\"' or '\"field_name\" : { options }'";
 				_errors.push_back(ve);
@@ -3033,7 +3033,7 @@ namespace corona
 						ve.class_name = class_name;
 						ve.field_name = index->get_index_key_string();
 						ve.message = "Missing index name.";
-						ve.filename = __FILE__;
+						ve.filename = get_file_name(__FILE__);
 						ve.line_number = __LINE__;
 						_errors.push_back(ve);
 					}
@@ -3045,7 +3045,7 @@ namespace corona
 			{
 				validation_error ve;
 				ve.class_name = class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "indexes must be an object.";
 				_errors.push_back(ve);
@@ -3159,7 +3159,7 @@ namespace corona
 			if (changed_class.class_description.empty()) {
 				validation_error ve;
 				ve.class_name = changed_class.class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "class description not found";
 				_context->errors.push_back(ve);
@@ -3170,7 +3170,7 @@ namespace corona
 			{
 				validation_error ve;
 				ve.class_name = changed_class.class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "cannot change base class of a class.";
 				_context->errors.push_back(ve);
@@ -3234,7 +3234,7 @@ namespace corona
 				else {
 					validation_error ve;
 					ve.class_name = changed_class.class_name;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = "base class nnot found";
 					_context->errors.push_back(ve);
@@ -3265,7 +3265,7 @@ namespace corona
 						ve.class_name = class_name;
 						ve.field_name = f;
 						ve.message = "Invalid field for index";
-						ve.filename = __FILE__;
+						ve.filename = get_file_name(__FILE__);
 						ve.line_number = __LINE__;
 						_context->errors.push_back(ve);
 					}
@@ -3380,7 +3380,7 @@ namespace corona
 				else {
 					validation_error ve;
 					ve.class_name = descendant.first;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = "descendant class not found";
 					_context->errors.push_back(ve);
@@ -4570,7 +4570,7 @@ private:
 
 				ve.class_name = class_data->get_class_name();
 				ve.field_name = trim(object_definition.to_json_typed(), 50);
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "Not an object";
 				validation_errors.push_back(ve);
@@ -4584,7 +4584,7 @@ private:
 
 					ve.class_name = trim(object_definition.to_json_typed(), 50);
 					ve.field_name = class_name_field;
-					ve.filename = __FILE__;
+					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
 					ve.message = "Missing class";
 					validation_errors.push_back(ve);
@@ -4644,7 +4644,7 @@ private:
 							validation_error ve;
 							ve.field_name = missed;
 							ve.class_name = class_data->get_class_name();
-							ve.filename = __FILE__;
+							ve.filename = get_file_name(__FILE__);
 							ve.line_number = __LINE__;
 							ve.message = std::format("Missing field required for index '{0}'", idx->get_index_name());
 							validation_errors.push_back(ve);
@@ -4666,7 +4666,7 @@ private:
 						validation_error ve;
 						ve.class_name = class_data->get_class_name();
 						ve.field_name = om.first;
-						ve.filename = __FILE__;
+						ve.filename = get_file_name(__FILE__);
 						ve.line_number = __LINE__;
 						ve.message = "Field not found in class definition";
 						validation_errors.push_back(ve);
@@ -6010,7 +6010,7 @@ private:
 				validation_error err;
                 err.class_name = "sys_user";
 				err.field_name = "password2";
-				err.filename = __FILE__;
+				err.filename = get_file_name(__FILE__);
                 err.line_number = __LINE__;
                 err.message = "Passwords don't match";
 				errors.push_back(err);
@@ -6028,13 +6028,13 @@ private:
 				validation_error err;
 				err.class_name = "sys_user";
 				err.field_name = "password1";
-				err.filename = __FILE__;
+				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
 				err.message = "Password too simple";
 				errors.push_back(err);
 				err.class_name = "sys_user";
 				err.field_name = "password2";
-				err.filename = __FILE__;
+				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
 				err.message = "Password too simple";
 				errors.push_back(err);

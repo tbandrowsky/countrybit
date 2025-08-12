@@ -228,7 +228,7 @@ namespace corona
 			else if (not jancestors.empty()) {
 				validation_error ve;
 				ve.class_name = class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "ancestors must be an array of strings";
 				_errors.push_back(ve);
@@ -248,7 +248,7 @@ namespace corona
 			{
 				validation_error ve;
 				ve.class_name = class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "descendants must be an array of strings";
 				_errors.push_back(ve);
@@ -279,7 +279,7 @@ namespace corona
 						ve.class_name = class_name;
 						ve.field_name = field->get_field_name();
 						ve.message = "Is not a valid field specification. Can either be a string or an object.";
-						ve.filename = __FILE__;
+						ve.filename = get_file_name(__FILE__);
 						ve.line_number = __LINE__;
 						_errors.push_back(ve);
 					}
@@ -298,7 +298,7 @@ namespace corona
 						ve.class_name = class_name;
 						ve.field_name = field->get_field_name();
 						ve.message = "Invalid field type";
-						ve.filename = __FILE__;
+						ve.filename = get_file_name(__FILE__);
 						ve.line_number = __LINE__;
 						_errors.push_back(ve);
 					}
@@ -308,7 +308,7 @@ namespace corona
 			{
 				validation_error ve;
 				ve.class_name = class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "fields must be an object.  each field is a member, with a field as the '\"field_name\" : \"field_type\"' or '\"field_name\" : { options }'";
 				_errors.push_back(ve);
@@ -329,7 +329,7 @@ namespace corona
 						ve.class_name = class_name;
 						ve.field_name = index->get_index_key_string();
 						ve.message = "Missing index name.";
-						ve.filename = __FILE__;
+						ve.filename = get_file_name(__FILE__);
 						ve.line_number = __LINE__;
 						_errors.push_back(ve);
 					}
@@ -341,7 +341,7 @@ namespace corona
 			{
 				validation_error ve;
 				ve.class_name = class_name;
-				ve.filename = __FILE__;
+				ve.filename = get_file_name(__FILE__);
 				ve.line_number = __LINE__;
 				ve.message = "indexes must be an object.";
 				_errors.push_back(ve);
