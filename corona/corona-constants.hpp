@@ -62,8 +62,11 @@ namespace corona
 	{
 		const char *file_name = _filename;
 		const char* last_slash = file_name;
-		while (*file_name) {
-			last_slash = file_name;
+		while (*file_name) 
+		{
+			if (*file_name == '/' or *file_name == '\\') {
+				last_slash = file_name;
+			}
 			file_name++;
 		}
 		return last_slash;
