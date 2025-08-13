@@ -33,233 +33,6 @@
       }
     },
     {
-      "class_name": "point",
-      "class_description": "a point",
-      "base_class_name": "sys_object",
-      "parents": [ "polygon" ],
-      "fields": {
-        "x": "double",
-        "y": "double",
-        "z": "double"
-      }
-    },
-    {
-      "class_name": "polygon",
-      "class_description": "a shape defined by a list of points",
-      "base_class_name": "sys_object",
-      "parents": [ "shape" ],
-      "fields": {
-        "fill_brush": "string",
-        "border_brush": "string",
-        "border_thickness": "double",
-        "points": "[ point ]",
-        "text": "string",
-        "font_name": "string",
-        "font_size": "string"
-      }
-    },
-    {
-      "class_name": "shape",
-      "class_description": "a shape defined by a list of points",
-      "base_class_name": "sys_object",
-      "parents": [ "actor" ],
-      "fields": {
-        "name": "string",
-        "polygons": "[ polygon ]"
-      }
-    },
-    {
-      "class_name": "actor",
-      "class_description": "an item on the board",
-      "base_class_name": "sys_object",
-      "parents": [ "actor" ],
-      "fields": {
-        "name": "string",
-        "type": "string",
-        "state": "string",
-        "shape": "[shape]",
-        "x": "double",
-        "y": "double",
-        "z": "double",
-        "dx": "double",
-        "dy": "double",
-        "dz": "double",
-        "w": "double",
-        "h": "double",
-        "ax": "double",
-        "ay": "double",
-        "az": "double",
-        "quantity": "double",
-        "children": "[ actor:parent ]",
-        "selection": "[ ->actor ]"
-      }
-    },
-    {
-      "class_name": "pawn",
-      "class_description": "a player",
-      "base_class_name": "actor",
-      "fields": {
-        "user_name": "string",
-        "game": "->game"
-      },
-      "indexes": {
-        "idx_user_name": {
-          "fields": [ "user_name" ]
-        }
-      }
-    },
-    {
-      "class_name": "recipe_ingredient",
-      "class_description": "something consumed by recipe",
-      "base_class_name": "sys_object",
-      "parents": [ "recipe" ],
-      "fields": {
-        "consume_class_name": "string",
-        "amount_used": "double"
-      }
-    },
-    {
-      "class_name": "recipe_dish",
-      "class_description": "something produced by a recipe",
-      "base_class_name": "sys_object",
-      "parents": [ "recipe" ],
-      "fields": {
-        "create_class_name": "string",
-        "amount_made": "double"
-      }
-    },
-    {
-      "class_name": "recipe",
-      "class_description": "a means to produce a good given other goods",
-      "base_class_name": "sys_object",
-      "parents": [ "recipe" ],
-      "fields": {
-        "ingredients": "[ recipe_ingredient ]",
-        "dishes": "[ recipe_dish ]"
-      }
-    },
-    {
-      "class_name": "board",
-      "class_description": "a board in revolution",
-      "base_class_name": "actor",
-      "parents": [ "game" ],
-      "fields": {
-        "name": "string",
-        "type": "string",
-        "form_name": "string"
-      },
-      "indexes": {
-        "idx_user_name": {
-          "fields": [ "user_name" ]
-        }
-      }
-    },
-    {
-      "class_name": "game",
-      "class_description": "a board in revolution",
-      "base_class_name": "sys_object",
-      "fields": {
-        "name": "string",
-        "description": "string",
-        "state": "string",
-        "boards": "[ board ]",
-        "initial_board": "->board"
-      }
-    },
-    {
-      "class_name": "game_command",
-      "class_description": "command for one piece to activate another",
-      "base_class_name": "sys_command",
-      "fields": {
-        "game": "->game",
-        "board": "->board",
-        "page": "->page",
-        "actor": "->actor",
-        "token": "string"
-      }
-    },
-    {
-      "class_name": "clear_selection",
-      "class_description": "command for one piece to activate another",
-      "base_class_name": "game_command",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "extend_selection",
-      "class_description": "command for one piece to activate another",
-      "base_class_name": "game_command",
-      "fields": {
-        "add_actors": "[ ->actor ]"
-      }
-    },
-    {
-      "class_name": "compose_selection",
-      "class_description": "command to consume selected pieces to create another",
-      "base_class_name": "game_command",
-      "fields": {
-        "compose_class_name": "string"
-      }
-    },
-    {
-      "class_name": "take_actor",
-      "class_description": "command to add additional items to inventory",
-      "base_class_name": "game_command",
-      "fields": {
-        "take_actors": "[ ->actor ]"
-      }
-    },
-    {
-      "class_name": "drop_actor",
-      "class_description": "command to drop selected pieces in inventory",
-      "base_class_name": "game_command",
-      "fields": {
-        "drop_actors": "[ ->actor ]"
-      }
-    },
-    {
-      "class_name": "accelerate_actor",
-      "class_description": "command to move selected pieces",
-      "base_class_name": "game_command",
-      "fields": {
-        "accelerate_actors": "[ ->actor ]",
-        "ax": "double",
-        "ay": "double",
-        "az": "double"
-      }
-    },
-    {
-      "class_name": "activate_actor",
-      "class_description": "command for one piece to activate another",
-      "base_class_name": "game_command",
-      "fields": {
-        "activate_actors": "[ ->actor ]"
-      }
-    },
-    {
-      "class_name": "navigate",
-      "class_description": "",
-      "base_class_name": "game_command",
-      "fields": {
-      }
-    },
-    {
-      "class_name": "join_game",
-      "class_description": "command to join a game",
-      "base_class_name": "game_command",
-      "fields": {
-        "game_id": "->game"
-      }
-    },
-    {
-      "class_name": "exit_game",
-      "class_description": "command to leave a game",
-      "base_class_name": "game_command",
-      "fields": {
-        "game_id": "->game"
-      }
-    },
-    {
       "class_name": "content",
       "class_description": "a comment on an article",
       "base_class_name": "sys_object",
@@ -285,6 +58,7 @@
       "fields": {
         "title": "string",
         "text": "string",
+        "content": "->content",
         "comments": "[ news_comment ]"
       }
     },
@@ -432,12 +206,468 @@
         "description": "string",
         "incumbent": "contact"
       }
+    },
+    {
+      "class_name": "job_activity",
+      "class_description": "item on the job",
+      "base_class_name": "sys_object",
+      "parents": [ "job" ],
+      "fields": {
+        "name": "string",
+        "description": "string"
+      }
+    },
+    {
+      "class_name": "job_application",
+      "class_description": "offices to influence or control",
+      "base_class_name": "sys_object",
+      "parents": [ "job" ],
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "amount": "double"
+      }
+    },
+    {
+      "class_name": "job",
+      "class_description": "offices to influence or control",
+      "base_class_name": "sys_object",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "amount": "double",
+        "address": "address",
+        "contact": "contact",
+        "required": "[exam]",
+        "applications": "[job_application]",
+        "activities": "[job_activity]"
+      }
+    },
+    {
+      "class_name": "candidate",
+      "class_description": "Candidates running for public office",
+      "base_class_name": "sys_object",
+      "fields": {
+        "candidate_id": "string",
+        "full_name": "string",
+        "political_party": "string",
+        "election_year": "int64",
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "committees": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "committee_candidate",
+                "name": "committee_candidate",
+                "filter": {
+                  "candidate_id": "$this.candidate_id"
+                }
+              },
+              {
+                "class_name": "committee",
+                "name": "committee",
+                "filter": {
+                  "committee_id": "committee_candidate.committee_id"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "committee"
+              }
+            ]
+          }
+        }
+      },
+      "indexes": {
+        "candidate_candidate_id_idx": {
+          "index_keys": [
+            "candidate_id"
+          ]
+        },
+        "candidate_full_name_idx": {
+          "index_keys": [
+            "full_name"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "candidate_search",
+      "class_description": "search object for candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "full_name": "string",
+        "state": "string",
+        "city": "string",
+        "political_party": "string",
+        "candidates": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "candidate",
+                "name": "candidate"
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "candidate",
+                "condition": {
+                  "class_name": "any",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "full_name",
+                      "value": "$this.full_name"
+                    },
+                    {
+                      "class_name": "eq",
+                      "valuepath": "state",
+                      "value": "$this.state"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "city",
+                      "value": "$this.city"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "political_party",
+                      "value": "$this.political_party"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "class_name": "committee",
+      "class_description": "Political groups that accept money from the public to support candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_id": "string",
+        "committee_name": "string",
+        "political_party": "string"
+      },
+      "indexes": {
+        "committee_committee_id_idx": {
+          "index_keys": [
+            "committee_id"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "committee_search",
+      "class_description": "search object for committees",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_name": "string",
+        "political_party": "string",
+        "committees": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "committee",
+                "name": "committee",
+                "filter": {
+                  "committee_name": "$this.committee_name",
+                  "political_party": "$this.political_party"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "committee",
+                "condition": {
+                  "class_name": "all",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "committee_name",
+                      "value": "$this.committee_name"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "political_party",
+                      "value": "$this.political_party"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "class_name": "committee_candidate",
+      "class_description": "Mapping of committees and candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_id": "string",
+        "candidate_id": "string"
+      },
+      "indexes": {
+        "committee_candidate_committee_id_idx": {
+          "index_keys": [
+            "committee_id"
+          ]
+        },
+        "committee_candidate_candidate_id_idx": {
+          "index_keys": [
+            "candidate_id"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "individual",
+      "class_description": "Mapping of committees and candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_id": "string",
+        "full_name": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "employer": "string",
+        "occupation": "string",
+        "transaction_date": "datetime",
+        "transaction_amount": "double",
+        "memo": "string"
+      }
+    },
+    {
+      "class_name": "people",
+      "class_description": "SQL Server Adventure Works People.People",
+      "base_class_name": "sys_object",
+      "fields": {
+        "business_entity_id": "string",
+        "person_type": "string",
+        "name_style": "string",
+        "title": "string",
+        "full_name": "string",
+        "first_name": "string",
+        "middle_name": "string",
+        "last_name": "string",
+        "suffix": "string"
+      },
+      "sql": {
+        "connection_name": "AdventureWorks2016",
+        "sql_view_name": "[AdventureWorks2016].[Person].[Person]",
+        "sql_table_name": "[AdventureWorks2016].[Person].[Person]",
+        "mappings": [
+          {
+            "corona_field_name": "business_entity_id",
+            "sql_field_name": "BusinessEntityID",
+            "primary_key": true,
+            "field_type": "string",
+            "string_size": 100
+          },
+          {
+            "corona_field_name": "person_type",
+            "sql_field_name": "PersonType",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20
+          },
+          {
+            "corona_field_name": "name_style",
+            "sql_field_name": "NameStyle",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20
+          },
+          {
+            "corona_field_name": "title",
+            "sql_field_name": "Title",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20
+          },
+          {
+            "corona_field_name": "full_name",
+            "sql_field_name": "Upper(Concat(LastName, ', ', FirstName))",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 100
+          },
+          {
+            "corona_field_name": "first_name",
+            "sql_field_name": "FirstName",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 100
+          },
+          {
+            "corona_field_name": "middle_name",
+            "sql_field_name": "MiddleName",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 100
+          },
+          {
+            "corona_field_name": "last_name",
+            "sql_field_name": "LastName",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 100
+          },
+          {
+            "corona_field_name": "suffix",
+            "sql_field_name": "Suffix",
+            "primary_key": false,
+            "field_type": "string",
+            "string_size": 20
+          }
+        ]
+      },
+      "indexes": {
+        "people_full_name_idx": {
+          "index_keys": [
+            "full_name"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "people_search",
+      "class_description": "search object for people",
+      "base_class_name": "sys_object",
+      "fields": {
+        "full_name": "string",
+        "people": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "people",
+                "name": "people"
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "people",
+                "condition": {
+                  "class_name": "any",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "full_name",
+                      "value": "$this.full_name"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
     }
   ],
   "users": [
 
   ],
   "datasets": [
-
+      {
+        "dataset_name": "Candidate Master",
+        "dataset_description": "Load Candidates",
+        "dataset_version": "1.0",
+        "dataset_author": "Federal Elections Commission",
+        "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+        "import": {
+          "type": "csv",
+          "delimiter": "|",
+          "filename": "cn.csv",
+          "target_class": "candidate",
+          "column_map": {
+            "0": "candidate_id",
+            "1": "full_name",
+            "2": "political_party",
+            "3": "election_year",
+            "10": "street1",
+            "11": "street2",
+            "12": "city",
+            "13": "state",
+            "14": "zip"
+          }
+        }
+      },
+      {
+        "dataset_name": "Committee Master",
+        "dataset_description": "Load Committees",
+        "dataset_version": "1.0",
+        "dataset_author": "Federal Elections Commission",
+        "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+        "import": {
+          "type": "csv",
+          "delimiter": "|",
+          "filename": "cm.csv",
+          "target_class": "committee",
+          "column_map": {
+            "0": "committee_id",
+            "1": "committee_name",
+            "10": "political_party",
+            "13": "company_name"
+          }
+        }
+      },
+      {
+        "dataset_name": "CommitteeCandidates Master",
+        "dataset_description": "Map Committees and Candidates",
+        "dataset_version": "1.0",
+        "dataset_author": "Federal Elections Commission",
+        "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+        "import": {
+          "type": "csv",
+          "delimiter": "|",
+          "filename": "ccl.csv",
+          "target_class": "committee_candidate",
+          "column_map": {
+            "0": "candidate_id",
+            "3": "committee_id"
+          }
+        }
+      },
+      {
+        "dataset_name": "Individual Master",
+        "dataset_description": "Load Individuals",
+        "dataset_version": "1.0",
+        "dataset_author": "Federal Elections Commission",
+        "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+        "import": {
+          "type": "csv",
+          "delimiter": "|",
+          "filename": "itcont.csv",
+          "target_class": "individual",
+          "column_map": {
+            "0": "committee_id",
+            "8": "full_name",
+            "9": "city",
+            "10": "state",
+            "11": "zip",
+            "12": "employer",
+            "13": "occupation",
+            "14": "transaction_date",
+            "15": "transaction_amount",
+            "20": "memo"
+          }
+        }
+      }
   ]
 }

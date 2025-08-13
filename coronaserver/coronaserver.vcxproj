@@ -162,6 +162,10 @@
     <ClInclude Include="coronaserver.hpp">
       <FileType>CppCode</FileType>
     </ClInclude>
+    <CopyFileToFolders Include="game_schema.json">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
     <ClCompile Include="insuranceapplication.cpp" />
     <ClCompile Include="revolutionapplication.cpp">
       <FileType>CppHeader</FileType>

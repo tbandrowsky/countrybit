@@ -1,0 +1,243 @@
+{
+  "schema_name": "Game Schema",
+  "schema_description": "Schema for the multiplayer gaming.",
+  "schema_version": "1.0",
+  "schema_authors": [
+    "TJ Bandrowsky"
+  ],
+  "classes": [
+    {
+      "class_name": "point",
+      "class_description": "a point",
+      "base_class_name": "sys_object",
+      "parents": [ "polygon" ],
+      "fields": {
+        "x": "double",
+        "y": "double",
+        "z": "double"
+      }
+    },
+    {
+      "class_name": "polygon",
+      "class_description": "a shape defined by a list of points",
+      "base_class_name": "sys_object",
+      "parents": [ "shape" ],
+      "fields": {
+        "fill_brush": "string",
+        "border_brush": "string",
+        "border_thickness": "double",
+        "points": "[ point ]",
+        "text": "string",
+        "font_name": "string",
+        "font_size": "string"
+      }
+    },
+    {
+      "class_name": "shape",
+      "class_description": "a shape defined by a list of points",
+      "base_class_name": "sys_object",
+      "parents": [ "actor" ],
+      "fields": {
+        "name": "string",
+        "polygons": "[ polygon ]"
+      }
+    },
+    {
+      "class_name": "actor",
+      "class_description": "an item on the board",
+      "base_class_name": "sys_object",
+      "parents": [ "actor" ],
+      "fields": {
+        "name": "string",
+        "type": "string",
+        "state": "string",
+        "shape": "[shape]",
+        "x": "double",
+        "y": "double",
+        "z": "double",
+        "dx": "double",
+        "dy": "double",
+        "dz": "double",
+        "w": "double",
+        "h": "double",
+        "ax": "double",
+        "ay": "double",
+        "az": "double",
+        "quantity": "double",
+        "children": "[ actor:parent ]",
+        "selection": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "pawn",
+      "class_description": "a player",
+      "base_class_name": "actor",
+      "fields": {
+        "user_name": "string",
+        "game": "->game"
+      },
+      "indexes": {
+        "idx_user_name": {
+          "fields": [ "user_name" ]
+        }
+      }
+    },
+    {
+      "class_name": "recipe_ingredient",
+      "class_description": "something consumed by recipe",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "consume_class_name": "string",
+        "amount_used": "double"
+      }
+    },
+    {
+      "class_name": "recipe_dish",
+      "class_description": "something produced by a recipe",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "create_class_name": "string",
+        "amount_made": "double"
+      }
+    },
+    {
+      "class_name": "recipe",
+      "class_description": "a means to produce a good given other goods",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "ingredients": "[ recipe_ingredient ]",
+        "dishes": "[ recipe_dish ]"
+      }
+    },
+    {
+      "class_name": "board",
+      "class_description": "a board in revolution",
+      "base_class_name": "actor",
+      "parents": [ "game" ],
+      "fields": {
+        "name": "string",
+        "type": "string",
+        "form_name": "string"
+      },
+      "indexes": {
+        "idx_user_name": {
+          "fields": [ "user_name" ]
+        }
+      }
+    },
+    {
+      "class_name": "game",
+      "class_description": "a board in revolution",
+      "base_class_name": "sys_object",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "state": "string",
+        "boards": "[ board ]",
+        "initial_board": "->board"
+      }
+    },
+    {
+      "class_name": "game_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "sys_command",
+      "fields": {
+        "game": "->game",
+        "board": "->board",
+        "page": "->page",
+        "actor": "->actor",
+        "token": "string"
+      }
+    },
+    {
+      "class_name": "clear_selection",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "game_command",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "extend_selection",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "game_command",
+      "fields": {
+        "add_actors": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "compose_selection",
+      "class_description": "command to consume selected pieces to create another",
+      "base_class_name": "game_command",
+      "fields": {
+        "compose_class_name": "string"
+      }
+    },
+    {
+      "class_name": "take_actor",
+      "class_description": "command to add additional items to inventory",
+      "base_class_name": "game_command",
+      "fields": {
+        "take_actors": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "drop_actor",
+      "class_description": "command to drop selected pieces in inventory",
+      "base_class_name": "game_command",
+      "fields": {
+        "drop_actors": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "accelerate_actor",
+      "class_description": "command to move selected pieces",
+      "base_class_name": "game_command",
+      "fields": {
+        "accelerate_actors": "[ ->actor ]",
+        "ax": "double",
+        "ay": "double",
+        "az": "double"
+      }
+    },
+    {
+      "class_name": "activate_actor",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "game_command",
+      "fields": {
+        "activate_actors": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "navigate",
+      "class_description": "",
+      "base_class_name": "game_command",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "join_game",
+      "class_description": "command to join a game",
+      "base_class_name": "game_command",
+      "fields": {
+        "game_id": "->game"
+      }
+    },
+    {
+      "class_name": "exit_game",
+      "class_description": "command to leave a game",
+      "base_class_name": "game_command",
+      "fields": {
+        "game_id": "->game"
+      }
+    }
+ ],
+  "users": [
+
+  ],
+  "datasets": [
+
+  ]
+}

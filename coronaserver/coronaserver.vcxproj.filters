@@ -28,6 +28,9 @@
     <CopyFileToFolders Include="config.json" />
     <CopyFileToFolders Include="insurance_schema.json" />
     <CopyFileToFolders Include="revolution_schema.json" />
+    <CopyFileToFolders Include="game_schema.json">
+      <Filter>Source Files</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
     <None Include="ccl.csv" />

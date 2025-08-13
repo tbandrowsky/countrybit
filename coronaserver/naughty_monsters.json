@@ -1,0 +1,443 @@
+{
+  "schema_name": "Revolution",
+  "schema_description": "Schema for the Revolution.",
+  "schema_version": "1.0",
+  "schema_authors": [
+    "TJ Bandrowsky"
+  ],
+  "classes": [
+    {
+      "class_name": "address",
+      "class_description": "a place where something is",
+      "base_class_name": "sys_object",
+      "fields": {
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "country": "string"
+      }
+    },
+    {
+      "class_name": "contact",
+      "class_description": "a someone",
+      "base_class_name": "sys_object",
+      "fields": {
+        "first_name": "string",
+        "last_name": "string",
+        "mobile_phone": "string",
+        "other_phone": "string",
+        "current_email": "string",
+        "other_email": "string"
+      }
+    },
+    {
+      "class_name": "point",
+      "class_description": "a point",
+      "base_class_name": "sys_object",
+      "parents": [ "polygon" ],
+      "fields": {
+        "x": "double",
+        "y": "double",
+        "z": "double"
+      }
+    },
+    {
+      "class_name": "polygon",
+      "class_description": "a shape defined by a list of points",
+      "base_class_name": "sys_object",
+      "parents": [ "shape" ],
+      "fields": {
+        "fill_brush": "string",
+        "border_brush": "string",
+        "border_thickness": "double",
+        "points": "[ point ]",
+        "text": "string",
+        "font_name": "string",
+        "font_size": "string"
+      }
+    },
+    {
+      "class_name": "shape",
+      "class_description": "a shape defined by a list of points",
+      "base_class_name": "sys_object",
+      "parents": [ "actor" ],
+      "fields": {
+        "name": "string",
+        "polygons": "[ polygon ]"
+      }
+    },
+    {
+      "class_name": "actor",
+      "class_description": "an item on the board",
+      "base_class_name": "sys_object",
+      "parents": [ "actor" ],
+      "fields": {
+        "name": "string",
+        "type": "string",
+        "state": "string",
+        "shape": "[shape]",
+        "x": "double",
+        "y": "double",
+        "z": "double",
+        "dx": "double",
+        "dy": "double",
+        "dz": "double",
+        "w": "double",
+        "h": "double",
+        "ax": "double",
+        "ay": "double",
+        "az": "double",
+        "quantity": "double",
+        "children": "[ actor:parent ]",
+        "selection": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "pawn",
+      "class_description": "a player",
+      "base_class_name": "actor",
+      "fields": {
+        "user_name": "string",
+        "game": "->game"
+      },
+      "indexes": {
+        "idx_user_name": {
+          "fields": [ "user_name" ]
+        }
+      }
+    },
+    {
+      "class_name": "recipe_ingredient",
+      "class_description": "something consumed by recipe",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "consume_class_name": "string",
+        "amount_used": "double"
+      }
+    },
+    {
+      "class_name": "recipe_dish",
+      "class_description": "something produced by a recipe",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "create_class_name": "string",
+        "amount_made": "double"
+      }
+    },
+    {
+      "class_name": "recipe",
+      "class_description": "a means to produce a good given other goods",
+      "base_class_name": "sys_object",
+      "parents": [ "recipe" ],
+      "fields": {
+        "ingredients": "[ recipe_ingredient ]",
+        "dishes": "[ recipe_dish ]"
+      }
+    },
+    {
+      "class_name": "board",
+      "class_description": "a board in revolution",
+      "base_class_name": "actor",
+      "parents": [ "game" ],
+      "fields": {
+        "name": "string",
+        "type": "string",
+        "form_name": "string"
+      },
+      "indexes": {
+        "idx_user_name": {
+          "fields": [ "user_name" ]
+        }
+      }
+    },
+    {
+      "class_name": "game",
+      "class_description": "a board in revolution",
+      "base_class_name": "sys_object",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "state": "string",
+        "boards": "[ board ]",
+        "initial_board": "->board"
+      }
+    },
+    {
+      "class_name": "game_command",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "sys_command",
+      "fields": {
+        "game": "->game",
+        "board": "->board",
+        "page": "->page",
+        "actor": "->actor",
+        "token": "string"
+      }
+    },
+    {
+      "class_name": "clear_selection",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "game_command",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "extend_selection",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "game_command",
+      "fields": {
+        "add_actors": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "compose_selection",
+      "class_description": "command to consume selected pieces to create another",
+      "base_class_name": "game_command",
+      "fields": {
+        "compose_class_name": "string"
+      }
+    },
+    {
+      "class_name": "take_actor",
+      "class_description": "command to add additional items to inventory",
+      "base_class_name": "game_command",
+      "fields": {
+        "take_actors": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "drop_actor",
+      "class_description": "command to drop selected pieces in inventory",
+      "base_class_name": "game_command",
+      "fields": {
+        "drop_actors": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "accelerate_actor",
+      "class_description": "command to move selected pieces",
+      "base_class_name": "game_command",
+      "fields": {
+        "accelerate_actors": "[ ->actor ]",
+        "ax": "double",
+        "ay": "double",
+        "az": "double"
+      }
+    },
+    {
+      "class_name": "activate_actor",
+      "class_description": "command for one piece to activate another",
+      "base_class_name": "game_command",
+      "fields": {
+        "activate_actors": "[ ->actor ]"
+      }
+    },
+    {
+      "class_name": "navigate",
+      "class_description": "",
+      "base_class_name": "game_command",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "join_game",
+      "class_description": "command to join a game",
+      "base_class_name": "game_command",
+      "fields": {
+        "game_id": "->game"
+      }
+    },
+    {
+      "class_name": "exit_game",
+      "class_description": "command to leave a game",
+      "base_class_name": "game_command",
+      "fields": {
+        "game_id": "->game"
+      }
+    },
+    {
+      "class_name": "content",
+      "class_description": "a comment on an article",
+      "base_class_name": "sys_object",
+      "parents": [ "news_article" ],
+      "fields": {
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "news_comment",
+      "class_description": "a comment on an article",
+      "base_class_name": "sys_object",
+      "parents": [ "news_article" ],
+      "fields": {
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "news_article",
+      "class_description": "an article",
+      "base_class_name": "sys_object",
+      "parents": [ "news_section" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "comments": "[ news_comment ]"
+      }
+    },
+    {
+      "class_name": "news_section",
+      "class_description": "a section of articles",
+      "base_class_name": "sys_object",
+      "parents": [ "news_group" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "sections": "[ news_section ]"
+      }
+    },
+    {
+      "class_name": "news_group",
+      "class_description": "a group of sections",
+      "parents": [ "news_library" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "sections": "[ news_section ]"
+      }
+    },
+    {
+      "class_name": "news_library",
+      "class_description": "a group of groups in a space",
+      "base_class_name": "sys_object",
+      "parents": [ "goal" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "sections": "[ news_group ]"
+      }
+    },
+    {
+      "class_name": "event",
+      "class_description": "a group of groups in a space",
+      "base_class_name": "sys_object",
+      "parents": [ "goal" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "date": "datetime",
+        "address": "address",
+        "contact": "contact",
+        "url": "string",
+        "game": "string"
+      }
+    },
+    {
+      "class_name": "goal_vote",
+      "class_description": "an object for people to achieve",
+      "base_class_name": "sys_object",
+      "parents": [ "goal" ],
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "support_goal": "boolean",
+        "agree_goal": "boolean",
+        "disagree_goal": "boolean",
+        "oppose_goal": "boolean",
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "goal",
+      "class_description": "an object for people to achieve",
+      "base_class_name": "sys_object",
+      "parents": [ "public_office" ],
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "support_goal": "number",
+        "agree_goal": "number",
+        "disagree_goal": "number",
+        "oppose_goal": "number",
+        "votes": [ "goal_vote" ],
+        "events": [ "event" ]
+      }
+    },
+    {
+      "class_name": "public_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "sys_object",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "incumbent": "contact",
+        "goals": "[goal]"
+      }
+    },
+    {
+      "class_name": "corporate_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "corporation": "string"
+      }
+    },
+    {
+      "class_name": "federal_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "branch": "string",
+        "description": "string",
+        "incumbent": "contact"
+      }
+    },
+    {
+      "class_name": "state_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "branch": "string",
+        "district": "string",
+        "state": "string",
+        "description": "string",
+        "incumbent": "contact"
+      }
+    },
+    {
+      "class_name": "city_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "state": "string",
+        "city": "string",
+        "description": "string",
+        "incumbent": "contact"
+      }
+    },
+    {
+      "class_name": "county_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "state": "string",
+        "county": "string",
+        "description": "string",
+        "incumbent": "contact"
+      }
+    }
+  ],
+  "users": [
+
+  ],
+  "datasets": [
+
+  ]
+}
