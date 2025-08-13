@@ -3,16 +3,16 @@
     "ApiKey": "CONNECTION_SENDGRID",
     "SenderName": "Todd Bandrowsky",
     "SenderEmail": "todd.bandrowsky@countryvideogames.com",
-    "UserConfirmationTitle": "Your Insurance Account"
+    "UserConfirmationTitle": "Your Revolution Enlistment"
   },
   "Connections": {
     "AdventureWorks2016": "Driver={ODBC Driver 17 for SQL Server};Server=BANDROWSKY-RIPP\\DEV01;Database=AdventureWorks2016;Trusted_Connection=yes;TrustServerCertificate=yes"
   },
   "Server": {
-    "listen_point": "https://+:443/insurance",
-    "application_name": "insurance",
-    "schema_filename": "insurance_schema.json",
-    "database_filename": "insurance_database.cdb",
+    "listen_point": "https://+:443/revolution",
+    "application_name": "revolution",
+    "schema_filename": "revolution_schema.json",
+    "database_filename": "revolution_database.cdb",
     "database_threads": 4,
     "database_recreate": true,
     "sys_user_name": "system",

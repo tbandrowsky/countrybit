@@ -1,4 +1,7 @@
-#ifdef CORONA_BUILD
+#define CORONA_REVOLUTION 1
+
+#ifdef CORONA_REVOLUTION
+
 #include "coronaserver.hpp"
 
 namespace corona::apps::revolution

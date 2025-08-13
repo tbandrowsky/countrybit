@@ -1,3 +1,5 @@
+
+#ifdef CORONA_INSURANCE
 #include "coronaserver.hpp"
 
 namespace corona::apps::insurance
@@ -202,4 +204,4 @@ int main(int argc, char* argv[])
     return CoronaMain(simulation, argc, argv);
 }
 
-
+#endif
