@@ -845,6 +845,8 @@ namespace corona
 
 	public:
 		corona_connections connections;
+		std::string onboarding_email;
+		std::string recovery_email;
 
 		corona_database_interface(std::shared_ptr<file> _fb) :
 			file_block(_fb)
@@ -5336,7 +5338,7 @@ private:
 
 		int64_t maximum_record_cache_size_bytes = giga_to_bytes(1);
 
-		bool send_user_confirmation(json user_info)
+		bool send_user_confirmation(json user_info, std::string email_template)
 		{
 			bool success = false;
 			try {
@@ -5352,7 +5354,9 @@ private:
 				sc_client.sender_name = sendgrid_sender;
 				sc_client.api_key = connections.get_connection("sendgrid");
 
-				std::string email_template = R"(<html><body><h2>$EMAIL_TITLE$</h2><p>Username is $USERNAME$</p><p>Validation code <span style="background:grey;border:1px solid black;padding 8px;">$CODE$</p></body></html>)";
+				if (email_template.empty()) {
+					email_template = R"(<html><body><h2>$EMAIL_TITLE$</h2><p>Username is $USERNAME$</p><p>Validation code <span style="background:grey;border:1px solid black;padding 8px;">$CODE$</p></body></html>)";
+				}
 
 				std::string user_name = user_info[user_name_field];
 
@@ -5375,6 +5379,11 @@ private:
 		std::string default_password;
 		std::string default_email_address;
 		std::string default_guest_team;
+		std::string default_onboard_email_filename;
+		std::string default_recovery_email_filename;
+		std::string default_onboard_email;
+		std::string default_recovery_email;
+
 		time_span token_life;
 
 		std::string default_api_title;
@@ -5436,6 +5445,10 @@ private:
 				default_api_description = server[sys_default_api_description_field];
 				default_api_version = server[sys_default_api_version_field];
 				default_api_author = server[sys_default_api_author_field];
+                default_onboard_email_filename = server[sys_default_onboard_email_template];
+				default_recovery_email_filename = server[sys_default_recovery_email_template];
+				default_onboard_email = read_all_string(default_onboard_email_filename);
+				default_recovery_email = read_all_string(default_recovery_email_filename);
 
 				if (server.has_member(sys_record_cache_field)) {
 					maximum_record_cache_size_bytes = (int64_t)server[sys_record_cache_field];
@@ -6127,7 +6140,7 @@ private:
 				new_user_wrapper = new_user_wrapper[data_field];
 				if (not is_system_user)
 				{
-					send_user_confirmation(new_user_wrapper);
+					send_user_confirmation(new_user_wrapper, default_onboard_email);
 				}
 				new_user_wrapper.erase_member("password");
 				new_user_wrapper.erase_member("confirmed_code");
@@ -6170,7 +6183,7 @@ private:
 
 			if (user_info.object()) {
 				message = "Code sent";
-				send_user_confirmation(user_info);
+				send_user_confirmation(user_info, recovery_email);
 			}
 
 			json errors = jp.create_array();

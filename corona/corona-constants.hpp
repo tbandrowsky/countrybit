@@ -660,6 +660,9 @@ namespace corona
 	const std::string sys_default_api_description_field = "api_description";
 	const std::string sys_default_api_version_field = "api_version";
 	const std::string sys_default_api_author_field = "api_author";
+	const std::string sys_default_onboard_email_template = "onboard_email_filename";
+	const std::string sys_default_recovery_email_template = "recovery_email_filename";
+
 
 	enum class field_types {
 		ft_none = 0,
