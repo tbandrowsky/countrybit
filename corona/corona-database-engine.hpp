@@ -5467,7 +5467,7 @@ private:
 		virtual std::string get_random_code()
 		{
 			std::string s_confirmation_code = "";
-			int confirmation_code_digits = 6;
+			int confirmation_code_digits = 8;
 			char confirmation_code[32] = {};
 
 			int rc = 0;
@@ -5989,9 +5989,39 @@ private:
 
 			}
 
-			bool is_stupid()
+			struct password_policy {
+				int min_length = 10;
+				int min_punctuation = 1;
+				int min_digits = 1;
+                int min_alpha = 1;
+			};
+
+			std::string is_stupid()
 			{
-				return char_count < 10 or (punctuation_count == 0 or digit_count == 0 or alpha_count == 0);
+				password_policy policy;
+
+				std::string plural = "s";
+
+				std::string corrections = "";
+				int c;
+				if ((c = policy.min_punctuation - punctuation_count) > 0) {
+                    std::string x = c > 1 ? "s" : "";
+					corrections += std::format( "Add {0} character{1}", c, x);
+                }
+				if ((c = policy.min_punctuation - punctuation_count) > 0) {
+					std::string x = c > 1 ? "s" : "";
+					corrections += std::format("Add {0} punctuation marks, like '!'", policy.min_length - char_count);
+				}
+				if ((c = policy.min_digits - digit_count) > 0) {
+					std::string x = c > 1 ? "s" : "";
+					corrections += std::format("Add {0} digits, like '0123'", policy.min_length - char_count);
+				}
+				if ((c = policy.min_alpha - alpha_count) > 0) {
+					std::string x = c > 1 ? "s" : "";
+					corrections += std::format("Add {0} letters, like 'Abc'", policy.min_alpha - alpha_count);
+				}
+
+				return corrections;
 			}
 		};
 
@@ -6055,8 +6085,9 @@ private:
 			// password complexity check
 
 			password_metrics pm1(user_password1);
+            std::string reason = pm1.is_stupid();
 
-			if (pm1.is_stupid())
+			if (not reason.empty())
 			{
 				std::vector<validation_error> errors;
 				validation_error err;
@@ -6074,7 +6105,7 @@ private:
 				errors.push_back(err);
 
 				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				response = create_user_response(create_user_request, false, std::format("Password '{4}' does not meet complexity requirements.  Password must be at least 10 characters long, have letters, numbers, and punctuation marks.  You have length = {0}, letters = {1}, numbers = {2}, punctuation = {3}.", pm1.char_count, pm1.alpha_count, pm1.digit_count, pm1.punctuation_count, user_password1), data, errors, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, std::format("Password too simple:{0}", reason), data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -6405,7 +6436,8 @@ private:
 
 			password_metrics pm1(user_password1);
 
-			if (pm1.is_stupid())
+            std::string reason = pm1.is_stupid();
+			if (not reason.empty())
 			{
 				std::vector<validation_error> errors;
 				validation_error err;
@@ -6416,7 +6448,8 @@ private:
 				err.message = "Password too simple.";
 				errors.push_back(err);
 
-				response = create_user_response(_password_request, false, "Password fails complexity test.", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+
+				response = create_user_response(_password_request, false, std::format( "Password fails complexity test: {0}", reason), jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}

@@ -19,7 +19,7 @@
     "sys_user_password": "systempassword1!",
     "sys_user_email": "todd.bandrowsky@gmail.com",
     "new_user_default_team": "Guests",
-    "onboard_email_filename": "onboarding_email_template",
-    "recovery_email_filename": "account_recovery_email_template"
+    "onboard_email_filename": "onboarding_email_template.html",
+    "recovery_email_filename": "account_recovery_email_template.html"
   }
 }
