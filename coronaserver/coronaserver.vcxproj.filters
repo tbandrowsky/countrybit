@@ -31,6 +31,8 @@
     <CopyFileToFolders Include="game_schema.json">
       <Filter>Source Files</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="account_recovery_email_template.html" />
+    <CopyFileToFolders Include="onboarding_email_template.html" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ccl.csv" />
