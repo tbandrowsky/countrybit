@@ -374,3 +374,7 @@ FodyWeavers.xsd
 /coronaserver/ky_eform_schema.json
 /coronaserver/seed_data/us_elections/data.txt
 /coronaserver/seed_data/us_elections/randomfile.xsd
+/coronaserver/seed_data/us_elections/ccl.csv
+/coronaserver/seed_data/us_elections/cm.csv
+/coronaserver/seed_data/us_elections/cn.csv
+/coronaserver/seed_data/us_elections/itcont.csv
