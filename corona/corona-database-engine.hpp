@@ -7315,9 +7315,10 @@ private:
 
 						// now that we have our class, we can go ahead and open the storage for it
 
-						json data_list = class_pair.second.map([](std::string _member, int _index, json& _item) -> json {
-							return _item[data_field];
-							});
+						json data_list = jp.create_array();
+						for (const auto& item : class_pair.second) {
+							data_list.push_back(item[data_field]);
+						}
 
 						auto perms = get_class_permission(user_name, class_pair.first);
 
