@@ -4538,7 +4538,7 @@ namespace corona
 
 private:
 
-		const int max_write_threads = 4;
+		const int max_write_threads = 8;
         HANDLE save_semaphore = CreateSemaphore(NULL, max_write_threads, max_write_threads, NULL);
 
 		virtual void save()
