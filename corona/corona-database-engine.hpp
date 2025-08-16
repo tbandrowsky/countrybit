@@ -5812,13 +5812,15 @@ private:
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
 											datomatic.push_back(new_object);
 											if (datomatic.size() > 10000) {
+                                                int batch_size = (int)datomatic.size();
 												total_row_count += datomatic.size();
 												json request(datomatic);
 												json cor = create_system_request(request);
-												put_object_sync(cor, [this, &total_row_count, &datomatic](json& put_result, double _exec_time) {
+
+												put_object_sync(cor, [this, total_row_count, batch_size](json& put_result, double _exec_time) {
 													if (put_result[success_field]) {
-                                                        double x = datomatic.size() / _exec_time;
-														std::string msg = std::format("import {0:.2f} rows / sec, {1} rows total", x, total_row_count);
+														double x = batch_size / _exec_time;
+														std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
 														system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
 													}
 													else 
@@ -5826,16 +5828,20 @@ private:
 														log_error_array(put_result);
 													}
 												});
+
+												datomatic = jp.create_array();
 											}
 										}
 
 										if (datomatic.size() > 0) {
-											total_row_count += datomatic.size();
+											int batch_size = (int)datomatic.size();
+											total_row_count += batch_size;
 											json request(datomatic);
 											json cor = create_system_request(request);
-											put_object_sync(cor, [this, total_row_count, &datomatic](json& put_result, double _exec_time) {
+											put_object_sync(cor, [this, total_row_count, batch_size](json& put_result, double _exec_time) {
 												if (put_result[success_field]) {
-													std::string msg = std::format("import {0:.2f} rows / sec, {1} rows total", datomatic.size() / _exec_time, total_row_count);
+													double x = batch_size / _exec_time;
+													std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
 													system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
 												}
 												else
