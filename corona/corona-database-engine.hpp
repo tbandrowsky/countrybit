@@ -4547,7 +4547,7 @@ private:
 			try {
 				cache->save();
 				int64_t bytes_written = commit();
-				system_monitoring_interface::global_mon->log_information(std::format("Database saved, {0} bytes written", bytes_written), __FILE__, __LINE__);
+//				system_monitoring_interface::global_mon->log_information(std::format("Database saved, {0} bytes written", bytes_written), __FILE__, __LINE__);
 			} 
 			catch (std::exception exc)
 			{
