@@ -180,9 +180,6 @@
     <CopyFileToFolders Include="account_recovery_email_template.html">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
     </CopyFileToFolders>
-    <None Include="ccl.csv" />
-    <None Include="cm.csv" />
-    <None Include="cn.csv" />
     <CopyFileToFolders Include="config.json">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <FileType>Document</FileType>

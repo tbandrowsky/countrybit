@@ -35,9 +35,6 @@
     <CopyFileToFolders Include="onboarding_email_template.html" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ccl.csv" />
-    <None Include="cm.csv" />
-    <None Include="cn.csv" />
     <None Include="packages.config" />
     <None Include="corona.postman_collection.json" />
     <None Include="deploy.ps1" />
