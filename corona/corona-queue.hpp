@@ -84,6 +84,8 @@ namespace corona {
 	public:
 		HANDLE notification_handle;
 		runnable function_to_run;
+		double execution_time_seconds;
+		timer queue_time;
 		general_job();
 		general_job(runnable _runnable, HANDLE _notification_handle = nullptr);
 		virtual bool queued(job_queue* _callingQueue) override {
@@ -289,12 +291,14 @@ namespace corona {
 	general_job::general_job()
 	{
 		notification_handle = nullptr;
+		execution_time_seconds = 0;
 	}
 
 	general_job::general_job(runnable _runnable, HANDLE _notification_handle)
 	{
 		notification_handle = _notification_handle;
 		function_to_run = _runnable;
+		execution_time_seconds = 0;
 	}
 
 	general_job::~general_job()
@@ -305,6 +309,7 @@ namespace corona {
 	job_notify general_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 	{
 		job_notify jobNotify;
+		timer tx;
 
 		if (notification_handle) {
 			jobNotify.setSignal(notification_handle);
@@ -709,6 +714,7 @@ namespace corona {
 
 			global_job_queue->submit_job([&locker, &job_timer, &_tests, test_seconds]() -> void
 				{
+					timer exec_time;
 					system_monitoring_interface::global_mon->log_information("job start", __FILE__, __LINE__);
 					scope_multilock locko = locker.lock({ object_lock_types::lock_table, 0, 0 });
                     double elapsed = job_timer.get_elapsed_seconds();	

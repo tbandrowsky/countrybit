@@ -5812,38 +5812,38 @@ private:
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
 											datomatic.push_back(new_object);
 											if (datomatic.size() > 10000) {
-												timer tx;
-												json cor = create_system_request(datomatic);
-												json put_result =  put_object(cor);
-												if (put_result[success_field]) {
-													double e = tx.get_elapsed_seconds();
-													total_row_count += datomatic.size();
-													std::string msg = std::format("import {0:.2f} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
-													system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
-													datomatic = jp.create_array();
-												}
-												else {
-													log_error_array(put_result);
-													break;
-												}
+												total_row_count += datomatic.size();
+												json request(datomatic);
+												json cor = create_system_request(request);
+												put_object_sync(cor, [this, &total_row_count, &datomatic](json& put_result, double _exec_time) {
+													if (put_result[success_field]) {
+                                                        double x = datomatic.size() / _exec_time;
+														std::string msg = std::format("import {0:.2f} rows / sec, {1} rows total", x, total_row_count);
+														system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
+													}
+													else 
+													{
+														log_error_array(put_result);
+													}
+												});
 											}
 										}
 
 										if (datomatic.size() > 0) {
-											timer tx;
-											json cor = create_system_request(datomatic);
-											json put_result = put_object(cor);
-											if (put_result[success_field]) {
-												double e = tx.get_elapsed_seconds();
-												total_row_count += datomatic.size();
-												std::string msg = std::format("final import {0:.2f} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
-												system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
-												datomatic = jp.create_array();
-											}
-											else {
-												log_error_array(put_result);
-												break;
-											}
+											total_row_count += datomatic.size();
+											json request(datomatic);
+											json cor = create_system_request(request);
+											put_object_sync(cor, [this, total_row_count, &datomatic](json& put_result, double _exec_time) {
+												if (put_result[success_field]) {
+													std::string msg = std::format("import {0:.2f} rows / sec, {1} rows total", datomatic.size() / _exec_time, total_row_count);
+													system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
+												}
+												else
+												{
+													log_error_array(put_result);
+												}
+												});
+                                            datomatic = jp.create_array();
 										}
 
 									}
@@ -7353,6 +7353,34 @@ private:
 			read_scope_lock my_lock(database_lock);
 
 			return put_object_nl(put_object_request);
+		}
+
+		virtual void put_object_async(json put_object_request, std::function<void(json& result, double exec_time)> on_complete)
+		{
+			global_job_queue->submit_job([this, put_object_request, on_complete]() {
+				timer tx;
+				// this is a lambda that will run in the job queue
+				// it will call the put_object_nl method, which will
+				// lock the database and do the work.
+				read_scope_lock my_lock(database_lock);
+				json result = this->put_object_nl(put_object_request);
+				if (on_complete)
+				{
+					on_complete(result, tx.get_elapsed_seconds());
+				}
+			}, NULL);
+		}
+
+		virtual void put_object_sync(json put_object_request, std::function<void(json& result, double exec_time)> on_complete)
+		{
+			timer tx;
+				// lock the database and do the work.
+			read_scope_lock my_lock(database_lock);
+			json result = this->put_object_nl(put_object_request);
+			if (on_complete)
+			{
+				on_complete(result, tx.get_elapsed_seconds());
+			}
 		}
 
 		virtual json get_object(json get_object_request)

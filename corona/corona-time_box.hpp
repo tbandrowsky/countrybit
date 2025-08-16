@@ -826,8 +826,8 @@ namespace corona
 
 	class timer
 	{
-		LARGE_INTEGER last_time;
-		LARGE_INTEGER frequency;
+		mutable LARGE_INTEGER last_time;
+		mutable LARGE_INTEGER frequency;
 	public:
 		
 		timer()
@@ -836,7 +836,7 @@ namespace corona
 			::QueryPerformanceCounter(&last_time);
 		}
 
-		double get_elapsed_seconds()
+		double get_elapsed_seconds() const 
 		{
 			LARGE_INTEGER current_time;
 			::QueryPerformanceCounter(&current_time);
@@ -845,7 +845,7 @@ namespace corona
 			return elapsed;
 		}
 
-		double get_elapsed_seconds_total()
+		double get_elapsed_seconds_total() const 
 		{
 			LARGE_INTEGER current_time;
 			::QueryPerformanceCounter(&current_time);
