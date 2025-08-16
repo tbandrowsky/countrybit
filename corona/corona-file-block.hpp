@@ -42,6 +42,8 @@ namespace corona
 		buffer  buff;
 		bool is_dirty;
         date_time last_accessed;
+		int64_t dirty_start = -1;
+		int64_t dirty_stop = -1;
 
 		file_buffer() 
 		{
@@ -297,6 +299,18 @@ namespace corona
 				fb = acquire_buffer(_location, _buffer_length, buffer_access_type::access_write);
 			}
 
+            int64_t stop = _location + _buffer_length;			
+
+			if (fb->dirty_stop < 0 or stop > fb->dirty_stop)
+			{
+				fb->dirty_stop = stop;
+			}
+			
+			if (fb->dirty_start < 0 or _location < fb->dirty_start)
+			{
+				fb->dirty_start = _location;
+			}
+
 			fb->is_dirty = true;
             fb->last_accessed = date_time::now();
 
@@ -430,8 +444,7 @@ namespace corona
 		virtual void commit() override
 		{
 		
-			commit_job_master cjm;
-
+			std::vector<std::shared_ptr<file_buffer>> dirty_buffers;
 			{
 				scope_lock lockme(buffer_lock);
 
@@ -466,7 +479,12 @@ namespace corona
 				while (i < dirty_buffers.size())
 				{
 					auto& trans_buff = dirty_buffers[i];
-					get_fp()->write(trans_buff->start, trans_buff->buff.get_ptr(), trans_buff->stop - trans_buff->start, &fence);
+					if (trans_buff->dirty_start >= 0 or trans_buff->dirty_stop >= 0) {
+						get_fp()->write(trans_buff->dirty_start, trans_buff->buff.get_ptr() + trans_buff->dirty_start, trans_buff->dirty_stop - trans_buff->dirty_start, &fence);
+					}
+					else {
+						get_fp()->write(trans_buff->start, trans_buff->buff.get_ptr(), trans_buff->stop - trans_buff->start, &fence);
+					}
 					i++;
 				}
 			}
