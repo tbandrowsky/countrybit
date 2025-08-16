@@ -150,7 +150,7 @@ namespace corona
 
 		virtual file* get_fp() = 0;
 
-		virtual void commit() = 0;
+		virtual int64_t commit() = 0; // returns bytes_written
 
 		virtual int buffer_count() = 0;
 		virtual void clear() = 0;
@@ -441,8 +441,9 @@ namespace corona
 			return false;
 		}
 
-		virtual void commit() override
+		virtual int64_t commit() override
 		{
+			int64_t bytes_written = 0;
 		
 			std::vector<std::shared_ptr<file_buffer>> dirty_buffers;
 			{
@@ -480,15 +481,18 @@ namespace corona
 				{
 					auto& trans_buff = dirty_buffers[i];
 					if (trans_buff->dirty_start >= 0 or trans_buff->dirty_stop >= 0) {
-						get_fp()->write(trans_buff->dirty_start, trans_buff->buff.get_ptr() + trans_buff->dirty_start, trans_buff->dirty_stop - trans_buff->dirty_start, &fence);
+						bytes_written += trans_buff->dirty_stop - trans_buff->dirty_start;
+						get_fp()->write(trans_buff->dirty_start, trans_buff->buff.get_ptr() + trans_buff->dirty_start - trans_buff->start, trans_buff->dirty_stop - trans_buff->dirty_start, &fence);
 					}
 					else {
+						bytes_written += trans_buff->stop - trans_buff->start;
 						get_fp()->write(trans_buff->start, trans_buff->buff.get_ptr(), trans_buff->stop - trans_buff->start, &fence);
 					}
 					i++;
 				}
 			}
 			fence.wait();
+			return bytes_written;
 		}
 
 		virtual int buffer_count() override
