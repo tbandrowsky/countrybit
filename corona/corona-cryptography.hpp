@@ -25,8 +25,12 @@ namespace corona
 {
 	class crypto
 	{
+        lockable crypto_lock;
+
 		buffer get_crypto_buffer(BCRYPT_HANDLE _item, const wchar_t* _property_name)
 		{
+			scope_lock mylock(crypto_lock);
+
 			DWORD bytes_length = {};
 			DWORD result_bytes = {};
 			NTSTATUS status;
@@ -57,6 +61,8 @@ namespace corona
 
 		std::string hash(std::string _src)
 		{
+			scope_lock mylock(crypto_lock);
+
 			std::string signature;
 
 			BCRYPT_ALG_HANDLE algorithm = {};
@@ -106,6 +112,8 @@ namespace corona
 
 		std::string hash(json& _src)
 		{
+			scope_lock mylock(crypto_lock);
+
 			std::string signature;
 
 			BCRYPT_ALG_HANDLE algorithm = {};
@@ -155,6 +163,9 @@ namespace corona
 
 		std::string encrypt(json& _src, std::string _pass_phrase, std::string _iv)
 		{
+
+			scope_lock mylock(crypto_lock);
+
 			std::string cipher_text;
 			std::string plain_text;
 
@@ -264,6 +275,9 @@ namespace corona
 
 		std::string decrypt(std::string cipher_text, std::string _pass_phrase, std::string _iv)
 		{
+
+			scope_lock mylock(crypto_lock);
+
 			std::string plain_text;
 
 			BCRYPT_ALG_HANDLE algorithm = {};

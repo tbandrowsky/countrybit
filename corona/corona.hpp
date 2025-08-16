@@ -55,6 +55,7 @@ For Future Consideration
 #include <regex>
 #include <queue>
 #include <ranges>
+#include <semaphore>
 
 #include <io.h>
 #include <fcntl.h>

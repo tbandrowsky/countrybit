@@ -41,6 +41,7 @@ namespace corona
 		int64_t top;
 		buffer  buff;
 		bool is_dirty;
+        date_time last_accessed;
 
 		file_buffer() 
 		{
@@ -63,6 +64,7 @@ namespace corona
 			top = _src.top;
 			is_dirty = _src.is_dirty;
 			buff = _src.buff;
+			last_accessed = _src.last_accessed;
 		}
 
 		file_buffer(file_buffer&& _src)
@@ -72,6 +74,7 @@ namespace corona
 			top = _src.top;
 			is_dirty = _src.is_dirty;
 			buff = std::move(_src.buff);
+			last_accessed = _src.last_accessed;
 		}
 
 		file_buffer& operator =(file_buffer&& _src)
@@ -81,6 +84,7 @@ namespace corona
 			top = _src.top;
 			buff = std::move(_src.buff);
 			is_dirty = _src.is_dirty;
+			last_accessed = _src.last_accessed;
 			return *this;
 		}
 
@@ -91,6 +95,7 @@ namespace corona
 			top = _src.top;
 			buff = _src.buff;
 			is_dirty = _src.is_dirty;
+			last_accessed = _src.last_accessed;
 			return *this;
 		}
 
@@ -242,6 +247,8 @@ namespace corona
 				std::copy(src, src + fb->stop - fb->start, dest);
 			}
 
+			new_buffer->last_accessed = date_time::now();
+
 			buffers = new_buffers;
 			buffers.push_back(new_buffer);
 
@@ -291,6 +298,7 @@ namespace corona
 			}
 
 			fb->is_dirty = true;
+            fb->last_accessed = date_time::now();
 
 			unsigned char* src = (unsigned char*)_buffer;
 			unsigned char* dest = (unsigned char*)fb->buff.get_ptr() + _location - fb->start;
@@ -333,6 +341,8 @@ namespace corona
 
 				fb = acquire_buffer(block_start, final_length, buffer_access_type::access_read);
 			}
+
+			fb->last_accessed = date_time::now();
 
 			unsigned char* src = (unsigned char*)fb->buff.get_ptr() + _location - fb->start;
 			unsigned char* dest = (unsigned char*)_buffer;
@@ -429,12 +439,23 @@ namespace corona
 				append_buffer->is_dirty = false;
 			}
 
+			std::vector<std::shared_ptr<file_buffer>> buffers_to_keep;
+
 			for (auto bf : buffers) {
 				if (bf->is_dirty) {
 					dirty_buffers.push_back(bf);
                     bf->is_dirty = false;
 				}
+                date_time expiration = bf->last_accessed + time_span(10, time_models::seconds);
+				if (expiration >= date_time::now()) {
+					buffers_to_keep.push_back(bf);
+                }
 			}
+
+			buffers.clear();
+			for (auto & bf : buffers_to_keep) {
+				buffers.push_back(bf);
+            }
 
 			if (dirty_buffers.size() > 0) {
 				int i = 0;

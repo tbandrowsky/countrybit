@@ -212,12 +212,11 @@ namespace corona
 		}
 		virtual void from_string(const std::string_view& _src)
 		{
-			std::string temp(_src);
-			if (temp.empty()) {
+			if (_src.empty()) {
 				value = 0.0;
 				return;
 			}
-			value = std::stod(temp);
+			value = std::strtod(_src.data(), nullptr);
 		}
 		virtual std::string format(std::string _format)
 		{
@@ -1093,6 +1092,10 @@ namespace corona
 
 		std::shared_ptr<json_string> string_impl() const {
 			return std::dynamic_pointer_cast<json_string>(value_base);
+		}
+
+		auto value_impl() const {
+			return value_base;
 		}
 
 		std::shared_ptr<json_array> array_impl() const {
@@ -1972,7 +1975,7 @@ namespace corona
 			return *this;
 		}
 
-		json put_member(std::string _key, std::shared_ptr<json_array> _value)
+		json put_member(std::string _key, const std::shared_ptr<json_value>& _value)
 		{
 			if (not object_impl()) {
 				throw std::logic_error("Not an object");
@@ -1981,7 +1984,16 @@ namespace corona
 			return *this;
 		}
 
-		json put_member(std::string _key, std::shared_ptr<json_object> _value)
+		json put_member(std::string _key, const std::shared_ptr<json_array>& _value) 
+		{
+			if (not object_impl()) {
+				throw std::logic_error("Not an object");
+			}
+			object_impl()->members[_key] = _value;
+			return *this;
+		}
+
+		json put_member(std::string _key, const std::shared_ptr<json_object>& _value)
 		{
 			if (not object_impl()) {
 				throw std::logic_error("Not an object");
@@ -2018,7 +2030,7 @@ namespace corona
 			return put_member(_key, _value);
 		}
 
-		json put_member(std::string _key, std::string _value)
+		json put_member(std::string _key, const std::string& _value)
 		{
 
 			if (not object_impl()) {

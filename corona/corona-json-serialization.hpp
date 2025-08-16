@@ -92,7 +92,18 @@ namespace corona
 			std::smatch matches;
 			if (std::regex_search(measure_string, matches, pattern)) {
 				std::string samount = matches[1];
-				damount = std::stod(samount);
+				if (not samount.empty()) {
+					try {
+						damount = std::stod(samount);
+					}
+					catch (const std::exception& e) {
+						system_monitoring_interface::global_mon->log_warning("measure amount is not a number: " + samount);
+						damount = 0;
+					}
+				}
+				else {
+					damount = 0;
+				}
 				sunits = matches[3];
 			}
 		}

@@ -4538,10 +4538,21 @@ namespace corona
 
 private:
 
+		const int max_write_threads = 4;
+        HANDLE save_semaphore = CreateSemaphore(NULL, max_write_threads, max_write_threads, NULL);
+
 		virtual void save()
 		{
-			cache->save();
-			commit();
+			WaitForSingleObject(save_semaphore, INFINITE);
+			try {
+				cache->save();
+				commit();
+			} 
+			catch (std::exception exc)
+			{
+
+			}
+            ReleaseSemaphore(save_semaphore, 1, NULL);
 		}
 
 		json create_class(std::string _text)
@@ -5800,14 +5811,14 @@ private:
 											new_object.erase_member(object_id_field);
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
 											datomatic.push_back(new_object);
-											if (datomatic.size() > 1000) {
+											if (datomatic.size() > 10000) {
 												timer tx;
 												json cor = create_system_request(datomatic);
 												json put_result =  put_object(cor);
 												if (put_result[success_field]) {
 													double e = tx.get_elapsed_seconds();
 													total_row_count += datomatic.size();
-													std::string msg = std::format("import {0:2} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
+													std::string msg = std::format("import {0:.2f} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
 													system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
 													datomatic = jp.create_array();
 												}
@@ -5825,7 +5836,7 @@ private:
 											if (put_result[success_field]) {
 												double e = tx.get_elapsed_seconds();
 												total_row_count += datomatic.size();
-												std::string msg = std::format("final import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
+												std::string msg = std::format("final import {0:.2f} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
 												system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
 												datomatic = jp.create_array();
 											}

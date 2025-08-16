@@ -139,9 +139,9 @@ namespace corona {
 
 	class job_queue : public lockable
 	{
-
 	protected:
 		HANDLE ioCompPort;
+		lockable queueLock;
 
 		std::vector<std::thread> threads;
 
@@ -628,6 +628,7 @@ namespace corona {
 
 		auto file_handle = _jobMessage->get_file_handle();
 		auto job_key = _jobMessage->get_job_key();
+		scope_lock lockme(queueLock);
 
 		if (io_jobs.try_get(file_handle, file_jobs)) {
 			file_jobs->jobs_by_ovp.insert(job_key, _jobMessage);
@@ -643,6 +644,8 @@ namespace corona {
 
 	io_job* job_queue::find_io_job(DWORD completionKey, LPOVERLAPPED overlapped)
 	{
+		scope_lock lockme(queueLock);
+
 		io_job* my_job = nullptr;
 		HANDLE hfile = (HANDLE)completionKey;
 		std::shared_ptr<job_file_request> file_jobs;
@@ -654,6 +657,8 @@ namespace corona {
 
 	bool job_queue::remove_io_job(io_job* _jobMessage)
 	{
+		scope_lock lockme(queueLock);
+
 		bool removed = false;
 		std::shared_ptr<job_file_request> file_jobs;
 
