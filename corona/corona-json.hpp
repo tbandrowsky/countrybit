@@ -213,6 +213,10 @@ namespace corona
 		virtual void from_string(const std::string_view& _src)
 		{
 			std::string temp(_src);
+			if (temp.empty()) {
+				value = 0.0;
+				return;
+			}
 			value = std::stod(temp);
 		}
 		virtual std::string format(std::string _format)
