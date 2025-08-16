@@ -372,3 +372,5 @@ FodyWeavers.xsd
 /coronaserver/test.cxdb
 /coronaserver/ky_eform_config.json
 /coronaserver/ky_eform_schema.json
+/coronaserver/seed_data/us_elections/data.txt
+/coronaserver/seed_data/us_elections/randomfile.xsd
