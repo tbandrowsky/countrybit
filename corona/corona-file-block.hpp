@@ -452,6 +452,7 @@ namespace corona
 				if (append_buffer and append_buffer->is_dirty) {
 					dirty_buffers.push_back(append_buffer);
 					append_buffer->is_dirty = false;
+					append_buffer = nullptr;
 				}
 
 				std::vector<std::shared_ptr<file_buffer>> buffers_to_keep;
@@ -488,6 +489,7 @@ namespace corona
 						bytes_written += trans_buff->stop - trans_buff->start;
 						get_fp()->write(trans_buff->start, trans_buff->buff.get_ptr(), trans_buff->stop - trans_buff->start, &fence);
 					}
+                    // system_monitoring_interface::global_mon->log_information(std::format("file block commit {0} {1} bytes", i, bytes_written), __FILE__, __LINE__);
 					i++;
 				}
 			}
