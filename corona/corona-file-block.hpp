@@ -430,7 +430,7 @@ namespace corona
 		virtual void commit() override
 		{
 		
-			std::vector<std::shared_ptr<file_buffer>> dirty_buffers;
+			commit_job_master cjm;
 
 			{
 				scope_lock lockme(buffer_lock);
