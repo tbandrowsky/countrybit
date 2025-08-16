@@ -5807,7 +5807,7 @@ private:
 												if (put_result[success_field]) {
 													double e = tx.get_elapsed_seconds();
 													total_row_count += datomatic.size();
-													std::string msg = std::format("import {0} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
+													std::string msg = std::format("import {0:2} rows / sec, {1} rows total", datomatic.size() / e, total_row_count);
 													system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
 													datomatic = jp.create_array();
 												}

@@ -33,6 +33,10 @@
     </CopyFileToFolders>
     <CopyFileToFolders Include="account_recovery_email_template.html" />
     <CopyFileToFolders Include="onboarding_email_template.html" />
+    <CopyFileToFolders Include="seed_data\us_elections\ccl.csv" />
+    <CopyFileToFolders Include="seed_data\us_elections\cm.csv" />
+    <CopyFileToFolders Include="seed_data\us_elections\cn.csv" />
+    <CopyFileToFolders Include="seed_data\us_elections\itcont.csv" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
