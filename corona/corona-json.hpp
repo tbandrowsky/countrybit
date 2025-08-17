@@ -1199,7 +1199,7 @@ namespace corona
 				else
 				{
 					auto member = object_impl()->members[s];
-					if (member->is_empty()) {
+					if (not member or member->is_empty()) {
 						good = false;
 						_missing.push_back(s);
 					}

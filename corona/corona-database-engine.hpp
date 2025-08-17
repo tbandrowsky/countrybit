@@ -4640,7 +4640,11 @@ private:
 
 				for (auto fld : class_data->get_fields()) {
 					if (object_definition.has_member(fld->get_field_name())) {
-						auto obj_type = object_definition[fld->get_field_name()]->get_field_type();
+						auto obj_typex = object_definition[fld->get_field_name()];
+						if (obj_typex.empty()) {
+							continue;
+                        }
+						auto obj_type = obj_typex->get_field_type();
 						auto member_type = fld->get_field_type();
 						if (member_type != obj_type) {
 							object_definition.change_member_type(fld->get_field_name(), member_type);
