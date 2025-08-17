@@ -4569,11 +4569,13 @@ private:
 			return response;
 		}
 
-		json check_single_object(date_time &current_date, read_class_sp& class_data, json object_definition, const class_permissions& _permission)
+		json check_single_object(date_time &current_date, read_class_sp& class_data, json& _object_definition, const class_permissions& _permission)
 		{
 			json_parser jp;
 			using namespace std::literals;
 			std::vector<validation_error> validation_errors;
+
+			json object_definition = _object_definition.clone();
 
 			json result = jp.create_object();
 
@@ -4699,12 +4701,12 @@ private:
 				result.put_member(message_field, msg);
 				result.put_member(success_field, 0);
 				result.put_member("errors", warnings);
-				result.put_member(data_field, object_definition);
+				result.share_member(data_field, object_definition);
 			}
 			else {
 				result.put_member(message_field, "Ok"sv);
 				result.put_member(success_field, 1);
-				result.put_member(data_field, object_definition);
+				result.share_member(data_field, object_definition);
 			}
 
 			return result;
