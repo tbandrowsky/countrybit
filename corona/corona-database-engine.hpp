@@ -4698,7 +4698,7 @@ private:
 				}
 				result.put_member(message_field, msg);
 				result.put_member(success_field, 0);
-				result.share_member("errors", warnings);
+				result.put_member("errors", warnings);
 				result.put_member(data_field, object_definition);
 			}
 			else {
@@ -4845,7 +4845,7 @@ private:
 			}
 			payload.put_member(success_field, _success);
 			payload.put_member(message_field, _message);
-			payload.share_member(data_field, _data);
+			payload.put_member(data_field, _data);
 			payload.put_member(seconds_field, _seconds);
 
 			if (_errors.size()) {
@@ -4887,7 +4887,7 @@ private:
 
 			payload.put_member(success_field, _success);
 			payload.put_member(message_field, _message);
-			payload.share_member(data_field, _data);
+			payload.put_member(data_field, _data);
 			payload.put_member_double(seconds_field, _seconds);
 
 			if (_errors.size()) {
