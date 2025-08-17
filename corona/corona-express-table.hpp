@@ -970,7 +970,7 @@ namespace corona
 				}
 			}
 
-			result.put_member("children", children);
+			result.share_member("children", children);
 			return result;
 		}
 
@@ -1001,9 +1001,9 @@ namespace corona
 			_dest.put_member_i64("root_type", root_block.block_type);
 			_dest.put_member_i64("root_location", root_block.location);
 			json kms = jp.create_array(key_members);
-			_dest.put_member("key_members", kms);
+			_dest.share_member("key_members", kms);
 			json oms = jp.create_array(object_members);
-			_dest.put_member("object_members", oms); 
+			_dest.share_member("object_members", oms); 
 			_dest.put_member_i64("count", count);
 		}
 

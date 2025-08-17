@@ -741,7 +741,7 @@ namespace corona
 				std::string temp_obj = std::string(temp.data);
 				json_parser jp;
 				json obj = jp.parse_array(temp_obj);
-				_dest.put_member(_key, obj);
+				_dest.share_member(_key, obj);
 			}
 			return success;
 		}

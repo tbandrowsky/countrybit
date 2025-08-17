@@ -1934,6 +1934,45 @@ namespace corona
 			return obj;
 		}
 
+		/// <summary>
+		/// share_member assigns a member from the passed json.  the pointer is shared.
+		/// </summary>
+		/// <param name="_key"></param>
+		/// <param name="_member"></param>
+		/// <returns></returns>
+		json share_member(std::string _key, json& _member)
+		{
+			auto thisobj = object_impl();
+
+			if (not thisobj) {
+				throw std::logic_error("Not an object");
+			}
+
+			thisobj->members[_key] = _member.value_base;
+
+			return *this;
+		}
+
+		/// <summary>
+		/// Moves a member from one JSON object to another under the specified key.
+		/// </summary>
+		/// <param name="_key">The key under which the member will be inserted in the target JSON object.</param>
+		/// <param name="_member">The JSON member to move. Its value will be transferred and cleared after the operation.</param>
+		/// <returns>The updated JSON object with the new member added.</returns>
+		json move_member(std::string _key, json& _member)
+		{
+			auto thisobj = object_impl();
+
+			if (not thisobj) {
+				throw std::logic_error("Not an object");
+			}
+
+			thisobj->members[_key] = _member.value_base;
+            _member.value_base = nullptr; // clear the member so it is not used again
+
+			return *this;
+		}
+
 		json put_member(std::string _key, json& _member)
 		{
 			if (not object_impl()) {

@@ -476,7 +476,7 @@ namespace corona
 				auto jobj = new_filter_object["filter"];
 				if (jobj.empty()) {
 					jobj = jp.create_object();
-					new_filter_object.put_member("filter", jobj);
+					new_filter_object.share_member("filter", jobj);
 				}
 				auto jmembers = jobj.get_members();
 
@@ -1067,7 +1067,7 @@ namespace corona
 					if (not (_src_key.empty() or _dest_key.empty()))
 					{
 						json value = _src[_src_key];
-						_dest.put_member(_dest_key, value);
+						_dest.share_member(_dest_key, value);
 					}
 				}
 			}
@@ -1087,7 +1087,7 @@ namespace corona
 				if (not (_src_key.empty() or _dest_key.empty()))
 				{
 					json value = _src[_src_key];
-					key.put_member(_dest_key, value);
+					key.share_member(_dest_key, value);
 				}
 			}
 
@@ -1108,7 +1108,7 @@ namespace corona
 			for (auto ctor : base_constructors) {
 				json obj = jp.create_object();
 				ctor.second->get_json(obj);
-				_dest.put_member(ctor.first, obj);
+				_dest.share_member(ctor.first, obj);
 			}
 		}
 
@@ -1236,7 +1236,7 @@ namespace corona
 			if (bridges) {
 				json jctors = jp.create_object();
 				bridges->get_json(jctors);
-				_dest.put_member("child_objects", jctors);
+				_dest.share_member("child_objects", jctors);
 			}
 		}
 
@@ -1439,8 +1439,8 @@ namespace corona
 			}
 						
 						
-			jitems.put_member("oneOf", joneof);
-			schema.put_member("items", jitems);
+			jitems.share_member("oneOf", joneof);
+			schema.share_member("items", jitems);
 
             return schema;
 		}
@@ -1468,7 +1468,7 @@ namespace corona
 			if (bridges) {
 				json jctors = jp.create_object();
 				bridges->get_json(jctors);
-				_dest.put_member("child_objects", jctors);
+				_dest.share_member("child_objects", jctors);
 			}
 		}
 
@@ -1554,8 +1554,8 @@ namespace corona
 				joneof.push_back(joneofi);
 			}
 
-			jitems.put_member("oneOf", joneof);
-			schema.put_member("items", jitems);
+			jitems.share_member("oneOf", joneof);
+			schema.share_member("items", jitems);
 
 			return schema;
 		}
@@ -1589,7 +1589,7 @@ namespace corona
 				for (auto s : allowed_values) {
 					jallowed_values.push_back(s);
 				}
-				_dest.put_member("enum", jallowed_values);
+				_dest.share_member("enum", jallowed_values);
 			}
 		}
 
@@ -2401,7 +2401,7 @@ namespace corona
 			{
 				jindex_keys.push_back(ikey);
 			}
-			_dest.put_member("index_keys", jindex_keys);
+			_dest.share_member("index_keys", jindex_keys);
 			_dest.put_member_i64("table_location", table_location);
 		}
 
@@ -2555,13 +2555,13 @@ namespace corona
 
 			auto tbl = get_table(_db);
 			json info = tbl->get_info();
-			all_info.put_member(class_name, info);
+			all_info.share_member(class_name, info);
 
 			for (auto idx : indexes) {
 				auto idx_name = idx.second->get_index_name();
 				auto idx_table = idx.second->get_xtable(_db);
 				info = idx_table->get_info();
-				all_info.put_member(idx_name, info);
+				all_info.share_member(idx_name, info);
 			}
 
 			return all_info;
@@ -2746,14 +2746,14 @@ namespace corona
 			{
 				ja.push_back(p);
 			}
-			_dest.put_member("parents", ja);
+			_dest.share_member("parents", ja);
 
 			if (table_fields.size() > 0) {
 				json jtable_fields = jp.create_array();
 				for (auto tf : table_fields) {
 					jtable_fields.push_back(tf);
 				}
-				_dest.put_member("table_fields", jtable_fields);
+				_dest.share_member("table_fields", jtable_fields);
 			}
 
 			if (fields.size() > 0) {
@@ -2761,10 +2761,10 @@ namespace corona
 				for (auto field : fields) {
 					json jfield_definition = jp.create_object();
 					field.second->get_json(jfield_definition);
-					jfield_object.put_member(field.first, jfield_definition);
+					jfield_object.share_member(field.first, jfield_definition);
 				
 				}
-				_dest.put_member("fields", jfield_object);
+				_dest.share_member("fields", jfield_object);
 			}
 
 			if (indexes.size() > 0) {
@@ -2772,9 +2772,9 @@ namespace corona
 				for (auto index : indexes) {
 					json jindex_definition = jp.create_object();
 					index.second->get_json(jindex_definition);
-					jindex_object.put_member(index.first, jindex_definition);
+					jindex_object.share_member(index.first, jindex_definition);
 				}
-				_dest.put_member("indexes", jindex_object);
+				_dest.share_member("indexes", jindex_object);
 			}
 
 			if (ancestors.size() > 0) {
@@ -2782,7 +2782,7 @@ namespace corona
 				for (auto class_ancestor : ancestors) {
 					jancestor_array.push_back(class_ancestor.first);
 				}
-				_dest.put_member("ancestors", jancestor_array);
+				_dest.share_member("ancestors", jancestor_array);
 			}
 
 			if (descendants.size() > 0) {
@@ -2790,13 +2790,13 @@ namespace corona
 				for (auto class_descendant : descendants) {
 					jdescendants_array.push_back(class_descendant.first);
 				}
-				_dest.put_member("descendants", jdescendants_array);
+				_dest.share_member("descendants", jdescendants_array);
 			}
 
 			if (sql) {
 				json jsql = jp.create_object();
 				sql->get_json(jsql);
-				_dest.put_member("sql", jsql);
+				_dest.share_member("sql", jsql);
 			}
 		}
 
@@ -3017,8 +3017,8 @@ namespace corona
 					new_index.put_member("index_name", index_name);
 					json new_index_keys = jp.create_array();
 					new_index_keys.push_back(parent);
-					new_index.put_member("index_keys", new_index_keys);
-					jindexes.put_member(index_name, new_index);
+					new_index.share_member("index_keys", new_index_keys);
+					jindexes.share_member(index_name, new_index);
 				}
 			}
 
@@ -3083,7 +3083,7 @@ namespace corona
 				auto query_field = fldpair.second;
 				if (query_field->get_field_type() == field_types::ft_query) {
 					json empty_array = jp.create_array();
-					_target.put_member(query_field->get_field_name(), empty_array);
+					_target.share_member(query_field->get_field_name(), empty_array);
 				}
 			}
 		}
@@ -3094,7 +3094,7 @@ namespace corona
 				auto query_field = fldpair.second;
 				if (query_field->get_field_type() == field_types::ft_query) {
 					json objects = query_field->run_queries(_db, _token, _classname, _target);
-					_target.put_member(query_field->get_field_name(), objects);
+					_target.share_member(query_field->get_field_name(), objects);
 				}
 			}
 		}
@@ -3371,7 +3371,7 @@ namespace corona
 						for (auto nf : new_fields) {
 							json jfld = jp.create_object();
 							nf->get_json(jfld);
-							descendant_json["fields"].put_member(nf->get_field_name(), jfld);
+							descendant_json["fields"].share_member(nf->get_field_name(), jfld);
 						}
 
 						desc_class->update(_context, descendant_json);
@@ -3555,7 +3555,7 @@ namespace corona
 									_child_objects.push_back(obj);
 								}
 								json empty_array = jp.create_array();
-								write_object.put_member(fld->get_field_name(), empty_array);
+								write_object.share_member(fld->get_field_name(), empty_array);
 							}
 						}
 					}
@@ -3571,7 +3571,7 @@ namespace corona
 									bridge->copy(obj, write_object);
 								}
 								json empty;
-								write_object.put_member(fld->get_field_name(), empty);
+								write_object.share_member(fld->get_field_name(), empty);
 								_child_objects.push_back(obj);
 							}
 						}
@@ -3691,7 +3691,7 @@ namespace corona
 							auto bridges = fld->get_bridges();
 							if (bridges) {
 								json results = bridges->get_children(_db, _src_obj, _grant);
-								_src_obj.put_member(fld->get_field_name(), results);
+								_src_obj.share_member(fld->get_field_name(), results);
 							}
 						}
 						else if (fld->get_field_type() == field_types::ft_object)
@@ -3700,7 +3700,7 @@ namespace corona
 							if (bridges) {
 								json results = bridges->get_children(_db, _src_obj, _grant);
 								json first = results.get_first_element();
-								_src_obj.put_member(fld->get_field_name(), first);
+								_src_obj.share_member(fld->get_field_name(), first);
 							}
 						}
 					}
@@ -3833,7 +3833,7 @@ namespace corona
             for (auto fld : fields) {
 				auto field = fld.second;
                 json field_definition = field->get_openapi_schema(_db);
-                properties.put_member(field->get_field_name(), field_definition);
+                properties.share_member(field->get_field_name(), field_definition);
 
 				auto options = field->get_options();
 				if (options and options->is_required()) {
@@ -3841,7 +3841,7 @@ namespace corona
 				}
             }
 
-			definition.put_member("properties", properties);
+			definition.share_member("properties", properties);
 
 			return definition;
 		}
@@ -4698,7 +4698,7 @@ private:
 				}
 				result.put_member(message_field, msg);
 				result.put_member(success_field, 0);
-				result.put_member("errors", warnings);
+				result.share_member("errors", warnings);
 				result.put_member(data_field, object_definition);
 			}
 			else {
@@ -4801,7 +4801,11 @@ private:
 					}
 				}
 
-				classes_group.put_member(class_name, result_list);
+				// move_member here is to prevent something stupid happening because this is in a loop 
+				// and the scope of result_list is outside of it.
+				// fixing it is out of scope for this particular thing.
+				// TODO: fix result_list
+				classes_group.move_member(class_name, result_list);
 			}
 
 			response.put_member(success_field, all_objects_good);
@@ -4841,7 +4845,7 @@ private:
 			}
 			payload.put_member(success_field, _success);
 			payload.put_member(message_field, _message);
-			payload.put_member(data_field, _data);
+			payload.share_member(data_field, _data);
 			payload.put_member(seconds_field, _seconds);
 
 			if (_errors.size()) {
@@ -4851,7 +4855,7 @@ private:
 					ve.get_json(jve);
 					errors_array.push_back(jve);
 				}
-				payload.put_member("errors", errors_array);
+				payload.share_member("errors", errors_array);
 			}
 
 
@@ -4883,7 +4887,7 @@ private:
 
 			payload.put_member(success_field, _success);
 			payload.put_member(message_field, _message);
-			payload.put_member(data_field, _data);
+			payload.share_member(data_field, _data);
 			payload.put_member_double(seconds_field, _seconds);
 
 			if (_errors.size()) {
@@ -4915,7 +4919,7 @@ private:
 			}
 			payload.put_member(success_field, _success);
 			payload.put_member(message_field, _message);
-			payload.put_member(data_field, _data);
+			payload.share_member(data_field, _data);
 			if (_errors.size()) {
 				json errors_array = jp.create_array();
 				for (auto& ve : _errors) {
@@ -4923,7 +4927,7 @@ private:
 					ve.get_json(jve);
 					errors_array.push_back(jve);
 				}
-				payload.put_member("errors", errors_array);
+				payload.share_member("errors", errors_array);
 			}
 			payload.put_member_double(seconds_field, _seconds);
 			return payload;
@@ -5050,7 +5054,7 @@ private:
 					auto ptr = write_lock_class(class_name);
 					if (ptr) {
 						json class_schema = ptr->get_openapi_schema(this);
-						schema.put_member(class_name, class_schema);
+						schema.share_member(class_name, class_schema);
 					}
 				}
 			}
@@ -6328,7 +6332,7 @@ private:
 								}
 							}
 						}
-						user.put_member("workflow_objects", workflow_objects);
+						user.share_member("workflow_objects", workflow_objects);
 					}
 					else
 					{
@@ -6532,7 +6536,7 @@ private:
 							key.put_member_i64(object_id_field, object_id);
 							key.put_member(class_name_field, class_name);
 							json obj = select_single_object(key, false, sys_perm);
-							navigation_options.put_member(class_name, obj);
+							navigation_options.share_member(class_name, obj);
 						}
 					}
 
@@ -6555,7 +6559,7 @@ private:
 							key.put_member_i64(object_id_field, object_id);
 							key.put_member(class_name_field, class_name);
 							json obj = select_single_object(key, false, sys_perm);
-							navigation_options.put_member(class_name, obj);
+							navigation_options.share_member(class_name, obj);
 						}
 					}
 
@@ -6667,8 +6671,8 @@ private:
 				json jedit_class = jp.create_object();
 				edit_class->get_json(jedit_class);
 				result = jp.create_object();
-				result.put_member("class", jedit_class);
-				result.put_member("object", jedit_object);
+				result.share_member("class", jedit_class);
+				result.share_member("object", jedit_object);
 			}
 			else 
 			{
@@ -6720,7 +6724,7 @@ private:
 			});
 
 			json data = jp.create_object();
-			data.put_member("class", result_list);
+			data.share_member("class", result_list);
 
 			system_monitoring_interface::global_mon->log_function_stop("get_classes", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			result = create_response(get_classes_request, true, "Ok", result_list, errors, method_timer.get_elapsed_seconds());
@@ -6783,8 +6787,8 @@ private:
 					json class_info = classd->get_info(this);
 
 					result = jp.create_object();
-					result.put_member("class", class_definition);
-					result.put_member("info", class_info);
+					result.share_member("class", class_definition);
+					result.share_member("info", class_info);
 
 					result = create_response(get_class_request, true, "Ok", result, errors, method_timer.get_elapsed_seconds());
 					system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -7691,7 +7695,7 @@ private:
 			std::string base64_token_string = base64_encode(token_string);
 
 			payload.put_member(token_field, base64_token_string);
-			payload.put_member(data_field, _data);
+			payload.share_member(data_field, _data);
 
 			return payload;
 		}
