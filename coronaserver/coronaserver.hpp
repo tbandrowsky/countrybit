@@ -384,26 +384,22 @@ VOID WINAPI SvcCtrlHandler(DWORD dwCtrl)
 // Remarks:
 //   The service must have an entry in the Application event log.
 //
-VOID SvcReportEvent(DWORD eventLog, const char *szFunction)
+VOID SvcReportEvent(DWORD eventLog, const char *szmessage)
 {
     HANDLE hEventSource;
     LPCTSTR lpszStrings[2];
-    std::string buffer;
 
     hEventSource = RegisterEventSource(NULL, SVCNAME);
 
     if (NULL != hEventSource)
     {
-        DWORD error = GetLastError();
-        buffer = std::format( "{0} failed with {1}", szFunction, error);
-
         lpszStrings[0] = SVCNAME;
-        lpszStrings[1] = buffer.c_str();
+        lpszStrings[1] = szmessage;
 
         ReportEvent(hEventSource,        // event log handle
             eventLog, // event type
             0,                   // event category
-            error,           // event identifier
+            eventLog,           // event identifier
             NULL,                // no security identifier
             2,                   // size of lpszStrings array
             0,                   // no binary data
