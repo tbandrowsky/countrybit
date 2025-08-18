@@ -58,6 +58,21 @@ namespace corona
 	const relative_ptr_type null_row = -1;
 	const relative_ptr_type first_row = 0;
 
+
+	const std::string get_file_name(const std::string& _filename)
+	{
+		const char* file_name = _filename.c_str();
+		const char* last_slash = file_name;
+		while (*file_name)
+		{
+			if (*file_name == '/' or *file_name == '\\') {
+				last_slash = file_name;
+			}
+			file_name++;
+		}
+		return last_slash;
+	}
+
 	const char *get_file_name(const char *_filename)
 	{
 		const char *file_name = _filename;
