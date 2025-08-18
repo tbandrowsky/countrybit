@@ -62,12 +62,20 @@
 #define CORONA_GENERAL_CATEGORY          ((WORD)0x00000001L)
 
 //
+// MessageId: CORONA_OTHER_CATEGORY
+//
+// MessageText:
+//
+// Other
+//
+#define CORONA_OTHER_CATEGORY            ((WORD)0x00000002L)
+
+//
 // MessageId: CORONA_SERVICE_INFORMATION
 //
 // MessageText:
 //
-// %s
-// %s %s
+// %1%nat SourceFile:%2%nLine:%3
 //
 #define CORONA_SERVICE_INFORMATION       ((DWORD)0x00030100L)
 
@@ -76,8 +84,7 @@
 //
 // MessageText:
 //
-// %s
-// %s %s
+// %1%nat SourceFile:%2%nLine:%3
 //
 #define CORONA_SERVICE_WARNING           ((DWORD)0x80030101L)
 
@@ -86,8 +93,7 @@
 //
 // MessageText:
 //
-// %s
-// %s %s
+// %1%nat SourceFile:%2%nLine:%3
 //
 #define CORONA_SERVICE_ERROR             ((DWORD)0xC0000102L)
 

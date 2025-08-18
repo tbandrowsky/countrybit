@@ -457,7 +457,7 @@ VOID SvcLogInfo(std::string message, std::string file, int line)
     LPCSTR strings[3] = { cmessage, cfile, cline };
     if (!ReportEventA(
         hEventLog,
-        EVENTLOG_ERROR_TYPE,
+        EVENTLOG_INFORMATION_TYPE,
         CORONA_GENERAL_CATEGORY,
         CORONA_SERVICE_INFORMATION, // Custom event ID
         NULL,

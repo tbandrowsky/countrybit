@@ -31,6 +31,12 @@ Language=English
 General
 .
 
+MessageId=0x2
+SymbolicName=CORONA_OTHER_CATEGORY
+Language=English
+Other
+.
+
 MessageIdTypedef=DWORD
 
 MessageId=0x100
@@ -38,8 +44,7 @@ SymbolicName=CORONA_SERVICE_INFORMATION
 Severity=Success
 Facility=Service
 Language=English
-%1
-%2 %3
+%1%nat SourceFile:%2%nLine:%3
 .
 
 MessageId=0x101
@@ -47,8 +52,7 @@ SymbolicName=CORONA_SERVICE_WARNING
 Severity=Warning
 Facility=Service
 Language=English
-%1
-%2 %3
+%1%nat SourceFile:%2%nLine:%3
 .
 
 MessageId=0x102
@@ -56,6 +60,5 @@ SymbolicName=CORONA_SERVICE_ERROR
 Severity=Error
 Facility=System
 Language=English
-%1
-%2 %3
+%1%nat SourceFile:%2%nLine:%3
 .
