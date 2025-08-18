@@ -156,7 +156,8 @@ namespace corona
 			});
 
 			if (not poll_success) {
-				log_error("Could not read database config file " + database_config_filename, __FILE__, __LINE__);
+				log_warning("Could not read database config file " + database_config_filename, __FILE__, __LINE__);
+				throw std::runtime_error("Could not read database config file " + database_config_filename);
 			}
 		}
 
