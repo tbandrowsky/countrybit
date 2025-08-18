@@ -90,10 +90,13 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
         try
         {
             std::cout << "Running Corona in console mode. Type '?' for help." << std::endl;
-            service = std::make_shared<corona::comm_bus_service>(_simulation, config_filename, false);
-            service->on_logged_error = [](const std::string& _msg, const char* _file, int _line) {
-                SvcReportEvent(EVENTLOG_ERROR_TYPE, _msg.c_str());
-            };
+            service = std::make_shared<corona::comm_bus_service>(
+                _simulation, 
+                config_filename,                 
+                [](const std::string& _msg, const char* _file, int _line) {
+                    SvcReportEvent(EVENTLOG_ERROR_TYPE, _msg.c_str());
+                },
+                false);
             while (not exit_flag)
             {
                 service->run_frame();
@@ -269,10 +272,13 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
 
     try 
     {        
-        service = std::make_shared<corona::comm_bus_service>(simulation, config_filename, false);
-        service->on_logged_error = [](const std::string& _msg, const char* _file, int _line) {
-            SvcReportEvent(EVENTLOG_ERROR_TYPE, _msg.c_str());
-            };
+        service = std::make_shared<corona::comm_bus_service>(
+            simulation,
+            config_filename,
+            [](const std::string& _msg, const char* _file, int _line) {
+                SvcReportEvent(EVENTLOG_ERROR_TYPE, _msg.c_str());
+            },
+            false);
         while (not exit_flag)
         {
             ::Sleep(1);
@@ -506,6 +512,3 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
 
     return 1;
 }
-
-
-

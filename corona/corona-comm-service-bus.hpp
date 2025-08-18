@@ -51,9 +51,15 @@ namespace corona
 		http_server db_api_server;
 
 		std::string listen_point;
+		std::function<void(const std::string& _msg, const char* _file, int _line)> on_logged_error;
 
-		comm_bus_service(std::shared_ptr<corona_simulation_interface>& _simulation, std::string _config_filename, bool _is_service = false)
+		comm_bus_service(std::shared_ptr<corona_simulation_interface>& _simulation, 
+			std::string _config_filename, 
+			std::function<void(const std::string& _msg, const char* _file, int _line)> _on_logged_error,
+			bool _is_service = false
+		)
 		{
+            on_logged_error = _on_logged_error;
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
 			date_time t = date_time::now();
@@ -1804,8 +1810,6 @@ Bind get classes
 			}
 
 		}
-
-		std::function<void(const std::string& _msg, const char* _file, int _line)> on_logged_error;
 
 		virtual void log_error(json j, const char* _file = nullptr, int _line = 0)
 		{
