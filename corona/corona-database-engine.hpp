@@ -5344,7 +5344,7 @@ private:
 				if (errors.size()) {
 					system_monitoring_interface::global_mon->log_warning(std::format("Errors on deserializing class {0}", _class_name), __FILE__, __LINE__);
 					for (auto error : errors) {
-						system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
+						system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, get_file_name(error.filename), error.line_number), __FILE__, __LINE__);
 					}
 				}
 			}
@@ -6283,9 +6283,9 @@ private:
 				validation_error err;
 				err.class_name = "sys_user";
 				err.field_name = "user_name";
-				err.filename = __FILE__;
+				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
-				err.message = "username not found";
+				err.message = "user not found";
 				errors.push_back(err);
 
 				response = create_user_response(_confirm_request, false, "user not found", data, errors, method_timer.get_elapsed_seconds());
@@ -6356,7 +6356,7 @@ private:
 				validation_error err;
 				err.class_name = "sys_user";
 				err.field_name = "validation_code";
-				err.filename = __FILE__;
+				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
 				err.message = "Incorrect validation code.";
 				errors.push_back(err);
@@ -6401,7 +6401,7 @@ private:
 				validation_error err;
 				err.class_name = "sys_user";
 				err.field_name = "user_name";
-				err.filename = __FILE__;
+				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
 				err.message = "Incorrect user_name.";
 				errors.push_back(err);
@@ -6424,7 +6424,7 @@ private:
 				validation_error err;
 				err.class_name = "sys_user";
 				err.field_name = "user_name";
-				err.filename = __FILE__;
+				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
 				err.message = "Denied.";
 				errors.push_back(err);
@@ -6452,7 +6452,7 @@ private:
 				validation_error err;
 				err.class_name = "sys_user";
 				err.field_name = "password2";
-				err.filename = __FILE__;
+				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
 				err.message = "Passwords don't match.";
 				errors.push_back(err);
@@ -6471,7 +6471,7 @@ private:
 				validation_error err;
 				err.class_name = "sys_user";
 				err.field_name = "password1";
-				err.filename = __FILE__;
+				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
 				err.message = "Password too simple.";
 				errors.push_back(err);

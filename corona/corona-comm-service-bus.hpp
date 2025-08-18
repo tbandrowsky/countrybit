@@ -128,7 +128,7 @@ namespace corona
 					bool success = (bool)create_database_response[success_field];
 					if (!success) {
 						log_json(create_database_response);
-						throw std::exception("Coult not create database");
+						throw std::exception("Could not create database");
 					}
 
 					ready_for_polling = true;
