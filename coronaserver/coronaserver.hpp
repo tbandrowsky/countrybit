@@ -30,7 +30,7 @@ VOID SvcMain(DWORD, LPTSTR*);
 VOID ReportSvcStatus(DWORD, DWORD, DWORD);
 
 VOID SvcInit(DWORD, LPTSTR*);
-VOID SvcReportEvent(const char*);
+VOID SvcReportEvent(DWORD, const char*);
 
 void corona_console_command()
 {
@@ -84,13 +84,16 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
 {
     exit_flag = false;
     simulation = _simulation;
-    SvcReportEvent("Running Console");
+    SvcReportEvent(EVENTLOG_INFORMATION_TYPE, "Running Console");
 
     if (SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
         try
         {
-            std::cout << "Running in console mode. Type '?' for help." << std::endl;
+            std::cout << "Running Corona in console mode. Type '?' for help." << std::endl;
             service = std::make_shared<corona::comm_bus_service>(_simulation, config_filename, false);
+            service->on_logged_error = [](const std::string& _msg, const char* _file, int _line) {
+                SvcReportEvent(EVENTLOG_ERROR_TYPE, _msg.c_str());
+            };
             while (not exit_flag)
             {
                 service->run_frame();
@@ -203,7 +206,7 @@ VOID WINAPI SvcMain(DWORD dwArgc, LPTSTR* lpszArgv)
 
     if (!gSvcStatusHandle)
     {
-        SvcReportEvent("RegisterServiceCtrlHandler Failed");
+        SvcReportEvent(EVENTLOG_ERROR_TYPE, "RegisterServiceCtrlHandler Failed");
         return;
     }
 
@@ -214,7 +217,7 @@ VOID WINAPI SvcMain(DWORD dwArgc, LPTSTR* lpszArgv)
 
     // Report initial status to the SCM
 
-    SvcReportEvent("Service Starting");
+    SvcReportEvent(EVENTLOG_INFORMATION_TYPE, "Corona Starting");
 
     ReportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
 
@@ -267,15 +270,25 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
     try 
     {        
         service = std::make_shared<corona::comm_bus_service>(simulation, config_filename, false);
+        service->on_logged_error = [](const std::string& _msg, const char* _file, int _line) {
+            SvcReportEvent(EVENTLOG_ERROR_TYPE, _msg.c_str());
+            };
         while (not exit_flag)
         {
             ::Sleep(1);
-            service->run_frame();
+            try {
+                service->run_frame();
+            }
+            catch (std::exception& exc)
+            {
+                SvcReportEvent(EVENTLOG_ERROR_TYPE, exc.what());
+                std::cerr << "Exception in service: " << exc.what() << std::endl;
+            }
         }
     }
     catch (std::exception exc)
     {
-        SvcReportEvent(exc.what());
+        SvcReportEvent(EVENTLOG_ERROR_TYPE, exc.what());
     }
 
     // at this point, here, the service is stopped, or has failed, and we're just waiting 
@@ -371,7 +384,7 @@ VOID WINAPI SvcCtrlHandler(DWORD dwCtrl)
 // Remarks:
 //   The service must have an entry in the Application event log.
 //
-VOID SvcReportEvent(const char *szFunction)
+VOID SvcReportEvent(DWORD eventLog, const char *szFunction)
 {
     HANDLE hEventSource;
     LPCTSTR lpszStrings[2];
@@ -388,7 +401,7 @@ VOID SvcReportEvent(const char *szFunction)
         lpszStrings[1] = buffer.c_str();
 
         ReportEvent(hEventSource,        // event log handle
-            EVENTLOG_ERROR_TYPE, // event type
+            eventLog, // event type
             0,                   // event category
             error,           // event identifier
             NULL,                // no security identifier
@@ -421,7 +434,7 @@ void RunService(std::shared_ptr<corona::corona_simulation_interface> _simulation
 
     if (!StartServiceCtrlDispatcher(DispatchTable))
     {
-        SvcReportEvent(SVCEVENTDISP);
+        SvcReportEvent(EVENTLOG_INFORMATION_TYPE, SVCEVENTDISP);
     }
 
 }
@@ -433,7 +446,7 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
 
     if (!GetModuleFileName(NULL, szUnquotedPath, MAX_PATH))
     {
-        printf("Cannot install service (%d)\n", GetLastError());
+        printf("Cannot install Corona service (%d)\n", GetLastError());
         return 1;
     }
 

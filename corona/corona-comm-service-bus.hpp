@@ -1805,6 +1805,8 @@ Bind get classes
 
 		}
 
+		std::function<void(const std::string& _msg, const char* _file, int _line)> on_logged_error;
+
 		virtual void log_error(json j, const char* _file = nullptr, int _line = 0)
 		{
 			std::string msg = j["message"];
@@ -1812,6 +1814,11 @@ Bind get classes
 				msg = "Error";
 			log_warning(msg, _file, _line);
 			log_json<json>(j, 4);
+			if (on_logged_error) {
+				std::string temp = j.to_json();
+				msg = msg + "\n" + temp;
+				on_logged_error(msg, _file, _line);
+			}
 		}
 
 		double frame_seconds = 1.0 / 20.0; // 60 frames per second	
