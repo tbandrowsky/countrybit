@@ -94,7 +94,8 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
                 _simulation, 
                 config_filename,                 
                 [](const std::string& _msg, const char* _file, int _line) {
-                    SvcReportEvent(EVENTLOG_ERROR_TYPE, _msg.c_str());
+                    std::string message = std::format("Corona service error: {0} at {1}:{2}", _msg, _file, _line);
+                    SvcReportEvent(EVENTLOG_ERROR_TYPE, message.c_str());
                 },
                 false);
             while (not exit_flag)
@@ -276,7 +277,8 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
             simulation,
             config_filename,
             [](const std::string& _msg, const char* _file, int _line) {
-                SvcReportEvent(EVENTLOG_ERROR_TYPE, _msg.c_str());
+                std::string message = std::format("Corona service error: {0} at {1}:{2}", _msg, _file, _line);
+                SvcReportEvent(EVENTLOG_ERROR_TYPE, message.c_str());
             },
             false);
         while (not exit_flag)
