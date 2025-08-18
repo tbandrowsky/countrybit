@@ -407,7 +407,7 @@ VOID SvcReportEvent(DWORD eventLog, const char *szmessage)
         ReportEvent(hEventSource,        // event log handle
             eventLog, // event type
             0,                   // event category
-            eventLog,           // event identifier
+            0,           // event identifier
             NULL,                // no security identifier
             2,                   // size of lpszStrings array
             0,                   // no binary data
