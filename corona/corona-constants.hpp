@@ -70,6 +70,9 @@ namespace corona
 			}
 			file_name++;
 		}
+		if ((*last_slash == '/') || (*last_slash == '\\')) {
+			last_slash++;
+		}
 		return last_slash;
 	}
 

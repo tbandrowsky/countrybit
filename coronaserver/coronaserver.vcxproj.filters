@@ -38,10 +38,21 @@
     <None Include="packages.config" />
     <None Include="corona.postman_collection.json" />
     <None Include="deploy.ps1" />
+    <None Include="eventmessages.txt">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="coronaserver.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="eventmessages.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="eventmessages.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

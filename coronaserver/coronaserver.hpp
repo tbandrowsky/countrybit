@@ -5,7 +5,18 @@
 
 #include "corona.hpp"
 #include <windows.h>
+#include <winmeta.h>
 #include <iostream>
+
+#include <TraceLoggingProvider.h>
+#include "eventmessages.h"
+
+bool RegisterCoronaEventSource(const std::string& svcName, const std::string& exePath);
+
+TRACELOGGING_DEFINE_PROVIDER( // defines g_hProvider
+    g_hProvider, // Name of the provider handle
+    "CountryVideoGames.CoronaDb", // Human-readable name for the provider
+    (0x2de904b0, 0x0e7b, 0x5db0, 0xc1, 0x88, 0xaa, 0x1a, 0x39, 0x1e, 0x3e, 0x5c));
 
 char SVCNAME[] = "Corona Database";
 char SVCEVENTDISP[] = "StartServiceCtrlDispatcher";
@@ -30,7 +41,8 @@ VOID SvcMain(DWORD, LPTSTR*);
 VOID ReportSvcStatus(DWORD, DWORD, DWORD);
 
 VOID SvcInit(DWORD, LPTSTR*);
-VOID SvcReportEvent(DWORD, const char*);
+VOID SvcLogError(std::string message, std::string file, int line);
+VOID SvcLogInfo(std::string message, std::string file, int line);
 
 void corona_console_command()
 {
@@ -84,7 +96,7 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
 {
     exit_flag = false;
     simulation = _simulation;
-    SvcReportEvent(EVENTLOG_INFORMATION_TYPE, "Running Console");
+    SvcLogInfo("Running Console", __FILE__, __LINE__);
 
     if (SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
         try
@@ -95,7 +107,7 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
                 config_filename,                 
                 [](const std::string& _msg, const char* _file, int _line) {
                     std::string message = std::format("Corona service error: {0} at {1}:{2}", _msg, _file, _line);
-                    SvcReportEvent(EVENTLOG_ERROR_TYPE, message.c_str());
+                    SvcLogError(message, __FILE__, __LINE__);
                 },
                 false);
             while (not exit_flag)
@@ -210,7 +222,7 @@ VOID WINAPI SvcMain(DWORD dwArgc, LPTSTR* lpszArgv)
 
     if (!gSvcStatusHandle)
     {
-        SvcReportEvent(EVENTLOG_ERROR_TYPE, "RegisterServiceCtrlHandler Failed");
+        SvcLogError("RegisterServiceCtrlHandler Failed", __FILE__, __LINE__);
         return;
     }
 
@@ -221,7 +233,7 @@ VOID WINAPI SvcMain(DWORD dwArgc, LPTSTR* lpszArgv)
 
     // Report initial status to the SCM
 
-    SvcReportEvent(EVENTLOG_INFORMATION_TYPE, "Corona Starting");
+    SvcLogInfo("Corona Starting", __FILE__, __LINE__);
 
     ReportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
 
@@ -278,7 +290,7 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
             config_filename,
             [](const std::string& _msg, const char* _file, int _line) {
                 std::string message = std::format("Corona service error: {0} at {1}:{2}", _msg, _file, _line);
-                SvcReportEvent(EVENTLOG_ERROR_TYPE, message.c_str());
+                SvcLogError(message, __FILE__, __LINE__);
             },
             false);
         while (not exit_flag)
@@ -289,14 +301,14 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
             }
             catch (std::exception& exc)
             {
-                SvcReportEvent(EVENTLOG_ERROR_TYPE, exc.what());
+                SvcLogError(exc.what(), __FILE__, __LINE__);
                 std::cerr << "Exception in service: " << exc.what() << std::endl;
             }
         }
     }
     catch (std::exception exc)
     {
-        SvcReportEvent(EVENTLOG_ERROR_TYPE, exc.what());
+        SvcLogError(exc.what(), __FILE__, __LINE__);
     }
 
     // at this point, here, the service is stopped, or has failed, and we're just waiting 
@@ -379,43 +391,85 @@ VOID WINAPI SvcCtrlHandler(DWORD dwCtrl)
 
 }
 
-//
-// Purpose: 
-//   Logs messages to the event log
-//
-// Parameters:
-//   szFunction - name of function that failed
-// 
-// Return value:
-//   None
-//
-// Remarks:
-//   The service must have an entry in the Application event log.
-//
-VOID SvcReportEvent(DWORD eventLog, const char *szmessage)
+VOID SvcLogError(std::string message, std::string file, int line)
 {
-    HANDLE hEventSource;
-    LPCTSTR lpszStrings[2];
+    const char* cmessage = message.c_str();
+    const char* cfile = file.c_str();    
 
-    hEventSource = RegisterEventSource(NULL, SVCNAME);
+   TraceLoggingWrite(
+        g_hProvider,
+       "Corona",
+       TraceLoggingLevel(WINEVENT_LEVEL_ERROR),
+       TraceLoggingStruct(3, "CoronaEvent"),
+       TraceLoggingValue(cmessage, "Message"),
+       TraceLoggingValue(cfile, "File"),
+       TraceLoggingValue(line, "Line")
+   );
 
-    if (NULL != hEventSource)
-    {
-        lpszStrings[0] = SVCNAME;
-        lpszStrings[1] = szmessage;
+   HANDLE hEventLog = RegisterEventSource(NULL, SVCNAME);
+   if (hEventLog == NULL) {
+       printf("Failed to register event source. Error: %lu\n", GetLastError());
+   }
 
-        ReportEvent(hEventSource,        // event log handle
-            eventLog, // event type
-            0,                   // event category
-            eventLog,           // event identifier
-            NULL,                // no security identifier
-            2,                   // size of lpszStrings array
-            0,                   // no binary data
-            lpszStrings,         // array of strings
-            NULL);               // no binary data
+   char cline[64];
+   sprintf_s(cline, "%d", line);
 
-        DeregisterEventSource(hEventSource);
+   LPCSTR strings[3] = { cmessage, cfile, cline };
+   if (!ReportEventA(
+       hEventLog,
+       EVENTLOG_INFORMATION_TYPE,
+       CORONA_GENERAL_CATEGORY,
+       CORONA_SERVICE_ERROR, // Custom event ID
+       NULL,
+       3,
+       0,
+       strings,
+       NULL)) {
+       printf("Failed to report event. Error: %lu\n", GetLastError());
+   }
+
+   DeregisterEventSource(hEventLog);
+}
+
+VOID SvcLogInfo(std::string message, std::string file, int line)
+{
+    const char* cmessage = message.c_str();
+    const char* cfile = corona::get_file_name(file.c_str());
+
+    TraceLoggingWrite(
+        g_hProvider,
+        "Corona",
+        TraceLoggingLevel(WINEVENT_LEVEL_INFO),
+        TraceLoggingStruct(3, "CoronaEvent"),
+        TraceLoggingValue(cmessage, "Message"),
+        TraceLoggingValue(cfile, "File"),
+        TraceLoggingValue(line, "Line")
+    );
+
+    HANDLE hEventLog = RegisterEventSource(NULL, SVCNAME);
+    if (hEventLog == NULL) {
+        printf("Failed to register event source. Error: %lu\n", GetLastError());
     }
+
+    char cline[64];
+    sprintf_s(cline, "%d", line);
+
+    LPCSTR strings[3] = { cmessage, cfile, cline };
+    if (!ReportEventA(
+        hEventLog,
+        EVENTLOG_INFORMATION_TYPE,
+        CORONA_GENERAL_CATEGORY,
+        CORONA_SERVICE_INFORMATION, // Custom event ID
+        NULL,
+        3,
+        0,
+        strings,
+        NULL)) {
+        printf("Failed to report event. Error: %lu\n", GetLastError());
+    }
+
+    DeregisterEventSource(hEventLog);
+
 }
 
 void RunService(std::shared_ptr<corona::corona_simulation_interface> _simulation)
@@ -438,13 +492,14 @@ void RunService(std::shared_ptr<corona::corona_simulation_interface> _simulation
 
     if (!StartServiceCtrlDispatcher(DispatchTable))
     {
-        SvcReportEvent(EVENTLOG_INFORMATION_TYPE, SVCEVENTDISP);
+        SvcLogInfo("Stopped", __FILE__, __LINE__);
     }
 
 }
 
 int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[])
 {
+    TraceLoggingRegister(g_hProvider);
 
     char szUnquotedPath[MAX_PATH];
 
@@ -453,6 +508,9 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
         printf("Cannot install Corona service (%d)\n", GetLastError());
         return 1;
     }
+
+    std::string exePath = szUnquotedPath;
+    RegisterCoronaEventSource(SVCNAME, exePath);
 
     PathRemoveFileSpecA(szUnquotedPath);
     SetCurrentDirectoryA(szUnquotedPath);
@@ -512,5 +570,50 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
         return 0;
     }
 
+    TraceLoggingUnregister(g_hProvider);
+
     return 1;
+}
+
+
+// Registers the service as an event source in the Windows registry
+bool RegisterCoronaEventSource(const std::string& svcName, const std::string& exePath)
+{
+    HKEY hKey;
+    std::string regPath = "SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\" + svcName;
+    LONG lRet = RegCreateKeyExA(
+        HKEY_LOCAL_MACHINE,
+        regPath.c_str(),
+        0,
+        NULL,
+        REG_OPTION_NON_VOLATILE,
+        KEY_SET_VALUE,
+        NULL,
+        &hKey,
+        NULL);
+
+    if (lRet != ERROR_SUCCESS)
+        return false;
+
+    // Set the EventMessageFile value to the executable path
+    lRet = RegSetValueExA(
+        hKey,
+        "EventMessageFile",
+        0,
+        REG_EXPAND_SZ,
+        reinterpret_cast<const BYTE*>(exePath.c_str()),
+        static_cast<DWORD>(exePath.size() + 1));
+
+    // Set supported types
+    DWORD dwTypes = EVENTLOG_ERROR_TYPE | EVENTLOG_WARNING_TYPE | EVENTLOG_INFORMATION_TYPE;
+    RegSetValueExA(
+        hKey,
+        "TypesSupported",
+        0,
+        REG_DWORD,
+        reinterpret_cast<const BYTE*>(&dwTypes),
+        sizeof(dwTypes));
+
+    RegCloseKey(hKey);
+    return lRet == ERROR_SUCCESS;
 }
