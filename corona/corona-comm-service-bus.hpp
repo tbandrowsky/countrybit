@@ -1811,6 +1811,17 @@ Bind get classes
 
 		}
 
+		virtual void log_warning(std::string _message, const char* _file = nullptr, int _line = 0) override
+		{
+			std::string msg = _message;
+			if (msg.empty())
+				msg = "Warning";
+            system_monitoring_interface::log_warning(msg, _file, _line);
+			if (on_logged_error) {
+				on_logged_error(msg, _file, _line);
+			}
+        }
+
 		virtual void log_error(json j, const char* _file = nullptr, int _line = 0)
 		{
 			std::string msg = j["message"];
@@ -1820,7 +1831,7 @@ Bind get classes
 			log_json<json>(j, 4);
 			if (on_logged_error) {
 				std::string temp = j.to_json();
-				msg = msg + "\n" + temp;
+				msg = msg + "\nThe JSON is:\n" + temp;
 				on_logged_error(msg, _file, _line);
 			}
 		}
