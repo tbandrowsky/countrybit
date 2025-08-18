@@ -726,6 +726,9 @@ namespace corona
 				if (c == oldChar) {
 					temp.push_back('\\');
 				}
+				else if (c == '\\') {
+                    temp.push_back(c);
+				}
 				temp.push_back(c);
 			}
 			temp += '"';
