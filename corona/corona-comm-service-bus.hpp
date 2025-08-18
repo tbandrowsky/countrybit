@@ -78,7 +78,7 @@ namespace corona
 
 			database_config_mon.filename = database_config_filename;
 
-			database_config_mon.poll(app.get(), [this, &tx](json& _new_config) {
+			bool poll_success = database_config_mon.poll(app.get(), [this, &tx](json& _new_config) {
 				local_db_config = _new_config;
 				system_monitoring_interface::global_mon->log_information(std::format("using config file {0}", database_config_filename), __FILE__, __LINE__);
 
@@ -154,6 +154,10 @@ namespace corona
 				log_command_stop("comm_service_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			});
+
+			if (not poll_success) {
+				log_error("Could not read database config file " + database_config_filename, __FILE__, __LINE__);
+			}
 		}
 
 		void prove_system()
@@ -1809,6 +1813,17 @@ Bind get classes
 				log_exception(exc, __FILE__, __LINE__);
 			}
 
+		}
+
+		virtual void log_exception(std::exception exc, const char* _file = nullptr, int _line = 0) override
+		{
+			std::string msg = std::format("Exception:{0}",  exc.what());
+			if (msg.empty())
+				msg = "Warning";
+			system_monitoring_interface::log_warning(msg, _file, _line);
+			if (on_logged_error) {
+				on_logged_error(msg, _file, _line);
+			}
 		}
 
 		virtual void log_warning(std::string _message, const char* _file = nullptr, int _line = 0) override

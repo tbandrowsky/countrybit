@@ -28,22 +28,25 @@ namespace corona
 		std::string filename;
 		json		contents;
 		std::string last_contents;
+		std::string error_message;
 
 		json_file_watcher()
 		{
 			;
 		}
 
-		void poll(application *_app, std::function<void(json&)> _handler)
+		bool poll(application *_app, std::function<void(json&)> _handler)
 		{
 			json_parser jp;
 			relative_ptr_type type;
+            bool success = false;
 
 			try {
 				if (_app->file_exists(filename)) {
 					std::string file_string = read_all_string(filename);
 					if (file_string.empty()) {
-						return;
+                        error_message = std::format("File {0} is empty", filename);
+						return false;
 					}
 					if (file_string != last_contents) {
 						last_contents = file_string;
@@ -53,14 +56,18 @@ namespace corona
 						if (_handler) {
 							_handler(contents);
 						}
+                        success = true;
 					}
 				}
 			}
 			catch (std::exception exc)
 			{
-
-  				system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+				error_message = std::format("Exception:{0}, {1}", filename, exc.what());
+				system_monitoring_interface::global_mon->log_warning(error_message.c_str(), __FILE__, __LINE__);
+                success = false;
 			}
+
+			return success;
 		}
 	};
 
