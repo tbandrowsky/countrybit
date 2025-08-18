@@ -44,7 +44,7 @@ SymbolicName=CORONA_SERVICE_INFORMATION
 Severity=Success
 Facility=Service
 Language=English
-%1%nat SourceFile:%2%nLine:%3
+%1%nSource: %2%nLine: %3
 .
 
 MessageId=0x101
@@ -52,7 +52,7 @@ SymbolicName=CORONA_SERVICE_WARNING
 Severity=Warning
 Facility=Service
 Language=English
-%1%nat SourceFile:%2%nLine:%3
+%1%nSource: %2%nLine: %3
 .
 
 MessageId=0x102
@@ -60,5 +60,5 @@ SymbolicName=CORONA_SERVICE_ERROR
 Severity=Error
 Facility=System
 Language=English
-%1%nat SourceFile:%2%nLine:%3
+%1%nSource: %2%nLine: %3
 .

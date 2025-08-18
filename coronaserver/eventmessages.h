@@ -75,7 +75,7 @@
 //
 // MessageText:
 //
-// %1%nat SourceFile:%2%nLine:%3
+// %1%nSource: %2%nLine: %3
 //
 #define CORONA_SERVICE_INFORMATION       ((DWORD)0x00030100L)
 
@@ -84,7 +84,7 @@
 //
 // MessageText:
 //
-// %1%nat SourceFile:%2%nLine:%3
+// %1%nSource: %2%nLine: %3
 //
 #define CORONA_SERVICE_WARNING           ((DWORD)0x80030101L)
 
@@ -93,7 +93,7 @@
 //
 // MessageText:
 //
-// %1%nat SourceFile:%2%nLine:%3
+// %1%nSource: %2%nLine: %3
 //
 #define CORONA_SERVICE_ERROR             ((DWORD)0xC0000102L)
 
