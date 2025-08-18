@@ -438,7 +438,7 @@ void RunService(std::shared_ptr<corona::corona_simulation_interface> _simulation
 
     if (!StartServiceCtrlDispatcher(DispatchTable))
     {
-        SvcReportEvent(EVENTLOG_INFORMATION_TYPE, SVCEVENTDISP);
+        SvcWriteEventLog(EVENTLOG_INFORMATION_TYPE, "Corona Service", "Stopped", SVCEVENTDISP);
     }
 
 }
