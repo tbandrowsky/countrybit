@@ -6101,7 +6101,13 @@ private:
 
 			std::string user_name = data[user_name_field];
 			std::string user_email = data[user_email_field];
-			if (user_name.empty() and user_email.empty()) {
+			if (user_name.empty() and not user_email.empty()) {
+				user_name = user_email;
+			}
+			else if (not user_name.empty() and user_email.empty()) {
+				user_email = user_name;
+            }
+			else if (user_name.empty() and user_email.empty()) {
 				std::vector<validation_error> errors;
 				validation_error err;
                 err.class_name = "sys_user";
@@ -6115,12 +6121,6 @@ private:
 				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				response = create_user_response(create_user_request, false, "An email is required.", data, errors, method_timer.get_elapsed_seconds());
 				return response;
-			}
-			if (user_email.empty()) {
-				user_email = user_name;
-			}
-			else if (user_name.empty()) {
-				user_email = user_name;
 			}
 			std::string user_password1 = data["password1"];
 			std::string user_password2 = data["password2"];
