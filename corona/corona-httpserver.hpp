@@ -351,7 +351,8 @@ namespace corona {
 				DWORD error = HttpAddUrlToUrlGroup(group_id, url.c_str(), context, 0);
 				if (error != NO_ERROR) {
 					os_result orx(error);
-					std::string message = "Exception:" + handler_list->url + " " + orx.message;
+					std::string net_acl_command = std::format("netsh http add urlacl url = {} user = \\Everyone", handler_list->url);
+                    std::string message = handler_list->url + " " + orx.message + "\ntry:" + net_acl_command;
 					throw std::logic_error(message.c_str());
 				}
 			}

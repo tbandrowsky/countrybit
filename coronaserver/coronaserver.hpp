@@ -48,7 +48,8 @@ void corona_console_command()
 {
     std::string command;
     std::cout << "corona shell >";
-    std::getline(std::cin, command);
+
+    std::getline(std::cin, command, '\n');
 
     if (not command.empty()) {
         if (command == "?") {
@@ -60,20 +61,25 @@ void corona_console_command()
         }
         else if (command == "c")
         {
+            std::cout << "All Classes" << std::endl;
             service->get_classes();
         }
         else if (command.starts_with("c "))
         {
             command = command.substr(2);
+            std::cout << "Class " << command << std::endl;
             service->get_class(command);
         }
         else if (command.starts_with("d "))
         {
             command = command.substr(2);
+            std::cout << "Class Details " << command << std::endl;
             service->get_data(command);
         }
         else if (command == "q")
         {
+            std::cout << "Shutting down." << std::endl;
+            SvcLogInfo("Shutting down", __FILE__, __LINE__);
             exit_flag = true;
         }
     }
@@ -102,6 +108,7 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
         try
         {
             std::cout << "Running Corona in console mode. Type '?' for help." << std::endl;
+            std::cout.flush();
             service = std::make_shared<corona::comm_bus_service>(
                 _simulation, 
                 config_filename,                 
@@ -114,6 +121,7 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
             {
                 service->run_frame();
             }
+            service = nullptr;
         }
         catch (std::exception exc)
         {
@@ -592,8 +600,10 @@ bool RegisterCoronaEventSource(const std::string& svcName, const std::string& ex
         &hKey,
         NULL);
 
-    if (lRet != ERROR_SUCCESS)
+    if (lRet != ERROR_SUCCESS) {
+        SvcLogError("Failed to create registry key for event source", __FILE__, __LINE__);
         return false;
+    }
 
     // Set the EventMessageFile value to the executable path
     lRet = RegSetValueExA(

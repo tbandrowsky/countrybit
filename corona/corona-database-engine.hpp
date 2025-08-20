@@ -69,6 +69,9 @@ namespace corona
 		std::map<std::string, std::string> copy_values;
 	};
 
+	/// <summary>
+	/// Parses a child object definition from a string and returns a child_object_definition instance representing the parsed structure.
+	/// </summary>
 	class child_object_definition 
 	{
 	public:
@@ -87,6 +90,11 @@ namespace corona
 		child_object_definition& operator =(const child_object_definition& _src) = default;
 		child_object_definition& operator =(child_object_definition&& _src) = default;
 
+		/// <summary>
+		/// Parses a child object definition from a source string, extracting class names and field mappings according to a custom syntax.
+		/// </summary>
+		/// <param name="_src">A pointer to a null-terminated C string containing the definition to parse.</param>
+		/// <returns>A child_object_definition structure populated with parsed class names, field mappings, and array status. If parsing fails or the input is empty, returns a default-initialized child_object_definition.</returns>
 		static child_object_definition parse_definition(const char* _src)
 		{
 			parser_base pb;
@@ -3866,6 +3874,7 @@ namespace corona
 		const std::string auth_general = "auth-general";
 		const std::string auth_system = "auth-system";
 		
+		long import_batch_size = 20000;
 		/*
 		* authorizations in tokens, methods and progressions
 		* 
@@ -4816,7 +4825,7 @@ private:
 
 			response.put_member(success_field, all_objects_good);
 			response.put_member(message_field, "Objects processed"sv);
-			response.put_member(data_field, classes_group);
+			response.share_member(data_field, classes_group);
 			return response;
 		}
 
@@ -5617,7 +5626,6 @@ private:
 			timer tx;
 			system_monitoring_interface::global_mon->log_job_start("apply_schema", "Applying schema file", start_schema, __FILE__, __LINE__);
 			using namespace std::literals;
-			bool new_database = true;
 
 			if (not _schema.has_member("schema_name"))
 			{
@@ -5644,20 +5652,36 @@ private:
 			schema_key.put_member(class_name_field, "sys_schema"sv);
 			schema_key.set_compare_order({ "schema_name", "schema_version" });
 
-			json schema_test =  select_object(schema_key, false, sys_perm);
+			json jschema =  select_object(schema_key, false, sys_perm);
+			int64_t schema_id;
 
-			if (schema_test.object()) 
+			if (jschema.object()) 
 			{
-				new_database = false;
+                jschema.merge(_schema);
+				schema_id = (int64_t)_schema["object_id"];
+			}
+			else 
+			{
+                json create_object_body = jp.create_object();
+				create_object_body.put_member(class_name_field, "sys_schema"sv);
+                json create_object_request = create_system_request(create_object_body);
+                json result = create_object(create_object_request);
+				if (result.has_member(data_field)) 
+				{
+					json new_schema = result[data_field];
+                    new_schema.merge(_schema);
+					jschema = new_schema;
+					schema_id = (int64_t)jschema["object_id"];
+				}
 			}
 
-			if (_schema.has_member("classes"))
+			if (jschema.has_member("classes"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
 				system_monitoring_interface::global_mon->log_job_section_start("", "Classes", start_section, __FILE__, __LINE__);
 
-				json class_array = _schema["classes"];
+				json class_array = jschema["classes"];
 				if (class_array.array())
 				{
 					for (int i = 0; i < class_array.size(); i++)
@@ -5690,12 +5714,12 @@ private:
 				system_monitoring_interface::global_mon->log_warning("classes not found in schema");
 			}
 
-			if (_schema.has_member("users"))
+			if (jschema.has_member("users"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
 				system_monitoring_interface::global_mon->log_job_section_start("", "Users", start_section, __FILE__, __LINE__);
-				json user_array = _schema["users"];
+				json user_array = jschema["users"];
 				if (user_array.array())
 				{
 					for (int i = 0; i < user_array.size(); i++)
@@ -5713,55 +5737,40 @@ private:
 				system_monitoring_interface::global_mon->log_job_section_stop("", "Users", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 	
-			if (_schema.has_member("datasets"))
+			if (jschema.has_member("datasets"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
 				system_monitoring_interface::global_mon->log_job_section_start("", "Datasets", start_section, __FILE__, __LINE__);
 				using namespace std::literals;
-				json script_array = _schema["datasets"];
-				if (script_array.array())
+				json dataset_array = jschema["datasets"];
+				if (dataset_array.array())
 				{
-					for (int i = 0; i < script_array.size(); i++)
+					for (int i = 0; i < dataset_array.size(); i++)
 					{
 						date_time start_dataset = date_time::now();
 						timer txs;
 
-						json script_definition = script_array.get_element(i);
-
-						script_definition.put_member(class_name_field, "sys_dataset"sv);
-						script_definition.put_member_i64("schema_id", (int64_t)_schema[object_id_field]);
-						std::string dataset_name = script_definition["dataset_name"];
-						std::string dataset_version = script_definition["dataset_version"];
+						json new_dataset = dataset_array.get_element(i);
+						new_dataset.put_member(class_name_field, "sys_dataset"sv);
+						new_dataset.put_member_i64("schema_id", (int64_t)jschema[object_id_field]);
+						std::string dataset_name = new_dataset["dataset_name"];
+						std::string dataset_version = new_dataset["dataset_version"];
 
 						system_monitoring_interface::global_mon->log_job_section_start("DataSet", dataset_name + " Start", start_dataset, __FILE__, __LINE__);
 
-						bool script_run = (bool)script_definition["run_on_change"];
-						json existing_script = get_dataset(dataset_name, dataset_version, sys_perm);
-						bool run_script = false;
-						if (existing_script.empty() or script_run)
-							run_script = true;
+						bool run_on_change = (bool)new_dataset["run_on_change"];
+						json existing_dataset = get_dataset(dataset_name, dataset_version, sys_perm);
 
-						if (existing_script.empty())
-						{
-							// in corona, creating an object doesn't actually persist anything 
-							// but a change in identifier.  It's a clean way of just getting the 
-							// "new chumpy" item for ya.  Or you can just shove it in there.
-							json put_script_request = create_system_request(script_definition);
-							json created_object = put_script_request[data_field];
-							json save_result = put_object(put_script_request);
-							if (not save_result[success_field]) {
-								system_monitoring_interface::global_mon->log_warning(save_result[message_field]);
-								system_monitoring_interface::global_mon->log_json<json>(save_result);
-								existing_script = save_result[data_field];
-							}
-							else
-								system_monitoring_interface::global_mon->log_information(save_result[message_field]);
+						if (not run_on_change and existing_dataset) {
+							system_monitoring_interface::global_mon->log_job_section_stop("DataSet", dataset_name + " Already Done", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+							continue;
 						}
 
-						if (run_script and script_definition.has_member("import"))
+						if (new_dataset.object() and new_dataset.has_member("import"))
 						{
-							json import_spec = script_definition["import"];
+                            new_dataset.put_member_i64("schema_id", (int64_t)jschema[object_id_field]);
+							json import_spec = new_dataset["import"];
 							std::vector<std::string> missing;
 
 							if (not import_spec.has_members(missing, { "target_class", "type" })) {
@@ -5776,6 +5785,7 @@ private:
 
 							std::string target_class = import_spec["target_class"];
 							std::string import_type = import_spec["type"];
+                            date_time import_datatime = import_spec["import_datatime"];
 
 							if (import_type == "csv") {
 
@@ -5795,100 +5805,128 @@ private:
 									system_monitoring_interface::global_mon->log_warning("filename and delimiter can't be blank.");
 								}
 
-								json column_map = import_spec["column_map"];
+								if (std::filesystem::exists(filename))
+								{
 
-								FILE* fp = nullptr;
-								int error_code = fopen_s(&fp, filename.c_str(), "rS");
+									auto file_modified = std::filesystem::last_write_time(filename);
+									const auto system_file_modified = std::chrono::clock_cast<std::chrono::system_clock>(file_modified);
+									const auto file_modified_time = std::chrono::system_clock::to_time_t(system_file_modified);
 
-								if (fp) {
-									// Buffer to store each line of the file.
-									char line[8182];
-									json datomatic = jp.create_array();
+									date_time file_modified_dt = date_time(file_modified_time);
+									if (file_modified_dt > import_datatime) {
 
-									// create template object
-									json codata = jp.create_object();
-									codata.put_member(class_name_field, target_class);
-									json cor = create_system_request(codata);
-									json new_object_response =  create_object(cor);
+										json column_map = import_spec["column_map"];
 
-									if (new_object_response[success_field]) {
-										json new_object_template = new_object_response[data_field];
+										FILE* fp = nullptr;
+										int error_code = fopen_s(&fp, filename.c_str(), "rS");
 
-										// Read each line from the file and store it in the 'line' buffer.
-										int64_t total_row_count = 0;
-										while (fgets(line, sizeof(line), fp)) {
-											// Print each line to the standard output.
-											json new_object = new_object_template.clone();
-											new_object.erase_member(object_id_field);
-											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
-											datomatic.push_back(new_object);
-											if (datomatic.size() > 10000) {
-                                                int batch_size = (int)datomatic.size();
-												total_row_count += datomatic.size();
-												json request(datomatic);
-												json cor = create_system_request(request);
+										if (fp) {
+											// Buffer to store each line of the file.
+											char line[8182];
+											json datomatic = jp.create_array();
 
-												put_object_sync(cor, [this, total_row_count, batch_size](json& put_result, double _exec_time) {
-													if (put_result[success_field]) {
-														double x = batch_size / _exec_time;
-														std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
-														system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
+											// create template object
+											json codata = jp.create_object();
+											codata.put_member(class_name_field, target_class);
+											json cor = create_system_request(codata);
+											json new_object_response = create_object(cor);
+
+											if (new_object_response[success_field]) {
+												json new_object_template = new_object_response[data_field];
+
+												// Read each line from the file and store it in the 'line' buffer.
+												int64_t total_row_count = 0;
+												while (fgets(line, sizeof(line), fp)) {
+													// Print each line to the standard output.
+													json new_object = new_object_template.clone();
+													new_object.erase_member(object_id_field);
+													jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
+													datomatic.push_back(new_object);
+													if (datomatic.size() > import_batch_size) {
+														int batch_size = (int)datomatic.size();
+														total_row_count += datomatic.size();
+														json request(datomatic);
+														json cor = create_system_request(request);
+
+														put_object_sync(cor, [this, total_row_count, batch_size](json& put_result, double _exec_time) {
+															if (put_result[success_field]) {
+																double x = batch_size / _exec_time;
+																std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
+																system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
+															}
+															else
+															{
+																log_error_array(put_result);
+															}
+															});
+
+														datomatic = jp.create_array();
 													}
-													else 
-													{
-														log_error_array(put_result);
-													}
-												});
+												}
 
-												datomatic = jp.create_array();
+												if (datomatic.size() > 0) {
+													int batch_size = (int)datomatic.size();
+													total_row_count += batch_size;
+													json request(datomatic);
+													json cor = create_system_request(request);
+													put_object_sync(cor, [this, total_row_count, batch_size](json& put_result, double _exec_time) {
+														if (put_result[success_field]) {
+															double x = batch_size / _exec_time;
+															std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
+															system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
+														}
+														else
+														{
+															log_error_array(put_result);
+														}
+														});
+													datomatic = jp.create_array();
+												}
+
+											}
+
+											// Close the file stream once all lines have been read.
+											fclose(fp);
+											import_spec.put_member("import_datatime", file_modified_dt);
+											new_dataset.share_member("import", import_spec);
+											json dataset_request = create_system_request(new_dataset);
+											json result = put_object(dataset_request);
+											if (result[success_field]) {
+												std::string msg = std::format("imported from {0}", filename);
+												system_monitoring_interface::global_mon->log_information(msg, __FILE__, __LINE__);
+											}
+											else {
+												system_monitoring_interface::global_mon->log_warning(result[message_field], __FILE__, __LINE__);
+												system_monitoring_interface::global_mon->log_json<json>(result);
+                                            }
+										}
+										else {
+											char error_buffer[256] = {};
+											strerror_s(
+												error_buffer,
+												std::size(error_buffer),
+												error_code
+											);
+											std::string msg = std::format("could not open file {0}:{1}", filename, error_buffer);
+											system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
+											char directory_name[MAX_PATH] = {};
+											char* result = _getcwd(directory_name, std::size(directory_name));
+											if (result) {
+												msg = std::format("cwd is {0}", result);
+												system_monitoring_interface::global_mon->log_information(msg, __FILE__, __LINE__);
 											}
 										}
-
-										if (datomatic.size() > 0) {
-											int batch_size = (int)datomatic.size();
-											total_row_count += batch_size;
-											json request(datomatic);
-											json cor = create_system_request(request);
-											put_object_sync(cor, [this, total_row_count, batch_size](json& put_result, double _exec_time) {
-												if (put_result[success_field]) {
-													double x = batch_size / _exec_time;
-													std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
-													system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
-												}
-												else
-												{
-													log_error_array(put_result);
-												}
-												});
-                                            datomatic = jp.create_array();
-										}
-
 									}
-
-									// Close the file stream once all lines have been read.
-									fclose(fp);
 								}
 								else {
-									char error_buffer[256] = {};
-									strerror_s(
-										error_buffer,
-										std::size(error_buffer),
-										error_code
-									);
-									std::string msg = std::format("could not open file {0}:{1}", filename, error_buffer);
-									system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
-									char directory_name[MAX_PATH] = {};
-									char *result = _getcwd(directory_name, std::size(directory_name));
-									if (result) {
-										msg = std::format("cwd is {0}", result);
-										system_monitoring_interface::global_mon->log_information(msg, __FILE__, __LINE__);
-									}
+	 									std::string msg = std::format("file {0} doesn't exist", filename);
+                                        system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
 								}
 							}
 						}
 
-						if (run_script and script_definition.has_member("objects")) {
-							json object_list = script_definition["objects"];
+						if (new_dataset.has_member("objects")) {
+							json object_list = new_dataset["objects"];
 							if (object_list.array()) {
 								for (int j = 0; j < object_list.size(); j++) {
 									json object_definition = object_list.get_element(j);
@@ -5917,18 +5955,18 @@ private:
 										system_monitoring_interface::global_mon->log_json<json>(create_result);
 									}
 								}
+								date_time completed_date = date_time::now();
+								new_dataset.put_member("completed", completed_date);
+								json put_script_request = create_system_request(new_dataset);
+								json save_script_result = put_object(put_script_request);
+								if (not save_script_result[success_field]) {
+									system_monitoring_interface::global_mon->log_warning(save_script_result[message_field]);
+									system_monitoring_interface::global_mon->log_json<json>(save_script_result);
+								}
+								else
+									system_monitoring_interface::global_mon->log_information(save_script_result[message_field]);
 							}
 
-							date_time completed_date = date_time::now();
-							script_definition.put_member("completed", completed_date);
-							json put_script_request = create_system_request(script_definition);
-							json save_script_result =  put_object(put_script_request);
-							if (not save_script_result[success_field]) {
-								system_monitoring_interface::global_mon->log_warning(save_script_result[message_field]);
-								system_monitoring_interface::global_mon->log_json<json>(save_script_result);
-							}
-							else
-								system_monitoring_interface::global_mon->log_information(save_script_result[message_field]);
 						}
 
 						system_monitoring_interface::global_mon->log_job_section_stop("DataSet", dataset_name + " Finished", txs.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -5937,27 +5975,19 @@ private:
 				}
 			}
 
-			_schema.put_member(class_name_field, "sys_schema"sv);
-
-			json put_schema_request = create_system_request(_schema);
+			json put_schema_request = create_system_request(jschema);
 			// in corona, creating an object doesn't actually persist anything 
 			// but a change in identifier.  It's a clean way of just getting the 
 			// "new chumpy" item for ya.  
-			json create_schema_result =  create_object(put_schema_request);
-			if (create_schema_result[success_field]) {
-				json created_object = put_schema_request[data_field];
-				json save_schema_result =  put_object(put_schema_request);
-				if (not save_schema_result[success_field]) {
-					system_monitoring_interface::global_mon->log_warning(save_schema_result[message_field]);
-					system_monitoring_interface::global_mon->log_json<json>(save_schema_result);
-				}
-				else
-					system_monitoring_interface::global_mon->log_information(save_schema_result[message_field]);
+			json put_schema_result =  put_object(put_schema_request);
+			if (put_schema_result[success_field]) {
+				std::string message = put_schema_result[message_field];
+				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
 			}
 			else 
 			{
-				system_monitoring_interface::global_mon->log_warning(create_schema_result[message_field], __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(create_schema_result);
+				system_monitoring_interface::global_mon->log_warning(put_schema_result[message_field], __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(put_schema_result);
 			}
 
 			system_monitoring_interface::global_mon->log_job_stop("apply_schema", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);

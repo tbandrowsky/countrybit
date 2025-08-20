@@ -119,9 +119,16 @@ namespace corona
 
 				if (database_recreate or not app->file_exists(database_filename))
 				{
-					db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
-					local_db = std::make_shared<corona_database>(db_file);
-					local_db->apply_config(local_db_config);
+					try {
+						db_file = app->open_file_ptr(database_filename, file_open_types::create_always);
+						local_db = std::make_shared<corona_database>(db_file);
+						local_db->apply_config(local_db_config);
+					}
+					catch (std::exception exc)
+					{
+                        std::string mxessage = std::format("Could not open database file {0} for create_always: {1}", database_filename, exc.what());
+                        log_warning(mxessage, __FILE__, __LINE__);
+					}
 
 					json create_database_response = local_db->create_database();
 
@@ -135,11 +142,19 @@ namespace corona
 				}
 				else
 				{
-					db_file = app->open_file_ptr(database_filename, file_open_types::open_existing);
-					local_db = std::make_shared<corona_database>(db_file);
-					local_db->apply_config(local_db_config);
 
-					local_db->open_database(0);
+					try {
+						db_file = app->open_file_ptr(database_filename, file_open_types::open_existing);
+						local_db = std::make_shared<corona_database>(db_file);
+						local_db->apply_config(local_db_config);
+						local_db->open_database(0);
+					}
+					catch (std::exception exc)
+					{
+						std::string mxessage = std::format("Could not open database file {0} for open_existing: {1}", database_filename, exc.what());
+						log_warning(mxessage, __FILE__, __LINE__);
+					}
+
 
 					ready_for_polling = true;
 				}
