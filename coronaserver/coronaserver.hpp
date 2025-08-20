@@ -49,40 +49,48 @@ void corona_console_command()
     std::string command;
     std::cout << "corona shell >";
 
-    std::getline(std::cin, command, '\n');
+    do {
+        std::getline(std::cin, command, '\n');
 
-    if (not command.empty()) {
-        if (command == "?") {
-            std::cout << "?           - help" << std::endl;
-            std::cout << "c           - list of classes" << std::endl;
-            std::cout << "c classname - class of name" << std::endl;
-            std::cout << "d classname - data for class" << std::endl;
-            std::cout << "q           - quit" << std::endl;
+        if (not command.empty()) {
+            if (command == "?") {
+                std::cout << "?           - help" << std::endl;
+                std::cout << "c           - list of classes" << std::endl;
+                std::cout << "c classname - class of name" << std::endl;
+                std::cout << "d classname - data for class" << std::endl;
+                std::cout << "x           - exits the shell" << std::endl;
+                std::cout << "q           - quit" << std::endl;
+            }
+            else if (command == "c")
+            {
+                corona::system_monitoring_interface::global_mon->log_information("Listing all classes", __FILE__, __LINE__);
+                service->get_classes();
+            }
+            else if (command.starts_with("c "))
+            {
+                command = command.substr(2);
+                corona::system_monitoring_interface::global_mon->log_information("Class " + command, __FILE__, __LINE__);
+                service->get_class(command);
+            }
+            else if (command.starts_with("d "))
+            {
+                command = command.substr(2);
+                corona::system_monitoring_interface::global_mon->log_information("Class Details" + command, __FILE__, __LINE__);
+                service->get_data(command);
+            }
+            else if (command == "q")
+            {
+                corona::system_monitoring_interface::global_mon->log_information("Shutting Down Safely", __FILE__, __LINE__);
+                std::cout << "Shutting down." << std::endl;
+                SvcLogInfo("Shutting down", __FILE__, __LINE__);
+                exit_flag = true;
+            }
+            else if (command == "x")
+            {
+                corona::system_monitoring_interface::global_mon->log_information("Exit Console (CTRL-C to come back)", __FILE__, __LINE__);
+            }
         }
-        else if (command == "c")
-        {
-            std::cout << "All Classes" << std::endl;
-            service->get_classes();
-        }
-        else if (command.starts_with("c "))
-        {
-            command = command.substr(2);
-            std::cout << "Class " << command << std::endl;
-            service->get_class(command);
-        }
-        else if (command.starts_with("d "))
-        {
-            command = command.substr(2);
-            std::cout << "Class Details " << command << std::endl;
-            service->get_data(command);
-        }
-        else if (command == "q")
-        {
-            std::cout << "Shutting down." << std::endl;
-            SvcLogInfo("Shutting down", __FILE__, __LINE__);
-            exit_flag = true;
-        }
-    }
+    } while (not exit_flag and command != "x" and command != "q");
 }
 
 // Handler function to handle CTRL+C

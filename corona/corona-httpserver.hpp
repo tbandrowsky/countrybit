@@ -361,8 +361,14 @@ namespace corona {
 
 		void start()
 		{
+            shutdown = false;
 			global_job_queue->listen_file(request_queue);
 			next_request();
+		}
+
+		void stop()
+		{
+			shutdown = true;
 		}
 
 		int read_body(buffer_assembler& _buff, PHTTP_REQUEST _request)

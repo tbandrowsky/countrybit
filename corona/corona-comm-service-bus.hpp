@@ -496,7 +496,14 @@ namespace corona
 
 		virtual ~comm_bus_service()
 		{
-
+			// stop the web
+            db_api_server.stop();
+			// stop the database.
+			// we do this here rather than just letting the pointer release itself 
+            // because we want to make sure the database is closed before the job queue is shut down
+			if (local_db) {
+				local_db = nullptr;
+			}
 		}
 
 		std::string get_token(http_action_request& _request)
