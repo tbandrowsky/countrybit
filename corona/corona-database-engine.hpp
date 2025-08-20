@@ -4120,6 +4120,40 @@ namespace corona
 
 			created_classes.put_member("sys_object", true);
 
+
+
+			response = create_class(R"(
+{	
+	"class_name" : "sys_error",
+	"class_description" : "Base of all errors",
+	"base_class_name" : "sys_object",
+	"fields" : {			
+			"system" : "string",
+			"message" : "string",
+			"body":"object",
+			"file" : "string",
+			"line": "int32"
+	}
+}
+)");
+
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			test = classes->get(R"({"class_name":"sys_error"})");
+			if (test.empty() or test.error()) {
+				system_monitoring_interface::global_mon->log_warning("could not find class sys_error after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+			}
+
+			created_classes.put_member("sys_error", true);
+
+
 			response = create_class(R"(
 {	
 	"class_name" : "sys_server",
@@ -5118,6 +5152,23 @@ private:
 			classd->put_objects(this, children, items, _permission);
 		}
 
+		void put_error(std::string _system, std::string _message, json& _body, std::string _file, int _line)
+		{
+			json_parser jp;
+			json error = jp.create_object();
+			error.put_member("system", _system);
+			error.put_member("message", _message);
+			error.put_member("file", _file);
+			error.put_member("line", _line);
+			error.share_member("body", _body);
+            json create_object_request = create_system_request(error);
+			json response = put_object(error);
+			if (not response[success_field]) {
+				system_monitoring_interface::global_mon->log_warning("put_error failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json<json>(response);
+			}
+		}
+
 		json get_user(std::string _user_name, class_permissions _permission)
 		{
 			json_parser jp;
@@ -5385,6 +5436,13 @@ private:
 				sc_client.sender_name = sendgrid_sender;
 				sc_client.api_key = connections.get_connection("sendgrid");
 
+				if (sc_client.api_key.empty()) {
+                    json_parser jp;
+					json blank = jp.create_object();
+					system_monitoring_interface::global_mon->log_warning("Sendgrid configuration is missing Api Key.  Be sure to set the CONNECT_SENDGRID environment variable.", __FILE__, __LINE__);
+					put_error("SendGrid", "Sendgrid configuration is missing Api Key.  Be sure to set the CONNECT_SENDGRID environment variable.", blank, __FILE__, __LINE__);
+				}
+
 				if (email_template.empty()) {
 					email_template = R"(<html><body><h2>$EMAIL_TITLE$</h2><p>Username is $USERNAME$</p><p>Validation code <span style="background:grey;border:1px solid black;padding 8px;">$CODE$</p></body></html>)";
 				}
@@ -5394,7 +5452,10 @@ private:
 				std::string email_body = replace(email_template, "$CODE$", new_code);
 				email_body = replace(email_body, "$USERNAME$", user_name);
 				email_body = replace(email_body, "$EMAIL_TITLE$", user_confirmation_title);
-				sc_client.send_email(user_info, user_confirmation_title, email_body, "text/html");
+				auto sg_response = sc_client.send_email(user_info, user_confirmation_title, email_body, "text/html");
+				if (sg_response.response.http_status_code > 299 or sg_response.response.http_status_code < 200) {
+					system_monitoring_interface::global_mon->log_warning(std::format("Cannot send email {} to {}", user_confirmation_title, user_name), __FILE__, __LINE__);
+				}
 				success = true;
 			}
 			catch (std::exception exc)
