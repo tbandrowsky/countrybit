@@ -25,6 +25,14 @@ For Future Consideration
 
 #include "corona-windows-all.h"
 
+#include <winmeta.h>
+#include <TraceLoggingProvider.h>
+
+TRACELOGGING_DEFINE_PROVIDER( // defines g_hProvider
+	global_corona_provider, // Name of the provider handle
+	"CountryVideoGames.CoronaDb", // Human-readable name for the provider
+	(0x2de904b0, 0x0e7b, 0x5db0, 0xc1, 0x88, 0xaa, 0x1a, 0x39, 0x1e, 0x3e, 0x5c));
+
 #include <string>
 #include <bit>
 #include <cstring>
@@ -293,5 +301,7 @@ namespace corona {
 // that this will continue.
 // this one is for Service applications 
 #include "corona-comm-service-bus.hpp"
+
+
 
 #endif

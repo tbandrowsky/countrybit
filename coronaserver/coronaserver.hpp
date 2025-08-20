@@ -5,18 +5,12 @@
 
 #include "corona.hpp"
 #include <windows.h>
-#include <winmeta.h>
 #include <iostream>
 
-#include <TraceLoggingProvider.h>
 #include "eventmessages.h"
 
 bool RegisterCoronaEventSource(const std::string& svcName, const std::string& exePath);
 
-TRACELOGGING_DEFINE_PROVIDER( // defines g_hProvider
-    g_hProvider, // Name of the provider handle
-    "CountryVideoGames.CoronaDb", // Human-readable name for the provider
-    (0x2de904b0, 0x0e7b, 0x5db0, 0xc1, 0x88, 0xaa, 0x1a, 0x39, 0x1e, 0x3e, 0x5c));
 
 char SVCNAME[] = "Corona Database";
 char SVCEVENTDISP[] = "StartServiceCtrlDispatcher";
@@ -413,7 +407,7 @@ VOID SvcLogError(std::string message, std::string file, int line)
     const char* cfile = file.c_str();    
 
    TraceLoggingWrite(
-        g_hProvider,
+        global_corona_provider,
        "Corona",
        TraceLoggingLevel(WINEVENT_LEVEL_ERROR),
        TraceLoggingStruct(3, "CoronaEvent"),
@@ -453,7 +447,7 @@ VOID SvcLogInfo(std::string message, std::string file, int line)
     const char* cfile = corona::get_file_name(file.c_str());
 
     TraceLoggingWrite(
-        g_hProvider,
+        global_corona_provider,
         "Corona",
         TraceLoggingLevel(WINEVENT_LEVEL_INFO),
         TraceLoggingStruct(3, "CoronaEvent"),
@@ -515,7 +509,7 @@ void RunService(std::shared_ptr<corona::corona_simulation_interface> _simulation
 
 int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[])
 {
-    TraceLoggingRegister(g_hProvider);
+    TraceLoggingRegister(global_corona_provider);
 
     char szUnquotedPath[MAX_PATH];
 
@@ -586,7 +580,7 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
         return 0;
     }
 
-    TraceLoggingUnregister(g_hProvider);
+    TraceLoggingUnregister(global_corona_provider);
 
     return 1;
 }
