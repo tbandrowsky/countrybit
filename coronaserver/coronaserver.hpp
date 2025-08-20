@@ -121,8 +121,7 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
                 _simulation, 
                 config_filename,                 
                 [](const std::string& _msg, const char* _file, int _line) {
-                    std::string message = std::format("Corona service error: {0} at {1}:{2}", _msg, _file, _line);
-                    SvcLogError(message, __FILE__, __LINE__);
+                    SvcLogError(_msg, __FILE__, __LINE__);
                 },
                 false);
             while (not exit_flag)
@@ -410,6 +409,7 @@ VOID WINAPI SvcCtrlHandler(DWORD dwCtrl)
 VOID SvcLogError(std::string message, std::string file, int line)
 {
     const char* cmessage = message.c_str();
+    file = corona::get_file_name(file);
     const char* cfile = file.c_str();    
 
    TraceLoggingWrite(
