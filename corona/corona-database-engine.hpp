@@ -6169,10 +6169,7 @@ private:
 			std::string user_name = data[user_name_field];
 			std::string user_email = data[user_email_field];
 
-			bool using_email_for_username = false;
-
 			if (user_name.empty() and not user_email.empty()) {
-				using_email_for_username = true;
 				user_name = user_email;
 			}
 			else if (not user_name.empty() and user_email.empty()) {
@@ -6193,10 +6190,8 @@ private:
 				response = create_user_response(create_user_request, false, "An email is required.", data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
-			else {
-				using_email_for_username = true;
-			}
-            data.put_member(user_name_field, user_name);
+
+			data.put_member(user_name_field, user_name);
 			data.put_member(user_email_field, user_email);
 			std::string user_password1 = data["password1"];
 			std::string user_password2 = data["password2"];
@@ -6248,35 +6243,15 @@ private:
 
 			auto sys_perm = get_system_permission();
 
-			do 
+			json existing_user = get_user(user_name, sys_perm);
+
+			if (existing_user.object())
 			{
-				json existing_user = get_user(user_name, sys_perm);
-
-				if (existing_user.object())
-				{
-					// if we're using email for the username, then we can't change it
-					if (using_email_for_username)
-					{
-						json_parser jp;
-                        json existing_errors = jp.create_array();
-						response = create_user_response(create_user_request, false, "User already exists.", existing_user, existing_errors, method_timer.get_elapsed_seconds());
-						return response;
-					}
-					else 
-					{
-						attempt_count++;
-						char buff[128];
-						buff[0] = ('0' + rand() % 10);
-						buff[1] = 0;
-						user_name = user_name + buff;
-					}
-				}
-				else 
-				{
-					user_exists = false;
-				}
-
-			} while (user_exists);
+				json_parser jp;
+                json existing_errors = jp.create_array();
+				response = create_user_response(create_user_request, false, "User already exists.", existing_user, existing_errors, method_timer.get_elapsed_seconds());
+				return response;
+			}
 
 			std::string hashed_pw = crypter.hash(user_password1);
 
