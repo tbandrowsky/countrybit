@@ -6344,7 +6344,7 @@ private:
 				err.field_name = user_name_field;
 				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
-				err.message = "user not found";
+				err.message = "User not found";
 				errors.push_back(err);
 				message = "User not found.";
 				system_monitoring_interface::active_mon->log_function_stop("send_validation_code", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);

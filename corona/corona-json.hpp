@@ -936,6 +936,9 @@ namespace corona
 				if (el.second) {
 					ret += el.second->to_json();
 				}
+				else {
+                    ret += "null";
+				}
 			}
 			ret += " }";
 			return ret;
