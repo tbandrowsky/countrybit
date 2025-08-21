@@ -536,8 +536,8 @@ namespace corona
 			json command = _src["select_command"];
 
 			if (command.empty()) {
-				system_monitoring_interface::global_mon->log_information("table control missing select_command", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json(_src);
+				system_monitoring_interface::active_mon->log_information("table control missing select_command", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json(_src);
 			}
 			corona::put_json(select_command, command);
 
@@ -704,8 +704,8 @@ namespace corona
 			choices.put_json(jlist_data);
 			json command = _src["select_command"];
 			if (command.empty()) {
-				system_monitoring_interface::global_mon->log_information("list control missing select_command", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json(_src);
+				system_monitoring_interface::active_mon->log_information("list control missing select_command", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json(_src);
 			}
 
 			corona::put_json(select_command, command);
@@ -860,8 +860,8 @@ namespace corona
 			choices.put_json(jlist_data);
 			json command = _src["select_command"];
 			if (command.empty()) {
-				system_monitoring_interface::global_mon->log_information("dropdown control missing select_command", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json(_src);
+				system_monitoring_interface::active_mon->log_information("dropdown control missing select_command", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json(_src);
 			}
 
 			corona::put_json(select_command, command);
@@ -972,8 +972,8 @@ namespace corona
 			text_control_base::put_json(_src);
 			json jcommand = _src["on_click"];
 			if (jcommand.empty()) {
-				system_monitoring_interface::global_mon->log_information("button control missing click_command", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json(_src);
+				system_monitoring_interface::active_mon->log_information("button control missing click_command", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json(_src);
 			}
 
 			icon_path = _src["icon_path"];
@@ -1695,8 +1695,8 @@ namespace corona
 
 			json jcommand = _src["change_command"];
 			if (jcommand.empty()) {
-				system_monitoring_interface::global_mon->log_information("month calendar control missing change_command", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json(_src);
+				system_monitoring_interface::active_mon->log_information("month calendar control missing change_command", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json(_src);
 			}
 
 			corona::put_json(change_command, jcommand);

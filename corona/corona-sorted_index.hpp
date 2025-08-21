@@ -635,7 +635,7 @@ bool test_sorted_index2(std::shared_ptr<test_set> _tests, std::shared_ptr<applic
 	std::shared_ptr<dynamic_box> box =
 		std::make_shared<dynamic_box>(1<<20);
 
-	system_monitoring_interface::global_mon->log_function_start("sort_index", "start", st, __FILE__, __LINE__);
+	system_monitoring_interface::active_mon->log_function_start("sort_index", "start", st, __FILE__, __LINE__);
 
 	using test_sorted_index_type = sorted_index<int64_t, int64_t, 1>;
 
@@ -657,7 +657,7 @@ bool test_sorted_index2(std::shared_ptr<test_set> _tests, std::shared_ptr<applic
 	}
 	_tests->test({ "read", true, __FILE__, __LINE__ });
 
-	system_monitoring_interface::global_mon->log_function_stop("sort_index", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+	system_monitoring_interface::active_mon->log_function_stop("sort_index", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	return true;
 }
 

@@ -92,6 +92,7 @@ namespace corona
 		console_color Logintel;		
 
 		static system_monitoring_interface* global_mon;
+		static system_monitoring_interface* active_mon;
 
 		CRITICAL_SECTION log_lock;
 
@@ -172,6 +173,7 @@ namespace corona
 		{
 			if (global_mon == nullptr) {
 				global_mon = new system_monitoring_interface();
+				active_mon = global_mon;
 				global_mon->test_colors();
 			}
 		}
@@ -184,6 +186,21 @@ namespace corona
 				_command_name = " ";
 			if (_message.empty())
 				_message = " ";
+
+            const char* cmessage = _message.c_str();
+            const char* ccommand = _command_name.c_str();
+            const char* cfilename = get_file_name(_file);
+
+			TraceLoggingWrite(
+				global_corona_provider,
+				"Corona",
+				TraceLoggingLevel(WINEVENT_LEVEL_INFO),
+				TraceLoggingStruct(3, "UserCommandStart"),
+				TraceLoggingValue(ccommand, "Command"),
+				TraceLoggingValue(cmessage, "Message"),
+				TraceLoggingValue(cfilename, "File"),
+				TraceLoggingValue(_line, "Line")
+			);
 
 			::EnterCriticalSection(&log_lock);
 
@@ -216,6 +233,22 @@ namespace corona
 
 			try {
 
+				const char* cmessage = _message.c_str();
+				const char* ccommand = _command_name.c_str();
+				const char* cfilename = get_file_name(_file);
+
+				TraceLoggingWrite(
+					global_corona_provider,
+					"Corona",
+					TraceLoggingLevel(WINEVENT_LEVEL_INFO),
+					TraceLoggingStruct(3, "UserCommandStop"),
+					TraceLoggingValue(ccommand, "Command"),
+					TraceLoggingValue(cmessage, "Message"),
+					TraceLoggingValue(cfilename, "File"),
+					TraceLoggingValue(_elapsed_seconds, "ExecutionTime"),
+					TraceLoggingValue(_line, "Line")
+				);
+
 				auto& xout = get_log_file();
 
 				xout << Logusercommand;
@@ -244,6 +277,23 @@ namespace corona
 		{
 			::EnterCriticalSection(&log_lock);
 
+			const char* cmessage = _message.c_str();
+			const char* ccommand = _command_name.c_str();
+			const char* cfilename = get_file_name(_file);
+			if (cfilename) {
+		
+				TraceLoggingWrite(
+					global_corona_provider,
+					"Corona",
+					TraceLoggingLevel(WINEVENT_LEVEL_INFO),
+					TraceLoggingStruct(3, "CommandStart"),
+					TraceLoggingValue(ccommand, "Command"),
+					TraceLoggingValue(cmessage, "Message"),
+					TraceLoggingValue(cfilename, "File"),
+					TraceLoggingValue(_line, "Line")
+				);
+			}
+
 			try {
 				auto& xout = get_log_file();
 
@@ -271,6 +321,21 @@ namespace corona
 		{
 			::EnterCriticalSection(&log_lock);
 
+			const char* cmessage = _message.c_str();
+			const char* ccommand = _command_name.c_str();
+			const char* cfilename = get_file_name(_file);
+
+			TraceLoggingWrite(
+				global_corona_provider,
+				"Corona",
+				TraceLoggingLevel(WINEVENT_LEVEL_INFO),
+				TraceLoggingStruct(3, "CommandStop"),
+				TraceLoggingValue(ccommand, "Command"),
+				TraceLoggingValue(cmessage, "Message"),
+				TraceLoggingValue(cfilename, "File"),
+				TraceLoggingValue(_elapsed_seconds, "ExecutionTime"),
+				TraceLoggingValue(_line, "Line")
+			);
 			try {
 				auto& xout = get_log_file();
 
@@ -296,13 +361,27 @@ namespace corona
 				log_exception(exc, __FILE__, __LINE__);
 			}
 
-
 			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_job_start(std::string _api_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
 			::EnterCriticalSection(&log_lock);
+
+			const char* cmessage = _message.c_str();
+			const char* ccommand = _api_name.c_str();
+			const char* cfilename = get_file_name(_file);
+
+			TraceLoggingWrite(
+				global_corona_provider,
+				"Corona",
+				TraceLoggingLevel(WINEVENT_LEVEL_INFO),
+				TraceLoggingStruct(3, "JobStart"),
+				TraceLoggingValue(ccommand, "Api"),
+				TraceLoggingValue(cmessage, "Message"),
+				TraceLoggingValue(cfilename, "File"),
+				TraceLoggingValue(_line, "Line")
+			);
 
 			try {
 				auto& xout = get_log_file();
@@ -330,12 +409,27 @@ namespace corona
 				log_exception(exc, __FILE__, __LINE__);
 			}
 
-
 			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_job_stop(std::string _api_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
+			const char* cmessage = _message.c_str();
+			const char* ccommand = _api_name.c_str();
+			const char* cfilename = get_file_name(_file);
+
+			TraceLoggingWrite(
+				global_corona_provider,
+				"Corona",
+				TraceLoggingLevel(WINEVENT_LEVEL_INFO),
+				TraceLoggingStruct(3, "JobStop"),
+				TraceLoggingValue(ccommand, "Api"),
+				TraceLoggingValue(cmessage, "Message"),
+				TraceLoggingValue(cfilename, "File"),
+				TraceLoggingValue(_elapsed_seconds, "ExecutionTime"),
+				TraceLoggingValue(_line, "Line")
+			);
+
 			::EnterCriticalSection(&log_lock);
 
 			try {
@@ -405,6 +499,22 @@ namespace corona
 
 		virtual void log_job_section_stop(std::string _api_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
+			const char* cmessage = _message.c_str();
+			const char* ccommand = _api_name.c_str();
+			const char* cfilename = get_file_name(_file);
+
+			TraceLoggingWrite(
+				global_corona_provider,
+				"Corona",
+				TraceLoggingLevel(WINEVENT_LEVEL_INFO),
+				TraceLoggingStruct(3, "JobSectionStop"),
+				TraceLoggingValue(ccommand, "Api"),
+				TraceLoggingValue(cmessage, "Message"),
+				TraceLoggingValue(cfilename, "File"),
+				TraceLoggingValue(_elapsed_seconds, "ExecutionTime"),
+				TraceLoggingValue(_line, "Line")
+			);
+
 			::EnterCriticalSection(&log_lock);
 
 			try {
@@ -440,6 +550,11 @@ namespace corona
 
 		virtual void log_function_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
+			const char* cmessage = _message.c_str();
+			const char* ccommand = _function_name.c_str();
+			const char* cfilename = get_file_name(_file);
+
+
 			::EnterCriticalSection(&log_lock);
 
 			try {
@@ -472,7 +587,23 @@ namespace corona
 
 		virtual void log_function_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
+			const char* cmessage = _message.c_str();
+			const char* ccommand = _function_name.c_str();
+			const char* cfilename = get_file_name(_file);
+
 			::EnterCriticalSection(&log_lock);
+
+			TraceLoggingWrite(
+				global_corona_provider,
+				"Corona",
+				TraceLoggingLevel(WINEVENT_LEVEL_INFO),
+				TraceLoggingStruct(3, "FunctionComplete"),
+				TraceLoggingValue(ccommand, "Function"),
+				TraceLoggingValue(cmessage, "Message"),
+				TraceLoggingValue(cfilename, "File"),
+				TraceLoggingValue(_elapsed_seconds, "ExecutionTime"),
+				TraceLoggingValue(_line, "Line")
+			);
 
 			try {
 				auto& xout = get_log_file();
@@ -976,11 +1107,12 @@ namespace corona
 	};
 
 	system_monitoring_interface* system_monitoring_interface::global_mon = nullptr;
+	system_monitoring_interface* system_monitoring_interface::active_mon = nullptr;
 
 	void log_warning(const std::string& _src)
 	{
-		if (system_monitoring_interface::global_mon) {
-			system_monitoring_interface::global_mon->log_warning(_src);
+		if (system_monitoring_interface::active_mon) {
+			system_monitoring_interface::active_mon->log_warning(_src);
 		}
 	}
 

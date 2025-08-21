@@ -167,9 +167,9 @@ namespace corona
 			"chapter_title_style", "chapter_subtitle_style", 
 			"paragraph_style", "form_style", "label_style",
 			"error_style", "success_style", "code_style"})) {
-			system_monitoring_interface::global_mon->log_warning("style sheet is missing");
+			system_monitoring_interface::active_mon->log_warning("style sheet is missing");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) { 
-				system_monitoring_interface::global_mon->log_warning(s);
+				system_monitoring_interface::active_mon->log_warning(s);
 				});
 			return;
 		}
@@ -638,7 +638,7 @@ namespace corona
 
 			std::string style_sheet_name = _src["style_sheet_name"];
 			if (style_sheet_name.empty()) {
-				system_monitoring_interface::global_mon->log_warning("style_sheet_name must not be empty");
+				system_monitoring_interface::active_mon->log_warning("style_sheet_name must not be empty");
 			}
 			std::shared_ptr<presentation_style> update_style;
 

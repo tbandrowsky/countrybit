@@ -29,6 +29,7 @@ namespace corona
 		json		contents;
 		std::string last_contents;
 		std::string error_message;
+        std::filesystem::file_time_type last_write_time;
 
 		json_file_watcher()
 		{
@@ -43,27 +44,31 @@ namespace corona
 
 			try {
 				if (_app->file_exists(filename)) {
-					std::string file_string = read_all_string(filename);
-					if (file_string.empty()) {
-                        error_message = std::format("File {0} is empty", filename);
-						return false;
-					}
-					if (file_string != last_contents) {
-						last_contents = file_string;
-						json_parser jp;
-						json temp = jp.parse_object(file_string);
-						contents = temp;
-						if (_handler) {
-							_handler(contents);
+					auto ftime = std::filesystem::last_write_time(filename);
+					if (ftime != last_write_time) {
+						last_write_time = ftime;
+						std::string file_string = read_all_string(filename);
+						if (file_string.empty()) {
+							error_message = std::format("File {0} is empty", filename);
+							return false;
 						}
-                        success = true;
+						if (file_string != last_contents) {
+							last_contents = file_string;
+							json_parser jp;
+							json temp = jp.parse_object(file_string);
+							contents = temp;
+							if (_handler) {
+								_handler(contents);
+							}
+							success = true;
+						}
 					}
 				}
 			}
 			catch (std::exception exc)
 			{
 				error_message = std::format("Exception:{0}, {1}", filename, exc.what());
-				system_monitoring_interface::global_mon->log_warning(error_message.c_str(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning(error_message.c_str(), __FILE__, __LINE__);
                 success = false;
 			}
 

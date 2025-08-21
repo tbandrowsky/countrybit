@@ -463,7 +463,7 @@ namespace corona
 			if constexpr (debug_xblock) {
 				std::string indent(_indent * 4, ' ');
 				std::string message = std::format("{2} leaf:{0}, key:{1}", get_reference().location, key.to_string(), indent);
-				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_information(message, __FILE__, __LINE__);
 			}
 
 			records.insert_or_assign(key, value);
@@ -737,7 +737,7 @@ namespace corona
 			if constexpr (debug_xblock) {
 				std::string indent(_indent * 4, ' ');
 				std::string message = std::format("{2} branch:{0}, key:{1}", get_reference().location, _key.to_string(), indent);
-				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_information(message, __FILE__, __LINE__);
 			}
 
 			dirtied();
@@ -1455,7 +1455,7 @@ namespace corona
 		timer tx;
 		date_time start = date_time::now();
 
-		system_monitoring_interface::global_mon->log_function_start("xleaf", "start", start, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("xleaf", "start", start, __FILE__, __LINE__);
 
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
@@ -1513,7 +1513,7 @@ namespace corona
 				message += value.to_string();
 				message += " read:";
 				message += valueread.to_string();
-				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_information(message, __FILE__, __LINE__);
 			}
 
 			if (not valueread.exact_equal(value)) {
@@ -1523,7 +1523,7 @@ namespace corona
 		}
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
 
-		system_monitoring_interface::global_mon->log_function_stop("xleaf", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_stop("xleaf", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 	void test_xbranch(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
@@ -1531,7 +1531,7 @@ namespace corona
 		timer tx;
 		date_time start = date_time::now();
 
-		system_monitoring_interface::global_mon->log_function_start("xbranch", "start", start, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("xbranch", "start", start, __FILE__, __LINE__);
 
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
@@ -1599,7 +1599,7 @@ namespace corona
 				message += value.to_string();
 				message += " read:";
 				message += valueread.to_string();
-				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_information(message, __FILE__, __LINE__);
 			}
 
 			if (not valueread.exact_equal(value)) {
@@ -1610,7 +1610,7 @@ namespace corona
 		_tests->test({ "round_trip", round_trip_success, __FILE__, __LINE__ });
 
 
-		system_monitoring_interface::global_mon->log_function_stop("xbranch", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_stop("xbranch", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 	void test_xtable(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
@@ -1618,7 +1618,7 @@ namespace corona
 		timer tx;
 		date_time start = date_time::now();
 
-		system_monitoring_interface::global_mon->log_function_start("xtable", "start", start, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("xtable", "start", start, __FILE__, __LINE__);
 
 		std::shared_ptr<file> fp = _app->open_file_ptr("test.cxdb", file_open_types::create_always);
 		file_block fb(fp);
@@ -1755,9 +1755,9 @@ namespace corona
 		_tests->test({ "clear", clear_success, __FILE__, __LINE__ });
 
 		json info = ptable->get_info();
-		system_monitoring_interface::global_mon->log_json(info);
+		system_monitoring_interface::active_mon->log_json(info);
 
-		system_monitoring_interface::global_mon->log_function_stop("xtable", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_stop("xtable", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 }

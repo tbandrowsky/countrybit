@@ -5,18 +5,12 @@
 
 #include "corona.hpp"
 #include <windows.h>
-#include <winmeta.h>
 #include <iostream>
 
-#include <TraceLoggingProvider.h>
 #include "eventmessages.h"
 
 bool RegisterCoronaEventSource(const std::string& svcName, const std::string& exePath);
 
-TRACELOGGING_DEFINE_PROVIDER( // defines g_hProvider
-    g_hProvider, // Name of the provider handle
-    "CountryVideoGames.CoronaDb", // Human-readable name for the provider
-    (0x2de904b0, 0x0e7b, 0x5db0, 0xc1, 0x88, 0xaa, 0x1a, 0x39, 0x1e, 0x3e, 0x5c));
 
 char SVCNAME[] = "Corona Database";
 char SVCEVENTDISP[] = "StartServiceCtrlDispatcher";
@@ -48,35 +42,49 @@ void corona_console_command()
 {
     std::string command;
     std::cout << "corona shell >";
-    std::getline(std::cin, command);
 
-    if (not command.empty()) {
-        if (command == "?") {
-            std::cout << "?           - help" << std::endl;
-            std::cout << "c           - list of classes" << std::endl;
-            std::cout << "c classname - class of name" << std::endl;
-            std::cout << "d classname - data for class" << std::endl;
-            std::cout << "q           - quit" << std::endl;
+    do {
+        std::getline(std::cin, command, '\n');
+
+        if (not command.empty()) {
+            if (command == "?") {
+                std::cout << "?           - help" << std::endl;
+                std::cout << "c           - list of classes" << std::endl;
+                std::cout << "c classname - class of name" << std::endl;
+                std::cout << "d classname - data for class" << std::endl;
+                std::cout << "x           - exits the shell" << std::endl;
+                std::cout << "q           - quit" << std::endl;
+            }
+            else if (command == "c")
+            {
+                corona::system_monitoring_interface::active_mon->log_information("Listing all classes", __FILE__, __LINE__);
+                service->get_classes();
+            }
+            else if (command.starts_with("c "))
+            {
+                command = command.substr(2);
+                corona::system_monitoring_interface::active_mon->log_information("Class " + command, __FILE__, __LINE__);
+                service->get_class(command);
+            }
+            else if (command.starts_with("d "))
+            {
+                command = command.substr(2);
+                corona::system_monitoring_interface::active_mon->log_information("Class Details" + command, __FILE__, __LINE__);
+                service->get_data(command);
+            }
+            else if (command == "q")
+            {
+                corona::system_monitoring_interface::active_mon->log_information("Shutting Down Safely", __FILE__, __LINE__);
+                std::cout << "Shutting down." << std::endl;
+                SvcLogInfo("Shutting down", __FILE__, __LINE__);
+                exit_flag = true;
+            }
+            else if (command == "x")
+            {
+                corona::system_monitoring_interface::active_mon->log_information("Exit Console (CTRL-C to come back)", __FILE__, __LINE__);
+            }
         }
-        else if (command == "c")
-        {
-            service->get_classes();
-        }
-        else if (command.starts_with("c "))
-        {
-            command = command.substr(2);
-            service->get_class(command);
-        }
-        else if (command.starts_with("d "))
-        {
-            command = command.substr(2);
-            service->get_data(command);
-        }
-        else if (command == "q")
-        {
-            exit_flag = true;
-        }
-    }
+    } while (not exit_flag and command != "x" and command != "q");
 }
 
 // Handler function to handle CTRL+C
@@ -102,18 +110,19 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
         try
         {
             std::cout << "Running Corona in console mode. Type '?' for help." << std::endl;
+            std::cout.flush();
             service = std::make_shared<corona::comm_bus_service>(
                 _simulation, 
                 config_filename,                 
                 [](const std::string& _msg, const char* _file, int _line) {
-                    std::string message = std::format("Corona service error: {0} at {1}:{2}", _msg, _file, _line);
-                    SvcLogError(message, __FILE__, __LINE__);
+                    SvcLogError(_msg, __FILE__, __LINE__);
                 },
                 false);
             while (not exit_flag)
             {
                 service->run_frame();
             }
+            service = nullptr;
         }
         catch (std::exception exc)
         {
@@ -394,10 +403,11 @@ VOID WINAPI SvcCtrlHandler(DWORD dwCtrl)
 VOID SvcLogError(std::string message, std::string file, int line)
 {
     const char* cmessage = message.c_str();
+    file = corona::get_file_name(file);
     const char* cfile = file.c_str();    
 
    TraceLoggingWrite(
-        g_hProvider,
+        global_corona_provider,
        "Corona",
        TraceLoggingLevel(WINEVENT_LEVEL_ERROR),
        TraceLoggingStruct(3, "CoronaEvent"),
@@ -437,7 +447,7 @@ VOID SvcLogInfo(std::string message, std::string file, int line)
     const char* cfile = corona::get_file_name(file.c_str());
 
     TraceLoggingWrite(
-        g_hProvider,
+        global_corona_provider,
         "Corona",
         TraceLoggingLevel(WINEVENT_LEVEL_INFO),
         TraceLoggingStruct(3, "CoronaEvent"),
@@ -499,7 +509,7 @@ void RunService(std::shared_ptr<corona::corona_simulation_interface> _simulation
 
 int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation, int argc, char* argv[])
 {
-    TraceLoggingRegister(g_hProvider);
+    TraceLoggingRegister(global_corona_provider);
 
     char szUnquotedPath[MAX_PATH];
 
@@ -570,7 +580,7 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
         return 0;
     }
 
-    TraceLoggingUnregister(g_hProvider);
+    TraceLoggingUnregister(global_corona_provider);
 
     return 1;
 }
@@ -592,8 +602,10 @@ bool RegisterCoronaEventSource(const std::string& svcName, const std::string& ex
         &hKey,
         NULL);
 
-    if (lRet != ERROR_SUCCESS)
+    if (lRet != ERROR_SUCCESS) {
+        SvcLogError("Failed to create registry key for event source", __FILE__, __LINE__);
         return false;
+    }
 
     // Set the EventMessageFile value to the executable path
     lRet = RegSetValueExA(

@@ -376,13 +376,13 @@ namespace corona
 			timer tx;
 
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
 			}
 
 			create_header();
 
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "create complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "create complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			return table_header;
 		}
@@ -393,11 +393,11 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
 			}
 
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 		}
 
@@ -440,14 +440,14 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "contains", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "contains", start_time, __FILE__, __LINE__);
 			}
 
 			json_object_key_block found_node;
 
 			relative_ptr_type result = find_node(key, found_node);
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "contains complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "contains complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			return  result != null_row;
 		}
@@ -457,7 +457,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
 
 			read_scope_lock lock(table_lock);
@@ -469,7 +469,7 @@ namespace corona
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return result;
@@ -480,7 +480,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
 			}
 
 			read_scope_lock lock(table_lock);
@@ -493,7 +493,7 @@ namespace corona
 				result = dn.data;
 			}
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return result;
@@ -504,7 +504,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "put_array", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "put_array", start_time, __FILE__, __LINE__);
 			}
 			if (_array.array()) {
 				for (auto item : _array) {
@@ -513,7 +513,7 @@ namespace corona
 			}
 			table_header->save(fb);
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "put_array", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "put_array", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 		}
 
@@ -522,7 +522,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "put", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "put", start_time, __FILE__, __LINE__);
 			}
 			write_scope_lock lock(table_lock);
 			auto key = get_key(value);
@@ -533,7 +533,7 @@ namespace corona
 			);
 			table_header->save(fb);
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return modified_node;
@@ -544,7 +544,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "put", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "put", start_time, __FILE__, __LINE__);
 			}
 
 			json_parser jp;
@@ -557,7 +557,7 @@ namespace corona
 
 			relative_ptr_type modified_node = this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_update(jx); });
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return modified_node;
@@ -568,7 +568,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "replace", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "replace", start_time, __FILE__, __LINE__);
 			}
 			write_scope_lock lock(table_lock);
 
@@ -583,7 +583,7 @@ namespace corona
 			}
 
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "replace", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "replace", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return n;
@@ -601,7 +601,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "erase", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "erase", start_time, __FILE__, __LINE__);
 			}
 			write_scope_lock lock(table_lock);
 
@@ -643,14 +643,14 @@ namespace corona
 				header.write(fb);
 				table_header->save(fb);
 				if (ENABLE_JSON_LOGGING) {
-					system_monitoring_interface::global_mon->log_table_stop("table", "erase complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_table_stop("table", "erase complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				return true;
 			}
 			else
 			{
 				if (ENABLE_JSON_LOGGING) {
-					system_monitoring_interface::global_mon->log_table_stop("table", "erase failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_table_stop("table", "erase failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				return false;
 			}
@@ -671,7 +671,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
 			}
 
 			result.is_all = true;
@@ -711,7 +711,7 @@ namespace corona
 			}
 
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return result;
@@ -737,7 +737,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "get_first", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "get_first", start_time, __FILE__, __LINE__);
 			}
 
 			auto index_lists = 0;
@@ -766,7 +766,7 @@ namespace corona
 				}
 			}
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "get_first complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "get_first complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return empty;
@@ -777,7 +777,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "select", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "select", start_time, __FILE__, __LINE__);
 			}
 
 			json_parser jp;
@@ -799,7 +799,7 @@ namespace corona
 				});
 
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "select complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "select complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return ja;
@@ -810,7 +810,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "select", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "select", start_time, __FILE__, __LINE__);
 			}
 
 			json_parser jp;
@@ -832,7 +832,7 @@ namespace corona
 				});
 
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "select complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "select complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return ja;
@@ -846,7 +846,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "update", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "update", start_time, __FILE__, __LINE__);
 			}
 
 			json_parser jp;
@@ -869,7 +869,7 @@ namespace corona
 				});
 
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "update complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "update complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return ja;
@@ -887,7 +887,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_start("table", "select_object", start_time, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_start("table", "select_object", start_time, __FILE__, __LINE__);
 			}
 
 			for_each_result fra = for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json_data_block& _jdata) -> int64_t
@@ -921,7 +921,7 @@ namespace corona
 					return true;
 				});
 			if (ENABLE_JSON_LOGGING) {
-				system_monitoring_interface::global_mon->log_table_stop("table", "select_object complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_table_stop("table", "select_object complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			return _destination;
@@ -954,7 +954,7 @@ namespace corona
 	{
 		date_time st = date_time::now();
 		timer tx;
-		system_monitoring_interface::global_mon->log_function_start("object table proof", "start", st, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("object table proof", "start", st, __FILE__, __LINE__);
 		using namespace std::literals;
 
 		using return_type = bool;
@@ -1222,14 +1222,14 @@ namespace corona
 		result = not any_iteration_fails;
 		_tests->test({ "table correct", result, __FILE__, __LINE__ });
 
-		system_monitoring_interface::global_mon->log_function_stop("object table proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_stop("object table proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 	void test_json_object_table_load(std::shared_ptr<test_set> _tests, std::shared_ptr<application> _app)
 	{
 		date_time st = date_time::now();
 		timer tx;
-		system_monitoring_interface::global_mon->log_function_start("object table load proof", "start", st, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("object table load proof", "start", st, __FILE__, __LINE__);
 
 		using return_type = bool;
 		json_parser jp;
@@ -1264,7 +1264,7 @@ namespace corona
 
 		_tests->test({ "read 1000", true, __FILE__, __LINE__ });
 
-		system_monitoring_interface::global_mon->log_function_stop("object table load proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_stop("object table load proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 }

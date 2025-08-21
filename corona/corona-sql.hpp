@@ -498,11 +498,11 @@ namespace corona
 				if (strncmp(szState, "01004", 5))
 				{
 					if (not warned) {
-						system_monitoring_interface::global_mon->log_warning("SQL Statement Error");
+						system_monitoring_interface::active_mon->log_warning("SQL Statement Error");
 						warned = true;
 					}
 					std::string error_message = std::format("[{0:5.5s}] {1} ({2})", std::string_view(szState), std::string_view(szMessage), (int)iError);
-					system_monitoring_interface::global_mon->log_information(error_message, __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_information(error_message, __FILE__, __LINE__);
 
 					
 				}

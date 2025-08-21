@@ -43,12 +43,12 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 			if (not _src.has_members(missing, { "id_field", "text_field", "selected_field" })) {
-				system_monitoring_interface::global_mon->log_warning("list_data is missing");
+				system_monitoring_interface::active_mon->log_warning("list_data is missing");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_warning(s);
+					system_monitoring_interface::active_mon->log_warning(s);
 					});
-				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				system_monitoring_interface::active_mon->log_information("the source json is:");
+				system_monitoring_interface::active_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -82,12 +82,12 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 			if (not _src.has_members(missing, { "label_text", "json_field_name", "width" })) {
-				system_monitoring_interface::global_mon->log_warning("table_column is missing:");
+				system_monitoring_interface::active_mon->log_warning("table_column is missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_warning(s);
+					system_monitoring_interface::active_mon->log_warning(s);
 					});
-				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				system_monitoring_interface::active_mon->log_information("the source json is:");
+				system_monitoring_interface::active_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -129,12 +129,12 @@ namespace corona
 
 			std::vector<std::string> missing;
 			if (not _src.has_members(missing, { "columns" })) {
-				system_monitoring_interface::global_mon->log_warning("table_data missing:");
+				system_monitoring_interface::active_mon->log_warning("table_data missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_warning(s);
+					system_monitoring_interface::active_mon->log_warning(s);
 					});
-				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+				system_monitoring_interface::active_mon->log_information("the source json is:");
+				system_monitoring_interface::active_mon->log_json<json>(_src, 2);
 				return;
 			}
 

@@ -73,7 +73,7 @@ namespace corona
                 std::stringstream ss;
                 ss << typeid(*this).name() << " bounds is jacked on create";
                 std::string mm = ss.str();
-                system_monitoring_interface::global_mon->log_warning(mm);
+                system_monitoring_interface::active_mon->log_warning(mm);
             }
 
             bool use_native_window = false; // a placeholder, and this is a critical spot 
@@ -125,7 +125,7 @@ namespace corona
 
         virtual void render(std::shared_ptr<direct2dContext>& _context)
         {
-            //system_monitoring_interface::global_mon->log_information("rendering " + std::to_string(id) + " " + class_name + " " + name);
+            //system_monitoring_interface::active_mon->log_information("rendering " + std::to_string(id) + " " + class_name + " " + name);
 
             D2D1_COLOR_F color = {};
 
@@ -274,7 +274,7 @@ namespace corona
             }
             else
             {
-                system_monitoring_interface::global_mon->log_warning("Couldn't get the native media type for the camera");
+                system_monitoring_interface::active_mon->log_warning("Couldn't get the native media type for the camera");
                 return HRESULT_FROM_NT(E_FAIL);
             }
             return HRESULT_FROM_NT(E_FAIL);
@@ -868,14 +868,14 @@ namespace corona
                 else
                 {
                     camera_status = "No camera found";
-                    system_monitoring_interface::global_mon->log_warning(camera_status);
+                    system_monitoring_interface::active_mon->log_warning(camera_status);
                     hr = E_FAIL;
                 }
             }
             else
             {
                 camera_status = "No camera found";
-                system_monitoring_interface::global_mon->log_warning(camera_status);
+                system_monitoring_interface::active_mon->log_warning(camera_status);
             }
 
             return hr;
@@ -927,11 +927,11 @@ namespace corona
                 {
                     if (hr == 0xc00d3ea2) {
                         camera_status = "Camera disconected";
-                        system_monitoring_interface::global_mon->log_warning(camera_status);
+                        system_monitoring_interface::active_mon->log_warning(camera_status);
                     }
                     else {
                         camera_status = "Camera error";
-                        system_monitoring_interface::global_mon->log_warning(camera_status);
+                        system_monitoring_interface::active_mon->log_warning(camera_status);
                     }
                     stop();
                     return;
@@ -943,15 +943,15 @@ namespace corona
                 }
                 if (flags & MF_SOURCE_READERF_NEWSTREAM)
                 {
-                    system_monitoring_interface::global_mon->log_information("New camera stream");
+                    system_monitoring_interface::active_mon->log_information("New camera stream");
                 }
                 if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
                 {
-                    system_monitoring_interface::global_mon->log_information("Native media type changed");
+                    system_monitoring_interface::active_mon->log_information("Native media type changed");
                 }
                 if (flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
                 {
-                    system_monitoring_interface::global_mon->log_information("Current media type changed");
+                    system_monitoring_interface::active_mon->log_information("Current media type changed");
                 }
                 if (flags & MF_SOURCE_READERF_STREAMTICK)
                 {
@@ -959,7 +959,7 @@ namespace corona
                 }
                 if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
                 {
-                    system_monitoring_interface::global_mon->log_information("Format changed");
+                    system_monitoring_interface::active_mon->log_information("Format changed");
                     hr = configure_decoder(pSourceReader, streamIndex);
                 }
 
@@ -1614,7 +1614,7 @@ namespace corona
                 instance.height = draw_bounds.h;
                 instance.alpha = 1.0;
 
-//                system_monitoring_interface::global_mon->log_information("image on_create", __FILE__, __LINE__);
+//                system_monitoring_interface::active_mon->log_information("image on_create", __FILE__, __LINE__);
                 solidBrushRequest sbr;
                 sbr.brushColor = toColor("FFFF00");
                 sbr.name = "image_control_test";

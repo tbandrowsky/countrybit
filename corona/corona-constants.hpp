@@ -78,7 +78,11 @@ namespace corona
 
 	const char *get_file_name(const char *_filename)
 	{
+		static char blank[16] = {};
 		const char *file_name = _filename;
+		if (not file_name) {
+			file_name = blank;
+		}
 		const char* last_slash = file_name;
 		while (*file_name) 
 		{

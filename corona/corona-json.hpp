@@ -936,6 +936,9 @@ namespace corona
 				if (el.second) {
 					ret += el.second->to_json();
 				}
+				else {
+                    ret += "null";
+				}
 			}
 			ret += " }";
 			return ret;
@@ -3090,21 +3093,32 @@ namespace corona
 
 		json group(std::function<std::string(json& _item)> _get_group)
 		{
-			if (not array_impl())
+            auto psrc = array_impl();
+			if (not psrc)
 			{
 				throw std::logic_error("Not an array");
 			}
 
 			json new_object(std::make_shared<json_object>());
+            auto pdst = new_object.object_impl();
 
 			for (int i = 0; i < size(); i++)
 			{
-				auto element = get_element(i);
-				std::string key = _get_group(element);
-				if (not new_object.has_member(key)) {
-					new_object.put_member_array(key);
+				auto& element = psrc->elements[i];
+				json jelement(element);
+				std::string key = _get_group(jelement);
+
+				std::shared_ptr<json_array> parray;
+				if (pdst->members.contains(key) == false)
+				{
+					parray = std::make_shared<json_array>();
+					pdst->members[key] = parray;
 				}
-				new_object[key.c_str()].put_element(-1, element);
+				else {
+                    parray = std::dynamic_pointer_cast<json_array>(pdst->members[key]);
+				}
+				
+                parray->elements.push_back(element);
 			}
 
 			return new_object;
@@ -4277,18 +4291,20 @@ namespace corona
 	{
 		json_parser jp;
 
-		if (not object_impl())
+        auto pdest = object_impl();
+		auto psrc = _object.object_impl();
+
+		if (not pdest)
 		{
 			throw std::logic_error("Not an object");
 		}
 
-		if (_object.object())
+		if (psrc)
 		{
-			auto members = _object.get_members();
-			for (auto member : members)
+			for (auto member : psrc->members)
 			{
-				put_member(member.first, member.second);
-			}
+                pdest->members[member.first] = member.second;
+            }
 		}
 
 		return *this;

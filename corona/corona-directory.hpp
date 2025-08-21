@@ -50,7 +50,7 @@ namespace corona
 					bool matches = foundi->second != entry.last_write_time();
 					if (matches)
 					{
-						system_monitoring_interface::global_mon->log_information(std::format("file changed {0}", temp));
+						system_monitoring_interface::active_mon->log_information(std::format("file changed {0}", temp));
 						result = true;
 					}
 				}

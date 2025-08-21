@@ -1481,7 +1481,7 @@ namespace corona
 				if (fld.class_name.empty()) {
 					std::string msg;
 					msg = std::format("form '{0}' fields.[{1}] does not have a class_name", name, index_lists);
-					system_monitoring_interface::global_mon->log_warning(msg);
+					system_monitoring_interface::active_mon->log_warning(msg);
 				}
 
 				if (fld.control_settings.empty())
@@ -1644,11 +1644,11 @@ namespace corona
 			control_builder cb;
 
 			if (_ids.name.empty()) {
-				system_monitoring_interface::global_mon->log_warning("Forms without names basically don't work");
+				system_monitoring_interface::active_mon->log_warning("Forms without names basically don't work");
 /*				json_parser jp;
 				json diag = jp.create_object();
 				_ids.get_json(diag);
-				system_monitoring_interface::global_mon->log_json<json>(diag);
+				system_monitoring_interface::active_mon->log_json<json>(diag);
 	*/		}
 
 			ids = _ids;
@@ -2103,7 +2103,7 @@ namespace corona
 				}
 				catch (std::exception exc)
 				{
-					system_monitoring_interface::global_mon->log_exception(exc);
+					system_monitoring_interface::active_mon->log_exception(exc);
 				}
 			}
 		}
@@ -2971,7 +2971,7 @@ namespace corona
 		{
 			std::string msg;
 			msg = std::format("class_name '{0}' is invalid", class_name);
-			system_monitoring_interface::global_mon->log_warning(msg);
+			system_monitoring_interface::active_mon->log_warning(msg);
 			std::cout << "Currently the following control classes are supported.  Set class_name to one of these." << std::endl;
 			std::cout << "Special types" << std::endl;
 			std::cout << "image, camera, " << std::endl;

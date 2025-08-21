@@ -163,7 +163,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				system_monitoring_interface::global_mon->log_warning(exc.what());
+				system_monitoring_interface::active_mon->log_warning(exc.what());
 			}
 
 			try
@@ -172,7 +172,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				system_monitoring_interface::global_mon->log_warning(exc.what());
+				system_monitoring_interface::active_mon->log_warning(exc.what());
 			}
 
 			jn.shouldDelete = true;
@@ -351,7 +351,8 @@ namespace corona {
 				DWORD error = HttpAddUrlToUrlGroup(group_id, url.c_str(), context, 0);
 				if (error != NO_ERROR) {
 					os_result orx(error);
-					std::string message = "Exception:" + handler_list->url + " " + orx.message;
+					std::string net_acl_command = std::format("netsh http add urlacl url = {} user = \\Everyone", handler_list->url);
+                    std::string message = handler_list->url + "\n" + orx.message + "\ntry this at command prompt to resolve:\n" + net_acl_command +"\n";
 					throw std::logic_error(message.c_str());
 				}
 			}
@@ -360,8 +361,14 @@ namespace corona {
 
 		void start()
 		{
+            shutdown = false;
 			global_job_queue->listen_file(request_queue);
 			next_request();
+		}
+
+		void stop()
+		{
+			shutdown = true;
 		}
 
 		int read_body(buffer_assembler& _buff, PHTTP_REQUEST _request)
@@ -485,7 +492,7 @@ namespace corona {
 				if (_request->UrlContext) {
                     date_time thetime = date_time::now();
 					timer tx;
-					system_monitoring_interface::global_mon->log_command_start(sabsPath, "start", thetime, __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_command_start(sabsPath, "start", thetime, __FILE__, __LINE__);
 
                     auto foundit = api_handlers.find(sabsPath);
 					if (foundit != api_handlers.end())
@@ -504,7 +511,7 @@ namespace corona {
 							}
 						}
 					}
-					system_monitoring_interface::global_mon->log_command_stop(sabsPath, "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_command_stop(sabsPath, "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				}
 			}

@@ -231,7 +231,7 @@ namespace corona {
 		}
 		else 
 		{
-			system_monitoring_interface::global_mon->log_warning("job_notify: setSignal called with invalid handle.", __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_warning("job_notify: setSignal called with invalid handle.", __FILE__, __LINE__);
 		}
 	}
 
@@ -361,7 +361,7 @@ namespace corona {
 		{
 			jobNotify.repost = false;
 			jobNotify.shouldDelete = true;
-			system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_exception(exc, __FILE__, __LINE__);
 			return jobNotify;
         }
 
@@ -435,7 +435,7 @@ namespace corona {
 
         if (hport == NULL) {
             os_result osr;
-            system_monitoring_interface::global_mon->log_warning(std::format("CreateIoCompletionPort failed with error #{0}", osr.message), __FILE__, __LINE__);
+            system_monitoring_interface::active_mon->log_warning(std::format("CreateIoCompletionPort failed with error #{0}", osr.message), __FILE__, __LINE__);
             return NULL;
         }
 
@@ -554,7 +554,7 @@ namespace corona {
 					}
 					catch (std::exception exc)
 					{
-						system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_warning(exc.what(), __FILE__, __LINE__);
 					}
 					if (remove_io_job(completed_io)) {
 						::SetEvent(empty_queue_event);
@@ -577,7 +577,7 @@ namespace corona {
 						}
 						catch (std::exception exc)
 						{
-							system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+							system_monitoring_interface::active_mon->log_warning(exc.what(), __FILE__, __LINE__);
 						}
 						if (compute_jobs.erase(job_id)) {
 							::SetEvent(empty_queue_event);
@@ -588,7 +588,7 @@ namespace corona {
 					}
 				}
 				else {
-					system_monitoring_interface::global_mon->log_warning("Unknown completion key for job, so, let's try again.", __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_warning("Unknown completion key for job, so, let's try again.", __FILE__, __LINE__);
                     PostQueuedCompletionStatus(ioCompPort, bytesTransferred, compKey, lpov);
 				}
 			}
@@ -688,7 +688,7 @@ namespace corona {
 	{
 		date_time st = date_time::now();
 		timer tx;
-		system_monitoring_interface::global_mon->log_function_start("lock proof", "start", st, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("lock proof", "start", st, __FILE__, __LINE__);
 
 		int test_seconds = 2;
 		int test_milliseconds = test_seconds * 1000;
@@ -704,10 +704,10 @@ namespace corona {
 
 		{
 			scope_multilock lock = locker.lock(lock_keys);
-			system_monitoring_interface::global_mon->log_information("1st lock on thread", __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_information("1st lock on thread", __FILE__, __LINE__);
 
 			scope_multilock lock2 = locker.lock(lock_keys);
-			system_monitoring_interface::global_mon->log_information("2nd lock on same thread", __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_information("2nd lock on same thread", __FILE__, __LINE__);
 			timer job_timer;
 
 			_tests->test({ "same thread", true, __FILE__, __LINE__ });
@@ -715,26 +715,26 @@ namespace corona {
 			global_job_queue->submit_job([&locker, &job_timer, &_tests, test_seconds]() -> void
 				{
 					timer exec_time;
-					system_monitoring_interface::global_mon->log_information("job start", __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_information("job start", __FILE__, __LINE__);
 					scope_multilock locko = locker.lock({ object_lock_types::lock_table, 0, 0 });
                     double elapsed = job_timer.get_elapsed_seconds();	
 					if (elapsed < test_seconds) {
-						system_monitoring_interface::global_mon->log_warning("thread skipped lock", __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_warning("thread skipped lock", __FILE__, __LINE__);
 						_tests->test({ "thread wait", false, __FILE__, __LINE__ });
 					}
 					else {
 						_tests->test({"thread wait", true, __FILE__, __LINE__ });
 					}
-					system_monitoring_interface::global_mon->log_information("job complete", __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_information("job complete", __FILE__, __LINE__);
 				}, wait_handle);
 
-			system_monitoring_interface::global_mon->log_information("waiting for job to get lock", __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_information("waiting for job to get lock", __FILE__, __LINE__);
 			::Sleep(test_milliseconds);
 		}
 
-		system_monitoring_interface::global_mon->log_information("Waiting for job to complete", __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_information("Waiting for job to complete", __FILE__, __LINE__);
 		WaitForSingleObject(wait_handle, INFINITE);
-		system_monitoring_interface::global_mon->log_information("Job complete", __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_information("Job complete", __FILE__, __LINE__);
 		if (tx.get_elapsed_seconds() < test_seconds) {
 			_tests->test({"wait suffice", false, __FILE__, __LINE__});
 		}
@@ -742,14 +742,14 @@ namespace corona {
 			_tests->test({"wait suffice", true, __FILE__, __LINE__ });
 		}
 
-		system_monitoring_interface::global_mon->log_function_stop("lock proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_stop("lock proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 	void test_rw_locks(std::shared_ptr<test_set> _tests)
 	{
 		date_time st = date_time::now();
 		timer tx;
-		system_monitoring_interface::global_mon->log_function_start("rw lock proof", "start", st, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("rw lock proof", "start", st, __FILE__, __LINE__);
 
 		double test_seconds = .5;
 		int test_milliseconds = test_seconds * 1000;
@@ -810,7 +810,7 @@ namespace corona {
 						read_locked_sp test_read(lock_test);
 						double elapsed = tst_timer.get_elapsed_seconds_total();
 						std::string test_name = std::format("read thread {0}.{1} {2}", x, i, elapsed);
-                        system_monitoring_interface::global_mon->log_information(test_name, __FILE__, __LINE__);	
+                        system_monitoring_interface::active_mon->log_information(test_name, __FILE__, __LINE__);	
 						if (elapsed < test_seconds) {
 							InterlockedIncrement(&fail_count);
 							_tests->test({ test_name, false, __FILE__, __LINE__ });
@@ -820,7 +820,7 @@ namespace corona {
 						}
 					}, wait_handle[i]);
 			}
-			system_monitoring_interface::global_mon->log_information(std::format("testing write blocks read {0}, {1} fails", x, fail_count), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_information(std::format("testing write blocks read {0}, {1} fails", x, fail_count), __FILE__, __LINE__);
 			::Sleep(test_milliseconds);
 			write_lock = nullptr;
 			for (auto wh : wait_handle) {
@@ -836,7 +836,7 @@ namespace corona {
 		std::shared_ptr<read_locked_sp<lockable_item>> read_lock = std::make_shared<read_locked_sp<lockable_item>>(lock_test);
 		int start_count = read_lock->get()->get_count();
 
-		system_monitoring_interface::global_mon->log_information("thread with multiple writers away, blocked by reader", __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_information("thread with multiple writers away, blocked by reader", __FILE__, __LINE__);
 		fail_count = 0;
 		LONG active_count = max_job_count;
 		timer test_timer2;
@@ -872,12 +872,12 @@ namespace corona {
 			CloseHandle(wh);
 		}
 
-		system_monitoring_interface::global_mon->log_information(std::format("{0} writers released and complete {1} active count", max_job_count, active_count), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_information(std::format("{0} writers released and complete {1} active count", max_job_count, active_count), __FILE__, __LINE__);
 
 		bool result = active_count == 0;
 		_tests->test({ "active_count", result, __FILE__, __LINE__ });
 
-		system_monitoring_interface::global_mon->log_function_stop("rw lock proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_stop("rw lock proof", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 

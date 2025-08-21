@@ -736,7 +736,7 @@ namespace corona {
 
 				if (cb) 
 				{
-					system_monitoring_interface::global_mon->log_information("Control clicked");
+					system_monitoring_interface::active_mon->log_information("Control clicked");
 					cb->dump();
 				}
 			}
@@ -1122,10 +1122,10 @@ namespace corona {
 						bool is_default = (bool)pg["default"];
 						std::string name = pg["page_name"];
 						if (name.empty()) {
-							system_monitoring_interface::global_mon->log_warning("page_name is empty for this page, skipping");
+							system_monitoring_interface::active_mon->log_warning("page_name is empty for this page, skipping");
 						}
 						else {
-							system_monitoring_interface::global_mon->log_information(std::format("updating page {0}", name), __FILE__, __LINE__);
+							system_monitoring_interface::active_mon->log_information(std::format("updating page {0}", name), __FILE__, __LINE__);
 						}
 						if (is_default or default_page_name.empty()) {
 							default_page_name = name;
@@ -1160,7 +1160,7 @@ namespace corona {
 					{
 						std::stringstream ss;
 						ss << "Unknown class_name: " << class_name << std::endl;
-						system_monitoring_interface::global_mon->log_warning(ss.str());
+						system_monitoring_interface::active_mon->log_warning(ss.str());
 					}
 				}
 			}

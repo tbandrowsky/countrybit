@@ -503,7 +503,7 @@ namespace corona
 				}
 				else 
 				{
-					system_monitoring_interface::global_mon->log_warning(std::format("Read failed on {0} with error #{1}", filename, fcr.result.message), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_warning(std::format("Read failed on {0} with error #{1}", filename, fcr.result.message), __FILE__, __LINE__);
 				}
 				_handler(temp);
             };
@@ -523,7 +523,7 @@ namespace corona
 						_handler(_src);
 					}
 					else {
-						system_monitoring_interface::global_mon->log_warning(std::format("Write failed on {0} with error #{1}", filename, fcr.result.message), __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_warning(std::format("Write failed on {0} with error #{1}", filename, fcr.result.message), __FILE__, __LINE__);
 					}
                 };
 				write(location, (void*)_src.c_str(), length, &fence);
@@ -558,7 +558,7 @@ namespace corona
 			BOOL success = ::GetFileSizeEx(hfile, &position);
 			if (not success) {
 				os_result err;
-				system_monitoring_interface::global_mon->log_warning(std::format("GetFileSizeEx failed on {0} with error #{1} - {2}", filename, err.message, err.success), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning(std::format("GetFileSizeEx failed on {0} with error #{1} - {2}", filename, err.message, err.success), __FILE__, __LINE__);
 			}
 			new_position = position;
 			new_position.QuadPart += _bytes_to_add;

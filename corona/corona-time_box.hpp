@@ -191,22 +191,16 @@ namespace corona
 
 		date_time(time_t tt)
 		{
-			date_time start = epoch();
+			struct tm tmTime;
+			localtime_s(&tmTime, &tt); // Use localtime(&t) for non-thread-safe version
 
-			FILETIME ft;
-			LARGE_INTEGER li;
-
-			SYSTEMTIME system_time;
-			sql_time_to_system_time(start.sql_date_time, system_time);
-			
-			::SystemTimeToFileTime(&system_time, &ft);
-			li.LowPart = ft.dwLowDateTime;
-			li.HighPart = ft.dwHighDateTime;
-			li.QuadPart += tt * time_model_nanos[ time_models::seconds ];
-			ft.dwLowDateTime = li.LowPart;
-			ft.dwHighDateTime = li.HighPart;
-			::FileTimeToSystemTime(&ft, &system_time);
-			system_time_to_sql_time(system_time, sql_date_time);
+			sql_date_time.year = tmTime.tm_year + 1900;
+			sql_date_time.month = tmTime.tm_mon + 1;
+			sql_date_time.day = tmTime.tm_mday;
+			sql_date_time.hour = tmTime.tm_hour;
+			sql_date_time.minute = tmTime.tm_min;
+			sql_date_time.second = tmTime.tm_sec;
+			sql_date_time.fraction= 0; // time_t does not provide milliseconds		
 		}
 
 		date_time(int _year, int _month, int _day, int _hour = 0, int _minute = 0, int _second = 0, int _milliseconds = 0)

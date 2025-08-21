@@ -426,7 +426,7 @@ namespace corona
 		else 
 		{
 			std::string msg = std::format("could not create direct2d window because root window not found");
-			system_monitoring_interface::global_mon->log_warning(msg);
+			system_monitoring_interface::active_mon->log_warning(msg);
 
 			std::weak_ptr<direct2dChildWindow> child;
 			return child;
@@ -896,7 +896,7 @@ namespace corona
 				break;
 			case WM_NCLBUTTONDOWN:
 			case WM_LBUTTONDOWN:
-				system_monitoring_interface::global_mon->log_information("Left Down");
+				system_monitoring_interface::active_mon->log_information("Left Down");
 				if (colorCapture) {
 					colorCapture = false;
 					::ReleaseCapture();
@@ -938,7 +938,7 @@ namespace corona
 
 			case WM_NCLBUTTONUP:
 			case WM_LBUTTONUP:
-				system_monitoring_interface::global_mon->log_information("Left Up");
+				system_monitoring_interface::active_mon->log_information("Left Up");
 				if (currentController)
 				{
 					POINT p;
@@ -1087,7 +1087,7 @@ namespace corona
 		}
 		catch (std::exception exc)
 		{
-			system_monitoring_interface::global_mon->log_exception(exc);
+			system_monitoring_interface::active_mon->log_exception(exc);
 		}
 		catch (...)
 		{
