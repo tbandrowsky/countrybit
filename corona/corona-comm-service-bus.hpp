@@ -767,6 +767,19 @@ namespace corona
 			_request.send_response(200, "Ok", fn_response);
 			};
 
+		http_handler_function corona_user_home = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.error()) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			std::string token = get_token(_request);
+			parsed_request.put_member(token_field, token);
+			json fn_response = local_db->user_home(parsed_request);
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
 		http_handler_function corona_objects_get = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
 			if (parsed_request.error()) {
@@ -991,25 +1004,9 @@ namespace corona
 
                 api_definition new_api;
 
-
-/**************
-Bind home
-***************/
-				new_api.path = "";
-				new_api.name = "home";
-				new_api.description = "Returns test handler for this server.";
-				new_api.verb = "get";
-				new_api.request_schema = {};
-				new_api.response_schema = {};
-				new_api.request_class_name = {};
-				new_api.response_class_name = {};
-				api_paths.push_back(new_api);
-				_server.put_handler(HTTP_VERB::HttpVerbGET, root_path, base_path, new_api.path, corona_test);
-				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
-
-/**************
-Bind test
-***************/
+				/**************
+				Bind test
+				***************/
 				new_api.name = "test";
 				new_api.description = "Returns test handler for this server.";
 				new_api.path = "test/";
@@ -1021,6 +1018,56 @@ Bind test
 				api_paths.push_back(new_api);
 				_server.put_handler(HTTP_VERB::HttpVerbGET, root_path, base_path, new_api.path, corona_test);
 				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
+
+/**************
+Bind home
+***************/
+				new_api.path = "home/";
+				new_api.name = "home";
+				new_api.description = "Accepts a request containing a token and returns user home.";
+				new_api.verb = "post";
+				new_api.request_schema = {};
+				new_api.response_schema = {};
+				new_api.request_class_name = {};
+				new_api.response_class_name = {};
+				api_paths.push_back(new_api);
+				_server.put_handler(HTTP_VERB::HttpVerbPOST, root_path, base_path, new_api.path, corona_user_home);
+				_server.put_handler(HTTP_VERB::HttpVerbOPTIONS, root_path, base_path, new_api.path, corona_options);
+
+				new_api.request_class_name = "sys_create_user_request";
+				new_api.response_class_name = "sys_create_user_response";
+
+				new_api.request_schema = R"({
+  "type": "object",
+  "properties": {
+	"token": {
+	  "type": "string",
+	  "description": "Passed in via the auth header, it is noted that the token contains the user name, and we use that."
+	},
+	"user_name": {
+	  "type": "string",
+	  "description": "The user name of the new user."
+	}
+  }
+})";
+				new_api.response_schema = R"({
+  "type": "object",
+  "properties": {
+	"success": {
+	  "type": "boolean",
+	  "description": "True if the user was created successfully."
+	},
+	"message": {
+	  "type": "string",
+	  "description": "Text of message."
+	},
+	"data": {
+	  "type": "object",
+	  "description": "Result object or objects."
+	},
+  }
+})";
+
 
 
 /**************
@@ -1105,7 +1152,7 @@ Bind loginuser
   "properties": {
 	"success": {
 	  "type": "boolean",
-	  "description": "True if the user was created successfully."
+	  "description": "True if the user was obtained successfully."
 	},
 	"message": {
 	  "type": "string",

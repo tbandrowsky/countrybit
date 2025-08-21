@@ -891,6 +891,7 @@ namespace corona
 		virtual json get_classes(json get_classes_request) = 0;
 		virtual json get_class(json get_class_request) = 0;
 		virtual json put_class(json put_class_request) = 0;
+		virtual json user_home(json user_home_request) = 0;
 
 		virtual json edit_object(json _edit_object_request) = 0;
 		virtual json run_object(json _edit_object_request) = 0;
@@ -3871,8 +3872,9 @@ namespace corona
 
 		bool watch_polling;
 
-		const std::string auth_general = "auth-general";
-		const std::string auth_system = "auth-system";
+        const std::string auth_general = "auth-general"; // this is the general user, which is used for general operations
+        const std::string auth_system = "auth-system"; // this is the system user, which is used for system operations
+		const std::string auth_self = "auth-self"; // this is the self user, which is used for the case when a user wants his own record
 		
 		long import_batch_size = 20000;
 		/*
@@ -4293,7 +4295,8 @@ namespace corona
 					}	
 				}
 			},
-			"workflow_classes" : "array"
+			"request_classes" : "[ string ]",
+			"resource_classes" : "[ string ]"
 	},
 	"indexes" : {
         "sys_team_name": {
@@ -5182,7 +5185,16 @@ private:
 
 			json users = classd->get_objects(this, key, true, _permission);
 
-			return users.get_first_element();
+			json user = users.get_first_element();
+			if (user.object()) {
+				std::string team_name = user["team_name"];
+				if (not team_name.empty()) {
+                    json team_data = get_team(team_name, _permission);
+					if (team_data.object()) {
+						user.share_member("team", team_data);
+					}
+				}
+			}
 		}
 
 		json get_team_by_domain(std::string _domain, class_permissions _permission)
@@ -5196,9 +5208,9 @@ private:
 			if (not classd)
 				return jp.create_array();
 
-			json users = classd->get_objects(this, key, true, _permission);
+			json teams = classd->get_objects(this, key, true, _permission);
 
-			return users.get_first_element();
+			return teams.get_first_element();
 		}
 
 		json get_team(std::string _team_name, class_permissions _permission)
@@ -6504,6 +6516,40 @@ private:
 			save();
 
 			return response;
+		}
+
+		virtual json user_home(json _user_home_request)
+		{
+			timer method_timer;
+			json_parser jp;
+
+			json result;
+			json result_list;
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			read_scope_lock my_lock(database_lock);
+			std::vector<validation_error> errors;
+
+			system_monitoring_interface::active_mon->log_function_start("user_home", "start", start_time, __FILE__, __LINE__);
+
+			std::string user_name;
+
+			if (not check_message(_user_home_request, { auth_self }, user_name))
+			{
+				result = create_response(_user_home_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				return result;
+			}
+
+            json user_details = get_user(user_name, get_system_permission());
+
+			system_monitoring_interface::active_mon->log_function_stop("user_home", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+            std::vector<validation_error> empty_errors;
+			result = create_response(_user_home_request, true, "Ok", user_details, empty_errors, method_timer.get_elapsed_seconds());
+
+			return result;
+
 		}
 
 		// and user set password
