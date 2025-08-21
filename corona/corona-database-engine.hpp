@@ -6324,9 +6324,30 @@ private:
 
 			system_monitoring_interface::active_mon->log_function_start("send_validation_code", "start", start_time, __FILE__, __LINE__);
 
-			json data = validation_code_request[data_field];
 
-			std::string user_name = data[user_name_field];
+			json data = validation_code_request[data_field];
+			std::string user_name = "";
+
+			if (data.empty()) {
+				user_name = validation_code_request[user_name_field];
+			}
+			else {
+				user_name = data[user_name_field];
+			}
+
+			if (user_name.empty()) {
+				std::vector<validation_error> errors;
+				validation_error err;
+				err.class_name = "sys_user";
+				err.field_name = user_name_field;
+				err.filename = get_file_name(__FILE__);
+				err.line_number = __LINE__;
+				err.message = "User required";
+				errors.push_back(err);
+				system_monitoring_interface::active_mon->log_function_stop("send_validation_code", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				response = create_user_response(validation_code_request, false, "user_name (typically an email address) is required", data, errors, tx.get_elapsed_seconds());
+				return response;
+			}
 
 			json user_info = get_user(user_name, sys_perm);
 
