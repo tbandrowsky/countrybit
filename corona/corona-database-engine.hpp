@@ -5453,15 +5453,15 @@ private:
 				email_body = replace(email_body, "$USERNAME$", user_name);
 				email_body = replace(email_body, "$EMAIL_TITLE$", user_confirmation_title);
 				auto sg_response = sc_client.send_email(user_info, user_confirmation_title, email_body, "text/html");
-				if (sg_response.response.http_status_code > 299 or sg_response.response.http_status_code < 200) {
-					system_monitoring_interface::active_mon->log_warning(std::format("Cannot send email {} to {}", user_confirmation_title, user_name), __FILE__, __LINE__);
+//				if (sg_response.response.http_status_code > 299 or sg_response.response.http_status_code < 200) {
+					system_monitoring_interface::active_mon->log_warning(std::format("Send email {} to {}", user_confirmation_title, user_name), __FILE__, __LINE__);
 					if (sg_response.response.response_body.is_safe_string()) {
 						system_monitoring_interface::active_mon->log_warning(sg_response.response.response_body.get_ptr(), __FILE__, __LINE__);
 					}
 					else {
 						system_monitoring_interface::active_mon->log_warning("Response body is not a string", __FILE__, __LINE__);
 					}
-				}
+	//			}
 				success = true;
 			}
 			catch (std::exception exc)
