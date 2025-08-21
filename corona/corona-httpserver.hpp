@@ -163,7 +163,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				system_monitoring_interface::global_mon->log_warning(exc.what());
+				system_monitoring_interface::active_mon->log_warning(exc.what());
 			}
 
 			try
@@ -172,7 +172,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				system_monitoring_interface::global_mon->log_warning(exc.what());
+				system_monitoring_interface::active_mon->log_warning(exc.what());
 			}
 
 			jn.shouldDelete = true;
@@ -492,7 +492,7 @@ namespace corona {
 				if (_request->UrlContext) {
                     date_time thetime = date_time::now();
 					timer tx;
-					system_monitoring_interface::global_mon->log_command_start(sabsPath, "start", thetime, __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_command_start(sabsPath, "start", thetime, __FILE__, __LINE__);
 
                     auto foundit = api_handlers.find(sabsPath);
 					if (foundit != api_handlers.end())
@@ -511,7 +511,7 @@ namespace corona {
 							}
 						}
 					}
-					system_monitoring_interface::global_mon->log_command_stop(sabsPath, "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_command_stop(sabsPath, "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				}
 			}

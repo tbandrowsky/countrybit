@@ -139,13 +139,13 @@ namespace corona {
 						{
 							std::stringstream ss;
 							ss << "Font '" << fontName << "' not loaded." << std::endl;
-							system_monitoring_interface::global_mon->log_warning(ss.str());
+							system_monitoring_interface::active_mon->log_warning(ss.str());
 						}
 					}
 					else {
 						std::stringstream ss;
 						ss << "Font '" << fontName << "' not created adapter not locked." << std::endl;
-						system_monitoring_interface::global_mon->log_warning(ss.str());
+						system_monitoring_interface::active_mon->log_warning(ss.str());
 					}
 
 					fontExtractedName = fontList.next_token(',', state);

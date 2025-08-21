@@ -489,7 +489,7 @@ namespace corona
 						bytes_written += trans_buff->stop - trans_buff->start;
 						get_fp()->write(trans_buff->start, trans_buff->buff.get_ptr(), trans_buff->stop - trans_buff->start, &fence);
 					}
-                    // system_monitoring_interface::global_mon->log_information(std::format("file block commit {0} {1} bytes", i, bytes_written), __FILE__, __LINE__);
+                    // system_monitoring_interface::active_mon->log_information(std::format("file block commit {0} {1} bytes", i, bytes_written), __FILE__, __LINE__);
 					i++;
 				}
 			}

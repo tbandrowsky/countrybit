@@ -320,7 +320,7 @@ namespace corona
 	{
 		date_time st = date_time::now();
 		timer tx;
-		system_monitoring_interface::global_mon->log_function_start("parse_child_field", "start", st, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("parse_child_field", "start", st, __FILE__, __LINE__);
 
 		child_object_definition cd;
 		bool result;
@@ -403,7 +403,7 @@ namespace corona
 			and cd.child_classes[0]->copy_values["target"] == "src";
 		_tests->test({ std::format("child object {0}", acase6), result , __FILE__, __LINE__ });
 
-		system_monitoring_interface::global_mon->log_function_stop("parse_child_field", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_stop("parse_child_field", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 	class class_permissions {
@@ -3158,9 +3158,9 @@ namespace corona
 
 			if (_context->errors.size())
 			{
-				system_monitoring_interface::global_mon->log_warning(std::format("Errors on updating class {0}", changed_class.class_name), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning(std::format("Errors on updating class {0}", changed_class.class_name), __FILE__, __LINE__);
 				for (auto error : _context->errors) {
-					system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
 				}
 
 				return false;
@@ -3932,7 +3932,7 @@ namespace corona
 
 			if (ai.index >= header.data.free_lists.capacity()) {
 				std::string msg = std::format("{0} bytes is too big to allocate as a block.", _size);
-				system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning(msg, __FILE__, __LINE__);
 				ai.index = header.data.free_lists.capacity() - 1;
 			}
 			return ai;
@@ -4071,7 +4071,7 @@ namespace corona
 
 			using namespace std::literals;
 
-			system_monitoring_interface::global_mon->log_job_start("create_database", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_job_start("create_database", "start", start_time, __FILE__, __LINE__);
 			
 			cache = std::make_unique<xblock_cache>(static_cast<file_block*>(this), maximum_record_cache_size_bytes);
 
@@ -4105,16 +4105,16 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			json test =  classes->get(R"({"class_name":"sys_object"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_object after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_object after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -4138,16 +4138,16 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			test = classes->get(R"({"class_name":"sys_error"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_error after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_error after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -4169,16 +4169,16 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("sys_server put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("sys_server put failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			test = classes->get(R"({"class_name":"sys_server"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_server after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_server after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -4197,16 +4197,16 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			test = classes->get(R"({"class_name":"sys_command"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_command after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_command after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -4252,17 +4252,17 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class sys_grant put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_warning("create_class sys_grant put failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
 				std::cout << response.to_json() << std::endl;
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			test = classes->get(R"({"class_name":"sys_grant"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_grant after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_grant after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -4307,17 +4307,17 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class sys_team put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_warning("create_class sys_team put failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
 				std::cout << response.to_json() << std::endl;
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			test = classes->get(R"({"class_name":"sys_team"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_team after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_team after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -4353,17 +4353,17 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class sys_dataset put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_warning("create_class sys_dataset put failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
 				std::cout << response.to_json() << std::endl;
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			test = classes->get(R"({"class_name":"sys_dataset"})");
 			if (test.empty() or test.is_member("class_name", "SysParseError")) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_dataset after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_dataset after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -4404,16 +4404,16 @@ namespace corona
 			created_classes.put_member("sys_schema", true);
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			test =  classes->get(R"({"class_name":"sys_schema"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_schema after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_schema after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
 			}
@@ -4505,16 +4505,16 @@ namespace corona
 )");
 
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("create_class sys_user put failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("create_class sys_user put failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			test =  classes->get(R"({"class_name":"sys_user"})");
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::global_mon->log_warning("could not find class sys_user after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_user after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -4539,13 +4539,13 @@ namespace corona
 			}
 
 			if (missing_classes.size() > 0) {
-				system_monitoring_interface::global_mon->log_warning("system classes not saved", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("system classes not saved", __FILE__, __LINE__);
 
 				for (auto mc : missing_classes) {
-					system_monitoring_interface::global_mon->log_information(mc[class_name_field], __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_information(mc[class_name_field], __FILE__, __LINE__);
 				}
 
-				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -4569,13 +4569,13 @@ namespace corona
 				response = create_response(new_user_request, true, "Database Created", user_return, errors, method_timer.get_elapsed_seconds());
 			}
 			else {
-				system_monitoring_interface::global_mon->log_warning("system user create failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json(new_user_result);
+				system_monitoring_interface::active_mon->log_warning("system user create failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json(new_user_result);
 				json temp = jp.create_object();
 				response = create_response(new_user_request, false, "Database user create failed.", temp, errors, method_timer.get_elapsed_seconds());
 			}
 
-			system_monitoring_interface::global_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
@@ -4590,7 +4590,7 @@ private:
 			try {
 				cache->save();
 				int64_t bytes_written = commit();
-//				system_monitoring_interface::global_mon->log_information(std::format("Database saved, {0} bytes written", bytes_written), __FILE__, __LINE__);
+//				system_monitoring_interface::active_mon->log_information(std::format("Database saved, {0} bytes written", bytes_written), __FILE__, __LINE__);
 			} 
 			catch (std::exception exc)
 			{
@@ -5164,8 +5164,8 @@ private:
             json create_object_request = create_system_request(error);
 			json response = put_object(error);
 			if (not response[success_field]) {
-				system_monitoring_interface::global_mon->log_warning("put_error failed", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(response);
+				system_monitoring_interface::active_mon->log_warning("put_error failed", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(response);
 			}
 		}
 
@@ -5371,9 +5371,9 @@ private:
 			if (class_def.object()) {
 				cd->put_json(errors, class_def);
 				if (errors.size()) {
-					system_monitoring_interface::global_mon->log_warning(std::format("Errors on deserializing class {0}", _class_name), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_warning(std::format("Errors on deserializing class {0}", _class_name), __FILE__, __LINE__);
 					for (auto error : errors) {
-						system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
 					}
 				}
 			}
@@ -5402,9 +5402,9 @@ private:
 			if (class_def.object()) {
 				cd->put_json(errors, class_def);
 				if (errors.size()) {
-					system_monitoring_interface::global_mon->log_warning(std::format("Errors on deserializing class {0}", _class_name), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_warning(std::format("Errors on deserializing class {0}", _class_name), __FILE__, __LINE__);
 					for (auto error : errors) {
-						system_monitoring_interface::global_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, get_file_name(error.filename), error.line_number), __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, get_file_name(error.filename), error.line_number), __FILE__, __LINE__);
 					}
 				}
 			}
@@ -5439,7 +5439,7 @@ private:
 				if (sc_client.api_key.empty()) {
                     json_parser jp;
 					json blank = jp.create_object();
-					system_monitoring_interface::global_mon->log_warning("Sendgrid configuration is missing Api Key.  Be sure to set the CONNECT_SENDGRID environment variable.", __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_warning("Sendgrid configuration is missing Api Key.  Be sure to set the CONNECT_SENDGRID environment variable.", __FILE__, __LINE__);
 					put_error("SendGrid", "Sendgrid configuration is missing Api Key.  Be sure to set the CONNECT_SENDGRID environment variable.", blank, __FILE__, __LINE__);
 				}
 
@@ -5454,13 +5454,19 @@ private:
 				email_body = replace(email_body, "$EMAIL_TITLE$", user_confirmation_title);
 				auto sg_response = sc_client.send_email(user_info, user_confirmation_title, email_body, "text/html");
 				if (sg_response.response.http_status_code > 299 or sg_response.response.http_status_code < 200) {
-					system_monitoring_interface::global_mon->log_warning(std::format("Cannot send email {} to {}", user_confirmation_title, user_name), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_warning(std::format("Cannot send email {} to {}", user_confirmation_title, user_name), __FILE__, __LINE__);
+					if (sg_response.response.response_body.is_safe_string()) {
+						system_monitoring_interface::active_mon->log_warning(sg_response.response.response_body.get_ptr(), __FILE__, __LINE__);
+					}
+					else {
+						system_monitoring_interface::active_mon->log_warning("Response body is not a string", __FILE__, __LINE__);
+					}
 				}
 				success = true;
 			}
 			catch (std::exception exc)
 			{
-				system_monitoring_interface::global_mon->log_warning(exc.what(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning(exc.what(), __FILE__, __LINE__);
 			}
 			return success;
 		}
@@ -5505,7 +5511,7 @@ private:
 			date_time start;
 			start = date_time::now();
 			timer tx;
-			system_monitoring_interface::global_mon->log_job_start("apply_config", "start", start, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_job_start("apply_config", "start", start, __FILE__, __LINE__);
 
 			if (_config.has_member("SendGrid"))
 			{
@@ -5551,7 +5557,7 @@ private:
 				}
 			}
 
-			system_monitoring_interface::global_mon->log_job_stop("apply_config", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_job_stop("apply_config", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		}
 
@@ -5665,14 +5671,14 @@ private:
 				if (_member.array()) {
 					_member.for_each_element([](json& _item) {
 						std::string msg = std::format("{0}:", (std::string)_item[message_field]);
-						system_monitoring_interface::global_mon->log_warning(msg);
+						system_monitoring_interface::active_mon->log_warning(msg);
 						if (not _item[success_field]) {
 							if (_item.has_member("errors"))
 							{
 								json errors = _item["errors"];
 								errors.for_each_element([](json& _msg) {
 									std::string msg = std::format("{0}.{1} {2}", (std::string)_msg[class_name_field], (std::string)_msg["field_name"], (std::string)_msg[message_field]);
-									system_monitoring_interface::global_mon->log_information(msg);
+									system_monitoring_interface::active_mon->log_information(msg);
 									});
 							}
 						}
@@ -5685,22 +5691,22 @@ private:
 		{
 			date_time start_schema = date_time::now();
 			timer tx;
-			system_monitoring_interface::global_mon->log_job_start("apply_schema", "Applying schema file", start_schema, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_job_start("apply_schema", "Applying schema file", start_schema, __FILE__, __LINE__);
 			using namespace std::literals;
 
 			if (not _schema.has_member("schema_name"))
 			{
-				system_monitoring_interface::global_mon->log_warning("Schema doesn't have a schema name");
+				system_monitoring_interface::active_mon->log_warning("Schema doesn't have a schema name");
 			}
 
 			if (not _schema.has_member("schema_version"))
 			{
-				system_monitoring_interface::global_mon->log_warning("Schema doesn't have a schema version");
+				system_monitoring_interface::active_mon->log_warning("Schema doesn't have a schema version");
 			}
 
 			if (not _schema.has_member("schema_authors"))
 			{
-				system_monitoring_interface::global_mon->log_warning("Schema doesn't have a schema author");
+				system_monitoring_interface::active_mon->log_warning("Schema doesn't have a schema author");
 			}
 
 			auto sys_perm = get_system_permission();
@@ -5740,7 +5746,7 @@ private:
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
-				system_monitoring_interface::global_mon->log_job_section_start("", "Classes", start_section, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_section_start("", "Classes", start_section, __FILE__, __LINE__);
 
 				json class_array = jschema["classes"];
 				if (class_array.array())
@@ -5759,27 +5765,27 @@ private:
 
 							if (class_result.error()) 
 							{
-								system_monitoring_interface::global_mon->log_warning(class_result, __FILE__, __LINE__);
+								system_monitoring_interface::active_mon->log_warning(class_result, __FILE__, __LINE__);
 							}
 						}
 						catch (std::exception exc)
 						{
-							system_monitoring_interface::global_mon->log_exception(exc);
+							system_monitoring_interface::active_mon->log_exception(exc);
 						}
 					}
 				}
-				system_monitoring_interface::global_mon->log_job_section_stop("", "Classes", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_section_stop("", "Classes", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else
 			{
-				system_monitoring_interface::global_mon->log_warning("classes not found in schema");
+				system_monitoring_interface::active_mon->log_warning("classes not found in schema");
 			}
 
 			if (jschema.has_member("users"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
-				system_monitoring_interface::global_mon->log_job_section_start("", "Users", start_section, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_section_start("", "Users", start_section, __FILE__, __LINE__);
 				json user_array = jschema["users"];
 				if (user_array.array())
 				{
@@ -5789,20 +5795,20 @@ private:
 						timer txu;
 
 						json user_definition = user_array.get_element(i);
-						system_monitoring_interface::global_mon->log_function_start("put user", user_definition[user_name_field], start_user, __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_function_start("put user", user_definition[user_name_field], start_user, __FILE__, __LINE__);
 						json put_user_request = create_system_request(user_definition);
 						create_user(put_user_request);
-					    system_monitoring_interface::global_mon->log_function_stop("put user", user_definition[user_name_field], txu.get_elapsed_seconds(), __FILE__, __LINE__);
+					    system_monitoring_interface::active_mon->log_function_stop("put user", user_definition[user_name_field], txu.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
 				}
-				system_monitoring_interface::global_mon->log_job_section_stop("", "Users", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_section_stop("", "Users", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 	
 			if (jschema.has_member("datasets"))
 			{
 				date_time start_section = date_time::now();
 				timer txsect;
-				system_monitoring_interface::global_mon->log_job_section_start("", "Datasets", start_section, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_job_section_start("", "Datasets", start_section, __FILE__, __LINE__);
 				using namespace std::literals;
 				json dataset_array = jschema["datasets"];
 				if (dataset_array.array())
@@ -5818,13 +5824,13 @@ private:
 						std::string dataset_name = new_dataset["dataset_name"];
 						std::string dataset_version = new_dataset["dataset_version"];
 
-						system_monitoring_interface::global_mon->log_job_section_start("DataSet", dataset_name + " Start", start_dataset, __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_job_section_start("DataSet", dataset_name + " Start", start_dataset, __FILE__, __LINE__);
 
 						bool run_on_change = (bool)new_dataset["run_on_change"];
 						json existing_dataset = get_dataset(dataset_name, dataset_version, sys_perm);
 
 						if (not run_on_change and existing_dataset) {
-							system_monitoring_interface::global_mon->log_job_section_stop("DataSet", dataset_name + " Already Done", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+							system_monitoring_interface::active_mon->log_job_section_stop("DataSet", dataset_name + " Already Done", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 							continue;
 						}
 
@@ -5835,12 +5841,12 @@ private:
 							std::vector<std::string> missing;
 
 							if (not import_spec.has_members(missing, { "target_class", "type" })) {
-								system_monitoring_interface::global_mon->log_warning("Import missing:");
+								system_monitoring_interface::active_mon->log_warning("Import missing:");
 								std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-									system_monitoring_interface::global_mon->log_warning(s);
+									system_monitoring_interface::active_mon->log_warning(s);
 									});
-								system_monitoring_interface::global_mon->log_information("the source json is:");
-								system_monitoring_interface::global_mon->log_json<json>(import_spec, 2);
+								system_monitoring_interface::active_mon->log_information("the source json is:");
+								system_monitoring_interface::active_mon->log_json<json>(import_spec, 2);
 								continue;
 							}
 
@@ -5851,19 +5857,19 @@ private:
 							if (import_type == "csv") {
 
 								if (not import_spec.has_members(missing, { "filename", "delimiter" })) {
-									system_monitoring_interface::global_mon->log_warning("Import CSV missing:");
+									system_monitoring_interface::active_mon->log_warning("Import CSV missing:");
 									std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-										system_monitoring_interface::global_mon->log_warning(s);
+										system_monitoring_interface::active_mon->log_warning(s);
 										});
-									system_monitoring_interface::global_mon->log_information("the source json is:");
-									system_monitoring_interface::global_mon->log_json<json>(import_spec, 2);
+									system_monitoring_interface::active_mon->log_information("the source json is:");
+									system_monitoring_interface::active_mon->log_json<json>(import_spec, 2);
 									continue;
 								}
 
 								std::string filename = import_spec["filename"];
 								std::string delimiter = import_spec["delimiter"];
 								if (filename.empty() or delimiter.empty()) {
-									system_monitoring_interface::global_mon->log_warning("filename and delimiter can't be blank.");
+									system_monitoring_interface::active_mon->log_warning("filename and delimiter can't be blank.");
 								}
 
 								if (std::filesystem::exists(filename))
@@ -5913,7 +5919,7 @@ private:
 															if (put_result[success_field]) {
 																double x = batch_size / _exec_time;
 																std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
-																system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
+																system_monitoring_interface::active_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
 															}
 															else
 															{
@@ -5934,7 +5940,7 @@ private:
 														if (put_result[success_field]) {
 															double x = batch_size / _exec_time;
 															std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
-															system_monitoring_interface::global_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
+															system_monitoring_interface::active_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
 														}
 														else
 														{
@@ -5954,11 +5960,11 @@ private:
 											json result = put_object(dataset_request);
 											if (result[success_field]) {
 												std::string msg = std::format("imported from {0}", filename);
-												system_monitoring_interface::global_mon->log_information(msg, __FILE__, __LINE__);
+												system_monitoring_interface::active_mon->log_information(msg, __FILE__, __LINE__);
 											}
 											else {
-												system_monitoring_interface::global_mon->log_warning(result[message_field], __FILE__, __LINE__);
-												system_monitoring_interface::global_mon->log_json<json>(result);
+												system_monitoring_interface::active_mon->log_warning(result[message_field], __FILE__, __LINE__);
+												system_monitoring_interface::active_mon->log_json<json>(result);
                                             }
 										}
 										else {
@@ -5969,19 +5975,19 @@ private:
 												error_code
 											);
 											std::string msg = std::format("could not open file {0}:{1}", filename, error_buffer);
-											system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
+											system_monitoring_interface::active_mon->log_warning(msg, __FILE__, __LINE__);
 											char directory_name[MAX_PATH] = {};
 											char* result = _getcwd(directory_name, std::size(directory_name));
 											if (result) {
 												msg = std::format("cwd is {0}", result);
-												system_monitoring_interface::global_mon->log_information(msg, __FILE__, __LINE__);
+												system_monitoring_interface::active_mon->log_information(msg, __FILE__, __LINE__);
 											}
 										}
 									}
 								}
 								else {
 	 									std::string msg = std::format("file {0} doesn't exist", filename);
-                                        system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
+                                        system_monitoring_interface::active_mon->log_warning(msg, __FILE__, __LINE__);
 								}
 							}
 						}
@@ -6000,20 +6006,20 @@ private:
 										json created_object = create_result[data_field];
 										json save_result =  put_object(put_object_request);
 										if (not save_result[success_field]) {
-											system_monitoring_interface::global_mon->log_warning(save_result[message_field]);
-											system_monitoring_interface::global_mon->log_json<json>(save_result);
+											system_monitoring_interface::active_mon->log_warning(save_result[message_field]);
+											system_monitoring_interface::active_mon->log_json<json>(save_result);
 										}
 										else {
 											std::string new_class_name = object_definition[class_name_field];
 											int64_t object_id = object_definition[object_id_field];
 											std::string object_created = std::format("object {0} ({1})", new_class_name, object_id);
-											system_monitoring_interface::global_mon->log_information(object_created);
+											system_monitoring_interface::active_mon->log_information(object_created);
 										}
 									}
 									else 
 									{
-										system_monitoring_interface::global_mon->log_warning(create_result[message_field], __FILE__, __LINE__);
-										system_monitoring_interface::global_mon->log_json<json>(create_result);
+										system_monitoring_interface::active_mon->log_warning(create_result[message_field], __FILE__, __LINE__);
+										system_monitoring_interface::active_mon->log_json<json>(create_result);
 									}
 								}
 								date_time completed_date = date_time::now();
@@ -6021,18 +6027,18 @@ private:
 								json put_script_request = create_system_request(new_dataset);
 								json save_script_result = put_object(put_script_request);
 								if (not save_script_result[success_field]) {
-									system_monitoring_interface::global_mon->log_warning(save_script_result[message_field]);
-									system_monitoring_interface::global_mon->log_json<json>(save_script_result);
+									system_monitoring_interface::active_mon->log_warning(save_script_result[message_field]);
+									system_monitoring_interface::active_mon->log_json<json>(save_script_result);
 								}
 								else
-									system_monitoring_interface::global_mon->log_information(save_script_result[message_field]);
+									system_monitoring_interface::active_mon->log_information(save_script_result[message_field]);
 							}
 
 						}
 
-						system_monitoring_interface::global_mon->log_job_section_stop("DataSet", dataset_name + " Finished", txs.get_elapsed_seconds(), __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_job_section_stop("DataSet", dataset_name + " Finished", txs.get_elapsed_seconds(), __FILE__, __LINE__);
 					}
-					system_monitoring_interface::global_mon->log_job_section_stop("DataSets", "", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_job_section_stop("DataSets", "", txsect.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 
@@ -6043,15 +6049,15 @@ private:
 			json put_schema_result =  put_object(put_schema_request);
 			if (put_schema_result[success_field]) {
 				std::string message = put_schema_result[message_field];
-				system_monitoring_interface::global_mon->log_information(message, __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_information(message, __FILE__, __LINE__);
 			}
 			else 
 			{
-				system_monitoring_interface::global_mon->log_warning(put_schema_result[message_field], __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_json<json>(put_schema_result);
+				system_monitoring_interface::active_mon->log_warning(put_schema_result[message_field], __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json<json>(put_schema_result);
 			}
 
-			system_monitoring_interface::global_mon->log_job_stop("apply_schema", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_job_stop("apply_schema", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			json temp = R"({ "success" : true, "message" : "Everything Ok, situation normal."})"_jobject;
 
@@ -6065,7 +6071,7 @@ private:
 			timer method_timer;
 			date_time start_schema = date_time::now();
 			timer tx;
-			system_monitoring_interface::global_mon->log_job_start("open_database", "Open database", start_schema, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_job_start("open_database", "Open database", start_schema, __FILE__, __LINE__);
 
 			cache = std::make_unique<xblock_cache>(static_cast<file_block*>(this), maximum_record_cache_size_bytes );
 			relative_ptr_type header_location =  header.read(this, _header_location);
@@ -6075,7 +6081,7 @@ private:
 			std::vector<std::string> class_keys = { class_name_field };
 			classes = std::make_shared<json_table>(classes_header, 0, this, class_keys);
 
-			system_monitoring_interface::global_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return header_location;
 		}
@@ -6156,7 +6162,7 @@ private:
 			date_time start_time = date_time::now();
 			timer tx;
 
-			system_monitoring_interface::global_mon->log_function_start("create_user", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("create_user", "start", start_time, __FILE__, __LINE__);
 
 			json data = create_user_request[data_field];
 
@@ -6179,7 +6185,7 @@ private:
                 errors.push_back(err);
 				err.field_name = user_email_field;
 				errors.push_back(err);
-				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				response = create_user_response(create_user_request, false, "An email is required.", data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
@@ -6197,7 +6203,7 @@ private:
                 err.line_number = __LINE__;
                 err.message = "Passwords don't match";
 				errors.push_back(err);
-				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				response = create_user_response(create_user_request, false, "Passwords don't match", data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
@@ -6223,7 +6229,7 @@ private:
 				err.message = "Password too simple";
 				errors.push_back(err);
 
-				system_monitoring_interface::global_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("create_user", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				response = create_user_response(create_user_request, false, std::format("Password too simple:{0}", reason), data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
@@ -6304,7 +6310,7 @@ private:
 
 			save();
 
-			system_monitoring_interface::global_mon->log_function_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return response;
 		}
@@ -6321,7 +6327,7 @@ private:
 
 			auto sys_perm = get_system_permission();
 
-			system_monitoring_interface::global_mon->log_function_start("send_validation_code", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("send_validation_code", "start", start_time, __FILE__, __LINE__);
 
 			json data = validation_code_request[data_field];
 
@@ -6339,7 +6345,7 @@ private:
 			json errors = jp.create_array();
 			response = create_user_response(validation_code_request, true, message, data, errors, tx.get_elapsed_seconds());
 
-			system_monitoring_interface::global_mon->log_function_stop("send_validation_code", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("send_validation_code", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return response;
 		}
@@ -6358,7 +6364,7 @@ private:
 			read_scope_lock my_lock(database_lock);
 			std::vector<validation_error> errors;
 
-			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
 
 			json data = _confirm_request;
 			std::string user_name = data[user_name_field];
@@ -6455,7 +6461,7 @@ private:
 				response = create_user_response(_confirm_request, false, "Incorrect validation code.  Check your e-mail or send another one.", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 			}
 
-			system_monitoring_interface::global_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			save();
 
@@ -6472,7 +6478,7 @@ private:
 			date_time start_time = date_time::now();
 			timer tx;
 
-			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
 
 			read_scope_lock my_lock(database_lock);
 			std::vector<validation_error> errors;
@@ -6521,16 +6527,16 @@ private:
 				errors.push_back(err);
 
 				response = create_user_response(_password_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
-			system_monitoring_interface::global_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
 
 			if (requested_user_name != user_name)
 			{
 				response = create_response(_password_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -6549,7 +6555,7 @@ private:
 				errors.push_back(err);
 
 				response = create_user_response(_password_request, false, "Passwords do not match.", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -6569,7 +6575,7 @@ private:
 
 
 				response = create_user_response(_password_request, false, std::format( "Password fails complexity test: {0}", reason), jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -6580,7 +6586,7 @@ private:
 			json jerrors;
 			response = create_user_response(_password_request, true, "Ok", data, jerrors, method_timer.get_elapsed_seconds());
 
-			system_monitoring_interface::global_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("confirm", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			save();
 
@@ -6602,7 +6608,7 @@ private:
 
 			read_scope_lock my_lock(database_lock);
 
-			system_monitoring_interface::global_mon->log_function_start("login_user", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("login_user", "start", start_time, __FILE__, __LINE__);
 
 			json data = _login_request;
 			std::string user_name = data[user_name_field];
@@ -6677,7 +6683,7 @@ private:
 			{
 				response = create_response(_login_request, false, "Failed", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 			}
-			system_monitoring_interface::global_mon->log_function_stop("login_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("login_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			save();
 
@@ -6697,7 +6703,7 @@ private:
 			if (not check_message(_run_object_request, { auth_general }, user_name))
 			{
 				response = create_response(_run_object_request, false, "Denied", jp.create_object(), errors, tx.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -6705,7 +6711,7 @@ private:
 			json result = put_object(_run_object_request);
 			if (result.error())
 			{
-				system_monitoring_interface::global_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 			json key = jp.create_object();
@@ -6735,11 +6741,11 @@ private:
 			if (not check_message(_edit_object_request, { auth_general }, user_name))
 			{
 				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			system_monitoring_interface::global_mon->log_function_start("edit_object", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("edit_object", "start", start_time, __FILE__, __LINE__);
 
 			json token = _edit_object_request[token_field];
 			json key = _edit_object_request.extract({ class_name_field, object_id_field });
@@ -6751,7 +6757,7 @@ private:
 			if (perms.get_grant == class_grants::grant_none)
 			{
 				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -6773,11 +6779,11 @@ private:
 			}
 			else 
 			{
-				system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return create_response(_edit_object_request, false, "Invalid class.", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 			}
 
-			system_monitoring_interface::global_mon->log_function_stop("edit_object", "success", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("edit_object", "success", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return create_response(_edit_object_request, true, "Ok", result, errors, method_timer.get_elapsed_seconds());
 		}
 
@@ -6795,7 +6801,7 @@ private:
 			read_scope_lock my_lock(database_lock);
 			std::vector<validation_error> errors;
 
-			system_monitoring_interface::global_mon->log_function_start("get_classes", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("get_classes", "start", start_time, __FILE__, __LINE__);
 
 			std::string user_name;
 
@@ -6823,7 +6829,7 @@ private:
 			json data = jp.create_object();
 			data.share_member("class", result_list);
 
-			system_monitoring_interface::global_mon->log_function_stop("get_classes", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("get_classes", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			result = create_response(get_classes_request, true, "Ok", result_list, errors, method_timer.get_elapsed_seconds());
 
 			return result;
@@ -6840,7 +6846,7 @@ private:
 
 			read_scope_lock my_lock(database_lock);
 
-			system_monitoring_interface::global_mon->log_function_start("get_class", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("get_class", "start", start_time, __FILE__, __LINE__);
 
 			std::vector<std::string> missing_elements;
 			std::vector<validation_error> errors;
@@ -6855,7 +6861,7 @@ private:
 					error_message.append(m);
 				}
 				json response = create_response(get_class_request, false, error_message, jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -6864,7 +6870,7 @@ private:
 			if (not check_message(get_class_request, { auth_general }, user_name))
 			{
 				result = create_response(get_class_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -6888,16 +6894,16 @@ private:
 					result.share_member("info", class_info);
 
 					result = create_response(get_class_request, true, "Ok", result, errors, method_timer.get_elapsed_seconds());
-					system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				else {
 					result = create_response(get_class_request, false, "Missing Class", key, errors, method_timer.get_elapsed_seconds());
-					system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 			else {
 				result = create_response(get_class_request, false, "denied", key, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			return result;
 		}
@@ -6920,7 +6926,7 @@ private:
 			std::string pc_stop = pc_msg + " stop";
 			std::string pc_failed = pc_msg + " failed";
 
-			system_monitoring_interface::global_mon->log_function_start(pc_name, pc_start, start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start(pc_name, pc_start, start_time, __FILE__, __LINE__);
 
 			std::vector<std::string> missing_elements;
 			if (not put_class_request.has_members(missing_elements, { token_field })) {
@@ -6932,7 +6938,7 @@ private:
 					error_message.append(m);
 				}
 				json response = create_response(put_class_request, false, error_message, jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -6941,7 +6947,7 @@ private:
 			if (not check_message(put_class_request, { auth_general }, user_name))
 			{
 				result = create_response(put_class_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
 			}
@@ -6953,13 +6959,13 @@ private:
 			if (jclass_definition.error())
 			{
 				result = create_response(put_class_request, false, "Invalid class", jclass_definition, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
 			if (class_name.empty()) {
 				result = create_response(put_class_request, false, "No class name", jclass_definition, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			auto permission = get_class_permission(
@@ -6968,7 +6974,7 @@ private:
 
 			if (permission.put_grant != class_grants::grant_any) {
 				result = create_response(put_class_request, false, "Denied", jclass_definition, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
 			}
@@ -6992,7 +6998,7 @@ private:
 			}
 
 			save();
-			system_monitoring_interface::global_mon->log_function_stop(pc_name, pc_stop, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop(pc_name, pc_stop, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return result;
 		}
 
@@ -7009,14 +7015,14 @@ private:
 			timer tx;
 			std::vector<validation_error> errors;
 
-			system_monitoring_interface::global_mon->log_function_start("update", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("update", "start", start_time, __FILE__, __LINE__);
 
 			bool include_children = (bool)query_details["include_children"];
 
 			json base_class_name = query_details[class_name_field];
 			if (base_class_name.empty()) {
 				response = create_response(_user_name, auth_general, false, "class_name not specified", query_details, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -7024,7 +7030,7 @@ private:
 			if (permission.get_grant == class_grants::grant_none)
 			{
 				response = create_response(_user_name, auth_general, false, "denied", query_details, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -7033,7 +7039,7 @@ private:
 			json object_list = jp.create_array();
 			if (not class_def) {
 				response = create_response(_user_name, auth_general, false, "class not found", query_details, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -7062,7 +7068,7 @@ private:
 
 			response = create_response(_user_name, auth_general, true, "completed", object_list, errors, method_timer.get_elapsed_seconds());
 
-			system_monitoring_interface::global_mon->log_function_stop("update", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("update", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return response;
 		}
 
@@ -7083,7 +7089,7 @@ private:
 			if (not check_message(query_request, { auth_general }, user_name))
 			{
 				response = create_response(query_request, false, "Denied", jp.create_object(), errors, tx.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("query", "denied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("query", "denied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -7099,7 +7105,7 @@ private:
 				if (not stages.array() or stages.size() == 0)
 				{
 					response = create_response(query_request, false, "query has no stages", jp.create_object(), errors, tx.get_elapsed_seconds());
-					system_monitoring_interface::global_mon->log_function_stop("query", "query has no stages", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_function_stop("query", "query has no stages", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					return response;
 				}
 
@@ -7110,20 +7116,20 @@ private:
 					if (from_name.empty())
 					{
 						response = create_response(query_request, false, "from with no name", jp.create_object(), errors, tx.get_elapsed_seconds());
-						system_monitoring_interface::global_mon->log_function_stop("query", "from with no name", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_function_stop("query", "from with no name", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
 					if (from_class_name.empty())
 					{
 						response = create_response(query_request, false, "from with no class", jp.create_object(), errors, tx.get_elapsed_seconds());
-						system_monitoring_interface::global_mon->log_function_stop("query", "from with no class", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_function_stop("query", "from with no class", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
 					auto cd = read_lock_class(from_class_name);
 					if (not cd) {
 						std::string message = std::format("from class '{0}' not found", from_class_name);
 						response = create_response(query_request, false, message, jp.create_object(), errors, tx.get_elapsed_seconds());
-						system_monitoring_interface::global_mon->log_function_stop("query", "from class not found", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_function_stop("query", "from class not found", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
 				}
@@ -7180,7 +7186,7 @@ private:
 										else
 										{
 											response = create_response(query_request, false, "Bad $ reference in query.", class_filter, errors, tx.get_elapsed_seconds());
-											system_monitoring_interface::global_mon->log_function_stop("query", "bad query data", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+											system_monitoring_interface::active_mon->log_function_stop("query", "bad query data", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 											return response;
 										}
 									}
@@ -7218,13 +7224,13 @@ private:
 						{
 							std::string message = std::format("Missing filters for {0}", filter_class_name);
 							response = create_response(query_request, false, message, jp.create_object(), errors, tx.get_elapsed_seconds());
-							system_monitoring_interface::global_mon->log_function_stop("query", "filter error", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+							system_monitoring_interface::active_mon->log_function_stop("query", "filter error", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 							return response;
 						}
 					}
 					else {
 						response = create_response(query_request, true, "query data is not an object or an array", jp.create_object(), errors, tx.get_elapsed_seconds());
-						system_monitoring_interface::global_mon->log_function_stop("query", "bad query data",  tx.get_elapsed_seconds(), __FILE__, __LINE__);
+						system_monitoring_interface::active_mon->log_function_stop("query", "bad query data",  tx.get_elapsed_seconds(), __FILE__, __LINE__);
 						return response;
 					}
 				}
@@ -7240,7 +7246,7 @@ private:
 				{
 					json query_errors = context.get_errors();
 					response = create_response(query_request, false, "errors", query_errors, errors, tx.get_elapsed_seconds());
-					system_monitoring_interface::global_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					return response;
 				}
 
@@ -7252,19 +7258,19 @@ private:
 				if (context.is_error()) {
 					json query_errors = context.get_errors();
 					response = create_response(query_request, false, "errors", query_errors, errors, tx.get_elapsed_seconds());
-					system_monitoring_interface::global_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				else 
 				{
 					json query_errors = context.get_errors();
 					response = create_response(query_request, true, "completed", query_results, errors, tx.get_elapsed_seconds());
-					system_monitoring_interface::global_mon->log_function_stop("query", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_function_stop("query", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 			else 
 			{
 				response = create_response(query_request, true, "query has no froms", jp.create_object(), errors, tx.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("query", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			return response;
 		}
@@ -7278,7 +7284,7 @@ private:
 			date_time start_time = date_time::now();
 			timer tx;
 			read_scope_lock my_lock(database_lock);
-			system_monitoring_interface::global_mon->log_function_start("create_object", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("create_object", "start", start_time, __FILE__, __LINE__);
 
 			json token = create_object_request[token_field];
 			json data = create_object_request[data_field];
@@ -7291,14 +7297,14 @@ private:
 			if (not check_message(create_object_request, { auth_general }, user_name))
 			{
 				response = create_response(create_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
 			auto permission =  get_class_permission(user_name, class_name);
 			if (permission.put_grant == class_grants::grant_none) {
 				json result = create_response(create_object_request, false, "Denied", data, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -7368,13 +7374,13 @@ private:
 				int64_t new_id = get_next_object_id();
 				new_object.put_member_i64("object_id", new_id);
 				response = create_response(create_object_request, true, "Object created", new_object, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("create_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("create_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else {
 				std::string msg = std::format("create_object failed because the class '{0}' was never found.", class_name);
-				system_monitoring_interface::global_mon->log_warning(msg);
+				system_monitoring_interface::active_mon->log_warning(msg);
 				response = create_response(create_object_request, false, "Couldn't find class", create_object_request, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			save();
 
@@ -7394,7 +7400,7 @@ private:
 			timer tx;
 			std::vector<validation_error> errors;
 
-			system_monitoring_interface::global_mon->log_function_start("put_object", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("put_object", "start", start_time, __FILE__, __LINE__);
 
 			object_definition = put_object_request[data_field];
 			std::string user_name;
@@ -7402,7 +7408,7 @@ private:
 			if (not check_message(put_object_request, { auth_general }, user_name))
 			{
 				result = create_response(put_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -7451,7 +7457,7 @@ private:
 			{
 				result = create_response(put_object_request, false, result[message_field], grouped_by_class_name, errors, method_timer.get_elapsed_seconds());
 			}
-			system_monitoring_interface::global_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return result;
 		}
@@ -7500,7 +7506,7 @@ private:
 			date_time start_time = date_time::now();
 			timer tx;
 
-			system_monitoring_interface::global_mon->log_function_start("get_object", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("get_object", "start", start_time, __FILE__, __LINE__);
 
 			std::string user_name;
 			json object_key = get_object_request.extract({ class_name_field, object_id_field });
@@ -7509,7 +7515,7 @@ private:
 			if (not check_message(get_object_request, { auth_general }, user_name))
 			{
 				result = create_response(get_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -7518,7 +7524,7 @@ private:
 			auto permission =  get_class_permission(user_name, class_name);
 			if (permission.get_grant == class_grants::grant_none) {
 				json result = create_response(get_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
@@ -7542,7 +7548,7 @@ private:
 			{
 				result = create_response(get_object_request, false, "Not found", object_key, errors, method_timer.get_elapsed_seconds());
 			}
-			system_monitoring_interface::global_mon->log_function_stop("get_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("get_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return result;
 		}
@@ -7559,7 +7565,7 @@ private:
 
 			std::vector<validation_error> errors;
 
-			system_monitoring_interface::global_mon->log_function_start("delete_object", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("delete_object", "start", start_time, __FILE__, __LINE__);
 
 			std::string user_name;
 			json object_key = delete_object_request.extract({ class_name_field, object_id_field });
@@ -7567,7 +7573,7 @@ private:
 			if (not check_message(delete_object_request, { auth_general }, user_name))
 			{
 				response = create_response(delete_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -7576,7 +7582,7 @@ private:
 			auto permission = get_class_permission(user_name, class_name);
 			if (permission.delete_grant == class_grants::grant_none) {
 				response = create_response(delete_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -7586,12 +7592,12 @@ private:
 				cd->delete_objects(this, object_key, true, permission);
 
 				response = create_response(delete_object_request, true, "Ok", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			else 
 			{
 				response = create_response(delete_object_request, true, "class not found", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 
 			save();
@@ -7608,7 +7614,7 @@ private:
 
 			date_time start_time = date_time::now();
 			timer tx;
-			system_monitoring_interface::global_mon->log_function_start("copy_object", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_start("copy_object", "start", start_time, __FILE__, __LINE__);
 
 			std::vector<validation_error> errors;
 			std::string user_name;
@@ -7616,7 +7622,7 @@ private:
 			if (not check_message(copy_request, { auth_general }, user_name))
 			{
 				response = create_response(copy_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -7638,14 +7644,14 @@ private:
 			src_permission = get_class_permission(user_name, source_class);
 			if (src_permission.get_grant == class_grants::grant_none) {
 				response = create_response(copy_request, false, "Denied", source_spec, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
 			dest_permission = get_class_permission(user_name, dest_class);
 			if (dest_permission.put_grant == class_grants::grant_none) {
 				response = create_response(copy_request, false, "Denied", dest_spec, errors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
@@ -7653,7 +7659,7 @@ private:
 				trans_permission = get_class_permission(user_name, transform_class);
 				if (trans_permission.get_grant == class_grants::grant_none) {
 					response = create_response(copy_request, false, "Denied", transform_spec, errors, method_timer.get_elapsed_seconds());
-					system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					return response;
 				}
 			}
@@ -7735,7 +7741,7 @@ private:
 				response = create_response(copy_request, false, "source object not specified", object_source, errors, method_timer.get_elapsed_seconds());;;
 			}
 
-			system_monitoring_interface::global_mon->log_function_stop("copy_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_function_stop("copy_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			save();
 			return response;
 		}
@@ -7835,7 +7841,7 @@ private:
 		using namespace std::literals;
 		date_time st = date_time::now();
 		timer tx;
-		system_monitoring_interface::global_mon->log_function_start("table proof", "start", st, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("table proof", "start", st, __FILE__, __LINE__);
 
 		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "corona_database.cdb");
 
@@ -7866,7 +7872,7 @@ private:
 		bool login_success;
 
 		date_time start_schema = date_time::now();
-		system_monitoring_interface::global_mon->log_job_start("test_database_engine", "start", start_schema, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_job_start("test_database_engine", "start", start_schema, __FILE__, __LINE__);
 
 		corona_database db(dtest);
 
@@ -7905,18 +7911,18 @@ private:
 
 		if (login_result[success_field]) {
 			login_success = false;
-			system_monitoring_interface::global_mon->log_warning("able to login with bad account", __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_warning("able to login with bad account", __FILE__, __LINE__);
 		}
 
 		login_result = db.login_user(login_positive_request);
 
 		if (not login_result[success_field]) {
 			login_success = false;
-			system_monitoring_interface::global_mon->log_warning("can't with good account", __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_warning("can't with good account", __FILE__, __LINE__);
 		}
 
 
-		system_monitoring_interface::global_mon->log_job_stop("test_database_engine", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_job_stop("test_database_engine", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		return success;
 	}
@@ -8082,7 +8088,7 @@ private:
 		}
 		catch (std::exception exc)
 		{
-			system_monitoring_interface::global_mon->log_exception(exc);
+			system_monitoring_interface::active_mon->log_exception(exc);
 			return false;
 		}
 
@@ -8193,7 +8199,7 @@ private:
 		}
 		catch (std::exception& exc)
 		{
-			system_monitoring_interface::global_mon->log_exception(exc);
+			system_monitoring_interface::active_mon->log_exception(exc);
 			return false;
 		}
 	}

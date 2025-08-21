@@ -92,6 +92,7 @@ namespace corona
 		console_color Logintel;		
 
 		static system_monitoring_interface* global_mon;
+		static system_monitoring_interface* active_mon;
 
 		CRITICAL_SECTION log_lock;
 
@@ -171,6 +172,7 @@ namespace corona
 		static void start()
 		{
 			if (global_mon == nullptr) {
+                active_mon = global_mon;
 				global_mon = new system_monitoring_interface();
 				global_mon->test_colors();
 			}
@@ -1105,11 +1107,12 @@ namespace corona
 	};
 
 	system_monitoring_interface* system_monitoring_interface::global_mon = nullptr;
+	system_monitoring_interface* system_monitoring_interface::active_mon = nullptr;
 
 	void log_warning(const std::string& _src)
 	{
 		if (system_monitoring_interface::global_mon) {
-			system_monitoring_interface::global_mon->log_warning(_src);
+			system_monitoring_interface::active_mon->log_warning(_src);
 		}
 	}
 

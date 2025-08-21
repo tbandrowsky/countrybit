@@ -617,7 +617,7 @@ namespace corona
 				auto fill = brushes[_fillBrush];
 				if (not fill) {
 					std::string msg = std::format("missing fill {0}", _fillBrush);
-					system_monitoring_interface::global_mon->log_warning(msg);
+					system_monitoring_interface::active_mon->log_warning(msg);
 				}
 				else
 					getDeviceContext()->FillRectangle(r, fill->getBrush());
@@ -633,7 +633,7 @@ namespace corona
 				auto border = brushes[_borderBrush];
 				if (not border) {
 					std::string msg = std::format("missing border {0}", _borderBrush);
-					system_monitoring_interface::global_mon->log_warning(msg);
+					system_monitoring_interface::active_mon->log_warning(msg);
 				}
 				else
 					getDeviceContext()->DrawRectangle(&r, border->getBrush(), _borderWidth);
@@ -786,7 +786,7 @@ namespace corona
 			auto bm = bitmaps[_bitmapInstanceDto->bitmapName];
 			if (not bm) {
 				std::string msg = std::format("bitmap {0} not in context", _bitmapInstanceDto->bitmapName);
-				system_monitoring_interface::global_mon->log_warning(msg);
+				system_monitoring_interface::active_mon->log_warning(msg);
 				return;
 			}
 			auto ibm = bm->getBySize(_bitmapInstanceDto->width, _bitmapInstanceDto->height);
@@ -817,7 +817,7 @@ namespace corona
 			}
 			else {
 				std::string msg = std::format("bitmap {0} did not have a matching size of {1},{2}", _bitmapInstanceDto->bitmapName, _bitmapInstanceDto->width, _bitmapInstanceDto->height);
-				system_monitoring_interface::global_mon->log_warning(msg);
+				system_monitoring_interface::active_mon->log_warning(msg);
 				return;
 			}
 		}

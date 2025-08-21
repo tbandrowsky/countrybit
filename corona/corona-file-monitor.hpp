@@ -68,7 +68,7 @@ namespace corona
 			catch (std::exception exc)
 			{
 				error_message = std::format("Exception:{0}, {1}", filename, exc.what());
-				system_monitoring_interface::global_mon->log_warning(error_message.c_str(), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning(error_message.c_str(), __FILE__, __LINE__);
                 success = false;
 			}
 

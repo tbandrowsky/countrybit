@@ -456,11 +456,11 @@ namespace corona
 			class_name = _src["class_name"];
 
 			if (not _src.has_members(missing, { "box" })) {
-				system_monitoring_interface::global_mon->log_warning(std::format( "control '{0}/{1}' is missing:", class_name, name), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning(std::format( "control '{0}/{1}' is missing:", class_name, name), __FILE__, __LINE__);
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_warning(s);
+					system_monitoring_interface::active_mon->log_warning(s);
 					});
-				system_monitoring_interface::global_mon->log_information("the source json is:");
+				system_monitoring_interface::active_mon->log_information("the source json is:");
 				return;
 			}
 
@@ -676,9 +676,9 @@ namespace corona
 			std::string sindent(_indent, ' ');
 			std::string fmt;
 			fmt = std::format("{0} {1} debug clicked", typeid(*this).name(), name);
-			system_monitoring_interface::global_mon->log_information(fmt);
+			system_monitoring_interface::active_mon->log_information(fmt);
 			get_json(control_json);
-			system_monitoring_interface::global_mon->log_json<json>(control_json);
+			system_monitoring_interface::active_mon->log_json<json>(control_json);
 		}
 
 	};
@@ -766,7 +766,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				system_monitoring_interface::global_mon->log_exception(exc);
+				system_monitoring_interface::active_mon->log_exception(exc);
 			}
 		}
 	}
@@ -789,7 +789,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				system_monitoring_interface::global_mon->log_exception(exc);
+				system_monitoring_interface::active_mon->log_exception(exc);
 			}
 		}
 	}
@@ -803,7 +803,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				system_monitoring_interface::global_mon->log_exception(exc);
+				system_monitoring_interface::active_mon->log_exception(exc);
 			}
 		}
 	}
@@ -1138,7 +1138,7 @@ namespace corona
 	void control_base::arrange(rectangle _bounds)
 	{
 		set_bounds(_bounds);
-//		system_monitoring_interface::global_mon->log_information(std::format("{0}.{1} {2},{3}-{4},{5}", class_name, name, bounds.x, bounds.y, bounds.w, bounds.h), __FILE__, __LINE__);
+//		system_monitoring_interface::active_mon->log_information(std::format("{0}.{1} {2},{3}-{4},{5}", class_name, name, bounds.x, bounds.y, bounds.w, bounds.h), __FILE__, __LINE__);
 	}
 
 	void control_base::arrange_children(rectangle _bounds,

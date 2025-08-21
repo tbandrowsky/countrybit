@@ -174,7 +174,7 @@ namespace corona
 
 		virtual void log(const char* _msg)
 		{
-			system_monitoring_interface::global_mon->log_information(_msg);
+			system_monitoring_interface::active_mon->log_information(_msg);
 		}
 
 	};
@@ -201,14 +201,14 @@ namespace corona
 
 			if (strcmp(buffer, "test1") != 0)
 			{
-				system_monitoring_interface::global_mon->log_warning("read / write test failed");
+				system_monitoring_interface::active_mon->log_warning("read / write test failed");
 			}
 
 			return true;
 		}
 		catch (std::exception exc)
 		{
-			system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+			system_monitoring_interface::active_mon->log_exception(exc, __FILE__, __LINE__);
 			return false;
 		}
 	}

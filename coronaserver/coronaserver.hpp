@@ -57,31 +57,31 @@ void corona_console_command()
             }
             else if (command == "c")
             {
-                corona::system_monitoring_interface::global_mon->log_information("Listing all classes", __FILE__, __LINE__);
+                corona::system_monitoring_interface::active_mon->log_information("Listing all classes", __FILE__, __LINE__);
                 service->get_classes();
             }
             else if (command.starts_with("c "))
             {
                 command = command.substr(2);
-                corona::system_monitoring_interface::global_mon->log_information("Class " + command, __FILE__, __LINE__);
+                corona::system_monitoring_interface::active_mon->log_information("Class " + command, __FILE__, __LINE__);
                 service->get_class(command);
             }
             else if (command.starts_with("d "))
             {
                 command = command.substr(2);
-                corona::system_monitoring_interface::global_mon->log_information("Class Details" + command, __FILE__, __LINE__);
+                corona::system_monitoring_interface::active_mon->log_information("Class Details" + command, __FILE__, __LINE__);
                 service->get_data(command);
             }
             else if (command == "q")
             {
-                corona::system_monitoring_interface::global_mon->log_information("Shutting Down Safely", __FILE__, __LINE__);
+                corona::system_monitoring_interface::active_mon->log_information("Shutting Down Safely", __FILE__, __LINE__);
                 std::cout << "Shutting down." << std::endl;
                 SvcLogInfo("Shutting down", __FILE__, __LINE__);
                 exit_flag = true;
             }
             else if (command == "x")
             {
-                corona::system_monitoring_interface::global_mon->log_information("Exit Console (CTRL-C to come back)", __FILE__, __LINE__);
+                corona::system_monitoring_interface::active_mon->log_information("Exit Console (CTRL-C to come back)", __FILE__, __LINE__);
             }
         }
     } while (not exit_flag and command != "x" and command != "q");

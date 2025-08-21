@@ -2314,7 +2314,7 @@ namespace corona {
 		}
 		catch (std::exception exc)
 		{
-			system_monitoring_interface::global_mon->log_exception(exc);
+			system_monitoring_interface::active_mon->log_exception(exc);
 			std::cout << exc.what() << std::endl;
 			return false;
 		}

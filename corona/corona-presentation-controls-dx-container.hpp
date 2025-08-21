@@ -414,7 +414,7 @@ namespace corona
 			view_port.y = rows[selected_item_page_index].bounds.y;
 			std::string msg;
 			msg = std::format("selected_page_index '{0}' selected_item_index {1}, y:{2} ", selected_page_index, selected_item_page_index, view_port.y);
-			system_monitoring_interface::global_mon->log_information(msg);
+			system_monitoring_interface::active_mon->log_information(msg);
 		}
 
 		void set_selection_border(solidBrushRequest _brushFill)
@@ -459,7 +459,7 @@ namespace corona
 					if (not page_to_item_index.contains(selected_page_index )) {
 						std::string msg;
 						msg = std::format("selected_page_index '{0}' not found", selected_page_index);
-						system_monitoring_interface::global_mon->log_warning(msg);
+						system_monitoring_interface::active_mon->log_warning(msg);
 						return;
 					}
 

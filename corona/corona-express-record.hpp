@@ -1442,7 +1442,7 @@ namespace corona
 		timer tx;
 		date_time start = date_time::now();
 
-		system_monitoring_interface::global_mon->log_function_start("xrecord", "start", start, __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_start("xrecord", "start", start, __FILE__, __LINE__);
 		using namespace std::literals;
 
 		xrecord comp1, comp2, comp3;
@@ -1645,7 +1645,7 @@ namespace corona
 		result = not (comp3 < comp1);
 		_tests->test({ "index 3 < swo", result, __FILE__, __LINE__ });
 
-		system_monitoring_interface::global_mon->log_function_stop("xrecord", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::active_mon->log_function_stop("xrecord", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 	}
 
 }

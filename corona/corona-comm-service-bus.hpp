@@ -59,6 +59,7 @@ namespace corona
 			bool _is_service = false
 		)
 		{
+            system_monitoring_interface::active_mon = this;
             on_logged_error = _on_logged_error;
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
@@ -80,7 +81,7 @@ namespace corona
 
 			bool poll_success = database_config_mon.poll(app.get(), [this, &tx](json& _new_config) {
 				local_db_config = _new_config;
-				system_monitoring_interface::global_mon->log_information(std::format("using config file {0}", database_config_filename), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_information(std::format("using config file {0}", database_config_filename), __FILE__, __LINE__);
 
 				server_config = local_db_config["Server"];
 
@@ -174,6 +175,19 @@ namespace corona
 				log_warning("Could not read database config file " + database_config_filename, __FILE__, __LINE__);
 				throw std::runtime_error("Could not read database config file " + database_config_filename);
 			}
+		}
+
+		virtual ~comm_bus_service()
+		{
+			// stop the web
+			db_api_server.stop();
+			// stop the database.
+			// we do this here rather than just letting the pointer release itself 
+			// because we want to make sure the database is closed before the job queue is shut down
+			if (local_db) {
+				local_db = nullptr;
+			}
+			system_monitoring_interface::active_mon = system_monitoring_interface::global_mon;
 		}
 
 		void prove_system()
@@ -494,17 +508,6 @@ namespace corona
 			}
 		}
 
-		virtual ~comm_bus_service()
-		{
-			// stop the web
-            db_api_server.stop();
-			// stop the database.
-			// we do this here rather than just letting the pointer release itself 
-            // because we want to make sure the database is closed before the job queue is shut down
-			if (local_db) {
-				local_db = nullptr;
-			}
-		}
 
 		std::string get_token(http_action_request& _request)
 		{

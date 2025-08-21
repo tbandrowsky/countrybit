@@ -97,7 +97,7 @@ namespace corona
 						damount = std::stod(samount);
 					}
 					catch (const std::exception& e) {
-						system_monitoring_interface::global_mon->log_warning("measure amount is not a number: " + samount);
+						system_monitoring_interface::active_mon->log_warning("measure amount is not a number: " + samount);
 						damount = 0;
 					}
 				}
@@ -108,12 +108,12 @@ namespace corona
 			}
 		}
 		else if (not _src.has_members(missing, { "amount", "units" })) {
-			system_monitoring_interface::global_mon->log_warning("measure is missing:");
+			system_monitoring_interface::active_mon->log_warning("measure is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_warning(s);
+				system_monitoring_interface::active_mon->log_warning(s);
 				});
-			system_monitoring_interface::global_mon->log_information("the source json is:");
-			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+			system_monitoring_interface::active_mon->log_information("the source json is:");
+			system_monitoring_interface::active_mon->log_json<json>(_src, 2);
 			return;
 		}
 		else 
@@ -196,12 +196,12 @@ namespace corona
 
 		std::vector<std::string> missing;
 		if (not _src.has_members(missing, { "width", "height" })) {
-			system_monitoring_interface::global_mon->log_warning("measure is missing:");
+			system_monitoring_interface::active_mon->log_warning("measure is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_warning(s);
+				system_monitoring_interface::active_mon->log_warning(s);
 				});
-			system_monitoring_interface::global_mon->log_information("the source json is:");
-			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+			system_monitoring_interface::active_mon->log_information("the source json is:");
+			system_monitoring_interface::active_mon->log_json<json>(_src, 2);
 			return;
 		}
 
@@ -231,12 +231,12 @@ namespace corona
 
 		std::vector<std::string> missing;
 		if (not _src.has_members(missing, { "w", "h" })) {
-			system_monitoring_interface::global_mon->log_warning("rectangle is missing:");
+			system_monitoring_interface::active_mon->log_warning("rectangle is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_warning(s);
+				system_monitoring_interface::active_mon->log_warning(s);
 				});
-			system_monitoring_interface::global_mon->log_information("the source json is:");
-			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
+			system_monitoring_interface::active_mon->log_information("the source json is:");
+			system_monitoring_interface::active_mon->log_json<json>(_src, 2);
 			return;
 		}
 

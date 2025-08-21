@@ -58,10 +58,10 @@ namespace corona
 			tests.push_back(tr);
 			LeaveCriticalSection(&cs);
 			if (not _test.success) {
-				system_monitoring_interface::global_mon->log_warning(_test.test_name, _test.file.c_str(), _test.line);
+				system_monitoring_interface::active_mon->log_warning(_test.test_name, _test.file.c_str(), _test.line);
 			}
 			else {
-				system_monitoring_interface::global_mon->log_information(_test.test_name + " passed", _test.file.c_str(), _test.line);
+				system_monitoring_interface::active_mon->log_information(_test.test_name + " passed", _test.file.c_str(), _test.line);
 			}
 		}
 
@@ -76,7 +76,7 @@ namespace corona
 				if (not test->success) 
 				{
 					std::string test_result = std::format("{0}.{1} failed", test_set_name, test->test_name);
-					system_monitoring_interface::global_mon->log_warning(test_result, test->file.c_str(), test->line);
+					system_monitoring_interface::active_mon->log_warning(test_result, test->file.c_str(), test->line);
 					is_true = false;
 				}
 			}
