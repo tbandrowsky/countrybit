@@ -78,14 +78,29 @@ namespace corona
       ]
 }			
 )";
-            std::string recipient_name = _user["user_name"];
-            std::string recipient_email = _user["email"];
+            std::string recipient_user_name = _user[user_name_field];
+            std::string recipient_first_name = _user[user_first_name_field];
+            std::string recipient_last_name = _user[user_last_name_field];
+            std::string recipient_user_email = _user[user_email_field];
+            std::string recipient_display_name;
+
+            if (recipient_user_email.empty()) {
+                recipient_user_email = recipient_user_name;
+            }
+
+            if (recipient_first_name.empty() && recipient_last_name.empty()) {
+                recipient_display_name = recipient_user_name;
+            }
+            else 
+            {
+                recipient_display_name = recipient_first_name + " " + recipient_last_name;
+            }
 
             json email_request = jp.parse_object(email_template);
 
             json to_json = jp.create_object();
-            to_json.put_member("email", recipient_email);
-            to_json.put_member("name", recipient_name);
+            to_json.put_member("email", recipient_user_email);
+            to_json.put_member("name", recipient_display_name);
 
             json from_json = jp.create_object();
             from_json.put_member("email", std::string(sender_email));
