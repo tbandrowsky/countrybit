@@ -1111,7 +1111,7 @@ namespace corona
 
 	void log_warning(const std::string& _src)
 	{
-		if (system_monitoring_interface::global_mon) {
+		if (system_monitoring_interface::active_mon) {
 			system_monitoring_interface::active_mon->log_warning(_src);
 		}
 	}
