@@ -6168,7 +6168,11 @@ private:
 
 			std::string user_name = data[user_name_field];
 			std::string user_email = data[user_email_field];
+
+			bool using_email_for_username = false;
+
 			if (user_name.empty() and not user_email.empty()) {
+				using_email_for_username = true;
 				user_name = user_email;
 			}
 			else if (not user_name.empty() and user_email.empty()) {
@@ -6189,6 +6193,11 @@ private:
 				response = create_user_response(create_user_request, false, "An email is required.", data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
+			else {
+				using_email_for_username = true;
+			}
+            data.put_member(user_name_field, user_name);
+			data.put_member(user_email_field, user_email);
 			std::string user_password1 = data["password1"];
 			std::string user_password2 = data["password2"];
 			std::string user_class = "sys_user";		
@@ -6241,15 +6250,26 @@ private:
 
 			do 
 			{
-				json existing_user_link = get_user(user_name, sys_perm);
+				json existing_user = get_user(user_name, sys_perm);
 
-				if (existing_user_link.object()) 
+				if (existing_user.object())
 				{
-					attempt_count++;
-					char buff[128];
-					buff[0] = ('0' + rand() % 10);
-					buff[1] = 0;
-					user_name = user_name + buff;
+					// if we're using email for the username, then we can't change it
+					if (using_email_for_username)
+					{
+						json_parser jp;
+                        json existing_errors = jp.create_array();
+						response = create_user_response(create_user_request, false, "User already exists.", existing_user, existing_errors, method_timer.get_elapsed_seconds());
+						return response;
+					}
+					else 
+					{
+						attempt_count++;
+						char buff[128];
+						buff[0] = ('0' + rand() % 10);
+						buff[1] = 0;
+						user_name = user_name + buff;
+					}
 				}
 				else 
 				{
@@ -6340,6 +6360,21 @@ private:
 			if (user_info.object()) {
 				message = "Code sent";
 				send_user_confirmation(user_info, recovery_email);
+			}
+			else 
+			{
+				std::vector<validation_error> errors;
+				validation_error err;
+				err.class_name = "sys_user";
+				err.field_name = user_name_field;
+				err.filename = get_file_name(__FILE__);
+				err.line_number = __LINE__;
+				err.message = "user not found";
+				errors.push_back(err);
+				message = "User not found.";
+				system_monitoring_interface::active_mon->log_function_stop("send_validation_code", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				response = create_user_response(validation_code_request, false, message, data, errors, tx.get_elapsed_seconds());
+                return response;
 			}
 
 			json errors = jp.create_array();
