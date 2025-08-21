@@ -59,9 +59,11 @@ namespace corona
 			bool _is_service = false
 		)
 		{
-            system_monitoring_interface::active_mon = this;
             on_logged_error = _on_logged_error;
 			system_monitoring_interface::start(); // this will create the global log queue.
+
+			system_monitoring_interface::active_mon = this;
+
 			timer tx;
 			date_time t = date_time::now();
 			json_parser jp;

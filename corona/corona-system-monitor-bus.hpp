@@ -172,8 +172,8 @@ namespace corona
 		static void start()
 		{
 			if (global_mon == nullptr) {
-                active_mon = global_mon;
 				global_mon = new system_monitoring_interface();
+				active_mon = global_mon;
 				global_mon->test_colors();
 			}
 		}
