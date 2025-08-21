@@ -5571,11 +5571,18 @@ private:
 			int rc = 0;
 			int lc = 0;
 			int i = 0;
+			int random_number;
+
+			std::random_device rd; // Seed generator
+			std::mt19937 gen(rd()); // Mersenne Twister engine
+			std::uniform_int_distribution<> dist('A', 'A' + 26); // Range [1, 100]
+
 			while (i < confirmation_code_digits and i < sizeof(confirmation_code))
 			{
 				do
 				{
-					rc = rand() % 26 + 'A';
+					random_number = dist(gen);
+					rc = random_number % 26 + 'A';
 					confirmation_code[i] = rc;
 				} while (rc == lc);
 				lc = rc;
@@ -6416,7 +6423,7 @@ private:
 				err.message = "user not found";
 				errors.push_back(err);
 
-				response = create_user_response(_confirm_request, false, "user not found", data, errors, method_timer.get_elapsed_seconds());
+				response = create_user_response(_confirm_request, false, "User not found", data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
