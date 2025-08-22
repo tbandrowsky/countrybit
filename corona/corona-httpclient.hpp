@@ -447,7 +447,7 @@ namespace corona
             return params;
         }
 
-		http_params post(const char* _host, int _port, const char* _url, json _body, const char* _headers = nullptr)
+		http_params post(const char* _host, int _port, const char* _url, json _body, const char* _headers = nullptr, bool _trace = false)
 		{
             http_params params;
 
@@ -465,6 +465,11 @@ namespace corona
             params.request.body = buffer(body_string.c_str());
             if (_headers)
                 params.request.headers = _headers;
+
+            if (_trace) {
+                std::string message = params.request.path + "\n" + body_string;
+                system_monitoring_interface::active_mon->log_information(message, __FILE__, __LINE__);
+            }
 
             run(params);
             return params;
