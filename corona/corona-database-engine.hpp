@@ -6391,6 +6391,8 @@ private:
 			else
 			{
 				response = create_user_response(create_user_request, false, "User not created", create_user_params, jerrors, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::active_mon->log_warning(std::format("Could not create user '{}': {}", user_name, user_result[message_field]), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json(response);
 			}
 
 			save();
