@@ -6343,15 +6343,14 @@ private:
 
 			system_monitoring_interface::active_mon->log_function_start("send_validation_code", "start", start_time, __FILE__, __LINE__);
 
+			std::string user_name = validation_code_request[user_name_field];
 
-			json data = validation_code_request[data_field];
-			std::string user_name = "";
-
-			if (not data.object()) {
-				user_name = validation_code_request[user_name_field];
-			}
-			else {
-				user_name = data[user_name_field];
+			if (user_name.empty()) {
+				json data = validation_code_request[data_field];
+			
+				if (data.object()) {
+					user_name = data[user_name_field];
+				}
 			}
 
 			if (user_name.empty()) {
