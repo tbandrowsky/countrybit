@@ -5087,18 +5087,17 @@ private:
 			std::string authorization = token[authorization_field];
 			std::string user = token[user_name_field];
 
-			if (authorization == auth_system) /* perhaps a tad loose used to be  and user == default_user*/
-			{
-				return token;
-			}
-
 			for (auto _authorization : _authorizations)
 			{
-				if ((_authorization == authorization) or 
-					(_authorization == auth_general and authorization == auth_system))
+				if (authorization == _authorization) /* perhaps a tad loose used to be  and user == default_user*/
+				{
 					return token;
+				}
+				else if (authorization == auth_system)
+				{
+					return token;
+				}
 			}
-
 			return empty;
 		}
 
@@ -6348,6 +6347,7 @@ private:
 			json create_user_params = jp.create_object();
 			create_user_params.put_member(class_name_field, user_class);
 			create_user_params.put_member(user_name_field, user_name);
+			create_user_params.put_member(user_email_field, user_email);
 			create_user_params.put_member(user_password_field, hashed_pw);
 			create_user_params.copy_member(user_first_name_field, data);
 			create_user_params.copy_member(user_last_name_field, data);
