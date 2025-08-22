@@ -1,0 +1,114 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// 11
+//
+
+1 11
+BEGIN
+    0x0004, 0x0000, 0x0001, 0x0000, 0x0002, 0x0000, 0x0034, 0x0000, 0x0100, 
+    0x0003, 0x0100, 0x0003, 0x0060, 0x0000, 0x0101, 0x8003, 0x0101, 0x8003, 
+    0x009c, 0x0000, 0x0102, 0xc000, 0x0102, 0xc000, 0x00d8, 0x0000, 0x0018, 
+    0x0001, 0x0047, 0x0065, 0x006e, 0x0065, 0x0072, 0x0061, 0x006c, 0x000d, 
+    0x000a, 0x0000, 0x0014, 0x0001, 0x004f, 0x0074, 0x0068, 0x0065, 0x0072, 
+    0x000d, 0x000a, 0x0000, 0x003c, 0x0001, 0x0025, 0x0031, 0x0025, 0x006e, 
+    0x0053, 0x006f, 0x0075, 0x0072, 0x0063, 0x0065, 0x003a, 0x0020, 0x0025, 
+    0x0032, 0x0025, 0x006e, 0x004c, 0x0069, 0x006e, 0x0065, 0x003a, 0x0020, 
+    0x0025, 0x0033, 0x000d, 0x000a, 0x0000, 0x0000, 0x003c, 0x0001, 0x0025, 
+    0x0031, 0x0025, 0x006e, 0x0053, 0x006f, 0x0075, 0x0072, 0x0063, 0x0065, 
+    0x003a, 0x0020, 0x0025, 0x0032, 0x0025, 0x006e, 0x004c, 0x0069, 0x006e, 
+    0x0065, 0x003a, 0x0020, 0x0025, 0x0033, 0x000d, 0x000a, 0x0000, 0x0000, 
+    0x003c, 0x0001, 0x0025, 0x0031, 0x0025, 0x006e, 0x0053, 0x006f, 0x0075, 
+    0x0072, 0x0063, 0x0065, 0x003a, 0x0020, 0x0025, 0x0032, 0x0025, 0x006e, 
+    0x004c, 0x0069, 0x006e, 0x0065, 0x003a, 0x0020, 0x0025, 0x0033, 0x000d, 
+    0x000a, 0x0000, 0x0000
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,1,1
+ PRODUCTVERSION 1,0,1,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Country Video Games"
+            VALUE "FileDescription", "Executable Corona Database and API Server"
+            VALUE "FileVersion", "1.0.1.1"
+            VALUE "InternalName", "Corona"
+            VALUE "LegalCopyright", "Copyright (C) 2025"
+            VALUE "OriginalFilename", "Corona"
+            VALUE "ProductName", "Corona Database and API Server"
+            VALUE "ProductVersion", "1.0.1.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

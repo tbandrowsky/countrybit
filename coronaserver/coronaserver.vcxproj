@@ -170,6 +170,7 @@
       <FileType>CppCode</FileType>
     </ClInclude>
     <ClInclude Include="eventmessages.h" />
+    <ClInclude Include="resource.h" />
     <CopyFileToFolders Include="game_schema.json">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <FileType>Document</FileType>
