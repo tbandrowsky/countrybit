@@ -718,23 +718,9 @@ namespace corona
 		}
 		virtual std::string to_json()
 		{
-			char oldChar = '"';
-			// TODO: recognize the escape character when parsing!!!
-			std::string temp;
-			temp += '"';
-			for (auto c : value) {
-				if (c == oldChar) {
-					temp.push_back('\\');
-				}
-				else if (c == '\\') {
-                    temp.push_back(c);
-				}
-				temp.push_back(c);
-			}
-			temp += '"';
+            std::string temp = escape_json_string(value);
 			return temp;
 		}
-
 		virtual std::string to_json_typed()
 		{
 			return get_type_prefix() + " " + to_json();

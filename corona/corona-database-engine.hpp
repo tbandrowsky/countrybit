@@ -896,7 +896,7 @@ namespace corona
 		virtual json edit_object(json _edit_object_request) = 0;
 		virtual json run_object(json _edit_object_request) = 0;
 		virtual json create_object(json create_object_request) = 0;
-		virtual json put_object(json put_object_request) = 0;
+		virtual json put_object(json put_object_request, const char* _auth = nullptr) = 0;
 		virtual json get_object(json get_object_request) = 0;
 		virtual json delete_object(json delete_object_request) = 0;
 
@@ -5050,7 +5050,8 @@ private:
 
 			for (auto _authorization : _authorizations)
 			{
-				if (_authorization == authorization)
+				if ((_authorization == authorization) or 
+					(_authorization == auth_general and authorization == auth_system))
 					return token;
 			}
 
@@ -7487,8 +7488,10 @@ private:
 
 			object_definition = put_object_request[data_field];
 			std::string user_name;
+	
+            std::string authority = auth_general;
 
-			if (not check_message(put_object_request, { auth_general }, user_name))
+			if (not check_message(put_object_request, { authority }, user_name))
 			{
 				result = create_response(put_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
