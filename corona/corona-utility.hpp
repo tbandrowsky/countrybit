@@ -107,23 +107,6 @@ namespace corona {
 		return source;
 	}
 
-	std::string get_environment(const std::string& _src)
-	{
-		char* libvar;
-		size_t requiredSize;
-		std::string ret;
-
-		getenv_s(&requiredSize, NULL, 0, _src.c_str());
-		if (requiredSize == 0)
-		{
-			return ret;
-		}
-
-		ret.resize(requiredSize + 4, 0);
-		getenv_s(&requiredSize, ret.data(), requiredSize, _src.c_str());
-
-		return ret;
-	}
 }
 
 #endif

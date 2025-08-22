@@ -109,6 +109,36 @@ namespace corona
 		return output;
 	}
 
+	std::string get_environment(const std::string& _src)
+	{
+		buffer env_path_buf(32768);
+		std::string ret;
+
+		DWORD result = GetEnvironmentVariable(_src.c_str(), env_path_buf.get_ptr(), (DWORD)env_path_buf.get_size());
+
+		if (result > 0 and result < env_path_buf.get_size())
+		{
+			if (env_path_buf.is_safe_string()) {
+				ret = std::string(env_path_buf.get_ptr());
+			}
+			else {
+				ret = "/*invalid string*/";
+				system_monitoring_interface::active_mon->log_warning(_src + " invalid string", __FILE__, __LINE__);
+			}
+		}
+		else if (result == 0)
+		{
+			os_result err;
+			ret = err.message;
+		}
+		else
+		{
+			ret = "/*too big*/";
+			system_monitoring_interface::active_mon->log_warning(_src + " too large. That is no moon.", __FILE__, __LINE__);
+		}
+		return ret;
+	}
+
 }
 
 #endif
