@@ -6489,6 +6489,13 @@ private:
 			json data = _confirm_request;
 			std::string user_name = data[user_name_field];
 			std::string user_code = data["validation_code"];
+			if (user_name.empty()) {
+				data = data[data_field];
+				if (data.object()) {
+					user_name = data[user_name_field];
+					user_code = data["validation_code"];
+				}
+            }
 
 			auto sys_perm = get_system_permission();
 
@@ -6502,7 +6509,7 @@ private:
 				err.field_name = "user_name";
 				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
-				err.message = "user not found";
+				err.message = std::format("User '{}' not found", user_name);
 				errors.push_back(err);
 
 				response = create_user_response(_confirm_request, false, "User not found", data, errors, method_timer.get_elapsed_seconds());
