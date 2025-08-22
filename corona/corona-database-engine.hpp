@@ -6347,7 +6347,7 @@ private:
 			json data = validation_code_request[data_field];
 			std::string user_name = "";
 
-			if (data.object()) {
+			if (not data.object()) {
 				user_name = validation_code_request[user_name_field];
 			}
 			else {
