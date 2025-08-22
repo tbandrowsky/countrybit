@@ -6390,7 +6390,7 @@ private:
 			}
 			else
 			{
-				response = create_user_response(create_user_request, false, "User not created", user_result, jerrors, method_timer.get_elapsed_seconds());
+				response = create_user_response(create_user_request, false, "User not created", create_user_params, jerrors, method_timer.get_elapsed_seconds());
 			}
 
 			save();
@@ -7920,7 +7920,11 @@ private:
 			payload = jp.create_object();
 
 			json token = jp.create_object();
-			token.put_member(user_name_field, default_user);
+            std::string user_name = _data[user_name_field];
+			if (user_name.empty()) {
+				user_name = default_user;
+            }
+			token.put_member(user_name_field, user_name);
 			token.put_member(authorization_field, auth_system);
 			date_time expiration = date_time::utc_now() + this->token_life;
 			token.put_member(token_expires_field, expiration);
