@@ -4522,11 +4522,31 @@ namespace corona
 				"max_length" : 15,
 				"match_pattern": "^\\\\d{5}(?:[-\\\\s]\\\\d{4})?$"	
 			},
-			"password" : "string",
-			"team_name" : "string",
-			"validation_code" : "string",
-			"confirmed_code" : "number",
-			"workflow_objects" : "object"
+			"password" : { 
+				"field_type":"string",
+				"field_name":"password",	
+				"is_server_only": true
+			},
+			"team_name" :{ 
+				"field_type":"string",
+				"field_name":"team_name",	
+				"is_server_only": true
+			}
+			"validation_code" : { 
+				"field_type":"string",
+				"field_name":"validation_code",	
+				"is_server_only": true
+			}
+			"confirmed_code" : { 
+				"field_type":"number",
+				"field_name":"validation_code",	
+				"is_server_only": true
+			}
+			"workflow_objects" : { 
+				"field_type":"object",
+				"field_name":"workflow_objects",	
+				"is_server_only": true
+			}
 	}
 }
 )");
