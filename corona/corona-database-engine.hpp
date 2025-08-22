@@ -6347,7 +6347,7 @@ private:
 			json data = validation_code_request[data_field];
 			std::string user_name = "";
 
-			if (data.empty()) {
+			if (data.object()) {
 				user_name = validation_code_request[user_name_field];
 			}
 			else {
@@ -6384,7 +6384,7 @@ private:
 				err.field_name = user_name_field;
 				err.filename = get_file_name(__FILE__);
 				err.line_number = __LINE__;
-				err.message = "User not found";
+				err.message = std::format("User '{}' not found", user_name);
 				errors.push_back(err);
 				message = "User not found.";
 				system_monitoring_interface::active_mon->log_function_stop("send_validation_code", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);

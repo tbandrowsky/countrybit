@@ -284,6 +284,15 @@ namespace corona
 
             DWORD security = params.request.port == 443 ? WINHTTP_FLAG_SECURE : 0;
 
+            DWORD options = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_3;
+            DWORD dwOptionSize = sizeof(options);
+
+            BOOL optionSet = WinHttpSetOption(hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &options, dwOptionSize);
+            if (not optionSet) {
+                os_result osr;
+                system_monitoring_interface::active_mon->log_warning(std::format("Failed to set secure protocols: '{}'", osr.message), __FILE__, __LINE__);
+            }
+
             // Create an HTTP request handle.
             if (hConnect) {
                 hRequest = WinHttpOpenRequest(hConnect,
