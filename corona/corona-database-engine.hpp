@@ -917,7 +917,7 @@ namespace corona
 		virtual write_class_sp create_lock_class(const std::string& _class_name) = 0;
 		virtual json save_class(write_class_sp& _class_to_save) = 0;
 		virtual json save_class(class_interface* _class_to_save) = 0;
-		virtual bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name) = 0;
+		virtual bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name, std::string& _token_authority) = 0;
 		virtual json get_openapi_schema(std::string _user_name) = 0;
 	};
 
@@ -4806,7 +4806,7 @@ private:
 			return result;
 		}
 
-		json check_object(json object_load, std::string _user_name, std::vector<validation_error>& validation_errors)
+		json check_object(json object_load, std::string _user_name, std::vector<validation_error>& validation_errors, std::string _authorization)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -4876,12 +4876,21 @@ private:
 					continue;
 				}
 
-				auto permission = get_class_permission(_user_name, class_pair.first);
+				class_permissions permission;
 
-				if (permission.put_grant == class_grants::grant_none) {
-					response.put_member(success_field, false);
-					response.put_member(message_field, "check_object denied"sv);
-					return response;
+				if (_authorization != auth_system) 
+				{
+					permission = get_class_permission(_user_name, class_pair.first);
+
+					if (permission.put_grant == class_grants::grant_none) {
+						response.put_member(success_field, false);
+						response.put_member(message_field, "check_object denied"sv);
+						return response;
+					}
+				}
+				else {
+					permission.user_name = _user_name;
+                    permission.put_grant = class_grants::grant_any;	
 				}
 
 				result_list = jp.create_array();
@@ -5103,7 +5112,7 @@ private:
 
 		public:
 
-		virtual bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name) override
+		virtual bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name, std::string& _token_authorization) override
 		{
 			std::string token = _message[token_field];
 
@@ -5112,6 +5121,7 @@ private:
 
 			if (is_ok) {
 				_user_name = result[user_name_field];
+                _token_authorization = result[authorization_field];
 			}
 
 			return is_ok;
@@ -6390,9 +6400,10 @@ private:
 			}
 			else
 			{
+                std::string message = user_result[message_field];
+				system_monitoring_interface::active_mon->log_warning(std::format("Could not create user '{}': {}", user_name, message), __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_json(user_result);
 				response = create_user_response(create_user_request, false, "User not created", create_user_params, jerrors, method_timer.get_elapsed_seconds());
-				system_monitoring_interface::active_mon->log_warning(std::format("Could not create user '{}': {}", user_name, user_result[message_field]), __FILE__, __LINE__);
-				system_monitoring_interface::active_mon->log_json(response);
 			}
 
 			save();
@@ -6613,9 +6624,9 @@ private:
 
 			system_monitoring_interface::active_mon->log_function_start("user_home", "start", start_time, __FILE__, __LINE__);
 
-			std::string user_name;
+			std::string user_name, user_auth;
 
-			if (not check_message(_user_home_request, { auth_self }, user_name))
+			if (not check_message(_user_home_request, { auth_self }, user_name, user_auth))
 			{
 				result = create_response(_user_home_request, false, "User home denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				return result;
@@ -6647,7 +6658,7 @@ private:
 			std::vector<validation_error> errors;
 
 			json data = _password_request[data_field];
-			std::string user_name;
+			std::string user_name, user_auth;
 			std::string user_code = data["validation_code"];
 			std::string requested_user_name = data[user_name_field];
 
@@ -6678,7 +6689,7 @@ private:
 				user_name = requested_user_name;
 
 			}
-			else if (not check_message(_password_request, { auth_general }, user_name))
+			else if (not check_message(_password_request, { auth_general }, user_name, user_auth))
 			{
 				std::vector<validation_error> errors;
 				validation_error err;
@@ -6855,7 +6866,7 @@ private:
 
 		virtual json run_object(json _run_object_request)
 		{
-			std::string user_name;
+			std::string user_name, user_auth;
 			json_parser jp;
 			json response;
 
@@ -6863,7 +6874,7 @@ private:
 			timer tx;
 			std::vector<validation_error> errors;
 
-			if (not check_message(_run_object_request, { auth_general }, user_name))
+			if (not check_message(_run_object_request, { auth_general }, user_name, user_auth))
 			{
 				response = create_response(_run_object_request, false, "run object denied", jp.create_object(), errors, tx.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -6896,12 +6907,12 @@ private:
 
 			date_time start_time = date_time::now();
 			timer tx;
-			std::string user_name;
+			std::string user_name, user_auth;
 
 			bool include_children = (bool)_edit_object_request["include_children"];
 			std::vector<validation_error> errors;
 
-			if (not check_message(_edit_object_request, { auth_general }, user_name))
+			if (not check_message(_edit_object_request, { auth_general }, user_name, user_auth))
 			{
 				result = create_response(_edit_object_request, false, "edit object denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -6966,9 +6977,9 @@ private:
 
 			system_monitoring_interface::active_mon->log_function_start("get_classes", "start", start_time, __FILE__, __LINE__);
 
-			std::string user_name;
+			std::string user_name, user_auth;
 
-			if (not check_message(get_classes_request, { auth_general }, user_name))
+			if (not check_message(get_classes_request, { auth_general }, user_name, user_auth))
 			{
 				result = create_response(get_classes_request, false, "get_classes denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				return result;
@@ -7028,9 +7039,9 @@ private:
 				return response;
 			}
 
-			std::string user_name;
+			std::string user_name, user_auth;
 
-			if (not check_message(get_class_request, { auth_general }, user_name))
+			if (not check_message(get_class_request, { auth_general }, user_name, user_auth))
 			{
 				result = create_response(get_class_request, false, "get_class denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -7105,9 +7116,9 @@ private:
 				return response;
 			}
 
-			std::string user_name;
+			std::string user_name, user_auth;
 
-			if (not check_message(put_class_request, { auth_general }, user_name))
+			if (not check_message(put_class_request, { auth_general }, user_name, user_auth))
 			{
 				result = create_response(put_class_request, false, "put_class denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -7246,10 +7257,10 @@ private:
 			// or with an object that has no members.
 			json response;
 
-			std::string user_name;
+			std::string user_name, user_auth;
 			std::vector<validation_error> errors;
 
-			if (not check_message(query_request, { auth_general }, user_name))
+			if (not check_message(query_request, { auth_general }, user_name, user_auth))
 			{
 				response = create_response(query_request, false, "query denied", jp.create_object(), errors, tx.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("query", "denied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -7454,10 +7465,10 @@ private:
 			std::string class_name = data[class_name_field];
 			json response;
 
-			std::string user_name;
+			std::string user_name, user_auth;
 			std::vector<validation_error> errors;
 
-			if (not check_message(create_object_request, { auth_general }, user_name))
+			if (not check_message(create_object_request, { auth_general }, user_name, user_auth))
 			{
 				response = create_response(create_object_request, false, "create_object denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -7569,15 +7580,16 @@ private:
 			std::string user_name;
 	
             std::string authority = auth_general;
+            std::string token_authority = auth_general;
 
-			if (not check_message(put_object_request, { authority }, user_name))
+			if (not check_message(put_object_request, { authority }, user_name, token_authority))
 			{
 				result = create_response(put_object_request, false, "Put object denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
 
-			result = check_object(object_definition, user_name, errors);
+			result = check_object(object_definition, user_name, errors, token_authority);
 
 			json grouped_by_class_name = result[data_field];
 
@@ -7673,11 +7685,11 @@ private:
 
 			system_monitoring_interface::active_mon->log_function_start("get_object", "start", start_time, __FILE__, __LINE__);
 
-			std::string user_name;
+			std::string user_name, user_auth;
 			json object_key = get_object_request.extract({ class_name_field, object_id_field });
 
 			std::vector<validation_error> errors;
-			if (not check_message(get_object_request, { auth_general }, user_name))
+			if (not check_message(get_object_request, { auth_general }, user_name, user_auth))
 			{
 				result = create_response(get_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -7732,10 +7744,10 @@ private:
 
 			system_monitoring_interface::active_mon->log_function_start("delete_object", "start", start_time, __FILE__, __LINE__);
 
-			std::string user_name;
+			std::string user_name, user_auth;
 			json object_key = delete_object_request.extract({ class_name_field, object_id_field });
 
-			if (not check_message(delete_object_request, { auth_general }, user_name))
+			if (not check_message(delete_object_request, { auth_general }, user_name, user_auth))
 			{
 				response = create_response(delete_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -7782,9 +7794,9 @@ private:
 			system_monitoring_interface::active_mon->log_function_start("copy_object", "start", start_time, __FILE__, __LINE__);
 
 			std::vector<validation_error> errors;
-			std::string user_name;
+			std::string user_name, user_auth;
 
-			if (not check_message(copy_request, { auth_general }, user_name))
+			if (not check_message(copy_request, { auth_general }, user_name, user_auth))
 			{
 				response = create_response(copy_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
