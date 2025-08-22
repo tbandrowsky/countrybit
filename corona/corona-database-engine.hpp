@@ -4880,7 +4880,7 @@ private:
 
 				if (permission.put_grant == class_grants::grant_none) {
 					response.put_member(success_field, false);
-					response.put_member(message_field, "denied"sv);
+					response.put_member(message_field, "check_object denied"sv);
 					return response;
 				}
 
@@ -5087,7 +5087,7 @@ private:
 			std::string authorization = token[authorization_field];
 			std::string user = token[user_name_field];
 
-			if (authorization == auth_system and user == default_user)
+			if (authorization == auth_system) /* perhaps a tad loose used to be  and user == default_user*/
 			{
 				return token;
 			}
@@ -6608,7 +6608,7 @@ private:
 
 			if (not check_message(_user_home_request, { auth_self }, user_name))
 			{
-				result = create_response(_user_home_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				result = create_response(_user_home_request, false, "User home denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				return result;
 			}
 
@@ -6680,7 +6680,7 @@ private:
 				err.message = "Denied.";
 				errors.push_back(err);
 
-				response = create_user_response(_password_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				response = create_user_response(_password_request, false, "Set password denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6689,7 +6689,7 @@ private:
 
 			if (requested_user_name != user_name)
 			{
-				response = create_response(_password_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				response = create_response(_password_request, false, "Set Password denied.", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("confirm", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6856,7 +6856,7 @@ private:
 
 			if (not check_message(_run_object_request, { auth_general }, user_name))
 			{
-				response = create_response(_run_object_request, false, "Denied", jp.create_object(), errors, tx.get_elapsed_seconds());
+				response = create_response(_run_object_request, false, "run object denied", jp.create_object(), errors, tx.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("run_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -6894,7 +6894,7 @@ private:
 
 			if (not check_message(_edit_object_request, { auth_general }, user_name))
 			{
-				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				result = create_response(_edit_object_request, false, "edit object denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -6910,7 +6910,7 @@ private:
 
 			if (perms.get_grant == class_grants::grant_none)
 			{
-				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				result = create_response(_edit_object_request, false, "edit_object denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -6961,7 +6961,7 @@ private:
 
 			if (not check_message(get_classes_request, { auth_general }, user_name))
 			{
-				result = create_response(get_classes_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				result = create_response(get_classes_request, false, "get_classes denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				return result;
 			}
 
@@ -7023,7 +7023,7 @@ private:
 
 			if (not check_message(get_class_request, { auth_general }, user_name))
 			{
-				result = create_response(get_class_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				result = create_response(get_class_request, false, "get_class denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -7056,7 +7056,7 @@ private:
 				}
 			}
 			else {
-				result = create_response(get_class_request, false, "denied", key, errors, method_timer.get_elapsed_seconds());
+				result = create_response(get_class_request, false, "get_class denied", key, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 			return result;
@@ -7100,7 +7100,7 @@ private:
 
 			if (not check_message(put_class_request, { auth_general }, user_name))
 			{
-				result = create_response(put_class_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, false, "put_class denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
@@ -7127,7 +7127,7 @@ private:
 				class_name);
 
 			if (permission.put_grant != class_grants::grant_any) {
-				result = create_response(put_class_request, false, "Denied", jclass_definition, errors, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, false, "put_class denied", jclass_definition, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop(pc_name, pc_failed, tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				return result;
@@ -7183,7 +7183,7 @@ private:
 			auto permission =  get_class_permission(_user_name, base_class_name);
 			if (permission.get_grant == class_grants::grant_none)
 			{
-				response = create_response(_user_name, auth_general, false, "denied", query_details, errors, method_timer.get_elapsed_seconds());
+				response = create_response(_user_name, auth_general, false, "query_class denied", query_details, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -7242,7 +7242,7 @@ private:
 
 			if (not check_message(query_request, { auth_general }, user_name))
 			{
-				response = create_response(query_request, false, "Denied", jp.create_object(), errors, tx.get_elapsed_seconds());
+				response = create_response(query_request, false, "query denied", jp.create_object(), errors, tx.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("query", "denied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
@@ -7450,14 +7450,14 @@ private:
 
 			if (not check_message(create_object_request, { auth_general }, user_name))
 			{
-				response = create_response(create_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				response = create_response(create_object_request, false, "create_object denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return response;
 			}
 
 			auto permission =  get_class_permission(user_name, class_name);
 			if (permission.put_grant == class_grants::grant_none) {
-				json result = create_response(create_object_request, false, "Denied", data, errors, method_timer.get_elapsed_seconds());
+				json result = create_response(create_object_request, false, "create_object denied", data, errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
@@ -7563,7 +7563,7 @@ private:
 
 			if (not check_message(put_object_request, { authority }, user_name))
 			{
-				result = create_response(put_object_request, false, "Denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
+				result = create_response(put_object_request, false, "Put object denied", jp.create_object(), errors, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::active_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				return result;
 			}
