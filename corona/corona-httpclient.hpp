@@ -462,6 +462,7 @@ namespace corona
                 "text/plain"
             };
             std::string body_string = _body.to_json();
+            body_string = escape_json_string(body_string); // Escape the JSON string for safe transmission
             params.request.body = buffer(body_string.c_str());
             if (_headers)
                 params.request.headers = _headers;

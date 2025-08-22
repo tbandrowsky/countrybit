@@ -6363,7 +6363,7 @@ private:
 				err.message = "User required";
 				errors.push_back(err);
 				system_monitoring_interface::active_mon->log_function_stop("send_validation_code", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				response = create_user_response(validation_code_request, false, "user_name (typically an email address) is required", data, errors, tx.get_elapsed_seconds());
+				response = create_user_response(validation_code_request, false, "user_name (typically an email address) is required", validation_code_request[data_field], errors, tx.get_elapsed_seconds());
 				return response;
 			}
 
@@ -6387,12 +6387,12 @@ private:
 				errors.push_back(err);
 				message = "User not found.";
 				system_monitoring_interface::active_mon->log_function_stop("send_validation_code", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				response = create_user_response(validation_code_request, false, message, data, errors, tx.get_elapsed_seconds());
+				response = create_user_response(validation_code_request, false, message, validation_code_request[data_field], errors, tx.get_elapsed_seconds());
                 return response;
 			}
 
 			json errors = jp.create_array();
-			response = create_user_response(validation_code_request, true, message, data, errors, tx.get_elapsed_seconds());
+			response = create_user_response(validation_code_request, true, message, validation_code_request[data_field], errors, tx.get_elapsed_seconds());
 
 			system_monitoring_interface::active_mon->log_function_stop("send_validation_code", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 

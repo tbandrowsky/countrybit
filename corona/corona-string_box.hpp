@@ -40,6 +40,43 @@ namespace corona {
 		return false;
 	}
 
+	/// <summary>
+	/// Escapes a string for safe inclusion in JSON output.
+	/// Converts special characters to their JSON escape sequences.
+	/// </summary>
+	/// <param name="input">The input string to escape.</param>
+	/// <returns>The escaped string, suitable for JSON.</returns>
+	inline std::string escape_json_string(const std::string& input)
+	{
+		std::string output;
+		output.reserve(input.size() + 8); // Reserve some extra space
+
+		for (char c : input)
+		{
+			switch (c)
+			{
+			case '\"': output += "\\\""; break;
+			case '\\': output += "\\\\"; break;
+			case '\b': output += "\\b";  break;
+			case '\f': output += "\\f";  break;
+			case '\n': output += "\\n";  break;
+			case '\r': output += "\\r";  break;
+			case '\t': output += "\\t";  break;
+			default:
+				if (static_cast<unsigned char>(c) < 0x20)
+				{
+					char buf[7];
+					snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
+					output += buf;
+				}
+				else
+				{
+					output += c;
+				}
+			}
+		}
+		return output;
+	}
 	class string_box
 	{
 
