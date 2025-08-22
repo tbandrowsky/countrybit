@@ -132,7 +132,7 @@ namespace corona
 
             std::string header = "Content-Type: application/json\r\n" + authorization_header;
 
-			http_params params = send_grid_client.post(host.c_str(), port, "/v3/mail/send", email_request, header.c_str());
+			http_params params = send_grid_client.post(host.c_str(), port, "/v3/mail/send", email_request, header.c_str(), true);
 
             return params;
 		}
