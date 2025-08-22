@@ -6486,11 +6486,11 @@ private:
 
 			system_monitoring_interface::active_mon->log_function_start("confirm", "start", start_time, __FILE__, __LINE__);
 
-			json data = _confirm_request;
-			std::string user_name = data[user_name_field];
-			std::string user_code = data["validation_code"];
+			json data;
+			std::string user_name = _confirm_request[user_name_field];
+			std::string user_code = _confirm_request["validation_code"];
 			if (user_name.empty()) {
-				data = data[data_field];
+				data = _confirm_request[data_field];
 				if (data.object()) {
 					user_name = data[user_name_field];
 					user_code = data["validation_code"];
@@ -6512,7 +6512,7 @@ private:
 				err.message = std::format("User '{}' not found", user_name);
 				errors.push_back(err);
 
-				response = create_user_response(_confirm_request, false, "User not found", data, errors, method_timer.get_elapsed_seconds());
+				response = create_user_response(_confirm_request, false, err.message, data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
@@ -6664,7 +6664,7 @@ private:
 				err.message = "Incorrect user_name.";
 				errors.push_back(err);
 
-				response = create_user_response(_password_request, false, "user not found", data, errors, method_timer.get_elapsed_seconds());
+				response = create_user_response(_password_request, false, "User not found", data, errors, method_timer.get_elapsed_seconds());
 				return response;
 			}
 
