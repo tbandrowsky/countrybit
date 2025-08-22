@@ -773,6 +773,7 @@ namespace corona
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
+			local_db->scrub_object(parsed_request);
 			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
 			json fn_response = local_db->user_home(parsed_request);
@@ -788,6 +789,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
+			local_db->scrub_object(parsed_request);
 			json fn_response = local_db->get_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -801,6 +803,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
+			local_db->scrub_object(parsed_request);
 			json fn_response = local_db->copy_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -828,6 +831,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
+			local_db->scrub_object(parsed_request);
 
 			json fn_response = local_db->query(parsed_request);
 			http_response response = create_response(200, fn_response);
@@ -842,6 +846,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
+			local_db->scrub_object(parsed_request);
 			json fn_response = local_db->create_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -855,6 +860,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
+			local_db->scrub_object(parsed_request);
 			json fn_response = local_db->put_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -868,6 +874,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member(token_field, token);
+			local_db->scrub_object(parsed_request);
 			json fn_response = local_db->delete_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -881,6 +888,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member("Token", token);
+			local_db->scrub_object(parsed_request);
 			json fn_response = local_db->edit_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -894,6 +902,7 @@ namespace corona
 			}
 			std::string token = get_token(_request);
 			parsed_request.put_member("Token", token);
+			local_db->scrub_object(parsed_request);
 			json fn_response = local_db->run_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);

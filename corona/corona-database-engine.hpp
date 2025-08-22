@@ -716,6 +716,7 @@ namespace corona
 		virtual std::shared_ptr<child_bridges_interface> get_bridges() = 0;
 		virtual json get_openapi_schema(corona_database_interface* _db) = 0;
         virtual bool is_required() = 0;
+		virtual bool is_server_only() = 0;
 	};
 
 	class field_interface {
@@ -782,6 +783,7 @@ namespace corona
 		relative_ptr_type								table_location;
 	public:
 
+		virtual bool is_server_only(const std::string& _field_name) = 0;
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
 
@@ -883,6 +885,7 @@ namespace corona
 			const class_permissions& _src,
 			std::string _class_name) = 0;
 
+		virtual void scrub_object(json& object_to_scrub) = 0;
 		virtual json create_user(json create_user_request, bool _system_user) = 0;
 		virtual json login_user(json _login_request) = 0;
 		virtual json user_confirm_user_code(json _login_request) = 0;
@@ -896,7 +899,7 @@ namespace corona
 		virtual json edit_object(json _edit_object_request) = 0;
 		virtual json run_object(json _edit_object_request) = 0;
 		virtual json create_object(json create_object_request) = 0;
-		virtual json put_object(json put_object_request, const char* _auth = nullptr) = 0;
+		virtual json put_object(json put_object_request) = 0;
 		virtual json get_object(json get_object_request) = 0;
 		virtual json delete_object(json delete_object_request) = 0;
 
@@ -954,6 +957,7 @@ namespace corona
 		bool		required;
 		std::string format;
 		std::string input_mask;
+		bool		server_only;
 
 		field_options_base() = default;
 		field_options_base(const field_options_base& _src) = default;
@@ -967,11 +971,13 @@ namespace corona
 			_dest.put_member("required", required);
 			_dest.put_member("format", format);
 			_dest.put_member("input_mask", input_mask);
+			_dest.put_member("server_only", server_only);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			required = (bool)_src["required"];
+            server_only = (bool)_src["server_only"];
 			format = (std::string)_src["format"];
             input_mask = (std::string)_src["input_mask"];	
 		}
@@ -1027,6 +1033,10 @@ namespace corona
 			return required; 
 		}
 
+		virtual bool is_server_only() override 
+		{ 
+			return server_only; 
+        }
 	};
 
 	class child_bridge_implementation : public child_bridge_interface
@@ -2555,6 +2565,20 @@ namespace corona
 		{
 			copy_from(&_src);
 			return *this;
+		}
+
+		virtual bool is_server_only(const std::string& _field_name) override
+		{
+			auto foundit = fields.find(_field_name);
+			if (foundit != std::end(fields)) {
+				auto field = foundit->second;
+				if (field) {
+					auto options = field->get_options();
+					if (options) {
+						return options->is_server_only();
+					}
+				}
+            }
 		}
 
 		virtual json get_info(corona_database_interface* _db) override
@@ -6170,6 +6194,32 @@ private:
 			}
 		};
 
+		virtual void scrub_object(json& object_to_scrub)
+		{
+			
+			if (auto obj_impl = object_to_scrub.object_impl()) {
+				std::string class_name = object_to_scrub[class_name_field];
+				auto rsp = read_lock_class(class_name);
+				for (auto& member : obj_impl->members)
+				{
+					if (rsp and not rsp->is_server_only(member.first)) {
+						obj_impl->members.erase(member.first);
+					}
+                    json child(member.second);
+					if (child.object() or child.array()) {
+						scrub_object(child);
+					}
+				}
+			}
+			else if (auto array_impl = object_to_scrub.array_impl()) {
+				for (int i = 0; i < array_impl->elements.size(); i++) {
+					json item(array_impl->elements[i]);
+					if (item.object()) {
+						scrub_object(item);
+					}
+				}
+			}
+		}
 
 		virtual json create_user(json create_user_request, bool _system_user = false)
 		{
