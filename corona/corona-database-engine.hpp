@@ -6385,6 +6385,7 @@ private:
 
 			json create_object_request = create_system_request(create_user_params);
 			json user_result =  put_object(create_object_request);
+			// we have to confirm if this guy did his job.
 			json jerrors = user_result["errors"];
 			if (user_result[success_field]) {
 				json new_user_wrapper = user_result[data_field]["sys_user"].get_element(0);
