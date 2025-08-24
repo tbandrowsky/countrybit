@@ -2509,7 +2509,7 @@ namespace corona
 		std::string class_name;
 		std::string class_description;
 		std::string base_class_name;
-		std::vector<std::string> table_fields;
+		std::vector<std::string> table_fields;//these are the fields that are in the xtable definition for this class
 		std::vector<std::string> parents;
 		std::map<std::string, std::shared_ptr<field_interface>> fields;
 		std::map<std::string, std::shared_ptr<index_interface>> indexes;
@@ -2884,7 +2884,8 @@ namespace corona
 			table_fields.clear();
 			if (jtable_fields.array()) {
 				for (auto tf : jtable_fields) {
-					table_fields.push_back((std::string)tf);
+					std::string stf = (std::string)tf;
+					table_fields.push_back(stf);
 				}
 			}
 
@@ -3300,11 +3301,14 @@ namespace corona
 				}
 			}
 
-			for (auto field : fields)
+			std::map<std::string, bool> existing_table_fields;
+            for (auto tf : table_fields) {
+                existing_table_fields.insert_or_assign(tf, true);
+            }
+
+			for (auto& field : fields)
 			{
-				if (std::find_if(table_fields.begin(), table_fields.end(), [&field](const std::string& _src) {
-						return _src == field.first;
-					}) == std::end(table_fields)) {
+				if (existing_table_fields.find(field.first)!=std::end(existing_table_fields)) {
 					table_fields.push_back(field.first);
 				}
 			}
