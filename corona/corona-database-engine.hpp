@@ -4592,6 +4592,11 @@ namespace corona
 				"field_name":"password",	
 				"is_server_only": true
 			},
+			"confirmed_code": { 
+				"field_type":"bool",
+				"field_name":"confirmed_code",	
+				"is_server_only": true
+			},
 			"team_name" :{ 
 				"field_type":"string",
 				"field_name":"team_name",	
@@ -4599,11 +4604,6 @@ namespace corona
 			},
 			"validation_code" : { 
 				"field_type":"string",
-				"field_name":"validation_code",	
-				"is_server_only": true
-			},
-			"confirmed_code" : { 
-				"field_type":"number",
 				"field_name":"validation_code",	
 				"is_server_only": true
 			},
