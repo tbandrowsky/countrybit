@@ -798,7 +798,7 @@ namespace corona
 			return -1;
 		}
 
-		virtual json get(json key) override
+		virtual json get(json& key) override
 		{
 			sql_statement stmt;
 			json results;
@@ -808,7 +808,7 @@ namespace corona
 			return results;
 		}
 
-		virtual void put(json values) override
+		virtual void put(json& values) override
 		{
 			sql_statement stmt;
 
@@ -817,14 +817,14 @@ namespace corona
 
 		}
 
-		virtual void put_array(json values) override
+		virtual void put_array(json& values) override
 		{
 			for (auto obj : values) {
 				put(obj);
 			}
 		}
 
-		virtual void erase(json key)  override
+		virtual void erase(json& key)  override
 		{
 			sql_statement stmt;
 			json results;
@@ -833,7 +833,7 @@ namespace corona
 			results = execute(stmt);
 		}
 
-		virtual void erase_array(json values) override
+		virtual void erase_array(json& values) override
 		{
 			for (auto obj : values) {
 				erase(obj);
