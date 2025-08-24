@@ -2688,6 +2688,11 @@ namespace corona
 			return table;
 		}
 
+		/// <summary>
+		/// Alters an xtable in the database, updating its structure and optionally migrating data.
+		/// </summary>
+		/// <param name="_db">Pointer to the corona_database_interface representing the database connection.</param>
+		/// <returns>A shared pointer to the current xtable after alteration.</returns>
 		virtual std::shared_ptr<xtable> alter_xtable(corona_database_interface* _db) override
 		{
 			std::shared_ptr<xtable> current_table, new_table, table;
@@ -3242,31 +3247,40 @@ namespace corona
             }
 
 			// check to see if we have changes requiring a table rebuild.
+			// first off, we don't have to rebuild if this is a new table.
 
 			bool alter_table = false;
-			for (auto f : fields) {
-				auto changed_field = changed_class.fields.find(f.first);
-				if (changed_field != std::end(changed_class.fields))
-				{
-					if (changed_field->second->get_field_type() != f.second->get_field_type())
+			std::vector<std::shared_ptr<field_interface>> new_fields;
+
+			if (table_location == 0) {
+				for (auto f : fields) {
+					auto changed_field = changed_class.fields.find(f.first);
+					if (changed_field != std::end(changed_class.fields))
+					{
+						if (changed_field->second->get_field_type() != f.second->get_field_type())
+						{
+							alter_table = true;
+						}
+					}
+					else
 					{
 						alter_table = true;
 					}
 				}
-				else 
-				{
-					alter_table = true;
+
+				for (auto f : changed_class.fields) {
+					auto changed_field = fields.find(f.first);
+					if (changed_field == std::end(fields))
+					{
+						new_fields.push_back(f.second);
+						alter_table = true;
+					}
 				}
 			}
-
-			std::vector<std::shared_ptr<field_interface>> new_fields;
-
-			for (auto f : changed_class.fields) {
-				auto changed_field = fields.find(f.first);
-				if (changed_field == std::end(fields))
-				{
+			else 
+			{
+				for (auto f : changed_class.fields) {
 					new_fields.push_back(f.second);
-					alter_table = true;
 				}
 			}
 
@@ -3308,7 +3322,7 @@ namespace corona
 
 			for (auto& field : fields)
 			{
-				if (existing_table_fields.find(field.first)!=std::end(existing_table_fields)) {
+				if (existing_table_fields.find(field.first)==std::end(existing_table_fields)) {
 					table_fields.push_back(field.first);
 				}
 			}
