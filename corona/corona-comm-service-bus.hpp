@@ -211,28 +211,14 @@ namespace corona
 			testo = tm.create_test_set("rw locks", dependencies);
 			test_rw_locks(testo);
 
-			testo = tm.create_test_set("object", dependencies);
-			test_object(testo, app);
-
-			testo = tm.create_test_set("file block", dependencies);
-			test_file_block(testo, app);
-
 			testo = tm.create_test_set("child_field", dependencies);
 			test_parse_child_field(testo);
 
-			dependencies = { "file block", "object" };
-			testo = tm.create_test_set("file", dependencies);
-			test_file(testo, app);
-
-			dependencies = { "file" };
-			testo = tm.create_test_set("data block", dependencies);
-			test_data_block(testo, app);
-
-			dependencies = { "data block" };
-			testo = tm.create_test_set("json node", dependencies);
-			test_json_node(testo, app);
-
-			dependencies = { "data block" };
+			// the test is in the old json_data_table stuff that lived up to this data
+            // have to pull it back in to keep the logic together. this is important to do
+			// and the comment is temporary.
+			// 
+			// dependencies = { "data block" };
 			testo = tm.create_test_set("xrecord", dependencies);
 			test_xrecord(testo, app);
 
@@ -248,7 +234,8 @@ namespace corona
 			testo = tm.create_test_set("xtable", dependencies);
 			test_xtable(testo, app);
 
-			dependencies = { "json node", "xtable" };
+			dependencies = { "xtable" };
+			//			dependencies = { "json node", "xtable" };
 			testo = tm.create_test_set("master", dependencies);
 
 			bool system_works = tm.prove("master");

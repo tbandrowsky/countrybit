@@ -48,11 +48,17 @@ constexpr bool is_convertible_to_int = std::is_convertible_v<T, int>;
 namespace corona
 {
 
+	/// <summary>
+    /// Class permissions	
+	/// </summary>
 	const std::string class_permission_put = "put";
 	const std::string class_permission_get = "get";
 	const std::string class_permission_delete = "delete";
 	const std::string class_permission_alter = "alter";
 
+	/// <summary>
+	/// Represents a string constant with the value "any".
+	/// </summary>
 	const std::string class_grant_any = "any"; // any object can be modified by someone on the team
 	const std::string class_grant_own = "own"; // only objects you own can be modified if you are on the team
 
@@ -780,14 +786,14 @@ namespace corona
 	class class_interface : public shared_lockable
 	{
 	protected:
-		relative_ptr_type								table_location;
+		int64_t											table_location;
 	public:
 
 		virtual bool is_server_only(const std::string& _field_name) = 0;
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
 
-		virtual int64_t									get_class_id() const = 0;
+        virtual int64_t									get_class_id() const = 0;
 		virtual std::string								get_class_name()  const = 0;
 		virtual std::string								get_class_description()  const = 0;
 		virtual std::string								get_base_class_name()  const = 0;
@@ -2780,6 +2786,7 @@ namespace corona
 			json_parser jp;
 
 			_dest.put_member(class_name_field, class_name);
+			_dest.put_member(object_id_field, class_id);
 			_dest.put_member("class_description", class_description);
 			_dest.put_member("base_class_name", base_class_name);
 			_dest.put_member_i64("table_location", table_location);
@@ -2851,6 +2858,7 @@ namespace corona
 			class_name = _src[class_name_field];
 			class_description = _src["class_description"];
 			base_class_name = _src["base_class_name"];
+            class_id = (int64_t)_src[object_id_field];
 			table_location = (int64_t)_src["table_location"];
 
 			parents.clear();
@@ -3226,6 +3234,11 @@ namespace corona
 			base_class_name = changed_class.base_class_name;
 			class_description = changed_class.class_description;
 			sql = changed_class.sql;
+
+            class_id = changed_class.class_id;
+			if (class_id <= 0) {
+				class_id = _context->db->get_next_object_id();
+            }
 
 			// check to see if we have changes requiring a table rebuild.
 
@@ -4110,6 +4123,8 @@ namespace corona
 			
 			cache = std::make_unique<xblock_cache>(static_cast<file_block*>(this), maximum_record_cache_size_bytes);
 
+
+
 			header.data.object_id = 1;
 			header_location = header.append(this);
 
@@ -4137,15 +4152,10 @@ namespace corona
 	}
 }
 )";
-			classes->put_json(class_errors, class_definition);
-
-			if (class_errors.size() > 0) {
-				for (auto& err : class_errors) {
-					system_monitoring_interface::active_mon->log_warning(err.message, err.filename.c_str(), err.line_number);
-				}
-				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return result;
-            }
+			activity update_activity;
+			update_activity.db = this;
+			class_definition = jp.parse_object(class_definition_str);
+			bool success = classes->update(&update_activity, class_definition);
 
 			auto cxtable = classes->get_xtable(this);
 			header.data.classes_location = cxtable->get_location();
@@ -4645,7 +4655,7 @@ namespace corona
 
 			new_user_request = create_system_request(new_user_data);
 			json new_user_result =  create_user(new_user_request);
-			bool success = (bool)new_user_result[success_field];
+			success = (bool)new_user_result[success_field];
 			std::vector<validation_error> errors;
 			if (success) {
 				json new_user = new_user_result[data_field];
@@ -6177,6 +6187,7 @@ private:
 		virtual relative_ptr_type open_database(relative_ptr_type _header_location)
 		{
 			write_scope_lock my_lock(database_lock);
+			json_parser jp;
 
 			timer method_timer;
 			date_time start_schema = date_time::now();
@@ -6187,7 +6198,31 @@ private:
 			relative_ptr_type header_location =  header.read(this, _header_location);
 
 			classes = std::make_shared<class_implementation>();
-            classes->open(this, header.data.classes_location);		
+            classes->open(this, header.data.classes_location);	
+
+			json class_definition = jp.create_object();
+			std::string class_definition_str = R"(
+{	
+	"class_name" : "sys_class",
+	"class_description" : "Class definitions",
+	"fields" : {			
+			"class_id":"int64",			
+			"class_name":"string",
+			"class_description":"string",
+			"table_location":"int64",
+			"base_class_name":"string",	
+			"ancestors":"[ string ]",
+			"descendants":"[ string ]",
+			"fields" : "object",
+			"indexes" : "object",
+			"sql" : "object"	
+	}
+}
+)";
+			activity update_activity;
+			update_activity.db = this;
+            class_definition = jp.parse_object(class_definition_str);
+			bool success = classes->update(&update_activity, class_definition);
 
 			system_monitoring_interface::active_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -7004,7 +7039,9 @@ private:
 
 			json result;
 			json result_list;
-			
+			json object_list;
+			json data;
+
 			date_time start_time = date_time::now();
 			timer tx;
 
@@ -7021,22 +7058,33 @@ private:
 				return result;
 			}
 
-			result_list =  classes->select([this, user_name](int _index, json& _item) {
-				auto permission = get_class_permission(user_name, _item[class_name_field]);
-				json_parser jp;
+			object_list = classes->get_objects(this, "{}"_jobject, false, get_system_permission());
+            result_list = jp.create_array();
 
-				if (permission.get_grant != class_grants::grant_none) 
-				{
-					return _item;
-				}
-				else 
-				{
-					json empty = jp.create_object("Skip", "this");
-					return empty;
-				}
-			});
+			// put on the afterburners.  my ai said this was faster...
+			if (object_list.array()) {
+				for (auto& item : object_list.array_impl()->elements) {
+                    std::shared_ptr<json_object> jo = dynamic_pointer_cast<json_object>(item);	
+					if (jo) {
+						std::string class_name = jo->members[class_name_field]->to_string();
+						auto permission = get_class_permission(user_name, class_name);
 
-			json data = jp.create_object();
+						if (permission.get_grant != class_grants::grant_none)
+						{
+							auto classd = read_lock_class(class_name);
+							json item = jp.create_object();
+							if (classd) {
+								classd->get_json(item);
+								json class_info = classd->get_info(this);
+								item.share_member("info", class_info);
+                                result_list.push_back(item);
+							}
+						}
+					}
+				}
+			}
+
+			data = jp.create_object();
 			data.share_member("class", result_list);
 
 			system_monitoring_interface::active_mon->log_function_stop("get_classes", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -7093,7 +7141,7 @@ private:
 
 			if (permission.get_grant != class_grants::grant_none) {
 
-				json class_definition = classes->get(key);
+				json class_definition = classes->get_single_object(this, key, false, permission);
 
 				auto classd = read_lock_class(class_name);
 				if (classd) {

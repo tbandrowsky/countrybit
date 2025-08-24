@@ -213,13 +213,6 @@ namespace corona {
 // but implemented using SQL Server tables
 #include "corona-sql.hpp"
 
-// a json table here is a physical table in a file beginning at some point within it.
-// it's ok, but it's actually quite slow and is not the simplest thing to thread.
-#include "corona-json-table.hpp"
-
-// a json object table here has a simpler key
-#include "corona-json-object-table.hpp"
-
 // this is a client for send grid
 #include "corona-sendgrid-client.hpp"
 
