@@ -4596,17 +4596,17 @@ namespace corona
 				"field_type":"string",
 				"field_name":"team_name",	
 				"is_server_only": true
-			}
+			},
 			"validation_code" : { 
 				"field_type":"string",
 				"field_name":"validation_code",	
 				"is_server_only": true
-			}
+			},
 			"confirmed_code" : { 
 				"field_type":"number",
 				"field_name":"validation_code",	
 				"is_server_only": true
-			}
+			},
 			"workflow_objects" : { 
 				"field_type":"object",
 				"field_name":"workflow_objects",	
