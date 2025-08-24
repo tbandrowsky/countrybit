@@ -6243,6 +6243,19 @@ private:
             class_definition = jp.parse_object(class_definition_str);
 			bool success = classes->update(&update_activity, class_definition);
 
+            std::vector<std::string> check_classes = { "sys_object", "sys_class", "sys_user", "sys_team", "sys_grant", "sys_server", "sys_error", "sys_schema", "sys_dataset" };
+
+			for (auto check_class : check_classes) {
+                std::string class_key = std::format(R"({{"class_name":"{0}"}})", check_class);
+                json key = jp.parse_object(class_key);
+				json test = classes->get_single_object(this, key, false, get_system_permission());
+				if (test.empty() or test.error()) {
+					system_monitoring_interface::active_mon->log_warning("could not find class '" + check_class + "' after open.", __FILE__, __LINE__);
+					system_monitoring_interface::active_mon->log_job_stop("open_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					return 0;
+				}
+			}
+
 			system_monitoring_interface::active_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			return header_location;
