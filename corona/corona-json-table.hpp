@@ -11,6 +11,11 @@ About this File
 This is a table in a json database, implemented with a skip list.
 
 Notes
+This was the first implementation of a json table for Corona based on skip lists.
+After much experimentation, almost a year of it, despite having had great luck with 
+skip_lists in the past, I have come to the conclusion that they are not the best for 
+database applications and to this end switched to B+ trees. The code is left here
+for reference.
 
 For Future Consideration
 */

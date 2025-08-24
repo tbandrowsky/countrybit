@@ -803,6 +803,7 @@ namespace corona
 		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) const = 0;
 		virtual	bool									update(activity* _context, json _changed_class) = 0;
 		virtual std::vector<std::string>				get_table_fields()  const = 0;
+		virtual void                                    open(corona_database_interface* _db, int64_t _location) = 0;
 
 		virtual	void									put_field(std::shared_ptr<field_interface>& _name) = 0;
 		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name)  const = 0;
@@ -2480,7 +2481,8 @@ namespace corona
 				table = std::make_shared<xtable>(_db->get_cache(), table_location);
 				return table;
 			}
-			else {
+			else 
+			{
 				auto table_header = std::make_shared<xtable_header>();
 				table_header->key_members = get_index_keys();
 				table_header->object_members = { object_id_field };
@@ -2653,6 +2655,14 @@ namespace corona
 		{
 			return table_fields;
 		}
+
+		virtual void open(corona_database_interface* _db, int64_t _location) override
+		{
+			table_location = _location;
+			// this actually does a read, so that, the cache has it now
+			std::shared_ptr<xtable> table = std::make_shared<xtable>(_db->get_cache(), table_location);
+		}
+
 
 		virtual std::shared_ptr<xtable> get_xtable(corona_database_interface* _db) override
 		{
@@ -3924,9 +3934,8 @@ namespace corona
 		delete_object
 		*/
 
-		std::shared_ptr<json_table> classes;
-		std::shared_ptr<json_table_header> classes_header;
-
+		std::shared_ptr<class_implementation> classes;
+		
 		bool trace_check_class = false;
 
 		allocation_index get_allocation_index(int64_t _size)
@@ -4104,12 +4113,42 @@ namespace corona
 			header.data.object_id = 1;
 			header_location = header.append(this);
 
-			header.data.object_id = 1;
-			classes_header = std::make_shared<json_table_header>();
-			classes_header->create(this);
-			header.data.classes_location = classes_header->get_location();
-			std::vector<std::string> class_keys = { class_name_field };
-			classes = std::make_shared<json_table>(classes_header, 0, this, class_keys);
+			// now create the classes table.  it too is an xtable and participates properly
+			// in the cache and allocation system.
+			classes = std::make_shared<class_implementation>();		
+
+			std::vector<validation_error> class_errors;
+			json class_definition = jp.create_object();
+			std::string class_definition_str = R"(
+{	
+	"class_name" : "sys_class",
+	"class_description" : "Class definitions",
+	"fields" : {			
+			"class_id":"int64",			
+			"class_name":"string",
+			"class_description":"string",
+			"table_location":"int64",
+			"base_class_name":"string",	
+			"ancestors":"[ string ]",
+			"descendants":"[ string ]",
+			"fields" : "object",
+			"indexes" : "object",
+			"sql" : "object"	
+	}
+}
+)";
+			classes->put_json(class_errors, class_definition);
+
+			if (class_errors.size() > 0) {
+				for (auto& err : class_errors) {
+					system_monitoring_interface::active_mon->log_warning(err.message, err.filename.c_str(), err.line_number);
+				}
+				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				return result;
+            }
+
+			auto cxtable = classes->get_xtable(this);
+			header.data.classes_location = cxtable->get_location();
 
 			created_classes = jp.create_object();
 
@@ -4137,7 +4176,7 @@ namespace corona
 				return result;
 			}
 
-			json test =  classes->get(R"({"class_name":"sys_object"})");
+			json test =  classes->get_single_object(this, R"({"class_name":"sys_object"})"_jobject, false, get_system_permission() );
 			if (test.empty() or test.error()) {
 				system_monitoring_interface::active_mon->log_warning("could not find class sys_object after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4145,8 +4184,6 @@ namespace corona
 			}
 
 			created_classes.put_member("sys_object", true);
-
-
 
 			response = create_class(R"(
 {	
@@ -4170,7 +4207,7 @@ namespace corona
 				return result;
 			}
 
-			test = classes->get(R"({"class_name":"sys_error"})");
+			test = classes->get_single_object(this, R"({"class_name":"sys_error"})"_jobject, false, get_system_permission());
 			if (test.empty() or test.error()) {
 				system_monitoring_interface::active_mon->log_warning("could not find class sys_error after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4201,7 +4238,7 @@ namespace corona
 				return result;
 			}
 
-			test = classes->get(R"({"class_name":"sys_server"})");
+			test = classes->get_single_object(this, R"({"class_name":"sys_server"})"_jobject, false, get_system_permission() );
 			if (test.empty() or test.error()) {
 				system_monitoring_interface::active_mon->log_warning("could not find class sys_server after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4229,7 +4266,7 @@ namespace corona
 				return result;
 			}
 
-			test = classes->get(R"({"class_name":"sys_command"})");
+			test = classes->get_single_object(this, R"({"class_name":"sys_command"})"_jobject, false, get_system_permission());
 			if (test.empty() or test.error()) {
 				system_monitoring_interface::active_mon->log_warning("could not find class sys_command after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4285,7 +4322,7 @@ namespace corona
 				return result;
 			}
 
-			test = classes->get(R"({"class_name":"sys_grant"})");
+			test = classes->get_single_object(this, R"({"class_name":"sys_grant"})"_jobject, false, get_system_permission());
 			if (test.empty() or test.error()) {
 				system_monitoring_interface::active_mon->log_warning("could not find class sys_grant after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4341,7 +4378,7 @@ namespace corona
 				return result;
 			}
 
-			test = classes->get(R"({"class_name":"sys_team"})");
+			test = classes->get_single_object(this, R"({"class_name":"sys_grant"})"_jobject, false, get_system_permission());
 			if (test.empty() or test.error()) {
 				system_monitoring_interface::active_mon->log_warning("could not find class sys_team after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4387,7 +4424,7 @@ namespace corona
 				return result;
 			}
 
-			test = classes->get(R"({"class_name":"sys_dataset"})");
+			test = classes->get_single_object(this, R"({"class_name":"sys_dataset"})"_jobject, false, get_system_permission());
 			if (test.empty() or test.is_member("class_name", "SysParseError")) {
 				system_monitoring_interface::active_mon->log_warning("could not find class sys_dataset after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4437,7 +4474,7 @@ namespace corona
 				return result;
 			}
 
-			test =  classes->get(R"({"class_name":"sys_schema"})");
+			test = classes->get_single_object(this, R"({"class_name":"sys_schema"})"_jobject, false, get_system_permission());
 			if (test.empty() or test.error()) {
 				system_monitoring_interface::active_mon->log_warning("could not find class sys_schema after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -4558,13 +4595,13 @@ namespace corona
 				return result;
 			}
 
-			test =  classes->get(R"({"class_name":"sys_user"})");
+			test = classes->get_single_object(this, R"({"class_name":"sys_user"})"_jobject, false, get_system_permission());
 			if (test.empty() or test.error()) {
-				system_monitoring_interface::active_mon->log_warning("could not find class sys_user after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::active_mon->log_warning("could not find class sys_schema after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::active_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 				return result;
 			}
-
 			created_classes.put_member("sys_user", true);
 
 			json gc = jp.create_object();
@@ -5136,32 +5173,27 @@ private:
 				user_name = default_user;
             }
 
-			json result_list = classes->select([this, user_name](int _index, json& _item) {
-				auto permission = get_class_permission(user_name, _item[class_name_field]);
-				json_parser jp;
-
-				if (permission.get_grant != class_grants::grant_none)
-				{
-					return _item;
-				}
-				else
-				{
-					json empty = jp.create_object("Skip", "this");
-					return empty;
-				}
-				});
-
-			if (result_list.array()) 
-			{
-				schema = jp.create_object();
-				for (auto items : result_list)
-				{
-					std::string class_name = items[class_name_field];
-					auto ptr = write_lock_class(class_name);
-					if (ptr) {
-						json class_schema = ptr->get_openapi_schema(this);
-						schema.share_member(class_name, class_schema);
+            json all_classes = classes->get_objects(this, R"({"class_name":"sys_class"})"_jobject, false, get_system_permission());
+			json result_list = jp.create_array();
+			if (all_classes.array()) {
+				for (auto cls : all_classes) {
+					std::string class_name = cls[class_name_field];
+					auto permission = get_class_permission(user_name, class_name);
+					if (permission.get_grant != class_grants::grant_none)
+					{
+						result_list.push_back(cls);
 					}
+                }
+			}
+
+			schema = jp.create_object();
+			for (auto items : result_list)
+			{
+				std::string class_name = items[class_name_field];
+				auto ptr = read_lock_class(class_name);
+				if (ptr) {
+					json class_schema = ptr->get_openapi_schema(this);
+					schema.share_member(class_name, class_schema);
 				}
 			}
 
@@ -5427,7 +5459,7 @@ private:
 			cd = std::make_shared<class_implementation>();
 			json key = jp.create_object();
 			key.put_member(class_name_field, _class_name);
-			json class_def = classes->get(key);
+			json class_def = classes->get_single_object(this, key, false, get_system_permission());
 
 			if (class_def.empty())
 				return nullptr;
@@ -5461,10 +5493,9 @@ private:
 			cd = std::make_shared<class_implementation>();
 			json key = jp.create_object();
 			key.put_member(class_name_field, _class_name);
-			json class_def = classes->get(key);
+			json class_def = classes->get_single_object(this, key, false, get_system_permission());
 
 			std::vector<validation_error> errors;
-
 			if (class_def.object()) {
 				cd->put_json(errors, class_def);
 				if (errors.size()) {
@@ -5721,8 +5752,11 @@ private:
 			json class_def;
 
 			class_def = jp.create_object();
+			json class_def_list = jp.create_array();
+            json dummy_children = jp.create_array();
 			_class_to_save->get_json(class_def);
-			classes->put(class_def);
+            class_def_list.push_back(class_def);
+            classes->put_objects(this, dummy_children, class_def_list, get_system_permission());
 			return class_def;
 		}
 
@@ -5732,8 +5766,11 @@ private:
 			json class_def;
 
 			class_def = jp.create_object();
+			json class_def_list = jp.create_array();
+			json dummy_children = jp.create_array();
 			_class_to_save->get_json(class_def);
-			classes->put(class_def);
+			class_def_list.push_back(class_def);
+			classes->put_objects(this, dummy_children, class_def_list, get_system_permission());
 			return class_def;
 		}
 
@@ -6149,10 +6186,8 @@ private:
 			cache = std::make_unique<xblock_cache>(static_cast<file_block*>(this), maximum_record_cache_size_bytes );
 			relative_ptr_type header_location =  header.read(this, _header_location);
 
-			classes_header = std::make_shared<json_table_header>();
-			classes_header->open(this, header.data.classes_location);
-			std::vector<std::string> class_keys = { class_name_field };
-			classes = std::make_shared<json_table>(classes_header, 0, this, class_keys);
+			classes = std::make_shared<class_implementation>();
+            classes->open(this, header.data.classes_location);		
 
 			system_monitoring_interface::active_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
