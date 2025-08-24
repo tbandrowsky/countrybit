@@ -39,6 +39,7 @@ the great module disaster.
 9/25/2024 - factored classes and indexes out to help with concurrency.
 10/28/2024 - now with xtable implementation for faster and more efficient storage,
 			and querying that works increasingly well.
+8/24/2025 - now with xtables, sign on ceremony, 20k puts / sec.  
 
 ***********************************************/
 
@@ -4597,14 +4598,14 @@ namespace corona
 				"field_name":"confirmed_code",	
 				"is_server_only": true
 			},
-			"team_name" :{ 
-				"field_type":"string",
-				"field_name":"team_name",	
-				"is_server_only": true
-			},
 			"validation_code" : { 
 				"field_type":"string",
 				"field_name":"validation_code",	
+				"is_server_only": true
+			},
+			"team_name" :{ 
+				"field_type":"string",
+				"field_name":"team_name",	
 				"is_server_only": true
 			},
 			"workflow_objects" : { 
