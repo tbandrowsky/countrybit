@@ -5310,6 +5310,8 @@ private:
 					}
 				}
 			}
+
+			return user;
 		}
 
 		json get_team_by_domain(std::string _domain, class_permissions _permission)
