@@ -496,15 +496,55 @@
       "class_description": "Mapping of committees and candidates",
       "base_class_name": "sys_object",
       "fields": {
-        "full_name": "string",
-        "city": "string",
-        "state": "string",
-        "zip": "string",
+        "full_name": {
+          "field_type": "string",
+          "required": true
+        },
+        "city": {
+          "field_type": "string",
+          "required": true
+        },
+        "state": {
+          "field_type": "string",
+          "required": true
+        },
         "employer": "string",
         "occupation": "string",
         "transaction_date": "datetime",
         "transaction_amount": "double",
-        "memo": "string"
+        "memo": "string",
+        "individuals": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "individual",
+                "name": "individual",
+                "filter": {
+                  "city": "$this.city",
+                  "state": "$this.state",
+                  "zip": "$this.zip"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "individual",
+                "condition": {
+                  "class_name": "all",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "full_name",
+                      "value": "$this.full_name"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
       }
     },
     {
@@ -534,66 +574,66 @@
 
   ],
   "datasets": [
-      {
-        "dataset_name": "Candidate Master",
-        "dataset_description": "Load Candidates",
-        "dataset_version": "1.0",
-        "dataset_author": "Federal Elections Commission",
-        "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
-        "import": {
-          "type": "csv",
-          "delimiter": "|",
-          "filename": "seed_data\\us_elections\\cn.csv",
-          "target_class": "candidate",
-          "column_map": {
-            "0": "candidate_id",
-            "1": "full_name",
-            "2": "political_party",
-            "3": "election_year",
-            "10": "street1",
-            "11": "street2",
-            "12": "city",
-            "13": "state",
-            "14": "zip"
-          }
+    {
+      "dataset_name": "Candidate Master",
+      "dataset_description": "Load Candidates",
+      "dataset_version": "1.0",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "filename": "seed_data\\us_elections\\cn.csv",
+        "target_class": "candidate",
+        "column_map": {
+          "0": "candidate_id",
+          "1": "full_name",
+          "2": "political_party",
+          "3": "election_year",
+          "10": "street1",
+          "11": "street2",
+          "12": "city",
+          "13": "state",
+          "14": "zip"
         }
-      },
-      {
-        "dataset_name": "Committee Master",
-        "dataset_description": "Load Committees",
-        "dataset_version": "1.0",
-        "dataset_author": "Federal Elections Commission",
-        "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
-        "import": {
-          "type": "csv",
-          "delimiter": "|",
-          "filename": "seed_data\\us_elections\\cm.csv",
-          "target_class": "committee",
-          "column_map": {
-            "0": "committee_id",
-            "1": "committee_name",
-            "10": "political_party",
-            "13": "company_name"
-          }
+      }
+    },
+    {
+      "dataset_name": "Committee Master",
+      "dataset_description": "Load Committees",
+      "dataset_version": "1.0",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "filename": "seed_data\\us_elections\\cm.csv",
+        "target_class": "committee",
+        "column_map": {
+          "0": "committee_id",
+          "1": "committee_name",
+          "10": "political_party",
+          "13": "company_name"
         }
-      },
-      {
-        "dataset_name": "CommitteeCandidates Master",
-        "dataset_description": "Map Committees and Candidates",
-        "dataset_version": "1.0",
-        "dataset_author": "Federal Elections Commission",
-        "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
-        "import": {
-          "type": "csv",
-          "delimiter": "|",
-          "filename": "seed_data\\us_elections\\ccl.csv",
-          "target_class": "committee_candidate",
-          "column_map": {
-            "0": "candidate_id",
-            "3": "committee_id"
-          }
+      }
+    },
+    {
+      "dataset_name": "CommitteeCandidates Master",
+      "dataset_description": "Map Committees and Candidates",
+      "dataset_version": "1.0",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "filename": "seed_data\\us_elections\\ccl.csv",
+        "target_class": "committee_candidate",
+        "column_map": {
+          "0": "candidate_id",
+          "3": "committee_id"
         }
-      },
+      }
+    },
     {
       "dataset_name": "Individual Master",
       "dataset_description": "Load Individuals",
@@ -607,15 +647,15 @@
         "target_class": "individual",
         "column_map": {
           "0": "committee_id",
-          "8": "full_name",
-          "9": "city",
-          "10": "state",
-          "11": "zip",
-          "12": "employer",
-          "13": "occupation",
-          "14": "transaction_date",
-          "15": "transaction_amount",
-          "20": "memo"
+          "7": "full_name",
+          "8": "city",
+          "9": "state",
+          "10": "zip",
+          "11": "employer",
+          "12": "occupation",
+          "13": "transaction_date",
+          "14": "transaction_amount",
+          "19": "memo"
         }
       }
     },

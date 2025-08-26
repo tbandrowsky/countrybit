@@ -47,6 +47,7 @@ void corona_console_command()
         std::getline(std::cin, command, '\n');
 
         if (not command.empty()) {
+            command[0] = std::tolower(command[0]);
             if (command == "?") {
                 std::cout << "?           - help" << std::endl;
                 std::cout << "c           - list of classes" << std::endl;

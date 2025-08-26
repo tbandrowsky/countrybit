@@ -5817,9 +5817,9 @@ private:
 			result_items.for_each_member([](const std::string& _member_name, json _member) {
 				if (_member.array()) {
 					_member.for_each_element([](json& _item) {
-						std::string msg = std::format("{0}:", (std::string)_item[message_field]);
-						system_monitoring_interface::active_mon->log_warning(msg);
 						if (not _item[success_field]) {
+							std::string msg = std::format("{0}:", (std::string)_item[message_field]);
+							system_monitoring_interface::active_mon->log_warning(msg);
 							if (_item.has_member("errors"))
 							{
 								json errors = _item["errors"];
