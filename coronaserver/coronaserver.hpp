@@ -109,7 +109,7 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
     if (SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
         try
         {
-            std::cout << "Running Corona in console mode. Type '?' for help." << std::endl;
+            std::cout << "Running Corona in console mode. CTRL-C for shell." << std::endl;
             std::cout.flush();
             service = std::make_shared<corona::comm_bus_service>(
                 _simulation, 
@@ -518,6 +518,8 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
         printf("Cannot install Corona service (%d)\n", GetLastError());
         return 1;
     }
+
+    std::cout << "Working Directory:" << szUnquotedPath << std::endl;
 
     std::string exePath = szUnquotedPath;
     RegisterCoronaEventSource(SVCNAME, exePath);
