@@ -105,7 +105,6 @@
       "class_name": "work_team",
       "class_description": "a team with tickets",
       "base_class_name": "sys_team",
-      "parents": [ "government" ],
       "fields": {
         "tickets": "[ ticket ]"
       }
@@ -544,7 +543,7 @@
         "import": {
           "type": "csv",
           "delimiter": "|",
-          "filename": "cn.csv",
+          "filename": "seed_data\\us_elections\\cn.csv",
           "target_class": "candidate",
           "column_map": {
             "0": "candidate_id",
@@ -568,7 +567,7 @@
         "import": {
           "type": "csv",
           "delimiter": "|",
-          "filename": "cm.csv",
+          "filename": "seed_data\\us_elections\\cm.csv",
           "target_class": "committee",
           "column_map": {
             "0": "committee_id",
@@ -587,7 +586,7 @@
         "import": {
           "type": "csv",
           "delimiter": "|",
-          "filename": "ccl.csv",
+          "filename": "seed_data\\us_elections\\ccl.csv",
           "target_class": "committee_candidate",
           "column_map": {
             "0": "candidate_id",
@@ -604,7 +603,7 @@
       "import": {
         "type": "csv",
         "delimiter": "|",
-        "filename": "itcont.csv",
+        "filename": "seed_data\\us_elections\\itcont.csv",
         "target_class": "individual",
         "column_map": {
           "0": "committee_id",
