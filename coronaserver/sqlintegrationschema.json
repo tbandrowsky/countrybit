@@ -1,0 +1,130 @@
+[
+  {
+    "class_name": "people",
+    "class_description": "SQL Server Adventure Works People.People",
+    "base_class_name": "sys_object",
+    "fields": {
+      "business_entity_id": "string",
+      "person_type": "string",
+      "name_style": "string",
+      "title": "string",
+      "full_name": "string",
+      "first_name": "string",
+      "middle_name": "string",
+      "last_name": "string",
+      "suffix": "string"
+    },
+    "sql": {
+      "connection_name": "AdventureWorks2016",
+      "sql_view_name": "[AdventureWorks2016].[Person].[Person]",
+      "sql_table_name": "[AdventureWorks2016].[Person].[Person]",
+      "mappings": [
+        {
+          "corona_field_name": "business_entity_id",
+          "sql_field_name": "BusinessEntityID",
+          "primary_key": true,
+          "field_type": "string",
+          "string_size": 100
+        },
+        {
+          "corona_field_name": "person_type",
+          "sql_field_name": "PersonType",
+          "primary_key": false,
+          "field_type": "string",
+          "string_size": 20
+        },
+        {
+          "corona_field_name": "name_style",
+          "sql_field_name": "NameStyle",
+          "primary_key": false,
+          "field_type": "string",
+          "string_size": 20
+        },
+        {
+          "corona_field_name": "title",
+          "sql_field_name": "Title",
+          "primary_key": false,
+          "field_type": "string",
+          "string_size": 20
+        },
+        {
+          "corona_field_name": "full_name",
+          "sql_field_name": "Upper(Concat(LastName, ', ', FirstName))",
+          "primary_key": false,
+          "field_type": "string",
+          "string_size": 100
+        },
+        {
+          "corona_field_name": "first_name",
+          "sql_field_name": "FirstName",
+          "primary_key": false,
+          "field_type": "string",
+          "string_size": 100
+        },
+        {
+          "corona_field_name": "middle_name",
+          "sql_field_name": "MiddleName",
+          "primary_key": false,
+          "field_type": "string",
+          "string_size": 100
+        },
+        {
+          "corona_field_name": "last_name",
+          "sql_field_name": "LastName",
+          "primary_key": false,
+          "field_type": "string",
+          "string_size": 100
+        },
+        {
+          "corona_field_name": "suffix",
+          "sql_field_name": "Suffix",
+          "primary_key": false,
+          "field_type": "string",
+          "string_size": 20
+        }
+      ]
+    },
+    "indexes": {
+      "people_full_name_idx": {
+        "index_keys": [
+          "full_name"
+        ]
+      }
+    }
+  },
+  {
+    "class_name": "people_search",
+    "class_description": "search object for people",
+    "base_class_name": "sys_object",
+    "fields": {
+      "full_name": "string",
+      "people": {
+        "field_type": "query",
+        "query": {
+          "from": [
+            {
+              "class_name": "people",
+              "name": "people"
+            }
+          ],
+          "stages": [
+            {
+              "class_name": "filter",
+              "stage_input_name": "people",
+              "condition": {
+                "class_name": "any",
+                "conditions": [
+                  {
+                    "class_name": "contains",
+                    "valuepath": "full_name",
+                    "value": "$this.full_name"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+]

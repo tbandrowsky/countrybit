@@ -4369,7 +4369,11 @@ namespace corona
 	"fields" : {
 			"team_name" : "string",
 			"team_description" : "string",
-			"team_domain" : "string",
+			"team_domain" : {
+				"field_name:" : "team_domain",
+				"field_type" : "string",		
+				"format:" : "regexp"
+			},
 			"permissions" : {
 				"field_type" : "array",
 				"field_name" : "permissions",
@@ -4385,15 +4389,11 @@ namespace corona
 					}	
 				}
 			},
-			"request_classes" : "[ string ]",
-			"resource_classes" : "[ string ]"
+			"workflow_classes" : "[ string ]"
 	},
 	"indexes" : {
         "sys_team_name": {
           "index_keys": [ "team_name" ]
-        },
-        "sys_team_email": {
-          "index_keys": [ "team_domain" ]
         }
 	}
 }
@@ -5314,20 +5314,26 @@ private:
 			return user;
 		}
 
-		json get_team_by_domain(std::string _domain, class_permissions _permission)
+		json get_team_by_email(std::string _domain, class_permissions _permission)
 		{
 			json_parser jp;
 
 			json key = jp.create_object();
-			key.put_member("team_domain", _domain);
+			json query_details = jp.create_object();
+            query_details.put_member("class_name", std::string("sys_team"));	
+			query_details.put_member("filter", key);
+			json all_teams = query_class(default_user, query_details, jp.create_object());
 
-			auto classd = read_get_class("sys_team");
-			if (not classd)
-				return jp.create_array();
+			json teams = jp.create_object();
+            for (auto team : all_teams) {
+                std::string domains = team["team_domain"];
+                std::regex domain_matcher(domains);
+				if (std::regex_match(_domain, domain_matcher)) {
+					teams.push_back(team);
+				}
+            }
 
-			json teams = classd->get_objects(this, key, true, _permission);
-
-			return teams.get_first_element();
+			return teams;
 		}
 
 		json get_team(std::string _team_name, class_permissions _permission)
@@ -5335,15 +5341,12 @@ private:
 			json_parser jp;
 
 			json key = jp.create_object();
-			key.put_member("team_name", _team_name);
-
-			auto classd = read_get_class("sys_team");
-			if (not classd)
-				return jp.create_array();
-
-			json users = classd->get_objects(this, key, true, _permission);
-
-			return users.get_first_element();
+            key.put_member("team_name", _team_name);
+			json query_details = jp.create_object();
+			query_details.put_member("class_name", std::string("sys_team"));
+			query_details.put_member("filter", key);
+			json all_teams = query_class(default_user, query_details, jp.create_object());
+			return all_teams.get_first_element();
 		}
 
 		json get_schema(std::string schema_name, std::string schema_version, class_permissions _permission)
@@ -5975,30 +5978,16 @@ private:
 							continue;
 						}
 
-						if (new_dataset.object() and new_dataset.has_member("import"))
-						{
-                            new_dataset.put_member_i64("schema_id", (int64_t)jschema[object_id_field]);
-							json import_spec = new_dataset["import"];
-							std::vector<std::string> missing;
+						if (new_dataset.object()) {
 
-							if (not import_spec.has_members(missing, { "target_class", "type" })) {
-								system_monitoring_interface::active_mon->log_warning("Import missing:");
-								std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-									system_monitoring_interface::active_mon->log_warning(s);
-									});
-								system_monitoring_interface::active_mon->log_information("the source json is:");
-								system_monitoring_interface::active_mon->log_json<json>(import_spec, 2);
-								continue;
-							}
+							if (new_dataset.has_member("import"))
+							{
+								new_dataset.put_member_i64("schema_id", (int64_t)jschema[object_id_field]);
+								json import_spec = new_dataset["import"];
+								std::vector<std::string> missing;
 
-							std::string target_class = import_spec["target_class"];
-							std::string import_type = import_spec["type"];
-                            date_time import_datatime = import_spec["import_datatime"];
-
-							if (import_type == "csv") {
-
-								if (not import_spec.has_members(missing, { "filename", "delimiter" })) {
-									system_monitoring_interface::active_mon->log_warning("Import CSV missing:");
+								if (not import_spec.has_members(missing, { "target_class", "type" })) {
+									system_monitoring_interface::active_mon->log_warning("Import missing:");
 									std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 										system_monitoring_interface::active_mon->log_warning(s);
 										});
@@ -6007,55 +5996,92 @@ private:
 									continue;
 								}
 
-								std::string filename = import_spec["filename"];
-								std::string delimiter = import_spec["delimiter"];
-								if (filename.empty() or delimiter.empty()) {
-									system_monitoring_interface::active_mon->log_warning("filename and delimiter can't be blank.");
-								}
+								std::string target_class = import_spec["target_class"];
+								std::string import_type = import_spec["type"];
+								date_time import_datatime = import_spec["import_datatime"];
 
-								if (std::filesystem::exists(filename))
-								{
+								if (import_type == "csv") {
 
-									auto file_modified = std::filesystem::last_write_time(filename);
-									const auto system_file_modified = std::chrono::clock_cast<std::chrono::system_clock>(file_modified);
-									const auto file_modified_time = std::chrono::system_clock::to_time_t(system_file_modified);
+									if (not import_spec.has_members(missing, { "filename", "delimiter" })) {
+										system_monitoring_interface::active_mon->log_warning("Import CSV missing:");
+										std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+											system_monitoring_interface::active_mon->log_warning(s);
+											});
+										system_monitoring_interface::active_mon->log_information("the source json is:");
+										system_monitoring_interface::active_mon->log_json<json>(import_spec, 2);
+										continue;
+									}
 
-									date_time file_modified_dt = date_time(file_modified_time);
-									if (file_modified_dt > import_datatime) {
+									std::string filename = import_spec["filename"];
+									std::string delimiter = import_spec["delimiter"];
+									if (filename.empty() or delimiter.empty()) {
+										system_monitoring_interface::active_mon->log_warning("filename and delimiter can't be blank.");
+									}
 
-										json column_map = import_spec["column_map"];
+									if (std::filesystem::exists(filename))
+									{
 
-										FILE* fp = nullptr;
-										int error_code = fopen_s(&fp, filename.c_str(), "rS");
+										auto file_modified = std::filesystem::last_write_time(filename);
+										const auto system_file_modified = std::chrono::clock_cast<std::chrono::system_clock>(file_modified);
+										const auto file_modified_time = std::chrono::system_clock::to_time_t(system_file_modified);
 
-										if (fp) {
-											// Buffer to store each line of the file.
-											char line[8182];
-											json datomatic = jp.create_array();
+										date_time file_modified_dt = date_time(file_modified_time);
+										if (file_modified_dt > import_datatime) {
 
-											// create template object
-											json codata = jp.create_object();
-											codata.put_member(class_name_field, target_class);
-											json cor = create_system_request(codata);
-											json new_object_response = create_object(cor);
+											json column_map = import_spec["column_map"];
 
-											if (new_object_response[success_field]) {
-												json new_object_template = new_object_response[data_field];
+											FILE* fp = nullptr;
+											int error_code = fopen_s(&fp, filename.c_str(), "rS");
 
-												// Read each line from the file and store it in the 'line' buffer.
-												int64_t total_row_count = 0;
-												while (fgets(line, sizeof(line), fp)) {
-													// Print each line to the standard output.
-													json new_object = new_object_template.clone();
-													new_object.erase_member(object_id_field);
-													jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
-													datomatic.push_back(new_object);
-													if (datomatic.size() > import_batch_size) {
+											if (fp) {
+												// Buffer to store each line of the file.
+												char line[8182];
+												json datomatic = jp.create_array();
+
+												// create template object
+												json codata = jp.create_object();
+												codata.put_member(class_name_field, target_class);
+												json cor = create_system_request(codata);
+												json new_object_response = create_object(cor);
+
+												if (new_object_response[success_field]) {
+													json new_object_template = new_object_response[data_field];
+
+													// Read each line from the file and store it in the 'line' buffer.
+													int64_t total_row_count = 0;
+													while (fgets(line, sizeof(line), fp)) {
+														// Print each line to the standard output.
+														json new_object = new_object_template.clone();
+														new_object.erase_member(object_id_field);
+														jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
+														datomatic.push_back(new_object);
+														if (datomatic.size() > import_batch_size) {
+															int batch_size = (int)datomatic.size();
+															total_row_count += datomatic.size();
+															json request(datomatic);
+															json cor = create_system_request(request);
+
+															put_object_sync(cor, [this, total_row_count, batch_size](json& put_result, double _exec_time) {
+																if (put_result[success_field]) {
+																	double x = batch_size / _exec_time;
+																	std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
+																	system_monitoring_interface::active_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
+																}
+																else
+																{
+																	log_error_array(put_result);
+																}
+																});
+
+															datomatic = jp.create_array();
+														}
+													}
+
+													if (datomatic.size() > 0) {
 														int batch_size = (int)datomatic.size();
-														total_row_count += datomatic.size();
+														total_row_count += batch_size;
 														json request(datomatic);
 														json cor = create_system_request(request);
-
 														put_object_sync(cor, [this, total_row_count, batch_size](json& put_result, double _exec_time) {
 															if (put_result[success_field]) {
 																double x = batch_size / _exec_time;
@@ -6067,114 +6093,94 @@ private:
 																log_error_array(put_result);
 															}
 															});
-
 														datomatic = jp.create_array();
 													}
+
 												}
 
-												if (datomatic.size() > 0) {
-													int batch_size = (int)datomatic.size();
-													total_row_count += batch_size;
-													json request(datomatic);
-													json cor = create_system_request(request);
-													put_object_sync(cor, [this, total_row_count, batch_size](json& put_result, double _exec_time) {
-														if (put_result[success_field]) {
-															double x = batch_size / _exec_time;
-															std::string msg = std::format("{0} objects, {1:.2f} / sec, {2} rows total", batch_size, x, total_row_count);
-															system_monitoring_interface::active_mon->log_activity(msg, _exec_time, __FILE__, __LINE__);
-														}
-														else
-														{
-															log_error_array(put_result);
-														}
-														});
-													datomatic = jp.create_array();
+												// Close the file stream once all lines have been read.
+												fclose(fp);
+												import_spec.put_member("import_datatime", file_modified_dt);
+												new_dataset.share_member("import", import_spec);
+												json dataset_request = create_system_request(new_dataset);
+												json result = put_object(dataset_request);
+												if (result[success_field]) {
+													std::string msg = std::format("imported from {0}", filename);
+													system_monitoring_interface::active_mon->log_information(msg, __FILE__, __LINE__);
 												}
-
-											}
-
-											// Close the file stream once all lines have been read.
-											fclose(fp);
-											import_spec.put_member("import_datatime", file_modified_dt);
-											new_dataset.share_member("import", import_spec);
-											json dataset_request = create_system_request(new_dataset);
-											json result = put_object(dataset_request);
-											if (result[success_field]) {
-												std::string msg = std::format("imported from {0}", filename);
-												system_monitoring_interface::active_mon->log_information(msg, __FILE__, __LINE__);
+												else {
+													system_monitoring_interface::active_mon->log_warning(result[message_field], __FILE__, __LINE__);
+													system_monitoring_interface::active_mon->log_json<json>(result);
+												}
 											}
 											else {
-												system_monitoring_interface::active_mon->log_warning(result[message_field], __FILE__, __LINE__);
-												system_monitoring_interface::active_mon->log_json<json>(result);
-                                            }
-										}
-										else {
-											char error_buffer[256] = {};
-											strerror_s(
-												error_buffer,
-												std::size(error_buffer),
-												error_code
-											);
-											std::string msg = std::format("could not open file {0}:{1}", filename, error_buffer);
-											system_monitoring_interface::active_mon->log_warning(msg, __FILE__, __LINE__);
-											char directory_name[MAX_PATH] = {};
-											char* result = _getcwd(directory_name, std::size(directory_name));
-											if (result) {
-												msg = std::format("cwd is {0}", result);
-												system_monitoring_interface::active_mon->log_information(msg, __FILE__, __LINE__);
+												char error_buffer[256] = {};
+												strerror_s(
+													error_buffer,
+													std::size(error_buffer),
+													error_code
+												);
+												std::string msg = std::format("could not open file {0}:{1}", filename, error_buffer);
+												system_monitoring_interface::active_mon->log_warning(msg, __FILE__, __LINE__);
+												char directory_name[MAX_PATH] = {};
+												char* result = _getcwd(directory_name, std::size(directory_name));
+												if (result) {
+													msg = std::format("cwd is {0}", result);
+													system_monitoring_interface::active_mon->log_information(msg, __FILE__, __LINE__);
+												}
 											}
 										}
 									}
-								}
-								else {
-	 									std::string msg = std::format("file {0} doesn't exist", filename);
-                                        system_monitoring_interface::active_mon->log_warning(msg, __FILE__, __LINE__);
-								}
-							}
-						}
-
-						if (new_dataset.has_member("objects")) {
-							json object_list = new_dataset["objects"];
-							if (object_list.array()) {
-								for (int j = 0; j < object_list.size(); j++) {
-									json object_definition = object_list.get_element(j);
-									json put_object_request = create_system_request(object_definition);
-									// in corona, creating an object doesn't actually persist anything 
-									// but a change in identifier.  It's a clean way of just getting the 
-									// "new chumpy" item for ya.  
-									json create_result =  create_object(put_object_request);
-									if (create_result[success_field]) {
-										json created_object = create_result[data_field];
-										json save_result =  put_object(put_object_request);
-										if (not save_result[success_field]) {
-											system_monitoring_interface::active_mon->log_warning(save_result[message_field]);
-											system_monitoring_interface::active_mon->log_json<json>(save_result);
-										}
-										else {
-											std::string new_class_name = object_definition[class_name_field];
-											int64_t object_id = object_definition[object_id_field];
-											std::string object_created = std::format("object {0} ({1})", new_class_name, object_id);
-											system_monitoring_interface::active_mon->log_information(object_created);
-										}
-									}
-									else 
-									{
-										system_monitoring_interface::active_mon->log_warning(create_result[message_field], __FILE__, __LINE__);
-										system_monitoring_interface::active_mon->log_json<json>(create_result);
+									else {
+										std::string msg = std::format("file {0} doesn't exist", filename);
+										system_monitoring_interface::active_mon->log_warning(msg, __FILE__, __LINE__);
 									}
 								}
-								date_time completed_date = date_time::now();
-								new_dataset.put_member("completed", completed_date);
-								json put_script_request = create_system_request(new_dataset);
-								json save_script_result = put_object(put_script_request);
-								if (not save_script_result[success_field]) {
-									system_monitoring_interface::active_mon->log_warning(save_script_result[message_field]);
-									system_monitoring_interface::active_mon->log_json<json>(save_script_result);
-								}
-								else
-									system_monitoring_interface::active_mon->log_information(save_script_result[message_field]);
 							}
 
+							if (new_dataset.has_member("objects")) {
+								json object_list = new_dataset["objects"];
+								if (object_list.array()) {
+									for (int j = 0; j < object_list.size(); j++) {
+										json object_definition = object_list.get_element(j);
+										json put_object_request = create_system_request(object_definition);
+										// in corona, creating an object doesn't actually persist anything 
+										// but a change in identifier.  It's a clean way of just getting the 
+										// "new chumpy" item for ya.  
+										json create_result = create_object(put_object_request);
+										if (create_result[success_field]) {
+											json created_object = create_result[data_field];
+											json save_result = put_object(put_object_request);
+											if (not save_result[success_field]) {
+												system_monitoring_interface::active_mon->log_warning(save_result[message_field]);
+												system_monitoring_interface::active_mon->log_json<json>(save_result);
+											}
+											else {
+												std::string new_class_name = object_definition[class_name_field];
+												int64_t object_id = object_definition[object_id_field];
+												std::string object_created = std::format("object {0} ({1})", new_class_name, object_id);
+												system_monitoring_interface::active_mon->log_information(object_created);
+											}
+										}
+										else
+										{
+											system_monitoring_interface::active_mon->log_warning(create_result[message_field], __FILE__, __LINE__);
+											system_monitoring_interface::active_mon->log_json<json>(create_result);
+										}
+									}
+								}
+
+							}
+							date_time completed_date = date_time::now();
+							new_dataset.put_member("completed", completed_date);
+							json put_script_request = create_system_request(new_dataset);
+							json save_script_result = put_object(put_script_request);
+							if (not save_script_result[success_field]) {
+								system_monitoring_interface::active_mon->log_warning(save_script_result[message_field]);
+								system_monitoring_interface::active_mon->log_json<json>(save_script_result);
+							}
+							else
+								system_monitoring_interface::active_mon->log_information(save_script_result[message_field]);
 						}
 
 						system_monitoring_interface::active_mon->log_job_section_stop("DataSet", dataset_name + " Finished", txs.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -6327,6 +6333,12 @@ private:
 			}
 		};
 
+		/// <summary>
+		/// Removes references to fields in object_to_scrub that are marked server only.
+		/// This prevents clients from updating server only data,
+		/// and also guards against leaking them.
+		/// </summary>
+		/// <param name="object_to_scrub"></param>
 		virtual void scrub_object(json& object_to_scrub)
 		{
 			
@@ -6640,52 +6652,39 @@ private:
 			{
 				user.put_member("confirmed_code", 1);
 				std::string email = user[user_email_field];
-				std::vector<std::string> email_components = split(email, '@');
+				json teams = get_team_by_email(email, sys_perm);
+				for (json team : teams) {
 
-				if (email_components.size() > 1) {
-					std::string domain = email_components[1];
-					json team = get_team_by_domain(domain, sys_perm);
-
-					if (team.empty()) 
+					user.put_member("team_name", (std::string)team["team_name"]);
+					json workflow_objects = jp.create_array();
+					json workflow_classes = team["workflow_classes"];
+					workflow_objects = user["workflow_objects"];
+					if (not workflow_objects.object())
 					{
-						team = get_team_by_domain("*", sys_perm);
+						workflow_objects = jp.create_object();
 					}
-
-					if (not team.empty())
-					{
-						user.put_member("team_name", (std::string)team["team_name"]);
-						json workflow_objects = jp.create_array();
-						json workflow_classes = team["workflow_classes"];
-						workflow_objects = user["workflow_objects"];
-						if (not workflow_objects.object())
-						{
-							workflow_objects = jp.create_object();
-						}
-						if (workflow_classes.array()) {
-							for (auto wf_class : workflow_classes) {
-								std::string class_name = (std::string)wf_class;
-								if (workflow_objects.has_member(class_name)) {
-									continue;
-								}
-								json create_req = jp.create_object();
-								create_req.put_member(class_name_field, class_name);
-								json sys_create_req = create_system_request(create_req);
-								json result = create_object(sys_create_req);
-								if (result[success_field]) {
-									json new_object = result[data_field];
-									int64_t object_id = new_object[object_id_field];
-									json sys_create_req = create_system_request(new_object);
-									workflow_objects.put_member_i64(class_name, object_id);
-									put_object_nl(sys_create_req);
-								}
+					// workflow classes lets you create editable objects for a user
+					// whose methods are search
+					if (workflow_classes.array()) {
+						for (auto wf_class : workflow_classes) {
+							std::string class_name = (std::string)wf_class;
+							if (workflow_objects.has_member(class_name)) {
+								continue;
+							}
+							json create_req = jp.create_object();
+							create_req.put_member(class_name_field, class_name);
+							json sys_create_req = create_system_request(create_req);
+							json result = create_object(sys_create_req);
+							if (result[success_field]) {
+								json new_object = result[data_field];
+								int64_t object_id = new_object[object_id_field];
+								json sys_create_req = create_system_request(new_object);
+								workflow_objects.put_member_i64(class_name, object_id);
+								put_object_nl(sys_create_req);
 							}
 						}
-						user.share_member("workflow_objects", workflow_objects);
 					}
-					else
-					{
-						user.put_member("team_name", std::string(""));
-					}
+					user.share_member("workflow_objects", workflow_objects);
 				}
 
 				put_user(user, sys_perm);

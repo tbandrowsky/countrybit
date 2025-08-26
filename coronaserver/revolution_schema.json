@@ -7,9 +7,51 @@
   ],
   "classes": [
     {
-      "class_name": "address",
-      "class_description": "a place where something is",
+      "class_name": "property",
       "base_class_name": "sys_object",
+      "class_description": "a thing owned by a user",
+      "parents": [ "sys_user" ],
+      "fields": {
+        "property_name": "string"
+      }
+    },
+    {
+      "class_name": "function",
+      "base_class_name": "sys_object",
+      "class_description": "a thing owned by a user",
+      "parents": [ "government" ],
+      "fields": {
+        "function_name": "string"
+      }
+    },
+    {
+      "class_name": "government",
+      "base_class_name": "sys_object",
+      "class_description": "a thing owned by a user",
+      "parents": [ "sys_user" ],
+      "fields": {
+        "government_name": "string",
+        "functions": "[ function ]"
+      }
+    },
+    {
+      "class_name": "building",
+      "class_description": "something built on a spot",
+      "base_class_name": "property",
+      "parents": [ "location" ],
+      "fields": {
+        "latitude": "double",
+        "longitude": "double",
+        "elevation": "double",
+        "building_code": "string",
+        "construction_code": "string"
+      }
+    },
+    {
+      "class_name": "location",
+      "class_description": "a place where something is",
+      "base_class_name": "property",
+      "parents": [ "inventory" ],
       "fields": {
         "street1": "string",
         "street2": "string",
@@ -20,9 +62,26 @@
       }
     },
     {
+      "class_name": "inventory",
+      "class_description": "items a user has",
+      "base_class_name": "property",
+      "fields": {
+        "locations": "[location]"
+      }
+    },
+    {
+      "class_name": "project",
+      "class_description": "a project",
+      "base_class_name": "property",
+      "fields": {
+        "project_description": "string"
+      }
+    },
+    {
       "class_name": "contact",
       "class_description": "a someone",
-      "base_class_name": "sys_object",
+      "base_class_name": "property",
+      "parents": [ "sys_user" ],
       "fields": {
         "first_name": "string",
         "last_name": "string",
@@ -33,71 +92,89 @@
       }
     },
     {
+      "class_name": "ticket",
+      "class_description": "a someone",
+      "base_class_name": "property",
+      "parents": [ "work_team" ],
+      "fields": {
+        "ticket_name": "string",
+        "ticket_description": "string"
+      }
+    },
+    {
+      "class_name": "work_team",
+      "class_description": "a team with tickets",
+      "base_class_name": "sys_team",
+      "parents": [ "government" ],
+      "fields": {
+        "tickets": "[ ticket ]"
+      }
+    },
+    {
+      "class_name": "note",
+      "class_description": "a note",
+      "base_class_name": "property",
+      "parents": [ "property" ],
+      "fields": {
+        "text": "string"
+      }
+    },
+    {
       "class_name": "content",
       "class_description": "a comment on an article",
-      "base_class_name": "sys_object",
+      "base_class_name": "function",
       "parents": [ "news_article" ],
       "fields": {
         "text": "string"
       }
     },
     {
-      "class_name": "news_comment",
+      "class_name": "comment",
       "class_description": "a comment on an article",
-      "base_class_name": "sys_object",
+      "base_class_name": "function",
       "parents": [ "news_article" ],
       "fields": {
         "text": "string"
       }
     },
     {
-      "class_name": "news_article",
+      "class_name": "article",
       "class_description": "an article",
-      "base_class_name": "sys_object",
-      "parents": [ "news_section" ],
+      "base_class_name": "function",
+      "parents": [ "topic" ],
       "fields": {
         "title": "string",
         "text": "string",
         "content": "->content",
-        "comments": "[ news_comment ]"
+        "comments": "[ comment ]"
       }
     },
     {
-      "class_name": "news_section",
+      "class_name": "topic",
       "class_description": "a section of articles",
-      "base_class_name": "sys_object",
-      "parents": [ "news_group" ],
+      "base_class_name": "function",
+      "parents": [ "library" ],
       "fields": {
         "title": "string",
         "text": "string",
-        "sections": "[ news_section ]"
+        "articles": "[ article ]"
       }
     },
     {
-      "class_name": "news_group",
-      "class_description": "a group of sections",
-      "parents": [ "news_library" ],
-      "fields": {
-        "title": "string",
-        "text": "string",
-        "sections": "[ news_section ]"
-      }
-    },
-    {
-      "class_name": "news_library",
+      "class_name": "library",
       "class_description": "a group of groups in a space",
-      "base_class_name": "sys_object",
+      "base_class_name": "function",
       "parents": [ "goal" ],
       "fields": {
         "title": "string",
         "text": "string",
-        "sections": "[ news_group ]"
+        "sections": "[ topic ]"
       }
     },
     {
       "class_name": "event",
       "class_description": "a group of groups in a space",
-      "base_class_name": "sys_object",
+      "base_class_name": "function",
       "parents": [ "goal" ],
       "fields": {
         "title": "string",
@@ -112,7 +189,7 @@
     {
       "class_name": "goal_vote",
       "class_description": "an object for people to achieve",
-      "base_class_name": "sys_object",
+      "base_class_name": "function",
       "parents": [ "goal" ],
       "fields": {
         "name": "string",
@@ -127,8 +204,8 @@
     {
       "class_name": "goal",
       "class_description": "an object for people to achieve",
-      "base_class_name": "sys_object",
-      "parents": [ "public_office" ],
+      "base_class_name": "function",
+      "parents": [ "government" ],
       "fields": {
         "name": "string",
         "description": "string",
@@ -143,7 +220,7 @@
     {
       "class_name": "public_office",
       "class_description": "offices to influence or control",
-      "base_class_name": "sys_object",
+      "base_class_name": "function",
       "fields": {
         "name": "string",
         "description": "string",
@@ -153,7 +230,7 @@
     },
     {
       "class_name": "corporate_office",
-      "class_description": "offices to influence or control",
+      "class_description": "corporate leaders to influence or control",
       "base_class_name": "public_office",
       "fields": {
         "corporation": "string"
@@ -205,42 +282,6 @@
         "county": "string",
         "description": "string",
         "incumbent": "contact"
-      }
-    },
-    {
-      "class_name": "job_activity",
-      "class_description": "item on the job",
-      "base_class_name": "sys_object",
-      "parents": [ "job" ],
-      "fields": {
-        "name": "string",
-        "description": "string"
-      }
-    },
-    {
-      "class_name": "job_application",
-      "class_description": "offices to influence or control",
-      "base_class_name": "sys_object",
-      "parents": [ "job" ],
-      "fields": {
-        "name": "string",
-        "description": "string",
-        "amount": "double"
-      }
-    },
-    {
-      "class_name": "job",
-      "class_description": "offices to influence or control",
-      "base_class_name": "sys_object",
-      "fields": {
-        "name": "string",
-        "description": "string",
-        "amount": "double",
-        "address": "address",
-        "contact": "contact",
-        "required": "[exam]",
-        "applications": "[job_application]",
-        "activities": "[job_activity]"
       }
     },
     {
@@ -452,131 +493,19 @@
       }
     },
     {
-      "class_name": "people",
-      "class_description": "SQL Server Adventure Works People.People",
-      "base_class_name": "sys_object",
-      "fields": {
-        "business_entity_id": "string",
-        "person_type": "string",
-        "name_style": "string",
-        "title": "string",
-        "full_name": "string",
-        "first_name": "string",
-        "middle_name": "string",
-        "last_name": "string",
-        "suffix": "string"
-      },
-      "sql": {
-        "connection_name": "AdventureWorks2016",
-        "sql_view_name": "[AdventureWorks2016].[Person].[Person]",
-        "sql_table_name": "[AdventureWorks2016].[Person].[Person]",
-        "mappings": [
-          {
-            "corona_field_name": "business_entity_id",
-            "sql_field_name": "BusinessEntityID",
-            "primary_key": true,
-            "field_type": "string",
-            "string_size": 100
-          },
-          {
-            "corona_field_name": "person_type",
-            "sql_field_name": "PersonType",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 20
-          },
-          {
-            "corona_field_name": "name_style",
-            "sql_field_name": "NameStyle",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 20
-          },
-          {
-            "corona_field_name": "title",
-            "sql_field_name": "Title",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 20
-          },
-          {
-            "corona_field_name": "full_name",
-            "sql_field_name": "Upper(Concat(LastName, ', ', FirstName))",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 100
-          },
-          {
-            "corona_field_name": "first_name",
-            "sql_field_name": "FirstName",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 100
-          },
-          {
-            "corona_field_name": "middle_name",
-            "sql_field_name": "MiddleName",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 100
-          },
-          {
-            "corona_field_name": "last_name",
-            "sql_field_name": "LastName",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 100
-          },
-          {
-            "corona_field_name": "suffix",
-            "sql_field_name": "Suffix",
-            "primary_key": false,
-            "field_type": "string",
-            "string_size": 20
-          }
-        ]
-      },
-      "indexes": {
-        "people_full_name_idx": {
-          "index_keys": [
-            "full_name"
-          ]
-        }
-      }
-    },
-    {
-      "class_name": "people_search",
-      "class_description": "search object for people",
+      "class_name": "individual_search",
+      "class_description": "Mapping of committees and candidates",
       "base_class_name": "sys_object",
       "fields": {
         "full_name": "string",
-        "people": {
-          "field_type": "query",
-          "query": {
-            "from": [
-              {
-                "class_name": "people",
-                "name": "people"
-              }
-            ],
-            "stages": [
-              {
-                "class_name": "filter",
-                "stage_input_name": "people",
-                "condition": {
-                  "class_name": "any",
-                  "conditions": [
-                    {
-                      "class_name": "contains",
-                      "valuepath": "full_name",
-                      "value": "$this.full_name"
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        }
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "employer": "string",
+        "occupation": "string",
+        "transaction_date": "datetime",
+        "transaction_amount": "double",
+        "memo": "string"
       }
     }
   ],
@@ -644,30 +573,105 @@
           }
         }
       },
-      {
-        "dataset_name": "Individual Master",
-        "dataset_description": "Load Individuals",
-        "dataset_version": "1.0",
-        "dataset_author": "Federal Elections Commission",
-        "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
-        "import": {
-          "type": "csv",
-          "delimiter": "|",
-          "filename": "itcont.csv",
-          "target_class": "individual",
-          "column_map": {
-            "0": "committee_id",
-            "8": "full_name",
-            "9": "city",
-            "10": "state",
-            "11": "zip",
-            "12": "employer",
-            "13": "occupation",
-            "14": "transaction_date",
-            "15": "transaction_amount",
-            "20": "memo"
-          }
+    {
+      "dataset_name": "Individual Master",
+      "dataset_description": "Load Individuals",
+      "dataset_version": "1.0",
+      "dataset_author": "Federal Elections Commission",
+      "dataset_source": "https://www.fec.gov/data/browse-data/?tab=bulk-data",
+      "import": {
+        "type": "csv",
+        "delimiter": "|",
+        "filename": "itcont.csv",
+        "target_class": "individual",
+        "column_map": {
+          "0": "committee_id",
+          "8": "full_name",
+          "9": "city",
+          "10": "state",
+          "11": "zip",
+          "12": "employer",
+          "13": "occupation",
+          "14": "transaction_date",
+          "15": "transaction_amount",
+          "20": "memo"
         }
       }
+    },
+    {
+      "dataset_name": "Revolution Teams",
+      "dataset_description": "Teams and their default memberships",
+      "dataset_version": "1.0",
+      "dataset_author": "Todd Bandrowsky",
+      "dataset_source": "This is canonical",
+      "objects": [
+        {
+          "class_name": "work_team",
+          "team_name": "All",
+          "team_description": "Revolution Users",
+          "team_domain": ".*",
+          "workflow_classes": "[user_home]",
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "property",
+              "get": "own",
+              "put": "own",
+              "delete": "own",
+              "alter": "none"
+            },
+            {
+              "class_name": "sys_grant",
+              "grant_class": "government",
+              "get": "all",
+              "put": "all",
+              "delete": "own",
+              "alter": "none"
+            }
+          ]
+        },
+        {
+          "class_name": "work_team",
+          "team_name": "Technicians",
+          "team_description": "Revolution Technicians",
+          "team_domain": "todd\\.bandrowsky@gmail\\.com",
+          "workflow_classes": "[developer_home]",
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "sys_object",
+              "get": "all",
+              "put": "all",
+              "delete": "all",
+              "alter": "all"
+            }
+          ]
+        },
+        {
+          "class_name": "work_team",
+          "team_name": "Administrators",
+          "team_description": "Government Administrators",
+          "team_domain": "(.*@countryvideogames\\.com)|(.*@countrybit\\.com)",
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "government",
+              "get": "all",
+              "put": "all",
+              "delete": "all",
+              "alter": "all"
+            },
+            {
+              "class_name": "sys_grant",
+              "grant_class": "property",
+              "get": "own",
+              "put": "own",
+              "delete": "own",
+              "alter": "own"
+            }
+          ]
+        }
+      ]
+    }
   ]
 }

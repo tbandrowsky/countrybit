@@ -41,6 +41,7 @@
     <None Include="eventmessages.txt">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="sqlintegrationschema.json" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="coronaserver.hpp">
