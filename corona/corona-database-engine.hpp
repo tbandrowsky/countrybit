@@ -5326,15 +5326,18 @@ private:
             query_details.put_member("class_name", std::string("sys_team"));	
 			query_details.put_member("filter", key);
 			json all_teams = query_class(default_user, query_details, jp.create_object());
+			json teams = jp.create_array();
 
-			json teams = jp.create_object();
-            for (auto team : all_teams) {
-                std::string domains = team["team_domain"];
-                std::regex domain_matcher(domains);
-				if (std::regex_match(_domain, domain_matcher)) {
-					teams.push_back(team);
+			if (all_teams[success_field]) {
+                all_teams = all_teams[data_field];
+				for (auto team : all_teams) {
+					std::string domains = team["team_domain"];
+					std::regex domain_matcher(domains);
+					if (std::regex_match(_domain, domain_matcher)) {
+						teams.push_back(team);
+					}
 				}
-            }
+			}
 
 			return teams;
 		}
