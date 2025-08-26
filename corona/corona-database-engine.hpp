@@ -4440,7 +4440,10 @@ namespace corona
 	"indexes" : {
         "sys_dataset_schema_id": {
           "index_keys": [ "schema_id" ]
-        }
+        },
+		"sys_dataset_dataset_name": {
+		  "index_keys": [ "dataset_name", "dataset_version" ]
+		}	
 	}
 }
 )");
@@ -6147,19 +6150,31 @@ private:
 										// in corona, creating an object doesn't actually persist anything 
 										// but a change in identifier.  It's a clean way of just getting the 
 										// "new chumpy" item for ya.  
-										json create_result = create_object(put_object_request);
+										json create_result = put_object(put_object_request);
 										if (create_result[success_field]) {
-											json created_object = create_result[data_field];
-											json save_result = put_object(put_object_request);
-											if (not save_result[success_field]) {
-												system_monitoring_interface::active_mon->log_warning(save_result[message_field]);
-												system_monitoring_interface::active_mon->log_json<json>(save_result);
+											if (not create_result[success_field]) {
+												system_monitoring_interface::active_mon->log_warning(create_result[message_field]);
+												system_monitoring_interface::active_mon->log_json<json>(create_result);
 											}
 											else {
-												std::string new_class_name = object_definition[class_name_field];
-												int64_t object_id = object_definition[object_id_field];
-												std::string object_created = std::format("object {0} ({1})", new_class_name, object_id);
-												system_monitoring_interface::active_mon->log_information(object_created);
+                                                json result = create_result[data_field];
+												for (auto class_result : result.get_members()) {
+                                                    json items = class_result.second;
+													if (items.array()) {
+														for (auto item : items) {
+															if (not item[success_field]) {
+																system_monitoring_interface::active_mon->log_warning(item[message_field], __FILE__, __LINE__);
+															}
+															else {
+                                                                json item_data = item[data_field];
+																std::string new_class_name = (std::string)item_data[class_name_field];
+																int64_t object_id = item_data[object_id_field];
+																std::string object_created = std::format("object {0} {1} saved", new_class_name, object_id);
+																system_monitoring_interface::active_mon->log_information(object_created);
+															}
+														}
+													}
+												}
 											}
 										}
 										else
