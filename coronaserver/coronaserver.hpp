@@ -525,11 +525,12 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
     std::string exePath = szUnquotedPath;
     RegisterCoronaEventSource(SVCNAME, exePath);
 
-    PathRemoveFileSpecA(szUnquotedPath);
-    SetCurrentDirectoryA(szUnquotedPath);
-
     if (argc <= 1)
     {
+
+        PathRemoveFileSpecA(szUnquotedPath);
+        SetCurrentDirectoryA(szUnquotedPath);
+
         RunService(_simulation);
         return 0;
     }
@@ -574,11 +575,18 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
     }
     else if (_strcmpi(argv[1], "console") == 0)
     {
+        char currentPath[MAX_PATH];
+        GetCurrentDirectoryA(sizeof(currentPath), currentPath);
+        std::cout << "Current Directory:" << currentPath << std::endl;
         RunConsole(_simulation);
         return 0;
     }
     else
     {
+
+        PathRemoveFileSpecA(szUnquotedPath);
+        SetCurrentDirectoryA(szUnquotedPath);
+
         RunService(_simulation);
         return 0;
     }
