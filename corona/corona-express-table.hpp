@@ -988,7 +988,7 @@ namespace corona
 		std::shared_ptr<xbranch_block> root;
 		std::vector<std::string> key_members;
 		std::vector<std::string> object_members;
-		int64_t count;
+		int64_t count = 0;
 
 		relative_ptr_type get_location()
 		{

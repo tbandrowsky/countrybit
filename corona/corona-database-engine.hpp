@@ -49,6 +49,26 @@ constexpr bool is_convertible_to_int = std::is_convertible_v<T, int>;
 namespace corona
 {
 
+	const std::string class_definition_string = R"(
+{	
+	"class_name" : "sys_class",
+	"class_description" : "Class definitions",
+	"fields" : {			
+			"class_id":"int64",			
+			"class_name":"string",
+			"class_description":"string",
+			"table_location":"int64",
+			"base_class_name":"string",	
+			"ancestors":"[ string ]",
+			"descendants":"[ string ]",
+			"fields" : "object",
+			"indexes" : "object",
+			"sql" : "object"	
+	}
+}
+)";
+
+
 	/// <summary>
     /// Class permissions	
 	/// </summary>
@@ -808,9 +828,9 @@ namespace corona
 		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					alter_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) const = 0;
+		virtual	bool									open(corona_database_interface* _db, std::string _existing_definition, int64_t _location) = 0;
 		virtual	bool									update(activity* _context, json _changed_class) = 0;
 		virtual std::vector<std::string>				get_table_fields()  const = 0;
-		virtual void                                    open(corona_database_interface* _db, int64_t _location) = 0;
 
 		virtual	void									put_field(std::shared_ptr<field_interface>& _name) = 0;
 		virtual std::shared_ptr<field_interface>		get_field(const std::string& _name)  const = 0;
@@ -2664,21 +2684,12 @@ namespace corona
 			return table_fields;
 		}
 
-		virtual void open(corona_database_interface* _db, int64_t _location) override
-		{
-			table_location = _location;
-			// this actually does a read, so that, the cache has it now
-			std::shared_ptr<xtable> table = std::make_shared<xtable>(_db->get_cache(), table_location);
-		}
-
-
 		virtual std::shared_ptr<xtable> get_xtable(corona_database_interface* _db) override
 		{
 			std::shared_ptr<xtable> table;
 			if (table_location > null_row)
 			{
 				table = std::make_shared<xtable>(_db->get_cache(), table_location);
-				system_monitoring_interface::active_mon->log_information(std::format("Opened xtable for class {0} at location {1}", class_name, table_location));
 			}
 			else
 			{
@@ -3201,6 +3212,28 @@ namespace corona
 		virtual int64_t get_location()  const override
 		{
 			return table_location;
+		}
+
+		virtual	bool open(corona_database_interface *_db, std::string _existing_definition, int64_t _location) override
+		{
+			json_parser jp;
+            json definition = jp.parse_object(_existing_definition);
+			std::vector<validation_error> errors;
+			put_json(errors, definition);
+			table_location = _location;
+
+			if (errors.size())
+			{
+				system_monitoring_interface::active_mon->log_warning(std::format("Errors on updating class {0}", class_name), __FILE__, __LINE__);
+				for (auto error : errors) {
+					system_monitoring_interface::active_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
+				}
+
+				return false;
+			}
+
+            get_table(_db);
+			return true;
 		}
 
 		virtual bool update(activity* _context, json _changed_class) override
@@ -3737,16 +3770,12 @@ namespace corona
 						return _item;
 					});
 
-					json obj_key = jp.create_object();
-					obj_key.put_member(class_name_field, class_name);
-
 					for (auto obi : temp) {
 						if (_key.compare(obi) != 0) {
 							continue;
                         }	
                         int64_t object_id = (int64_t)obi[object_id_field];	
-						obj_key.put_member_i64(object_id_field, object_id);
-						json bojdetail = get_single_object(_db, obj_key, false, _grant);
+                        json bojdetail = _db->select_object(class_name, object_id, _grant);
 						temp.push_back(bojdetail);
 					}
 					obj = temp;
@@ -4168,27 +4197,9 @@ namespace corona
 
 			std::vector<validation_error> class_errors;
 			json class_definition = jp.create_object();
-			std::string class_definition_str = R"(
-{	
-	"class_name" : "sys_class",
-	"class_description" : "Class definitions",
-	"fields" : {			
-			"class_id":"int64",			
-			"class_name":"string",
-			"class_description":"string",
-			"table_location":"int64",
-			"base_class_name":"string",	
-			"ancestors":"[ string ]",
-			"descendants":"[ string ]",
-			"fields" : "object",
-			"indexes" : "object",
-			"sql" : "object"	
-	}
-}
-)";
 			activity update_activity;
 			update_activity.db = this;
-			class_definition = jp.parse_object(class_definition_str);
+			class_definition = jp.parse_object(class_definition_string);
 			bool success = classes->update(&update_activity, class_definition);
 
 			auto cxtable = classes->get_xtable(this);
@@ -6284,31 +6295,7 @@ private:
 			relative_ptr_type header_location =  header.read(this, _header_location);
 
 			classes = std::make_shared<class_implementation>();
-            classes->open(this, header.data.classes_location);	
-
-			json class_definition = jp.create_object();
-			std::string class_definition_str = R"(
-{	
-	"class_name" : "sys_class",
-	"class_description" : "Class definitions",
-	"fields" : {			
-			"class_id":"int64",			
-			"class_name":"string",
-			"class_description":"string",
-			"table_location":"int64",
-			"base_class_name":"string",	
-			"ancestors":"[ string ]",
-			"descendants":"[ string ]",
-			"fields" : "object",
-			"indexes" : "object",
-			"sql" : "object"	
-	}
-}
-)";
-			activity update_activity;
-			update_activity.db = this;
-            class_definition = jp.parse_object(class_definition_str);
-			bool success = classes->update(&update_activity, class_definition);
+			classes->open(this, class_definition_string, header.data.classes_location);
 
             std::vector<std::string> check_classes = { "sys_object", "sys_class", "sys_user", "sys_team", "sys_grant", "sys_server", "sys_error", "sys_schema", "sys_dataset" };
 
