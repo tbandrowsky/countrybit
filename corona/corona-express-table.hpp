@@ -222,8 +222,8 @@ namespace corona
 		bool is_full()
 		{
 			read_scope_lock lockit(locker);
-
-			return xrecords_per_block <= records.size() + 1;
+			int s = (records.size() + 1);
+			return s >= xrecords_per_block;
 		}
 
 		bool is_empty()
