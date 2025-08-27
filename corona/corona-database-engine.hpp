@@ -3728,13 +3728,25 @@ namespace corona
 				if (index_table)
 				{
 					json object_key = jp.create_object();
+					json temp;
+					obj = jp.create_array();
 
- 					obj = index_table->select(_key, [_db, this, &object_key, &_grant](json& _item) -> json {
-						int64_t object_id = (int64_t)_item[object_id_field];
-						bool empty;
-						json objfound = get_object(_db, object_id, _grant, empty);
-						return objfound;
+ 					temp = index_table->select(_key, [_db, this, &object_key, &_grant](json& _item) -> json {
+						return _item;
 					});
+
+					json obj_key = jp.create_object();
+					obj_key.put_member(class_name_field, class_name);
+
+					for (auto obi : temp) {
+						if (_key.compare(obi) != 0) {
+							continue;
+                        }	
+						obj_key.put_member_i64(object_id_field, (int64_t)obi.get_member(object_id_field);
+						json bojdetail = get_single_object(_db, obj_key, false, _grant);
+						temp.push_back(bojdetail);
+					}
+					obj = temp;
 				}
 				else
 				{
@@ -5330,11 +5342,16 @@ private:
 
 			if (all_teams[success_field]) {
                 all_teams = all_teams[data_field];
-				for (auto team : all_teams) {
-					std::string domains = team["team_domain"];
-					std::regex domain_matcher(domains);
-					if (std::regex_match(_domain, domain_matcher)) {
-						teams.push_back(team);
+				if (all_teams.array()) {
+					for (int ix = 0; ix < all_teams.size(); ix++) {
+						json team = all_teams.get_element(ix);
+						std::string domains = (std::string)team["team_domain"];
+						if (domains.size() == 0)
+							continue;
+						std::regex domain_matcher(domains);
+						if (std::regex_match(_domain, domain_matcher)) {
+							teams.push_back(team);
+						}
 					}
 				}
 			}
