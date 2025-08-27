@@ -2677,6 +2677,7 @@ namespace corona
 			if (table_location > null_row)
 			{
 				table = std::make_shared<xtable>(_db->get_cache(), table_location);
+				system_monitoring_interface::active_mon->log_information(std::format("Opened xtable for class {0} at location {1}", class_name, table_location));
 			}
 			else
 			{
@@ -2685,6 +2686,7 @@ namespace corona
 				table_header->key_members = { object_id_field };
 				table = std::make_shared<xtable>(_db->get_cache(), table_header);
 				table_location = table_header->get_location();
+                system_monitoring_interface::active_mon->log_information(std::format("Created xtable for class {0} at location {1}", class_name, table_location));
 			}
 			return table;
 		}
