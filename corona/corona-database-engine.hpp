@@ -3727,11 +3727,10 @@ namespace corona
 				auto index_table = find_index(_db, _key);
 				if (index_table)
 				{
-					json object_key = jp.create_object();
 					json temp;
 					obj = jp.create_array();
 
- 					temp = index_table->select(_key, [_db, this, &object_key, &_grant](json& _item) -> json {
+ 					temp = index_table->select(_key, [](json& _item) -> json {
 						return _item;
 					});
 
@@ -5370,7 +5369,20 @@ private:
 			query_details.put_member("class_name", std::string("sys_team"));
 			query_details.put_member("filter", key);
 			json all_teams = query_class(default_user, query_details, jp.create_object());
-			return all_teams.get_first_element();
+			json teams = jp.create_array();
+			if (all_teams[success_field]) {
+				all_teams = all_teams[data_field];
+				if (all_teams.array()) {
+					for (int ix = 0; ix < all_teams.size(); ix++) {
+						json team = all_teams.get_element(ix);
+						std::string names = (std::string)team["team_name"];
+						if (names != _team_name)
+							continue;
+						teams.push_back(team);
+					}
+				}
+			}
+			return teams.get_first_element();
 		}
 
 		json get_schema(std::string schema_name, std::string schema_version, class_permissions _permission)
