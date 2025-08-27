@@ -3742,7 +3742,8 @@ namespace corona
 						if (_key.compare(obi) != 0) {
 							continue;
                         }	
-						obj_key.put_member_i64(object_id_field, (int64_t)obi.get_member(object_id_field);
+                        int64_t object_id = (int64_t)obi[object_id_field];	
+						obj_key.put_member_i64(object_id_field, object_id);
 						json bojdetail = get_single_object(_db, obj_key, false, _grant);
 						temp.push_back(bojdetail);
 					}
