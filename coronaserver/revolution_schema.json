@@ -575,6 +575,82 @@
   ],
   "datasets": [
     {
+      "dataset_name": "Revolution Teams",
+      "dataset_description": "Teams and their default memberships",
+      "dataset_version": "1.0",
+      "dataset_author": "Todd Bandrowsky",
+      "dataset_source": "This is canonical",
+      "objects": [
+        {
+          "class_name": "work_team",
+          "team_name": "All",
+          "team_description": "Revolution Users",
+          "team_domain": ".*",
+          "workflow_classes": [ "user_home", "individual_search", "candidate_search" ],
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "property",
+              "get": "own",
+              "put": "own",
+              "delete": "own",
+              "alter": "none"
+            },
+            {
+              "class_name": "sys_grant",
+              "grant_class": "government",
+              "get": "all",
+              "put": "all",
+              "delete": "own",
+              "alter": "none"
+            }
+          ]
+        },
+        {
+          "class_name": "work_team",
+          "team_name": "Technicians",
+          "team_description": "Revolution Technicians",
+          "team_domain": "todd\\.bandrowsky@gmail\\.com",
+          "workflow_classes": [ "developer_home", "individual_search", "candidate_search" ],
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "sys_object",
+              "get": "all",
+              "put": "all",
+              "delete": "all",
+              "alter": "all"
+            }
+          ]
+        },
+        {
+          "class_name": "work_team",
+          "team_name": "Administrators",
+          "team_description": "Government Administrators",
+          "team_domain": "(.*@countryvideogames\\.com)|(.*@countrybit\\.com)|(*.gov)",
+          "workflow_classes": [ "government_home", "individual_search", "candidate_search" ],
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "government",
+              "get": "all",
+              "put": "all",
+              "delete": "all",
+              "alter": "all"
+            },
+            {
+              "class_name": "sys_grant",
+              "grant_class": "property",
+              "get": "own",
+              "put": "own",
+              "delete": "own",
+              "alter": "own"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "dataset_name": "Candidate Master",
       "dataset_description": "Load Candidates",
       "dataset_version": "1.0",
@@ -658,82 +734,6 @@
           "19": "memo"
         }
       }
-    },
-    {
-      "dataset_name": "Revolution Teams",
-      "dataset_description": "Teams and their default memberships",
-      "dataset_version": "1.0",
-      "dataset_author": "Todd Bandrowsky",
-      "dataset_source": "This is canonical",
-      "objects": [
-        {
-          "class_name": "work_team",
-          "team_name": "All",
-          "team_description": "Revolution Users",
-          "team_domain": ".*",
-          "workflow_classes": [ "user_home", "individual_search", "candidate_search" ],
-          "permissions": [
-            {
-              "class_name": "sys_grant",
-              "grant_class": "property",
-              "get": "own",
-              "put": "own",
-              "delete": "own",
-              "alter": "none"
-            },
-            {
-              "class_name": "sys_grant",
-              "grant_class": "government",
-              "get": "all",
-              "put": "all",
-              "delete": "own",
-              "alter": "none"
-            }
-          ]
-        },
-        {
-          "class_name": "work_team",
-          "team_name": "Technicians",
-          "team_description": "Revolution Technicians",
-          "team_domain": "todd\\.bandrowsky@gmail\\.com",
-          "workflow_classes": [ "developer_home", "individual_search", "candidate_search" ],
-          "permissions": [
-            {
-              "class_name": "sys_grant",
-              "grant_class": "sys_object",
-              "get": "all",
-              "put": "all",
-              "delete": "all",
-              "alter": "all"
-            }
-          ]
-        },
-        {
-          "class_name": "work_team",
-          "team_name": "Administrators",
-          "team_description": "Government Administrators",
-          "team_domain": "(.*@countryvideogames\\.com)|(.*@countrybit\\.com)|(*.gov)",
-          "workflow_classes": [ "government_home", "individual_search", "candidate_search" ],
-          "permissions": [
-            {
-              "class_name": "sys_grant",
-              "grant_class": "government",
-              "get": "all",
-              "put": "all",
-              "delete": "all",
-              "alter": "all"
-            },
-            {
-              "class_name": "sys_grant",
-              "grant_class": "property",
-              "get": "own",
-              "put": "own",
-              "delete": "own",
-              "alter": "own"
-            }
-          ]
-        }
-      ]
     }
   ]
 }
