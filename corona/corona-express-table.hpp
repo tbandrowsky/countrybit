@@ -72,11 +72,11 @@ namespace corona
 	public:
 
 		virtual relative_ptr_type get_location() = 0;
-		virtual json get(json& _object) = 0;
-		virtual void put(json& _object) = 0;
-		virtual void put_array(json& _object) = 0;
-		virtual void erase(json& _object)= 0;
-		virtual void erase_array(json& _object) = 0;
+		virtual json get(json _object) = 0;
+		virtual void put(json _object) = 0;
+		virtual void put_array(json _object) = 0;
+		virtual void erase(json _object)= 0;
+		virtual void erase_array(json _object) = 0;
 		virtual xfor_each_result for_each(json _object, std::function<relative_ptr_type(json& _item)> _process) = 0;
 		virtual json select(json _object, std::function<json(json& _item)> _process) = 0;
 		virtual void clear() = 0;
@@ -222,8 +222,8 @@ namespace corona
 		bool is_full()
 		{
 			read_scope_lock lockit(locker);
-
-			return xrecords_per_block <= records.size() + 1;
+			int s = (records.size() + 1);
+			return s >= xrecords_per_block;
 		}
 
 		bool is_empty()
@@ -995,7 +995,7 @@ namespace corona
 			return header.block_location;
 		}
 
-		virtual void get_json(json& _dest)
+		virtual void get_json(json _dest)
 		{
 			json_parser jp;
 			_dest.put_member_i64("root_type", root_block.block_type);
@@ -1007,7 +1007,7 @@ namespace corona
 			_dest.put_member_i64("count", count);
 		}
 
-		virtual void put_json(json& _src)
+		virtual void put_json(json _src)
 		{
 			json_parser jp;
 			root_block.location = _src["root_location"];
@@ -1116,7 +1116,7 @@ namespace corona
 			return jresult;
 		}
 
-		virtual json get(json& _object) override
+		virtual json get(json _object) override
 		{
 			json_parser jp;
 			json jresult;
@@ -1131,7 +1131,7 @@ namespace corona
 			return jresult;
 		}
 
-		virtual void put(json& _object) override
+		virtual void put(json _object) override
 		{
 			xrecord key(table_header->key_members, _object);
 			if (key.is_wildcard()) {
@@ -1146,7 +1146,7 @@ namespace corona
 			}
 		}
 
-		virtual void put_array(json& _array) override
+		virtual void put_array(json _array) override
 		{
 			if (_array.array()) {
 				for (auto item : _array) {
@@ -1163,14 +1163,14 @@ namespace corona
 			::InterlockedDecrement64(&table_header->count);
 		}
 
-		virtual void erase(json& _object) override
+		virtual void erase(json _object) override
 		{
 			xrecord key(table_header->key_members, _object);
 			::InterlockedDecrement64(&table_header->count);
 			table_header->root->erase(key);
 		}
 
-		virtual void erase_array(json& _array) override
+		virtual void erase_array(json _array) override
 		{
 			if (_array.array()) {
 				for (auto item : _array) {

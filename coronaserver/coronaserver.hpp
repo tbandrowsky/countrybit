@@ -47,6 +47,7 @@ void corona_console_command()
         std::getline(std::cin, command, '\n');
 
         if (not command.empty()) {
+            command[0] = std::tolower(command[0]);
             if (command == "?") {
                 std::cout << "?           - help" << std::endl;
                 std::cout << "c           - list of classes" << std::endl;
@@ -109,7 +110,7 @@ void RunConsole(std::shared_ptr<corona::corona_simulation_interface> _simulation
     if (SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
         try
         {
-            std::cout << "Running Corona in console mode. Type '?' for help." << std::endl;
+            std::cout << "Running Corona in console mode. CTRL-C for shell." << std::endl;
             std::cout.flush();
             service = std::make_shared<corona::comm_bus_service>(
                 _simulation, 
@@ -519,14 +520,17 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
         return 1;
     }
 
+    std::cout << "Working Directory:" << szUnquotedPath << std::endl;
+
     std::string exePath = szUnquotedPath;
     RegisterCoronaEventSource(SVCNAME, exePath);
 
-    PathRemoveFileSpecA(szUnquotedPath);
-    SetCurrentDirectoryA(szUnquotedPath);
-
     if (argc <= 1)
     {
+
+        PathRemoveFileSpecA(szUnquotedPath);
+        SetCurrentDirectoryA(szUnquotedPath);
+
         RunService(_simulation);
         return 0;
     }
@@ -571,11 +575,18 @@ int CoronaMain(std::shared_ptr<corona::corona_simulation_interface> _simulation,
     }
     else if (_strcmpi(argv[1], "console") == 0)
     {
+        char currentPath[MAX_PATH];
+        GetCurrentDirectoryA(sizeof(currentPath), currentPath);
+        std::cout << "Current Directory:" << currentPath << std::endl;
         RunConsole(_simulation);
         return 0;
     }
     else
     {
+
+        PathRemoveFileSpecA(szUnquotedPath);
+        SetCurrentDirectoryA(szUnquotedPath);
+
         RunService(_simulation);
         return 0;
     }

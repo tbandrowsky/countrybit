@@ -212,6 +212,7 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <FileType>Document</FileType>
     </CopyFileToFolders>
+    <None Include="sqlintegrationschema.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="eventmessages.txt">
