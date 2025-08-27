@@ -1116,6 +1116,9 @@ namespace corona
 			return jresult;
 		}
 
+
+		///Ok, so the root cause is that xcompare and xrecord doesn't work with objects ... s/b converted to strings and stored.
+
 		virtual json get(json _object) override
 		{
 			json_parser jp;
