@@ -918,6 +918,7 @@ namespace corona
 
 		virtual int64_t get_next_object_id() = 0;
 
+		virtual json select_object(std::string _class_name, int64_t _object_id, class_permissions _permissions) = 0;
 		virtual json select_object(json _key, bool _include_children, class_permissions _permissions) = 0;
 		virtual json select_single_object(json _key, bool _include_children, class_permissions _permissions) = 0;
 		virtual read_class_sp read_lock_class(const std::string& _class_name) = 0;
@@ -5246,6 +5247,25 @@ private:
 
 		protected:
 
+		json select_object(std::string _class_name, int64_t _object_id, class_permissions _permissions)
+		{
+			json_parser jp;
+			json obj = jp.create_array();
+
+			read_class_sp classd = read_lock_class(_class_name);
+			if (not classd)
+				return obj;
+
+			auto perm = get_class_permission(_permissions, _class_name);
+			bool exists = false;
+			json oneobj= classd->get_object(this, _object_id, _permissions, exists);
+			if (oneobj.object())
+                obj.push_back(oneobj);
+
+			return obj;
+		}
+
+
 		json select_object(json _key, bool _children, class_permissions _permission)
 		{
 			json_parser jp;
@@ -6180,44 +6200,33 @@ private:
 									for (int j = 0; j < object_list.size(); j++) {
 										json object_definition = object_list.get_element(j);
 										json put_object_request = create_system_request(object_definition);
-										// in corona, creating an object doesn't actually persist anything 
-										// but a change in identifier.  It's a clean way of just getting the 
-										// "new chumpy" item for ya.  
 										json create_result = put_object(put_object_request);
-										if (create_result[success_field]) {
-											if (not create_result[success_field]) {
-												system_monitoring_interface::active_mon->log_warning(create_result[message_field]);
-												system_monitoring_interface::active_mon->log_json<json>(create_result);
-											}
-											else {
-                                                json result = create_result[data_field];
-												for (auto class_result : result.get_members()) {
-                                                    json items = class_result.second;
-													if (items.array()) {
-														for (auto item : items) {
-															if (not item[success_field]) {
-																system_monitoring_interface::active_mon->log_warning(item[message_field], __FILE__, __LINE__);
-															}
-															else {
-                                                                json item_data = item[data_field];
-																std::string new_class_name = (std::string)item_data[class_name_field];
-																int64_t object_id = item_data[object_id_field];
-																std::string object_created = std::format("object {0} {1} saved", new_class_name, object_id);
-																system_monitoring_interface::active_mon->log_information(object_created);
-															}
+										if (not create_result[success_field]) {
+											system_monitoring_interface::active_mon->log_warning(create_result[message_field]);
+											system_monitoring_interface::active_mon->log_json<json>(create_result);
+										}
+										else {
+                                            json result = create_result[data_field];
+											for (auto class_result : result.get_members()) {
+                                                json items = class_result.second;
+												if (items.array()) {
+													for (auto item : items) {
+														if (not item[success_field]) {
+															system_monitoring_interface::active_mon->log_warning(item[message_field], __FILE__, __LINE__);
+														}
+														else {
+                                                            json item_data = item[data_field];
+															std::string new_class_name = (std::string)item_data[class_name_field];
+															int64_t object_id = item_data[object_id_field];
+															std::string object_created = std::format("object {0} {1} saved", new_class_name, object_id);
+															system_monitoring_interface::active_mon->log_information(object_created);
 														}
 													}
 												}
 											}
 										}
-										else
-										{
-											system_monitoring_interface::active_mon->log_warning(create_result[message_field], __FILE__, __LINE__);
-											system_monitoring_interface::active_mon->log_json<json>(create_result);
-										}
 									}
 								}
-
 							}
 							date_time completed_date = date_time::now();
 							new_dataset.put_member("completed", completed_date);
