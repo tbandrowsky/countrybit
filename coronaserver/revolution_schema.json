@@ -577,7 +577,7 @@
     {
       "dataset_name": "Revolution Teams",
       "dataset_description": "Teams and their default memberships",
-      "dataset_version": "1.0",
+      "dataset_version": "1.1",
       "dataset_author": "Todd Bandrowsky",
       "dataset_source": "This is canonical",
       "objects": [
