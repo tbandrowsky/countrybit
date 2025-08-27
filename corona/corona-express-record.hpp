@@ -1289,8 +1289,6 @@ namespace corona
 				std::string temp;
 				ft = (field_types)record_bytes[this_offset];
 				switch (ft) {
-				case field_types::ft_object:
-				case field_types::ft_array:
 				case field_types::ft_string:
 					on_to_string<xstring>(temp, &this_offset);
 					break;
@@ -1488,18 +1486,21 @@ namespace corona
         json test_obj = jp.create_object();
         json test_inner_obj = jp.create_object();
 		json test_inner_array = jp.create_array();
-		test_inner_obj.put_member("string_value", "hello");
+		test_inner_obj.put_member("string_value", std::string("hello"));
 		test_inner_obj.put_member("int64_value", 42i64);
-		test_inner_array.push_back("one");
+		test_inner_array.push_back(std::string("one"));
 		test_inner_array.push_back(2i64);
 		test_inner_array.push_back(3.0);
 		test_obj.put_member("obj_value", test_inner_obj);
 		test_obj.put_member("arr_value", test_inner_array);
 		test_obj.put_member("amount", 4.0);
-		test_obj.put_member("prompt", "hello");
+		test_obj.put_member("prompt", std::string("hello"));
         test_obj.put_member("object_id", 42i64);
 		
-		test_in.put_json({ "string_value", "int64_value", "obj_value", "arr_value"}, test_obj);
+        std::vector<std::string> keysc = { "amount", "prompt", "object_id", "obj_value", "arr_value" };
+		test_in.put_json(keysc, test_obj);
+		json jtest_out = jp.create_object();
+        test_in.get_json(jtest_out, keysc);
 
 		comp1.add(4.0);
 		comp1.add("hello");
@@ -1624,7 +1625,6 @@ namespace corona
 		_tests->test({ "xr == key 3", result, __FILE__, __LINE__ });
 
 		// and now json tests.
-		json_parser jp;
 		json jsrc = jp.create_object();
 		jsrc.put_member("Name", "Bill"sv);
 		jsrc.put_member("Age", "41"sv);

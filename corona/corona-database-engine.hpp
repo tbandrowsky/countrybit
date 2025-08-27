@@ -3221,6 +3221,9 @@ namespace corona
 			std::vector<validation_error> errors;
 			put_json(errors, definition);
 			table_location = _location;
+			if (_location <= 1) {
+                table_location = definition["table_location"];
+			}
 
 			if (errors.size())
 			{
@@ -5590,32 +5593,23 @@ private:
 
 		std::shared_ptr<class_implementation> cache_class(const std::string& _class_name)
 		{
-			std::shared_ptr<class_implementation> cd;
 			write_scope_lock my_lock(class_lock);
+
+			std::shared_ptr<class_implementation> class_to_cache;
 			json_parser jp;
-			cd = std::make_shared<class_implementation>();
+			class_to_cache = std::make_shared<class_implementation>();
 			json key = jp.create_object();
 			key.put_member(class_name_field, _class_name);
 			json class_def = classes->get_single_object(this, key, false, get_system_permission());
 
 			std::vector<validation_error> errors;
-			if (class_def.object()) {
-				cd->put_json(errors, class_def);
-				if (errors.size()) {
-					system_monitoring_interface::active_mon->log_warning(std::format("Errors on deserializing class {0}", _class_name), __FILE__, __LINE__);
-					for (auto error : errors) {
-						system_monitoring_interface::active_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, get_file_name(error.filename), error.line_number), __FILE__, __LINE__);
-					}
-				}
-			}
-			else 
-			{
-				// this will be a new, empty class.
-				cd->set_class_name(_class_name);
+
+			if (!class_to_cache->open(this, class_def, -1)) {
+				class_to_cache->set_class_name(_class_name);
 			}
 
-			class_cache.insert_or_assign(_class_name, cd);
-			return cd;
+			class_cache.insert_or_assign(_class_name, class_to_cache);
+			return class_to_cache;
 		}
 
 		int64_t maximum_record_cache_size_bytes = giga_to_bytes(1);
