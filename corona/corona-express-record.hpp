@@ -1020,7 +1020,7 @@ namespace corona
 						field_comparer<compare_fn, xwildcard, xint64_t> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
-					else if (other_ft == field_types::ft_string)
+					else if (other_ft == field_types::ft_string or other_ft == field_types::ft_object or other_ft == field_types::ft_array)
 					{
 						field_comparer<compare_fn, xwildcard, xstring> comparer;
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
@@ -1046,7 +1046,40 @@ namespace corona
 						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
 					}
 				}
+				else if (this_ft == field_types::ft_object or this_ft == field_types::ft_array)
+				{
+					if (other_ft == field_types::ft_int64)
+					{
+						field_comparer<compare_fn, xstring, xint64_t> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_string or other_ft == field_types::ft_object or other_ft == field_types::ft_array)
+					{
+						field_comparer<compare_fn, xstring, xstring> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_double)
+					{
+						field_comparer<compare_fn, xstring, xdouble> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_datetime)
+					{
+						field_comparer<compare_fn, xstring, xdatetime> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_reference)
+					{
+						field_comparer<compare_fn, xstring, xreference> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
+					else if (other_ft == field_types::ft_wildcard)
+					{
+						field_comparer<compare_fn, xstring, xwildcard> comparer;
+						comp_result = comparer.compare_field(record_bytes, &this_offset, _other, &other_offset);
+					}
 
+				}
 				if constexpr (std::is_same<compare_fn, fn_op_eq>::value)
 				{
 					if (comp_result != std::weak_ordering::equivalent) return false;
