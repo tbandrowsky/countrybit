@@ -789,7 +789,7 @@ namespace corona
 	class index_interface
 	{
 	protected:
-		relative_ptr_type								table_location;
+		int64_t											table_location;
 	public:
 		virtual void get_json(json& _dest) = 0;
 		virtual void put_json(std::vector<validation_error>& _errors, json& _src) = 0;
@@ -800,6 +800,7 @@ namespace corona
 		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					create_xtable(corona_database_interface* _db) = 0;
 		virtual std::string								get_index_key_string() = 0;
+		virtual int64_t									get_location() { return table_location; }
 
 	};
 
@@ -2522,11 +2523,11 @@ namespace corona
 		{
 			std::shared_ptr<xtable> table;
 
-			if (table_location != null_row)
+			if (table_location > null_row)
 			{
 				table = std::make_shared<xtable>(_db->get_cache(), table_location);
-				return table;
 			}
+			return table;
 		}
 
 	};
@@ -3267,6 +3268,8 @@ namespace corona
 		virtual bool update(activity* _context, json _changed_class) override
 		{
 			class_implementation changed_class;
+			bool alter_table = false;
+			json_parser jp;
 
 			if (class_id <= 0) {
 				std::string msg = std::format("{0} was not assigned a class_id", class_name);
@@ -3311,36 +3314,6 @@ namespace corona
 			class_description = changed_class.class_description;
 			sql = changed_class.sql;
 
-
-			bool alter_table = false;
-			std::vector<std::shared_ptr<field_interface>> new_fields;
-
-			for (auto f : fields) {
-				auto changed_field = changed_class.fields.find(f.first);
-				if (changed_field != std::end(changed_class.fields))
-				{
-					if (changed_field->second->get_field_type() != f.second->get_field_type())
-					{
-						alter_table = true;
-					}
-				}
-				else
-				{
-					alter_table = true;
-				}
-			}
-
-			for (auto f : changed_class.fields) {
-				auto changed_field = fields.find(f.first);
-				if (changed_field == std::end(fields))
-				{
-					new_fields.push_back(f.second);
-					alter_table = true;
-				}
-			}
-
-			fields = changed_class.fields;
-
 			ancestors.clear();
 
 			if (not base_class_name.empty()) {
@@ -3355,7 +3328,7 @@ namespace corona
 
 					for (auto temp_field : base_class->get_fields())
 					{
-						fields.insert_or_assign(temp_field->get_field_name(), temp_field);
+						changed_class.fields.insert_or_assign(temp_field->get_field_name(), temp_field);
 					}
 					_context->db->save_class(base_class.get());
 				}
@@ -3364,31 +3337,52 @@ namespace corona
 					ve.class_name = changed_class.class_name;
 					ve.filename = get_file_name(__FILE__);
 					ve.line_number = __LINE__;
-					ve.message = "base class nnot found";
+					ve.message = std::format("base class {0} not found", base_class_name);
 					_context->errors.push_back(ve);
 					return false;
 				}
 			}
 
+			std::map<std::string, std::shared_ptr<index_interface>> combined_indexes;
+			std::map<std::string, std::shared_ptr<field_interface>> combined_fields;
 			std::map<std::string, bool> existing_table_fields;
-            for (auto tf : table_fields) {
-                existing_table_fields.insert_or_assign(tf, true);
-            }
+			std::vector<std::shared_ptr<field_interface>> new_fields;
 
-			for (auto& field : fields)
+			for (auto tf : table_fields) {
+				existing_table_fields.insert_or_assign(tf, true);
+			}
+
+			for (auto f : changed_class.fields)
+			{
+				combined_fields[f.first] = f.second;
+			}
+
+			for (auto f : fields)
+			{
+				combined_fields[f.first] = f.second;
+			}
+
+			fields.clear();
+			for (auto& field : combined_fields)
 			{
 				if (existing_table_fields.find(field.first)==std::end(existing_table_fields)) {
 					table_fields.push_back(field.first);
+					new_fields.push_back(field.second);
 				}
+				fields[field.first] = field.second;
 			}
 
-			auto view_descendants = descendants | std::views::filter([this](auto& pair) {
-				return pair.first != class_name;
-				});
-
-			// check the indexes here, because here we have all of our fields from class anncestors.
+			for (auto idx : changed_class.indexes)
+			{
+				combined_indexes[idx.first] = idx.second;
+			}
 
 			for (auto idx : indexes)
+			{
+				combined_indexes[idx.first] = idx.second;
+			}
+
+			for (auto idx : combined_indexes)
 			{
 				for (auto f : idx.second->get_index_keys()) {
 					if (not fields.contains(f)) {
@@ -3403,87 +3397,52 @@ namespace corona
 				}
 			}
 
+			indexes = combined_indexes;
+
 			if (_context->errors.size() > 0)
 			{
 				return false;
 			}
 
-			// loop through existing indexes,
-			// dropping old ones that don't match
-			auto existing_indexes = get_indexes();
-			for (auto old_index : existing_indexes)
-			{
-				auto existing = changed_class.indexes.find(old_index->get_index_name());
-				// if the index is going away, then get rid of it.
-				if (existing == changed_class.indexes.end() or
-					existing->second->get_index_key_string() != old_index->get_index_key_string()) {
-					auto index_table = old_index->get_xtable(_context->db);
-					if (index_table)
-					{
-						index_table->clear();
-						index_table->save();
-					}
-				}
-			}
-
-			// reindex tables list
-			std::map<std::string, std::shared_ptr<index_interface>> correct_indexes;
+			auto view_descendants = descendants | std::views::filter([this](auto& pair) {
+				return pair.first != class_name;
+				});
 
 			// and once again through the indexes
 			// we make a copy of the existing index, so as to keep its table,
 			// while at the same time not trusting this index, which was passed in.
-			for (auto& new_index : changed_class.indexes)
+			for (auto& new_index : indexes)
 			{
 				std::shared_ptr<index_interface> index_to_create;
 
-				// we want to use the existing class to pick up if we have a table
-				index_to_create  = get_index(new_index.first);
-				if (index_to_create) {
-					auto temp = std::make_shared<index_implementation>(index_to_create, _context->db);
-					index_to_create = std::dynamic_pointer_cast<index_implementation, index_interface>(temp);
-				}
-
-				if (not index_to_create)
+				if (new_index.second->get_location() > null_row)
 				{
-					auto temp = std::make_shared<index_implementation>(new_index.second, _context->db);
-					index_to_create = std::dynamic_pointer_cast<index_implementation, index_interface>(temp);
-					index_to_create->create_xtable(_context->db);
+					continue;
 				}
+				else 
+				{
+					auto class_data = get_table(_context->db);
+					auto table = new_index.second->create_xtable(_context->db);
 
-				correct_indexes.insert_or_assign(new_index.first, index_to_create);
+					auto& keys = new_index.second->get_index_keys();
+					date_time dt = date_time::now();
+					timer tx;
+					system_monitoring_interface::active_mon->log_job_section_start("index", new_index.first, dt, __FILE__, __LINE__);
+					json empty_key = jp.create_object();
+					class_data->for_each(empty_key, [table](json& _item) -> relative_ptr_type {
+						table->put(_item);
+						return 1;
+						});
+					system_monitoring_interface::active_mon->log_job_section_stop("index:", new_index.first, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				}
 			}
 
-			indexes = correct_indexes;
-
-			if (class_id == 0) {
+			if (class_id <= 0) {
 				class_id = _context->db->get_next_object_id();
-			}
+			}	
 
 			_context->db->save_class(this);
-
-			json empty_key;
-			std::shared_ptr<xtable> class_data;
-
-			if (alter_table) {
-				class_data = alter_xtable(_context->db);
-			}
-			else 
-			{
-				class_data = get_xtable(_context->db);
-			}
-
-			// and populate the new indexes with any data that might exist
-			for (auto idc : indexes) {
-				auto my_index = idc.second;
-				auto table = my_index->get_xtable(_context->db);
-				auto& keys = my_index->get_index_keys();
-				class_data->for_each(empty_key, [table](json& _item) -> relative_ptr_type {
-					table->put(_item);
-					return 1;
-				});
-			}
-
-			// now update the descendants
 
 			for (auto descendant : view_descendants)
 			{
