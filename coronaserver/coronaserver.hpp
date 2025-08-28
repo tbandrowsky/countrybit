@@ -12,7 +12,7 @@
 bool RegisterCoronaEventSource(const std::string& svcName, const std::string& exePath);
 
 
-char SVCNAME[] = "Corona Database";
+char SVCNAME[] = "Instant Enterprise";
 char SVCEVENTDISP[] = "StartServiceCtrlDispatcher";
 
 #pragma comment(lib, "advapi32.lib")
@@ -41,9 +41,9 @@ VOID SvcLogInfo(std::string message, std::string file, int line);
 void corona_console_command()
 {
     std::string command;
-    std::cout << "corona shell >";
 
     do {
+        std::cout << std::endl << "Instant Enterprise >";
         std::getline(std::cin, command, '\n');
 
         if (not command.empty()) {
@@ -83,6 +83,9 @@ void corona_console_command()
             else if (command == "x")
             {
                 corona::system_monitoring_interface::active_mon->log_information("Exit Console (CTRL-C to come back)", __FILE__, __LINE__);
+            }
+            else {
+                std::cout << "Unknown command '" << command << "'. Type ? for help." << std::endl;  
             }
         }
     } while (not exit_flag and command != "x" and command != "q");
@@ -243,7 +246,7 @@ VOID WINAPI SvcMain(DWORD dwArgc, LPTSTR* lpszArgv)
 
     // Report initial status to the SCM
 
-    SvcLogInfo("Corona Starting", __FILE__, __LINE__);
+    SvcLogInfo("Instant Enterprise Starting", __FILE__, __LINE__);
 
     ReportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
 
@@ -299,7 +302,7 @@ VOID SvcInit(DWORD dwArgc, LPTSTR* lpszArgv)
             simulation,
             config_filename,
             [](const std::string& _msg, const char* _file, int _line) {
-                std::string message = std::format("Corona service error: {0} at {1}:{2}", _msg, _file, _line);
+                std::string message = std::format("Instant Enterprise error: {0} at {1}:{2}", _msg, _file, _line);
                 SvcLogError(message, __FILE__, __LINE__);
             },
             false);
@@ -409,9 +412,9 @@ VOID SvcLogError(std::string message, std::string file, int line)
 
    TraceLoggingWrite(
         global_corona_provider,
-       "Corona",
+       "InstantEnterprise",
        TraceLoggingLevel(WINEVENT_LEVEL_ERROR),
-       TraceLoggingStruct(3, "CoronaEvent"),
+       TraceLoggingStruct(3, "InstantEnterpriseEvent"),
        TraceLoggingValue(cmessage, "Message"),
        TraceLoggingValue(cfile, "File"),
        TraceLoggingValue(line, "Line")
@@ -449,9 +452,9 @@ VOID SvcLogInfo(std::string message, std::string file, int line)
 
     TraceLoggingWrite(
         global_corona_provider,
-        "Corona",
+        "InstantEnterprise",
         TraceLoggingLevel(WINEVENT_LEVEL_INFO),
-        TraceLoggingStruct(3, "CoronaEvent"),
+        TraceLoggingStruct(3, "InstantEnterpriseEvent"),
         TraceLoggingValue(cmessage, "Message"),
         TraceLoggingValue(cfile, "File"),
         TraceLoggingValue(line, "Line")

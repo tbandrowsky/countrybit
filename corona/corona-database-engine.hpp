@@ -951,7 +951,6 @@ namespace corona
 		virtual json select_single_object(json _key, bool _include_children, class_permissions _permissions) = 0;
 		virtual read_class_sp read_lock_class(const std::string& _class_name) = 0;
 		virtual write_class_sp write_lock_class(const std::string& _class_name) = 0;
-		virtual json save_class(write_class_sp& _class_to_save) = 0;
 		virtual json save_class(class_interface* _class_to_save) = 0;
 		virtual bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name, std::string& _token_authority) = 0;
 		virtual json get_openapi_schema(std::string _user_name) = 0;
@@ -3581,16 +3580,9 @@ namespace corona
 				}
 			}
 
-			std::map<std::string, bool> existing_table_fields;
-			for (auto tf : table_fields) {
-				existing_table_fields.insert_or_assign(tf, true);
-			}
-
 			for (auto& field : fields)
 			{
-				if (existing_table_fields.find(field.first) == std::end(existing_table_fields)) {
-					table_fields.push_back(field.first);
-				}
+				table_fields.push_back(field.first);
 			}
 
 			auto view_descendants = descendants | std::views::filter([this](auto& pair) {
@@ -4335,6 +4327,7 @@ namespace corona
 				ci = std::make_shared<class_implementation>();
 				ci->create(&activio, _class_definition);
 			}
+            save_class(ci.get());
 			class_cache.insert(class_name, ci);
 			return ci;
 		}
@@ -5924,11 +5917,6 @@ private:
             class_def_list.push_back(class_def);
             classes->put_objects(this, dummy_children, class_def_list, get_system_permission());
 			return class_def;
-		}
-
-		virtual json save_class(write_class_sp& _class_to_save) override
-		{
-			return save_class(_class_to_save.get());
 		}
 
 		void log_error_array(json put_result)
@@ -8242,7 +8230,7 @@ private:
 		timer tx;
 		system_monitoring_interface::active_mon->log_function_start("table proof", "start", st, __FILE__, __LINE__);
 
-		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "corona_database.cdb");
+		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "instant_enterprise.cdb");
 
 		json_parser jp;
 		json proof_assertion = jp.create_object();

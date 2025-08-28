@@ -154,7 +154,7 @@ namespace corona
 			database_config_filename = "config.json";
 			pages_config_filename = _config_filename_base + "pages.json";
 			styles_config_filename = _config_filename_base + "styles.json";
-			database_filename = app->get_data_filename("corona.cdb");
+			database_filename = app->get_data_filename("instantenterprise.cdb");
 
 			/*
 			char path[MAX_PATH + 16] = {};
