@@ -2811,7 +2811,7 @@ namespace corona
 			json_parser jp;
 
 			_dest.put_member(class_name_field, class_name);
-			_dest.put_member(object_id_field, class_id);
+			_dest.put_member_i64(object_id_field, class_id);
 			_dest.put_member("class_description", class_description);
 			_dest.put_member("base_class_name", base_class_name);
 			_dest.put_member_i64("table_location", table_location);

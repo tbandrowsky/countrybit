@@ -1177,6 +1177,7 @@ namespace corona
 
 		xrecord(std::vector<std::string>& _keys, json _src)
 		{
+			has_wildcard = false;
 			put_json(_keys, _src);
 		}
 
@@ -1235,6 +1236,7 @@ namespace corona
 
 		void put_json(std::vector<std::string>& _keys, json _j)
 		{
+			has_wildcard = false;
 			record_bytes.clear();
 			int index = 0;
 
