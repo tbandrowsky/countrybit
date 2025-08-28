@@ -3269,6 +3269,11 @@ namespace corona
 		{
 			class_implementation changed_class;
 
+			if (class_id <= 0) {
+				std::string msg = std::format("{0} was not assigned a class_id", class_name);
+				throw std::logic_error(msg);
+			}
+
 			changed_class.put_json(_context->errors, _changed_class);
 
 			if (_context->errors.size())
@@ -3307,10 +3312,6 @@ namespace corona
 			class_description = changed_class.class_description;
 			sql = changed_class.sql;
 
-            class_id = changed_class.class_id;
-			if (class_id <= 0) {
-				class_id = _context->db->get_next_object_id();
-            }
 
 			bool alter_table = false;
 			std::vector<std::shared_ptr<field_interface>> new_fields;
@@ -3616,10 +3617,6 @@ namespace corona
 			if (_context->errors.size() > 0)
 			{
 				return false;
-			}
-
-			if (class_id == 0) {
-				class_id = _context->db->get_next_object_id();
 			}
 
 			create_xtable(_context->db);
