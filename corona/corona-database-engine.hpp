@@ -821,15 +821,16 @@ namespace corona
 		virtual std::map<std::string, bool>  const&		get_descendants()  const = 0;
 		virtual std::map<std::string, bool>  const&		get_ancestors()  const = 0;
 		virtual std::map<std::string, bool>  &			update_descendants() = 0;
-		virtual std::map<std::string, bool>  &			update_ancestors()  = 0;
+		virtual std::map<std::string, bool>  &			update_ancestors() = 0;
 		virtual std::vector<std::string>				get_parents() const = 0;
 		virtual std::shared_ptr<xtable_interface>		get_table(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<sql_table>				get_stable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					alter_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) const = 0;
-		virtual	bool									open(corona_database_interface* _db, std::string _existing_definition, int64_t _location) = 0;
+		virtual	bool									open(activity* _context, json _existing_definition, int64_t _location) = 0;
 		virtual	bool									update(activity* _context, json _changed_class) = 0;
+		virtual	bool									create(activity* _context, json _changed_class) = 0;
 		virtual std::vector<std::string>				get_table_fields()  const = 0;
 
 		virtual	void									put_field(std::shared_ptr<field_interface>& _name) = 0;
@@ -860,8 +861,9 @@ namespace corona
 	class activity
 	{
 	public:
-		std::map<std::string, write_class_sp> classes;
 		corona_database_interface* db;
+
+		std::map<std::string, write_class_sp> classes;
 		std::vector<validation_error> errors;
 
 		class_interface* get_class(std::string _class_name);
@@ -913,6 +915,10 @@ namespace corona
 			const class_permissions& _src,
 			std::string _class_name) = 0;
 
+		virtual std::shared_ptr<class_interface> read_get_class(const std::string& _class_name) = 0;
+		virtual std::shared_ptr<class_interface> put_class_impl(activity* _activity, json& _class_definition) = 0;
+		virtual std::shared_ptr<class_interface> get_class_impl(activity* _activity, std::string _class_name) = 0;
+
 		virtual void scrub_object(json& object_to_scrub) = 0;
 		virtual json create_user(json create_user_request, bool _system_user) = 0;
 		virtual json login_user(json _login_request) = 0;
@@ -943,7 +949,6 @@ namespace corona
 		virtual json select_single_object(json _key, bool _include_children, class_permissions _permissions) = 0;
 		virtual read_class_sp read_lock_class(const std::string& _class_name) = 0;
 		virtual write_class_sp write_lock_class(const std::string& _class_name) = 0;
-		virtual write_class_sp create_lock_class(const std::string& _class_name) = 0;
 		virtual json save_class(write_class_sp& _class_to_save) = 0;
 		virtual json save_class(class_interface* _class_to_save) = 0;
 		virtual bool check_message(json& _message, std::vector<std::string> _authorizations, std::string& _user_name, std::string& _token_authority) = 0;
@@ -3214,28 +3219,29 @@ namespace corona
 			return table_location;
 		}
 
-		virtual	bool open(corona_database_interface *_db, std::string _existing_definition, int64_t _location) override
+		virtual	bool open(activity* _context, json definition, int64_t _location) override
 		{
 			json_parser jp;
-            json definition = jp.parse_object(_existing_definition);
-			std::vector<validation_error> errors;
-			put_json(errors, definition);
+
+			put_json(_context->errors, definition);
+
 			table_location = _location;
-			if (_location <= 1) {
+
+			if (table_location <= 1) {
                 table_location = definition["table_location"];
 			}
 
-			if (errors.size())
+			if (_context->errors.size())
 			{
 				system_monitoring_interface::active_mon->log_warning(std::format("Errors on updating class {0}", class_name), __FILE__, __LINE__);
-				for (auto error : errors) {
+				for (auto error : _context->errors) {
 					system_monitoring_interface::active_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
 				}
 
 				return false;
 			}
 
-            get_table(_db);
+            get_table(_context->db);
 			return true;
 		}
 
@@ -3330,7 +3336,7 @@ namespace corona
 
 			if (not base_class_name.empty()) {
 
-				auto base_class = _context->get_class(base_class_name);
+				auto base_class = _context->db->read_get_class(base_class_name);
 				if (base_class) {
 
 					ancestors = base_class->get_ancestors();
@@ -3342,7 +3348,7 @@ namespace corona
 					{
 						fields.insert_or_assign(temp_field->get_field_name(), temp_field);
 					}
-					_context->db->save_class(base_class);
+					_context->db->save_class(base_class.get());
 				}
 				else {
 					validation_error ve;
@@ -3505,6 +3511,111 @@ namespace corona
 			}
 
 			return true;
+		}
+
+		virtual bool create(activity* _context, json _changed_class) override
+		{
+			put_json(_context->errors, _changed_class);
+
+			if (_context->errors.size())
+			{
+				system_monitoring_interface::active_mon->log_warning(std::format("Errors on updating class {0}", class_name), __FILE__, __LINE__);
+				for (auto error : _context->errors) {
+					system_monitoring_interface::active_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
+				}
+
+				return false;
+			}
+
+			if (class_description.empty()) {
+				validation_error ve;
+				ve.class_name = class_name;
+				ve.filename = get_file_name(__FILE__);
+				ve.line_number = __LINE__;
+				ve.message = "class description not found";
+				_context->errors.push_back(ve);
+				return false;
+			}
+
+			if (class_id <= 0) {
+				class_id = _context->db->get_next_object_id();
+			}
+
+			ancestors.clear();
+
+			if (not base_class_name.empty()) {
+
+				auto base_class = _context->db->read_get_class(base_class_name);
+				if (base_class) {
+
+					ancestors = base_class->get_ancestors();
+					ancestors.insert_or_assign(base_class_name, true);
+					base_class->update_descendants().insert_or_assign(class_name, true);
+					descendants.insert_or_assign(class_name, true);
+
+					for (auto temp_field : base_class->get_fields())
+					{
+						fields.insert_or_assign(temp_field->get_field_name(), temp_field);
+					}
+					_context->db->save_class(base_class.get());
+				}
+				else {
+					validation_error ve;
+					ve.class_name = class_name;
+					ve.filename = get_file_name(__FILE__);
+					ve.line_number = __LINE__;
+					ve.message = "base class nnot found";
+					_context->errors.push_back(ve);
+					return false;
+				}
+			}
+
+			std::map<std::string, bool> existing_table_fields;
+			for (auto tf : table_fields) {
+				existing_table_fields.insert_or_assign(tf, true);
+			}
+
+			for (auto& field : fields)
+			{
+				if (existing_table_fields.find(field.first) == std::end(existing_table_fields)) {
+					table_fields.push_back(field.first);
+				}
+			}
+
+			auto view_descendants = descendants | std::views::filter([this](auto& pair) {
+				return pair.first != class_name;
+				});
+
+			// check the indexes here, because here we have all of our fields from class ancestors.
+
+			for (auto idx : indexes)
+			{
+				for (auto f : idx.second->get_index_keys()) {
+					if (not fields.contains(f)) {
+						validation_error ve;
+						ve.class_name = class_name;
+						ve.field_name = f;
+						ve.message = "Invalid field for index";
+						ve.filename = get_file_name(__FILE__);
+						ve.line_number = __LINE__;
+						_context->errors.push_back(ve);
+					}
+				}
+			}
+
+			if (_context->errors.size() > 0)
+			{
+				return false;
+			}
+
+			if (class_id == 0) {
+				class_id = _context->db->get_next_object_id();
+			}
+
+			_context->db->save_class(this);
+
+			return true;
+
 		}
 
 		virtual void put_field(std::shared_ptr<field_interface>& _new_field) override
@@ -4169,6 +4280,51 @@ namespace corona
 					}
 				}
 			}
+		}
+
+		virtual std::shared_ptr<class_interface> get_class_impl(activity* _activity, std::string _class_name)
+		{
+			std::shared_ptr<class_interface> cd;
+			json_parser jp;
+
+			class_cache.try_get(_class_name, cd);
+
+			if (not cd) {
+				std::shared_ptr<class_implementation> cdimp = std::make_shared<class_implementation>();
+				json key = jp.create_object();
+				key.put_member(class_name_field, _class_name);
+				json class_def = classes->get_single_object(this, key, false, get_system_permission());
+				if (class_def) {
+					activity get_activity;
+					get_activity.db = this;
+					cdimp->open(&get_activity, class_def, -1);
+					cd = cdimp;
+					class_cache.insert(_class_name, cd);
+				}
+			}
+			return cd;
+		}
+
+		virtual std::shared_ptr<class_interface> put_class_impl(activity* _activity, json& _class_definition)
+		{
+			std::string class_name = _class_definition[class_name_field];
+			auto ci = get_class_impl(_activity, class_name);
+			if (ci) {
+				activity activio;
+				activio.db = this;
+				ci->update(&activio, _class_definition);
+				save_class(ci.get());
+			}
+			else 
+			{
+				activity activio;
+				activio.db = this;
+				ci = std::make_shared<class_implementation>();
+				ci->create(&activio, _class_definition);
+				save_class(ci.get());
+			}
+			class_cache.insert(class_name, ci);
+			return ci;
 		}
 
 		json create_database()
@@ -5544,73 +5700,7 @@ private:
 			return header.data.object_id;
 		}
 
-		std::map<std::string, std::shared_ptr<class_implementation>> class_cache;
-
-		std::shared_ptr<class_implementation> get_cached_class(const std::string& _class_name)
-		{
-			std::shared_ptr<class_implementation> cd;
-			read_scope_lock my_lock(class_lock);
-			auto cache_hit = class_cache.find(_class_name);
-			if (cache_hit != std::end(class_cache)) {
-				cd = cache_hit->second;
-			}
-			return cd;
-		}
-
-		std::shared_ptr<class_implementation> cache_existing_class(const std::string& _class_name)
-		{
-			std::shared_ptr<class_implementation> cd;
-			write_scope_lock my_lock(class_lock);
-			json_parser jp;
-			cd = std::make_shared<class_implementation>();
-			json key = jp.create_object();
-			key.put_member(class_name_field, _class_name);
-			json class_def = classes->get_single_object(this, key, false, get_system_permission());
-
-			if (class_def.empty())
-				return nullptr;
-
-			std::vector<validation_error> errors;
-
-			if (class_def.object()) {
-				cd->put_json(errors, class_def);
-				if (errors.size()) {
-					system_monitoring_interface::active_mon->log_warning(std::format("Errors on deserializing class {0}", _class_name), __FILE__, __LINE__);
-					for (auto error : errors) {
-						system_monitoring_interface::active_mon->log_information(std::format("{0} {1} {2}  @{3} {4}", error.class_name, error.field_name, error.message, error.filename, error.line_number), __FILE__, __LINE__);
-					}
-				}
-			}
-			else
-			{
-				// this will be a new, empty class.
-				cd->set_class_name(_class_name);
-			}
-
-			class_cache.insert_or_assign(_class_name, cd);
-			return cd;
-		}
-
-		std::shared_ptr<class_implementation> cache_class(const std::string& _class_name)
-		{
-			write_scope_lock my_lock(class_lock);
-
-			std::shared_ptr<class_implementation> class_to_cache;
-			json_parser jp;
-			class_to_cache = std::make_shared<class_implementation>();
-			json key = jp.create_object();
-			key.put_member(class_name_field, _class_name);
-			json class_def = classes->get_single_object(this, key, false, get_system_permission());
-
-			std::vector<validation_error> errors;
-
-			if (!class_to_cache->open(this, class_def, -1)) {
-				class_to_cache->set_class_name(_class_name);
-			}
-
-			class_cache.insert_or_assign(_class_name, class_to_cache);
-			return class_to_cache;
-		}
+		thread_safe_map<std::string, std::shared_ptr<class_interface>> class_cache;
 
 		int64_t maximum_record_cache_size_bytes = giga_to_bytes(1);
 
@@ -5787,60 +5877,27 @@ private:
 			return s_confirmation_code;
 		}
 
-		virtual std::shared_ptr<class_implementation> read_get_class(const std::string& _class_name) 
+		virtual std::shared_ptr<class_interface> read_get_class(const std::string& _class_name) 
 		{
-			std::shared_ptr<class_implementation> cd;
+			std::shared_ptr<class_interface> cd;
 
-			cd = get_cached_class(_class_name);
-
-			if (not cd)
-			{
-				cd = cache_existing_class(_class_name);
-			}
+			activity act;
+			act.db = this;
+			cd = get_class_impl(&act, _class_name);
 
 			return cd;
 		}
 
 		virtual read_class_sp read_lock_class(const std::string& _class_name) override
 		{
-			std::shared_ptr<class_implementation> cd;
-
-			cd = get_cached_class(_class_name);
-
-			if (not cd)
-			{
-				cd = cache_existing_class(_class_name);
-			}
-
-			std::shared_ptr<class_interface> cdi = std::dynamic_pointer_cast<class_interface>(cd);
-			return read_class_sp(cdi);
+			std::shared_ptr<class_interface> cd = read_get_class(_class_name);
+			return read_class_sp(cd);
 		}
 
 		virtual write_class_sp write_lock_class(const std::string& _class_name) override
 		{
-			std::shared_ptr<class_implementation> cd;
-
-			cd = get_cached_class(_class_name);
-
-			std::shared_ptr<class_interface> cdi = std::dynamic_pointer_cast<class_interface>(cd);
-
-			return write_class_sp(cdi);
-		}
-
-		virtual write_class_sp create_lock_class(const std::string& _class_name) override
-		{
-			std::shared_ptr<class_implementation> cd;
-
-			cd = get_cached_class(_class_name);
-
-			if (not cd)
-			{
-				cd = cache_class(_class_name);
-			}
-
-			std::shared_ptr<class_interface> cdi = std::dynamic_pointer_cast<class_interface>(cd);
-
-			return write_class_sp(cdi);
+			std::shared_ptr<class_interface> cd = read_get_class(_class_name);
+			return write_class_sp(cd);
 		}
 
 		virtual json save_class(class_interface *_class_to_save)
@@ -5859,16 +5916,7 @@ private:
 
 		virtual json save_class(write_class_sp& _class_to_save) override
 		{
-			json_parser jp;
-			json class_def;
-
-			class_def = jp.create_object();
-			json class_def_list = jp.create_array();
-			json dummy_children = jp.create_array();
-			_class_to_save->get_json(class_def);
-			class_def_list.push_back(class_def);
-			classes->put_objects(this, dummy_children, class_def_list, get_system_permission());
-			return class_def;
+			return save_class(_class_to_save.get());
 		}
 
 		void log_error_array(json put_result)
@@ -6288,8 +6336,15 @@ private:
 			cache = std::make_unique<xblock_cache>(static_cast<file_block*>(this), maximum_record_cache_size_bytes );
 			relative_ptr_type header_location =  header.read(this, _header_location);
 
+			activity act;
+			act.db = this;
+
+			json class_definition = jp.parse_object(class_definition_string);
+			if (class_definition.error())
+				throw std::exception("Class Definition Parse Error");
+
 			classes = std::make_shared<class_implementation>();
-			classes->open(this, class_definition_string, header.data.classes_location);
+			classes->open(&act, class_definition, header.data.classes_location);
 
             std::vector<std::string> check_classes = { "sys_object", "sys_class", "sys_user", "sys_team", "sys_grant", "sys_server", "sys_error", "sys_schema", "sys_dataset" };
 
@@ -7245,7 +7300,6 @@ private:
 			json result;
 			json_parser jp;
 
-			read_scope_lock my_lock(database_lock);
 			std::vector<validation_error> errors;
 
 			date_time start_time = date_time::now();
@@ -7310,22 +7364,18 @@ private:
 				return result;
 			}
 
-			activity update_activity;
+			activity pcactivity;
+			pcactivity.db = this;
 
-			update_activity.db = this;
+			auto pclass = put_class_impl(&pcactivity, jclass_definition);
 
-			auto class_to_modify = update_activity.create_class(class_name);
-
-			bool success = class_to_modify->update(&update_activity, jclass_definition);
-
-			if (success) 
+			if (pclass) 
 			{				
-				save_class(class_to_modify);
-				result = create_response(put_class_request, success, "Ok", jclass_definition, update_activity.errors, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, true, "Ok", jclass_definition, pcactivity.errors, method_timer.get_elapsed_seconds());
 			}
 			else 
 			{
-				result = create_response(put_class_request, success, "errors", jclass_definition, update_activity.errors, method_timer.get_elapsed_seconds());
+				result = create_response(put_class_request, false, "errors", jclass_definition, pcactivity.errors, method_timer.get_elapsed_seconds());
 			}
 
 			save();
@@ -8153,9 +8203,7 @@ private:
 			return fi->second.get();
 		}
 
-		auto impl = db->write_lock_class(_class_name);
-		classes.emplace(std::pair<std::string, write_class_sp>(_class_name, std::move(impl)));
-		return get_class(_class_name);
+		return nullptr;
 	}
 
 	class_interface* activity::create_class(std::string _class_name)
@@ -8166,8 +8214,9 @@ private:
 			return fi->second.get();
 		}
 
-		auto impl = db->create_lock_class(_class_name);
-		classes.emplace(std::pair<std::string, write_class_sp>(_class_name, std::move(impl)));
+		std::shared_ptr<class_implementation> class_impl = std::make_shared<class_implementation>();
+		std::shared_ptr<class_interface> iclass = std::dynamic_pointer_cast<class_interface>(class_impl);
+		classes.insert_or_assign(_class_name, iclass);
 		return get_class(_class_name);
 	}
 
