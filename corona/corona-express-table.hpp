@@ -276,12 +276,13 @@ namespace corona
 			size_t total_bytes = header_size_bytes;
 
 			// notice that we're also prepping the header as we do this.
-			xheader.count = records.size();
+			xheader.count = 0;
 
 			for (auto& r : records)
 			{
 				total_bytes += r.first.size();
 				total_bytes += r.second.size();
+				xheader.count++;
 			}
 
 			*_size = total_bytes;

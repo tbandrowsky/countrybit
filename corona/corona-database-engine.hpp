@@ -3438,10 +3438,6 @@ namespace corona
 				}
 			}
 
-			if (class_id <= 0) {
-				class_id = _context->db->get_next_object_id();
-			}	
-
 			_context->db->save_class(this);
 
 			for (auto descendant : view_descendants)
@@ -4582,8 +4578,8 @@ namespace corona
 			"dataset_author" : "string",
 			"dataset_source" : "string",
 			"completed" : "datetime",
-			"run_on_change": "bool",
-			"objects": "array",
+			"run_on_change": "bool",		
+			"objects" : "array",
 			"import" : "object"
 	},
 	"indexes" : {
