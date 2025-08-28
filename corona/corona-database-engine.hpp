@@ -798,6 +798,7 @@ namespace corona
 		virtual std::string								get_index_name() = 0;
 		virtual std::vector<std::string>				&get_index_keys() = 0;
 		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
+		virtual std::shared_ptr<xtable>					create_xtable(corona_database_interface* _db) = 0;
 		virtual std::string								get_index_key_string() = 0;
 
 	};
@@ -826,6 +827,7 @@ namespace corona
 		virtual std::shared_ptr<xtable_interface>		get_table(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<sql_table>				get_stable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					get_xtable(corona_database_interface* _db) = 0;
+		virtual std::shared_ptr<xtable>					create_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					alter_xtable(corona_database_interface* _db) = 0;
 		virtual std::shared_ptr<xtable>					find_index(corona_database_interface* _db, json& _keys) const = 0;
 		virtual	bool									open(activity* _context, json _existing_definition, int64_t _location) = 0;
@@ -2505,6 +2507,18 @@ namespace corona
 			return *this;
 		}
 
+		virtual std::shared_ptr<xtable> create_xtable(corona_database_interface* _db) override
+		{
+			std::shared_ptr<xtable> table;
+
+			auto table_header = std::make_shared<xtable_header>();
+			table_header->key_members = get_index_keys();
+			table_header->object_members = { object_id_field };
+			table = std::make_shared<xtable>(_db->get_cache(), table_header);
+			table_location = table->get_location();
+			return table;
+		}
+
 		virtual std::shared_ptr<xtable> get_xtable(corona_database_interface* _db) override
 		{
 			std::shared_ptr<xtable> table;
@@ -2512,15 +2526,6 @@ namespace corona
 			if (table_location != null_row)
 			{
 				table = std::make_shared<xtable>(_db->get_cache(), table_location);
-				return table;
-			}
-			else 
-			{
-				auto table_header = std::make_shared<xtable_header>();
-				table_header->key_members = get_index_keys();
-				table_header->object_members = { object_id_field };
-				table = std::make_shared<xtable>(_db->get_cache(), table_header);
-				table_location = table->get_location();
 				return table;
 			}
 		}
@@ -2689,6 +2694,19 @@ namespace corona
 			return table_fields;
 		}
 
+		virtual std::shared_ptr<xtable> create_xtable(corona_database_interface* _db) override
+		{
+			std::shared_ptr<xtable> table;
+			
+			auto table_header = std::make_shared<xtable_header>();
+			table_header->object_members = table_fields;
+			table_header->key_members = { object_id_field };
+			table = std::make_shared<xtable>(_db->get_cache(), table_header);
+			table_location = table_header->get_location();
+			system_monitoring_interface::active_mon->log_information(std::format("Created xtable for class {0} at location {1}", class_name, table_location));
+			return table;
+		}
+
 		virtual std::shared_ptr<xtable> get_xtable(corona_database_interface* _db) override
 		{
 			std::shared_ptr<xtable> table;
@@ -2696,14 +2714,11 @@ namespace corona
 			{
 				table = std::make_shared<xtable>(_db->get_cache(), table_location);
 			}
-			else
-			{
-				auto table_header = std::make_shared<xtable_header>();
-				table_header->object_members = table_fields;
-				table_header->key_members = { object_id_field };
-				table = std::make_shared<xtable>(_db->get_cache(), table_header);
-				table_location = table_header->get_location();
-                system_monitoring_interface::active_mon->log_information(std::format("Created xtable for class {0} at location {1}", class_name, table_location));
+			else {
+//				system_monitoring_interface::active_mon->log_information(std::format("Created xtable for class {0} at location {1}", class_name, table_location));
+
+				std::string msg = std::format("Attempting to open {} from nowhere", class_name);
+				throw std::logic_error(msg);
 			}
 			return table;
 		}
@@ -3231,6 +3246,11 @@ namespace corona
                 table_location = definition["table_location"];
 			}
 
+			if (table_location <= 1) {
+				std::string stuff = std::format("Attempt to open {0} but not created", (std::string)definition[class_name_field]);
+				throw std::logic_error(stuff);
+			}
+
 			if (_context->errors.size())
 			{
 				system_monitoring_interface::active_mon->log_warning(std::format("Errors on updating class {0}", class_name), __FILE__, __LINE__);
@@ -3292,41 +3312,30 @@ namespace corona
 				class_id = _context->db->get_next_object_id();
             }
 
-			// check to see if we have changes requiring a table rebuild.
-			// first off, we don't have to rebuild if this is a new table.
-
 			bool alter_table = false;
 			std::vector<std::shared_ptr<field_interface>> new_fields;
 
-			if (table_location == 0) {
-				for (auto f : fields) {
-					auto changed_field = changed_class.fields.find(f.first);
-					if (changed_field != std::end(changed_class.fields))
-					{
-						if (changed_field->second->get_field_type() != f.second->get_field_type())
-						{
-							alter_table = true;
-						}
-					}
-					else
+			for (auto f : fields) {
+				auto changed_field = changed_class.fields.find(f.first);
+				if (changed_field != std::end(changed_class.fields))
+				{
+					if (changed_field->second->get_field_type() != f.second->get_field_type())
 					{
 						alter_table = true;
 					}
 				}
-
-				for (auto f : changed_class.fields) {
-					auto changed_field = fields.find(f.first);
-					if (changed_field == std::end(fields))
-					{
-						new_fields.push_back(f.second);
-						alter_table = true;
-					}
+				else
+				{
+					alter_table = true;
 				}
 			}
-			else 
-			{
-				for (auto f : changed_class.fields) {
+
+			for (auto f : changed_class.fields) {
+				auto changed_field = fields.find(f.first);
+				if (changed_field == std::end(fields))
+				{
 					new_fields.push_back(f.second);
+					alter_table = true;
 				}
 			}
 
@@ -3438,6 +3447,7 @@ namespace corona
 				{
 					auto temp = std::make_shared<index_implementation>(new_index.second, _context->db);
 					index_to_create = std::dynamic_pointer_cast<index_implementation, index_interface>(temp);
+					index_to_create->create_xtable(_context->db);
 				}
 
 				correct_indexes.insert_or_assign(new_index.first, index_to_create);
@@ -3612,7 +3622,11 @@ namespace corona
 				class_id = _context->db->get_next_object_id();
 			}
 
-			_context->db->save_class(this);
+			create_xtable(_context->db);
+			for (auto idx : indexes)
+			{
+				idx.second->create_xtable(_context->db);
+			}
 
 			return true;
 
@@ -3663,6 +3677,9 @@ namespace corona
 		{
 			json_parser jp;
 			json result;
+			if (table_location <= 0) {
+				throw std::exception("Attempt to fetch an object from a non-existent class");
+			}
 			if (sql) {
 				auto tb = get_xtable(_db);
 				result = tb->get(_object_id);
@@ -4313,7 +4330,6 @@ namespace corona
 				activity activio;
 				activio.db = this;
 				ci->update(&activio, _class_definition);
-				save_class(ci.get());
 			}
 			else 
 			{
@@ -4321,7 +4337,6 @@ namespace corona
 				activio.db = this;
 				ci = std::make_shared<class_implementation>();
 				ci->create(&activio, _class_definition);
-				save_class(ci.get());
 			}
 			class_cache.insert(class_name, ci);
 			return ci;
@@ -4359,7 +4374,7 @@ namespace corona
 			activity update_activity;
 			update_activity.db = this;
 			class_definition = jp.parse_object(class_definition_string);
-			bool success = classes->update(&update_activity, class_definition);
+			bool success = classes->create(&update_activity, class_definition);
 
 			auto cxtable = classes->get_xtable(this);
 			header.data.classes_location = cxtable->get_location();
@@ -6346,7 +6361,7 @@ private:
 			classes = std::make_shared<class_implementation>();
 			classes->open(&act, class_definition, header.data.classes_location);
 
-            std::vector<std::string> check_classes = { "sys_object", "sys_class", "sys_user", "sys_team", "sys_grant", "sys_server", "sys_error", "sys_schema", "sys_dataset" };
+            std::vector<std::string> check_classes = { "sys_object", "sys_user", "sys_team", "sys_grant", "sys_server", "sys_error", "sys_schema", "sys_dataset" };
 
 			for (auto check_class : check_classes) {
                 std::string class_key = std::format(R"({{"class_name":"{0}"}})", check_class);
