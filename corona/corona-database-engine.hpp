@@ -3825,12 +3825,12 @@ namespace corona
 
 			json_parser jp;
 			json obj;
+			obj = jp.create_array();
 
 			if (_key.has_member(object_id_field)) {
 				int64_t object_id = (int64_t)_key[object_id_field];
 				bool exists;
 				json temp = get_object(_db, object_id, _grant, exists);
-				obj = jp.create_array();
 				obj.push_back(temp);
 			}
 			else 
@@ -3839,7 +3839,6 @@ namespace corona
 				if (index_table)
 				{
 					json temp;
-					obj = jp.create_array();
 
  					temp = index_table->select(_key, [](json& _item) -> json {
 						return _item;
@@ -5929,7 +5928,8 @@ private:
 			schema_key.put_member(class_name_field, "sys_schema"sv);
 			schema_key.set_compare_order({ "schema_name", "schema_version" });
 
-			json jschema =  select_object(schema_key, false, sys_perm);
+			json jschema_array =  select_object(schema_key, false, sys_perm);
+            json jschema = jschema_array.get_first_element();
 			int64_t schema_id;
 
 			if (jschema.object()) 
@@ -8004,7 +8004,8 @@ private:
 			}
 
 			// load the complete object
-			json object_source = select_object(source_key, true, src_permission);
+			json object_source_array = select_object(source_key, true, src_permission);
+			json object_source = object_source_array.get_first_element();
 
 			json object_to_copy_result;
 			json source_object;
