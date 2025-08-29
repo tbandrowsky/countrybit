@@ -3243,7 +3243,7 @@ namespace corona
 			table_location = _location;
 
 			if (table_location <= 1) {
-                table_location = definition["table_location"];
+                table_location = (int64_t)definition["table_location"];
 			}
 
 			if (table_location <= 1) {
