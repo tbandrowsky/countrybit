@@ -51,7 +51,7 @@ namespace corona
 
 
 		virtual char* before_read(int32_t _size) = 0;
-		virtual void after_read(char* _bytes) = 0;
+		virtual void after_read(char* _bytes, int32_t _size) = 0;
 
 		virtual void finished_io(char* _bytes) = 0;
 
@@ -264,7 +264,7 @@ namespace corona
 			return (char*)data.c_str();
 		}
 
-		virtual void after_read(char* _bytes) override
+		virtual void after_read(char* _bytes, int32_t _size) override
 		{
 			;
 		}
@@ -315,7 +315,7 @@ namespace corona
 			return (char*)bytes.c_str();
 		}
 
-		virtual void after_read(char* _bytes) override
+		virtual void after_read(char* _bytes, int32_t _size) override
 		{
 			const char* contents = _bytes;
 			if (contents) {
@@ -374,7 +374,7 @@ namespace corona
 			return io_bytes;
 		}
 
-		virtual void after_read(char* _bytes) override
+		virtual void after_read(char* _bytes, int32_t _size) override
 		{
 		}
 

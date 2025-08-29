@@ -257,7 +257,7 @@ namespace corona
 			return bytes;
 		}
 
-		virtual void after_read(char* _bytes) override
+		virtual void after_read(char* _bytes, int32_t _size) override
 		{
 			records.clear();
 			xheader = *((xrecord_block_header *)_bytes);
@@ -1026,7 +1026,7 @@ namespace corona
 			return (char*)data.c_str();
 		}
 
-		virtual void after_read(char* _bytes) override
+		virtual void after_read(char* _bytes, int32_t _size) override
 		{
 			json_parser parser;
 			json temp = parser.parse_object(data);
@@ -1116,10 +1116,7 @@ namespace corona
 			}
 			return jresult;
 		}
-
-
-		///Ok, so the root cause is that xcompare and xrecord doesn't work with objects ... s/b converted to strings and stored.
-
+		
 		virtual json get(json _object) override
 		{
 			json_parser jp;
