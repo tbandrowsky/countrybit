@@ -3850,7 +3850,8 @@ namespace corona
                         }	
                         int64_t object_id = (int64_t)obi[object_id_field];	
                         json bojdetail = _db->select_object(class_name, object_id, _grant);
-						temp.push_back(bojdetail);
+                        json detail = bojdetail.get_first_element();
+						temp.push_back(detail);
 					}
 					obj = temp;
 				}
