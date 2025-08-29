@@ -9,7 +9,33 @@
 namespace corona
 {
 
+
 	const int packed_field_type_size = 1;
+
+	struct xptr
+	{
+	public:
+		int64_t length;
+		char* bytes;
+	};
+
+	class xfield
+	{
+	public:
+		field_types field_type;
+		int64_t		record_offset;
+
+		virtual xptr get_ptr() = 0;
+	};
+
+	struct xrecord2 
+	{
+	public:
+        std::vector<xfield> record_bytes;
+
+		xrecord2() = default;
+		virtual ~xrecord2() = default;
+	};
 
 	struct xstring
 	{
