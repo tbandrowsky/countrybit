@@ -120,14 +120,15 @@ namespace corona
 			return true;
 		}
 
-		static char zero_buff[32] = { 0 };
 
 		static int emplace(const std::string& _src, std::vector<char>& _dest)
 		{
+			char zero_buff[8] = { 0 };
+
 			char ft = (char)field_types::ft_string;
 			_dest.push_back(ft);
 
-			char* c = nullptr;
+			const char* c = nullptr;
 			int l = 0;
 			
 			if (_src.empty()) {
@@ -151,10 +152,12 @@ namespace corona
 
 		static int emplace_as(field_types _ft, const std::string& _src, std::vector<char>& _dest)
 		{
+			char zero_buff[8] = { 0 };
+
 			char ft = (char)_ft;
 			_dest.push_back(ft);
 
-			char* c = nullptr;
+			const char* c = nullptr;
 			int l = 0;
 
 			if (_src.empty()) {
