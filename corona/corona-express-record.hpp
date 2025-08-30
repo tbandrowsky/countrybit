@@ -123,9 +123,9 @@ namespace corona
 
 		static int emplace(const std::string& _src, std::vector<char>& _dest)
 		{
-			char zero_buff[8] = { 0 };
+			static char zero_buff[4] = { 0 };
 
-			char ft = (char)field_types::ft_string;
+  		    char ft = (char)field_types::ft_string;
 			_dest.push_back(ft);
 
 			const char* c = nullptr;
@@ -152,7 +152,8 @@ namespace corona
 
 		static int emplace_as(field_types _ft, const std::string& _src, std::vector<char>& _dest)
 		{
-			char zero_buff[8] = { 0 };
+
+			static char zero_buff[4] = { 0 };
 
 			char ft = (char)_ft;
 			_dest.push_back(ft);

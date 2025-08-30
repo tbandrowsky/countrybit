@@ -272,46 +272,44 @@ namespace corona
 
 		virtual char* before_write(int32_t* _size) override
 		{
-			int header_size_bytes = xheader.size();
-			size_t total_bytes = header_size_bytes;
+			int32_t offset = xheader.size();
 
-			// notice that we're also prepping the header as we do this.
 			xheader.count = 0;
-
-			for (auto& r : records)
-			{
-				total_bytes += r.first.size();
-				total_bytes += r.second.size();
-				xheader.count++;
-			}
-
-			*_size = total_bytes;
-
-			char *bytes = new char[total_bytes + 10];
-			char* current = bytes + header_size_bytes;
-
 			int i = 0;
+
 			for (auto& r : records)
 			{
 				auto& rl = xheader.records[i];
-				int size_actual;
-
-				rl.key_offset = current - bytes;
-				rl.key_size = r.first.size();
-				const char *rsrc = r.first.data();
-				std::copy(rsrc, rsrc + rl.key_size, current);
-				current += rl.key_size;
-
-				rl.value_offset = current - bytes;
-				rl.value_size = r.second.size();
-				const char *vsrc = r.second.data();
-				data_type* check_src = (data_type*)(vsrc);
-				std::copy(vsrc, vsrc + rl.value_size, current);
-				current += rl.value_size;
+                rl.key_offset = offset;
+                rl.key_size = r.first.size();
+				offset += r.first.size();
+				rl.value_offset = offset;
+                rl.value_size = r.second.size();
+                offset += r.second.size();
+				xheader.count++;
 				i++;
 			}
 
-			std::copy(xheader.data(), xheader.data() + header_size_bytes, bytes);
+			*_size = offset;
+
+			char *bytes = new char[offset + 10];
+
+			i = 0;
+			for (auto& r : records)
+			{
+				auto& rl = xheader.records[i];
+
+				const char *ksrc = r.first.data();
+                char* kdest = bytes + rl.key_offset;
+				std::copy(ksrc, ksrc + rl.key_size, kdest);
+
+				const char *vsrc = r.second.data();
+				char* vdest = bytes + rl.value_offset;
+				std::copy(vsrc, vsrc + rl.value_size, vdest);
+				i++;
+			}
+
+			std::copy(xheader.data(), xheader.data() + xheader.size(), bytes);
 
 			xrecord_block_header* check_it = (xrecord_block_header*)bytes;
 
