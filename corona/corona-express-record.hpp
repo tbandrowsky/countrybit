@@ -120,18 +120,32 @@ namespace corona
 			return true;
 		}
 
+		static char zero_buff[32] = { 0 };
+
 		static int emplace(const std::string& _src, std::vector<char>& _dest)
 		{
 			char ft = (char)field_types::ft_string;
 			_dest.push_back(ft);
 
-			int32_t l = _src.size() + 1;
-			char* x = (char *)&l;
-			_dest.insert(_dest.end(), x, x + sizeof(l));
+			char* c = nullptr;
+			int l = 0;
+			
+			if (_src.empty()) {
+				c = zero_buff;
+				l = 1;
+			}
+			else 
+			{
+                c = _src.c_str();
+                l = _src.size() + 1;	
+			}
 
-			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + l);
+			char* pl = (char*)&l;
+			_dest.insert(_dest.end(), pl, pl + sizeof(l));
+
+			_dest.insert(_dest.end(), c, c + l);
 			int return_value;
-			return_value = std::distance(_dest.begin(), _dest.end());
+			return_value = 1 + sizeof(l) + l;
 			return return_value;
 		}
 
@@ -140,13 +154,25 @@ namespace corona
 			char ft = (char)_ft;
 			_dest.push_back(ft);
 
-			int32_t l = _src.size() + 1;
-			char* x = (char*)&l;
-			_dest.insert(_dest.end(), x, x + sizeof(l));
+			char* c = nullptr;
+			int l = 0;
 
-			_dest.insert(_dest.end(), _src.c_str(), _src.c_str() + l);
+			if (_src.empty()) {
+				c = zero_buff;
+				l = 1;
+			}
+			else
+			{
+				c = _src.c_str();
+				l = _src.size() + 1;
+			}
+
+			char* pl = (char*)&l;
+			_dest.insert(_dest.end(), pl, pl + sizeof(l));
+
+			_dest.insert(_dest.end(), c, c + l);
 			int return_value;
-			return_value = std::distance(_dest.begin(), _dest.end());
+			return_value = 1 + sizeof(l) + l;
 			return return_value;
 		}
 

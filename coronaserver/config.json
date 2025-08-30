@@ -11,8 +11,8 @@
   "Server": {
     "listen_point": "https://+:443/revolution",
     "application_name": "revolution",
-    "schema_filename": "revolution_schema.json",
-    "database_filename": "revolution_database.cdb",
+    "schema_filename": "table_test_schema.json",
+    "database_filename": "table_test_database.cdb",
     "database_threads": 3,
     "database_recreate": false,
     "sys_user_name": "system",

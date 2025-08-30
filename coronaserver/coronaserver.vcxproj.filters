@@ -42,6 +42,7 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="sqlintegrationschema.json" />
+    <None Include="table_test_schema.json" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="coronaserver.hpp">

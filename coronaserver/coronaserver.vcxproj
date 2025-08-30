@@ -215,6 +215,7 @@
       <FileType>Document</FileType>
     </CopyFileToFolders>
     <None Include="sqlintegrationschema.json" />
+    <None Include="table_test_schema.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="eventmessages.txt">

@@ -73,7 +73,7 @@ namespace corona
 
 				if (data_result.success)
 				{
-					after_read(bytes);
+					after_read(bytes, header.data_size);
 					finished_io(bytes);
 					if (ENABLE_JSON_LOGGING) {
 						system_monitoring_interface::active_mon->log_block_stop("block", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);

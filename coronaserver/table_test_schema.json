@@ -1,0 +1,654 @@
+{
+  "schema_name": "Revolution",
+  "schema_description": "Schema for the Revolution.",
+  "schema_version": "1.0",
+  "schema_authors": [
+    "TJ Bandrowsky"
+  ],
+  "classes": [
+    {
+      "class_name": "property",
+      "base_class_name": "sys_object",
+      "class_description": "a thing owned by a user",
+      "parents": [ "sys_user" ],
+      "fields": {
+        "property_name": "string"
+      }
+    },
+    {
+      "class_name": "function",
+      "base_class_name": "sys_object",
+      "class_description": "a thing owned by a user",
+      "parents": [ "government" ],
+      "fields": {
+        "function_name": "string"
+      }
+    },
+    {
+      "class_name": "government",
+      "base_class_name": "sys_object",
+      "class_description": "a thing owned by a user",
+      "parents": [ "sys_user" ],
+      "fields": {
+        "government_name": "string",
+        "functions": "[ function ]"
+      }
+    },
+    {
+      "class_name": "building",
+      "class_description": "something built on a spot",
+      "base_class_name": "property",
+      "parents": [ "location" ],
+      "fields": {
+        "latitude": "double",
+        "longitude": "double",
+        "elevation": "double",
+        "building_code": "string",
+        "construction_code": "string"
+      }
+    },
+    {
+      "class_name": "location",
+      "class_description": "a place where something is",
+      "base_class_name": "property",
+      "parents": [ "inventory" ],
+      "fields": {
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "country": "string"
+      }
+    },
+    {
+      "class_name": "inventory",
+      "class_description": "items a user has",
+      "base_class_name": "property",
+      "fields": {
+        "locations": "[location]"
+      }
+    },
+    {
+      "class_name": "project",
+      "class_description": "a project",
+      "base_class_name": "property",
+      "fields": {
+        "project_description": "string"
+      }
+    },
+    {
+      "class_name": "contact",
+      "class_description": "a someone",
+      "base_class_name": "property",
+      "parents": [ "sys_user" ],
+      "fields": {
+        "first_name": "string",
+        "last_name": "string",
+        "mobile_phone": "string",
+        "other_phone": "string",
+        "current_email": "string",
+        "other_email": "string"
+      }
+    },
+    {
+      "class_name": "ticket",
+      "class_description": "a someone",
+      "base_class_name": "property",
+      "parents": [ "work_team" ],
+      "fields": {
+        "ticket_name": "string",
+        "ticket_description": "string"
+      }
+    },
+    {
+      "class_name": "work_team",
+      "class_description": "a team with tickets",
+      "base_class_name": "sys_team",
+      "fields": {
+        "tickets": "[ ticket ]"
+      }
+    },
+    {
+      "class_name": "note",
+      "class_description": "a note",
+      "base_class_name": "property",
+      "parents": [ "property" ],
+      "fields": {
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "content",
+      "class_description": "a comment on an article",
+      "base_class_name": "function",
+      "parents": [ "news_article" ],
+      "fields": {
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "comment",
+      "class_description": "a comment on an article",
+      "base_class_name": "function",
+      "parents": [ "news_article" ],
+      "fields": {
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "article",
+      "class_description": "an article",
+      "base_class_name": "function",
+      "parents": [ "topic" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "content": "->content",
+        "comments": "[ comment ]"
+      }
+    },
+    {
+      "class_name": "topic",
+      "class_description": "a section of articles",
+      "base_class_name": "function",
+      "parents": [ "library" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "articles": "[ article ]"
+      }
+    },
+    {
+      "class_name": "library",
+      "class_description": "a group of groups in a space",
+      "base_class_name": "function",
+      "parents": [ "goal" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "sections": "[ topic ]"
+      }
+    },
+    {
+      "class_name": "event",
+      "class_description": "a group of groups in a space",
+      "base_class_name": "function",
+      "parents": [ "goal" ],
+      "fields": {
+        "title": "string",
+        "text": "string",
+        "date": "datetime",
+        "address": "address",
+        "contact": "contact",
+        "url": "string",
+        "game": "string"
+      }
+    },
+    {
+      "class_name": "goal_vote",
+      "class_description": "an object for people to achieve",
+      "base_class_name": "function",
+      "parents": [ "goal" ],
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "support_goal": "boolean",
+        "agree_goal": "boolean",
+        "disagree_goal": "boolean",
+        "oppose_goal": "boolean",
+        "text": "string"
+      }
+    },
+    {
+      "class_name": "goal",
+      "class_description": "an object for people to achieve",
+      "base_class_name": "function",
+      "parents": [ "government" ],
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "support_goal": "number",
+        "agree_goal": "number",
+        "disagree_goal": "number",
+        "oppose_goal": "number",
+        "votes": [ "goal_vote" ],
+        "events": [ "event" ]
+      }
+    },
+    {
+      "class_name": "public_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "function",
+      "fields": {
+        "name": "string",
+        "description": "string",
+        "incumbent": "contact",
+        "goals": "[goal]"
+      }
+    },
+    {
+      "class_name": "corporate_office",
+      "class_description": "corporate leaders to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "corporation": "string"
+      }
+    },
+    {
+      "class_name": "federal_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "branch": "string",
+        "description": "string",
+        "incumbent": "contact"
+      }
+    },
+    {
+      "class_name": "state_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "branch": "string",
+        "district": "string",
+        "state": "string",
+        "description": "string",
+        "incumbent": "contact"
+      }
+    },
+    {
+      "class_name": "city_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "state": "string",
+        "city": "string",
+        "description": "string",
+        "incumbent": "contact"
+      }
+    },
+    {
+      "class_name": "county_office",
+      "class_description": "offices to influence or control",
+      "base_class_name": "public_office",
+      "fields": {
+        "name": "string",
+        "state": "string",
+        "county": "string",
+        "description": "string",
+        "incumbent": "contact"
+      }
+    },
+    {
+      "class_name": "candidate",
+      "class_description": "Candidates running for public office",
+      "base_class_name": "sys_object",
+      "fields": {
+        "candidate_id": "string",
+        "full_name": "string",
+        "political_party": "string",
+        "election_year": "int64",
+        "street1": "string",
+        "street2": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "committees": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "committee_candidate",
+                "name": "committee_candidate",
+                "filter": {
+                  "candidate_id": "$this.candidate_id"
+                }
+              },
+              {
+                "class_name": "committee",
+                "name": "committee",
+                "filter": {
+                  "committee_id": "committee_candidate.committee_id"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "committee"
+              }
+            ]
+          }
+        }
+      },
+      "indexes": {
+        "candidate_candidate_id_idx": {
+          "index_keys": [
+            "candidate_id"
+          ]
+        },
+        "candidate_full_name_idx": {
+          "index_keys": [
+            "full_name"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "candidate_search",
+      "class_description": "search object for candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "full_name": "string",
+        "state": "string",
+        "city": "string",
+        "political_party": "string",
+        "candidates": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "candidate",
+                "name": "candidate"
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "candidate",
+                "condition": {
+                  "class_name": "any",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "full_name",
+                      "value": "$this.full_name"
+                    },
+                    {
+                      "class_name": "eq",
+                      "valuepath": "state",
+                      "value": "$this.state"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "city",
+                      "value": "$this.city"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "political_party",
+                      "value": "$this.political_party"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "class_name": "committee",
+      "class_description": "Political groups that accept money from the public to support candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_id": "string",
+        "committee_name": "string",
+        "political_party": "string"
+      },
+      "indexes": {
+        "committee_committee_id_idx": {
+          "index_keys": [
+            "committee_id"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "committee_search",
+      "class_description": "search object for committees",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_name": "string",
+        "political_party": "string",
+        "committees": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "committee",
+                "name": "committee",
+                "filter": {
+                  "committee_name": "$this.committee_name",
+                  "political_party": "$this.political_party"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "committee",
+                "condition": {
+                  "class_name": "all",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "committee_name",
+                      "value": "$this.committee_name"
+                    },
+                    {
+                      "class_name": "contains",
+                      "valuepath": "political_party",
+                      "value": "$this.political_party"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "class_name": "committee_candidate",
+      "class_description": "Mapping of committees and candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_id": "string",
+        "candidate_id": "string"
+      },
+      "indexes": {
+        "committee_candidate_committee_id_idx": {
+          "index_keys": [
+            "committee_id"
+          ]
+        },
+        "committee_candidate_candidate_id_idx": {
+          "index_keys": [
+            "candidate_id"
+          ]
+        }
+      }
+    },
+    {
+      "class_name": "individual",
+      "class_description": "Mapping of committees and candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "committee_id": "string",
+        "full_name": "string",
+        "city": "string",
+        "state": "string",
+        "zip": "string",
+        "employer": "string",
+        "occupation": "string",
+        "transaction_date": "datetime",
+        "transaction_amount": "double",
+        "memo": "string"
+      }
+    },
+    {
+      "class_name": "individual_search",
+      "class_description": "Mapping of committees and candidates",
+      "base_class_name": "sys_object",
+      "fields": {
+        "full_name": {
+          "field_type": "string",
+          "required": true
+        },
+        "city": {
+          "field_type": "string",
+          "required": true
+        },
+        "state": {
+          "field_type": "string",
+          "required": true
+        },
+        "employer": "string",
+        "occupation": "string",
+        "transaction_date": "datetime",
+        "transaction_amount": "double",
+        "memo": "string",
+        "individuals": {
+          "field_type": "query",
+          "query": {
+            "from": [
+              {
+                "class_name": "individual",
+                "name": "individual",
+                "filter": {
+                  "city": "$this.city",
+                  "state": "$this.state",
+                  "zip": "$this.zip"
+                }
+              }
+            ],
+            "stages": [
+              {
+                "class_name": "filter",
+                "stage_input_name": "individual",
+                "condition": {
+                  "class_name": "all",
+                  "conditions": [
+                    {
+                      "class_name": "contains",
+                      "valuepath": "full_name",
+                      "value": "$this.full_name"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "class_name": "user_home",
+      "class_description": "Home object per users",
+      "base_class_name": "sys_object",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "technician_home",
+      "class_description": "Home object for technicians",
+      "base_class_name": "sys_object",
+      "fields": {
+      }
+    },
+    {
+      "class_name": "government_home",
+      "class_description": "Home object for government",
+      "base_class_name": "sys_object",
+      "fields": {
+      }
+    }
+
+  ],
+  "users": [
+
+  ],
+  "datasets": [
+    {
+      "dataset_name": "Revolution Teams",
+      "dataset_description": "Teams and their default memberships",
+      "dataset_version": "1.1",
+      "dataset_author": "Todd Bandrowsky",
+      "dataset_source": "This is canonical",
+      "objects": [
+        {
+          "class_name": "work_team",
+          "team_name": "All",
+          "team_description": "Revolution Users",
+          "team_domain": ".*",
+          "workflow_classes": [ "user_home", "individual_search", "candidate_search" ],
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "property",
+              "get": "own",
+              "put": "own",
+              "delete": "own",
+              "alter": "none"
+            },
+            {
+              "class_name": "sys_grant",
+              "grant_class": "government",
+              "get": "all",
+              "put": "all",
+              "delete": "own",
+              "alter": "none"
+            }
+          ]
+        },
+        {
+          "class_name": "work_team",
+          "team_name": "Technicians",
+          "team_description": "Revolution Technicians",
+          "team_domain": "todd\\.bandrowsky@gmail\\.com",
+          "workflow_classes": [ "developer_home", "individual_search", "candidate_search" ],
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "sys_object",
+              "get": "all",
+              "put": "all",
+              "delete": "all",
+              "alter": "all"
+            }
+          ]
+        },
+        {
+          "class_name": "work_team",
+          "team_name": "Administrators",
+          "team_description": "Government Administrators",
+          "team_domain": "(.*@countryvideogames\\.com)|(.*@countrybit\\.com)|(*.gov)",
+          "workflow_classes": [ "government_home", "individual_search", "candidate_search" ],
+          "permissions": [
+            {
+              "class_name": "sys_grant",
+              "grant_class": "government",
+              "get": "all",
+              "put": "all",
+              "delete": "all",
+              "alter": "all"
+            },
+            {
+              "class_name": "sys_grant",
+              "grant_class": "property",
+              "get": "own",
+              "put": "own",
+              "delete": "own",
+              "alter": "own"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
