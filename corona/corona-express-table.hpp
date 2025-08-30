@@ -275,6 +275,7 @@ namespace corona
 			int32_t offset = xheader.size();
 
 			xheader.count = 0;
+			int i = 0;
 
 			for (auto& r : records)
 			{
@@ -286,13 +287,14 @@ namespace corona
                 rl.value_size = r.second.size();
                 offset += r.second.size();
 				xheader.count++;
+				i++;
 			}
 
 			*_size = offset;
 
 			char *bytes = new char[offset + 10];
 
-			int i = 0;
+			i = 0;
 			for (auto& r : records)
 			{
 				auto& rl = xheader.records[i];
@@ -307,7 +309,7 @@ namespace corona
 				i++;
 			}
 
-			std::copy(xheader.data(), xheader.data() + header_size_bytes, bytes);
+			std::copy(xheader.data(), xheader.data() + xheader.size(), bytes);
 
 			xrecord_block_header* check_it = (xrecord_block_header*)bytes;
 
